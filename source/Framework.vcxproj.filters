@@ -1,0 +1,346 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="dllmain.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="StringUtilities.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Stopwatch.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Exception.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Diagnostics.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="DateTime.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="io\File.cpp">
+      <Filter>Source\io</Filter>
+    </ClCompile>
+    <ClCompile Include="threading\Thread.cpp">
+      <Filter>Source\threading</Filter>
+    </ClCompile>
+    <ClCompile Include="math\MathUtilities.cpp">
+      <Filter>Source\math</Filter>
+    </ClCompile>
+    <ClCompile Include="Application.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="threading\InterruptibleThread.cpp">
+      <Filter>Source\threading</Filter>
+    </ClCompile>
+    <ClCompile Include="threading\Interrupt.cpp">
+      <Filter>Source\threading</Filter>
+    </ClCompile>
+    <ClCompile Include="log\Logging.cpp">
+      <Filter>Source\log</Filter>
+    </ClCompile>
+    <ClCompile Include="log\server\ServerSink.cpp">
+      <Filter>Source\log\server</Filter>
+    </ClCompile>
+    <ClCompile Include="pc.h">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="io\sockets\ProtoServer.cpp">
+      <Filter>Source\io\sockets</Filter>
+    </ClCompile>
+    <ClCompile Include="log\server\proto\messages.pb.cc">
+      <Filter>Source\log\server\proto</Filter>
+    </ClCompile>
+    <ClCompile Include="io\sockets\ProtoClient.cpp">
+      <Filter>Source\io\sockets</Filter>
+    </ClCompile>
+    <ClCompile Include="Settings.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="io\sockets\Socket.cpp">
+      <Filter>Source\io\sockets</Filter>
+    </ClCompile>
+    <ClCompile Include="Cache.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="db\Database.cpp">
+      <Filter>Source\db</Filter>
+    </ClCompile>
+    <ClCompile Include="db\DataType.cpp">
+      <Filter>Source\db</Filter>
+    </ClCompile>
+    <ClCompile Include="db\DBException.cpp">
+      <Filter>Source\db</Filter>
+    </ClCompile>
+    <ClCompile Include="db\DBQueue.cpp">
+      <Filter>Source\db</Filter>
+    </ClCompile>
+    <ClCompile Include="threading\Pool.cpp">
+      <Filter>Source\threading</Filter>
+    </ClCompile>
+    <ClCompile Include="io\DiskWatcher.cpp">
+      <Filter>Source\io</Filter>
+    </ClCompile>
+    <ClCompile Include="db\types\Table.cpp">
+      <Filter>Source\db\types</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="StringUtilities.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Stopwatch.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Exception.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Diagnostics.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="io\Buffer.h">
+      <Filter>Headers\io</Filter>
+    </ClInclude>
+    <ClInclude Include="io\File.h">
+      <Filter>Headers\io</Filter>
+    </ClInclude>
+    <ClInclude Include="io\Parser.h">
+      <Filter>Headers\io</Filter>
+    </ClInclude>
+    <ClInclude Include="io\sockets\SessionCallbacks.h">
+      <Filter>Headers\io\sockets</Filter>
+    </ClInclude>
+    <ClInclude Include="io\sockets\Socket.h">
+      <Filter>Headers\io\sockets</Filter>
+    </ClInclude>
+    <ClInclude Include="TypeDefs.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="log\Logging.h">
+      <Filter>Headers\log</Filter>
+    </ClInclude>
+    <ClInclude Include="math\EMatrix.h">
+      <Filter>Headers\math</Filter>
+    </ClInclude>
+    <ClInclude Include="math\ESparse.h">
+      <Filter>Headers\math</Filter>
+    </ClInclude>
+    <ClInclude Include="math\MathUtilities.h">
+      <Filter>Headers\math</Filter>
+    </ClInclude>
+    <ClInclude Include="threading\Pool.h">
+      <Filter>Headers\threading</Filter>
+    </ClInclude>
+    <ClInclude Include="threading\ReusableThread.h">
+      <Filter>Headers\threading</Filter>
+    </ClInclude>
+    <ClInclude Include="threading\Thread.h">
+      <Filter>Headers\threading</Filter>
+    </ClInclude>
+    <ClInclude Include="DateTime.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="math\io\MatLab\MatLabFile.h">
+      <Filter>Headers\math\io\matlab</Filter>
+    </ClInclude>
+    <ClInclude Include="math\io\MatLab\MatLabVariable.h">
+      <Filter>Headers\math\io\matlab</Filter>
+    </ClInclude>
+    <ClInclude Include="collections\Queue.h">
+      <Filter>Headers\collections</Filter>
+    </ClInclude>
+    <ClInclude Include="collections\UnorderedMap.h">
+      <Filter>Headers\collections</Filter>
+    </ClInclude>
+    <ClInclude Include="collections\UnorderedSet.h">
+      <Filter>Headers\collections</Filter>
+    </ClInclude>
+    <ClInclude Include="Collections.h">
+      <Filter>Headers\collections</Filter>
+    </ClInclude>
+    <ClInclude Include="Defines.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="math\Decimal.h">
+      <Filter>Headers\math</Filter>
+    </ClInclude>
+    <ClInclude Include="math\DecimalOld.h">
+      <Filter>Headers\math</Filter>
+    </ClInclude>
+    <ClInclude Include="Application.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="threading\InterruptibleThread.h">
+      <Filter>Headers\threading</Filter>
+    </ClInclude>
+    <ClInclude Include="threading\Interrupt.h">
+      <Filter>Headers\threading</Filter>
+    </ClInclude>
+    <ClInclude Include="collections\Map.h">
+      <Filter>Headers\collections</Filter>
+    </ClInclude>
+    <ClInclude Include="settings\Settings.h">
+      <Filter>Headers\Settings</Filter>
+    </ClInclude>
+    <ClInclude Include="log\server\ReceivedMessages.h">
+      <Filter>Headers\log\server</Filter>
+    </ClInclude>
+    <ClInclude Include="log\server\SentMessages.h">
+      <Filter>Headers\log\server</Filter>
+    </ClInclude>
+    <ClInclude Include="log\server\ServerSink.h">
+      <Filter>Headers\log\server</Filter>
+    </ClInclude>
+    <ClInclude Include="Exports.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="JdeAssert.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="collections\UnorderedMapValue.h">
+      <Filter>Headers\collections</Filter>
+    </ClInclude>
+    <ClInclude Include="SmartPointer.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="io\Tar.h">
+      <Filter>Headers\io</Filter>
+    </ClInclude>
+    <ClInclude Include="Dll.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="log\server\EtwSink.h">
+      <Filter>Headers\log\server</Filter>
+    </ClInclude>
+    <ClInclude Include="io\sockets\Server.h">
+      <Filter>Headers\io\sockets</Filter>
+    </ClInclude>
+    <ClInclude Include="io\sockets\Client.h">
+      <Filter>Headers\io\sockets</Filter>
+    </ClInclude>
+    <ClInclude Include="io\sockets\ProtoServer.h">
+      <Filter>Headers\io\sockets</Filter>
+    </ClInclude>
+    <ClInclude Include="io\sockets\ProtoClient.h">
+      <Filter>Headers\io\sockets</Filter>
+    </ClInclude>
+    <ClInclude Include="log\server\proto\messages.pb.h">
+      <Filter>Headers\log\server\proto</Filter>
+    </ClInclude>
+    <ClInclude Include="io\DiskWatcher.h">
+      <Filter>Headers\io</Filter>
+    </ClInclude>
+    <ClInclude Include="db\c_api.h">
+      <Filter>Headers\db</Filter>
+    </ClInclude>
+    <ClInclude Include="db\Database.h">
+      <Filter>Headers\db</Filter>
+    </ClInclude>
+    <ClInclude Include="db\DataSource.h">
+      <Filter>Headers\db</Filter>
+    </ClInclude>
+    <ClInclude Include="db\DataType.h">
+      <Filter>Headers\db</Filter>
+    </ClInclude>
+    <ClInclude Include="db\DBException.h">
+      <Filter>Headers\db</Filter>
+    </ClInclude>
+    <ClInclude Include="db\DBQueue.h">
+      <Filter>Headers\db</Filter>
+    </ClInclude>
+    <ClInclude Include="db\Row.h">
+      <Filter>Headers\db</Filter>
+    </ClInclude>
+    <ClInclude Include="db\SchemaProc.h">
+      <Filter>Headers\db</Filter>
+    </ClInclude>
+    <ClInclude Include="db\types\Schema.h">
+      <Filter>Headers\db\types</Filter>
+    </ClInclude>
+    <ClInclude Include="db\types\Table.h">
+      <Filter>Headers\db\types</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Headers">
+      <UniqueIdentifier>{4b892314-3203-4a72-bb36-637463f69fea}</UniqueIdentifier>
+      <Extensions>*.h</Extensions>
+    </Filter>
+    <Filter Include="Source">
+      <UniqueIdentifier>{fa324e6e-eda5-4a83-b0ae-6bf13021350e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\io">
+      <UniqueIdentifier>{1a6dc553-d765-4490-bd31-cef0cbe855ba}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\io">
+      <UniqueIdentifier>{204da0f0-0b8c-4319-b48f-268339f1925e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\io\sockets">
+      <UniqueIdentifier>{f6d0f452-bf96-4861-b070-b8212b54fac1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\io\sockets">
+      <UniqueIdentifier>{8bf5a9cd-521a-4661-972d-269d5f51115d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\threading">
+      <UniqueIdentifier>{ed864d81-96b0-457b-9981-da2f62661ff5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\log">
+      <UniqueIdentifier>{0e023d39-d62a-49f4-89c9-199d81ed025e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\math">
+      <UniqueIdentifier>{02133487-975a-41bc-a7e2-702a865b998a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\math\io">
+      <UniqueIdentifier>{0e297a8a-0747-4d48-8760-5730639c8160}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\math">
+      <UniqueIdentifier>{4057f9a8-3c35-4aa6-98be-de51189179f5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\threading">
+      <UniqueIdentifier>{1d2fadfd-c4b1-4b04-a420-635a2fbdd2c8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\math\io">
+      <UniqueIdentifier>{e404b1cf-a9a4-4cec-a5f4-00f7fa1a15fa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\math\io\matlab">
+      <UniqueIdentifier>{b50b224a-2c0b-4b9c-a3b0-eb24bcc93695}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\collections">
+      <UniqueIdentifier>{f7d60aea-b307-40e6-a812-18c5350e7d1f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\Settings">
+      <UniqueIdentifier>{8487c156-298f-4dad-af94-49b6b92323dc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\log">
+      <UniqueIdentifier>{7cca4a77-6d0a-4b3a-b97f-9055286bc36b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\log\server">
+      <UniqueIdentifier>{09fd1b1e-8c6f-487d-84e8-695b760c8ff4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\log\server">
+      <UniqueIdentifier>{5ee3b262-ac37-4156-9ca4-5f5202dcd550}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\log\server\proto">
+      <UniqueIdentifier>{416604aa-ee50-45ca-8005-f648857ab670}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\io\Zip">
+      <UniqueIdentifier>{eb9d0ee5-c92f-4185-b4ed-04e8980aff2f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\log\server\proto">
+      <UniqueIdentifier>{6fa39ae7-ece8-4b51-bf5c-4287e9329b72}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\db">
+      <UniqueIdentifier>{930b521a-76f8-4082-884c-24323405f625}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\db">
+      <UniqueIdentifier>{03e07a05-08f0-4958-a34a-913bb1843393}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\db\types">
+      <UniqueIdentifier>{222a2995-a2e4-4804-8b7b-5fe8742877a9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\db\types">
+      <UniqueIdentifier>{95ad6653-3ffe-45d2-a48a-db0d945d0370}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

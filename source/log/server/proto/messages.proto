@@ -1,0 +1,208 @@
+//MKLINK timestamp.proto C:\code\libraries\protobuf\src\google\protobuf\timestamp.proto
+//C:\code\libraries\vcpkg\installed\x64-windows\tools\protobuf\protoc.exe -I. -I=C:\code\libraries\protobuf\src --cpp_out dllexport_decl=JDE_NATIVE_VISIBILITY:. messages.proto
+//protoc --cpp_out dllexport_decl=JDE_NATIVE_VISIBILITY:. messages.proto
+//\code\7.0\web2\ClientApp>MKLINK ib.proto C:\code\7.0\native\framework\markets\types\proto\ib.proto
+//\code\7.0\web2\ClientApp>npx pbjs -t static-module -w es6 -o src\app\proto\ib.js ib.proto & npx pbts -o src\app\proto\ib.d.ts src\app\proto\ib.js
+
+syntax = "proto3";
+
+package Jde.Logging.Proto;
+import "google/protobuf/timestamp.proto";
+
+//enum EVersion
+//{
+//	None=0;
+//	V1=1;
+//}
+
+enum ELogLevel
+{
+	Trace = 0;
+	Debug = 1;
+	Information = 2;
+	Warning = 3;
+	Error = 4;
+	Critical = 5;
+	LogLevelNone = 6;
+}
+
+message Instance
+{
+	string ApplicationName=1;
+	string HostName=2;
+	int32 ProcessId=3;
+	//ELogLevel dbLogLevel=4;
+	uint32 StartTime=5;
+}
+ 
+ //message ErrorMessage
+ //{
+// 	 string Description=1;
+ //}
+
+//message IdName
+//{
+//	int32 Id=1;
+//	string Name=2;
+//}
+
+//message ApplicationInstance
+//{
+//	uint32 Id=1;
+//	uint32 ApplicationId=2;
+//	string HostId=3;
+//	uint32 ProcessId=4;
+//	uint32 StartTime=5;
+//}
+
+message Message
+{
+	google.protobuf.Timestamp Time=1;
+	ELogLevel Level=2;
+	uint32 MessageId=3;
+	uint32 FileId=4;
+	uint32 FunctionId=5;
+	uint32 LineNumber=6;
+	uint32 UserId=7;
+	uint64 ThreadId=8;
+	repeated string Variables=9;
+}
+/*
+message Message2
+{
+	ELogLevel Level=1;
+	uint32 MessageId=2;
+	string MessageValue=3;
+	uint32 FileId=4;
+	string File=5;
+	uint32 FunctionId=6;
+	string Function=7;
+	uint32 LineNumber=8;
+	uint32 UserId=9;
+	uint32 ThreadId=10;
+
+	//google.protobuf.Timestamp Timestamp=11;
+	string Thread=12;
+	string User=13;
+	repeated string Variables=14;
+}
+*/
+enum EFields
+{
+	FieldsNone=0;
+	TimestampField=0x1;
+	MessageId=0x2;
+	MessageField=0x4;
+	Level=0x8;
+	FileId=0x10;
+	File=0x20;
+	FunctionId=0x40;
+	Function=0x80;
+	LineNumber=0x100;
+	UserId=0x200;
+	User=0x400;
+	ThreadId=0x800;
+	Thread=0x1000;
+	VariableCount=0x2000;
+	SessionId=0x4000;
+}
+
+message RequestString
+{
+	EFields Field=1;
+	uint32 Id=2;
+	string Value=3;
+}
+
+message Status
+{
+	uint32 StartTime=1;
+	uint64 Memory=2;
+	ELogLevel ServerLogLevel=3;
+	ELogLevel ClientLogLevel=4;
+	repeated string Details=5;
+}
+
+message CustomMessage
+{
+	uint32 RequestId=1;
+	bytes Message=2;
+}
+
+//message StringResult
+//{
+//	map<uint32,string> FieldValues=1;
+//}
+
+//message StringResults
+//{
+//	map<uint32,StringResult> Values=1;
+//}
+
+message ToServerUnion
+{
+	oneof Value
+	{
+		Instance Instance = 1;	
+		Message Message = 2;
+		RequestString String = 3;
+		Status Status = 4;
+		CustomMessage Custom=5;
+	}
+}
+
+message ToServer
+{
+	repeated ToServerUnion Messages = 1;
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+enum EFromServer
+{
+	Ping=0;
+	Error_=1;
+	ReadError=2;
+}
+
+message Acknowledgement
+{
+	uint32 InstanceId=1;
+}
+
+message GenericFromServer
+{
+	EFromServer What = 1;
+	string Description=2;
+}
+
+message Strings
+{
+	repeated uint32 Messages = 1;
+	repeated uint32 Files = 2;
+	repeated uint32 Functions = 3;
+	repeated uint32 Threads = 4;
+}
+
+message LogLevels
+{
+	ELogLevel Server=1;
+	ELogLevel Client=2;
+}
+
+message FromServerUnion
+{
+	oneof Value
+	{
+		Acknowledgement Acknowledgement = 1;
+		GenericFromServer Generic = 2;
+		Strings Strings = 3;
+		LogLevels LogLevels = 4;
+		CustomMessage Custom = 5;
+	}
+}
+
+message FromServer
+{
+	repeated FromServerUnion Messages = 1;
+}

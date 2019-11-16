@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>15.0</VCProjectVersion>
+    <ProjectGuid>{7FC3CC33-B345-423E-99B6-5D499E531FBF}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>Core</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+    <IncludePath>C:\code\libraries\spdlog\include;C:\code\libraries\boost_1_69_0;C:\code\libraries\matio\src;C:\code\libraries\matio\visual_studio;C:\code\libraries\json\include;$(IncludePath)</IncludePath>
+    <OutDir>$(SolutionDir).bin\$(Configuration)\</OutDir>
+    <TargetName>Jde.Native</TargetName>
+    <LibraryPath>C:\code\libraries\boost_1_69_0\stage\lib;$(LibraryPath)</LibraryPath>
+    <IntDir>$(SolutionDir).obj\Core\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+    <IncludePath>C:\code\libraries\spdlog\include;C:\code\libraries\boost_1_69_0;C:\code\libraries\matio\src;C:\code\libraries\matio\visual_studio;C:\code\libraries\json\include;$(IncludePath)</IncludePath>
+    <OutDir>$(SolutionDir).bin\$(Configuration)\</OutDir>
+    <TargetName>Jde.Native</TargetName>
+    <LibraryPath>C:\code\libraries\boost_1_69_0\stage\lib;$(LibraryPath)</LibraryPath>
+    <IntDir>.obj\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <WarningLevel>Level4</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>JDE_NATIVE_EXPORTS;BOOST_ALL_DYN_LINK;_SCL_SECURE_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;_SILENCE_CXX17_ALLOCATOR_VOID_DEPRECATION_WARNING;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;NOMINMAX;_DEBUG;CORE_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <DisableSpecificWarnings>4068;4251;4275;4297</DisableSpecificWarnings>
+      <AdditionalOptions>/MP %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <ShowProgress>NotSet</ShowProgress>
+      <AdditionalDependencies>Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <WarningLevel>Level4</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>JDE_NATIVE_EXPORTS;BOOST_ALL_DYN_LINK;_SCL_SECURE_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;_SILENCE_CXX17_ALLOCATOR_VOID_DEPRECATION_WARNING;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;NOMINMAX;NDEBUG;CORE_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <DisableSpecificWarnings>4068;4251;4275;4297</DisableSpecificWarnings>
+      <AdditionalOptions>/MP %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <ShowProgress>NotSet</ShowProgress>
+      <AdditionalDependencies>Ws2_32.lib;release\libprotobuf.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="Application.h" />
+    <ClInclude Include="collections\UnorderedMapValue.h" />
+    <ClInclude Include="db\c_api.h" />
+    <ClInclude Include="db\Database.h" />
+    <ClInclude Include="db\DataSource.h" />
+    <ClInclude Include="db\DataType.h" />
+    <ClInclude Include="db\DBException.h" />
+    <ClInclude Include="db\DBQueue.h" />
+    <ClInclude Include="db\Row.h" />
+    <ClInclude Include="db\SchemaProc.h" />
+    <ClInclude Include="db\types\Schema.h" />
+    <ClInclude Include="db\types\Table.h" />
+    <ClInclude Include="Dll.h" />
+    <ClInclude Include="io\DiskWatcher.h" />
+    <ClInclude Include="io\sockets\Client.h" />
+    <ClInclude Include="io\sockets\ProtoClient.h" />
+    <ClInclude Include="io\sockets\ProtoServer.h" />
+    <ClInclude Include="io\sockets\Server.h" />
+    <ClInclude Include="io\Tar.h" />
+    <ClInclude Include="JdeAssert.h" />
+    <ClInclude Include="Collections.h" />
+    <ClInclude Include="collections\Map.h" />
+    <ClInclude Include="collections\Queue.h" />
+    <ClInclude Include="collections\UnorderedMap.h" />
+    <ClInclude Include="collections\UnorderedSet.h" />
+    <ClInclude Include="DateTime.h" />
+    <ClInclude Include="Defines.h" />
+    <ClInclude Include="Diagnostics.h" />
+    <ClInclude Include="Exception.h" />
+    <ClInclude Include="Exports.h" />
+    <ClInclude Include="io\Buffer.h" />
+    <ClInclude Include="io\File.h" />
+    <ClInclude Include="io\Parser.h" />
+    <ClInclude Include="io\sockets\SessionCallbacks.h" />
+    <ClInclude Include="io\sockets\Socket.h" />
+    <ClInclude Include="log\Logging.h" />
+    <ClInclude Include="log\server\EtwSink.h" />
+    <ClInclude Include="log\server\proto\messages.pb.h" />
+    <ClInclude Include="log\server\ReceivedMessages.h" />
+    <ClInclude Include="log\server\SentMessages.h" />
+    <ClInclude Include="log\server\ServerSink.h" />
+    <ClInclude Include="math\Decimal.h" />
+    <ClInclude Include="math\DecimalOld.h" />
+    <ClInclude Include="math\EMatrix.h" />
+    <ClInclude Include="math\ESparse.h" />
+    <ClInclude Include="math\io\MatLab\MatLabFile.h" />
+    <ClInclude Include="math\io\MatLab\MatLabVariable.h" />
+    <ClInclude Include="math\MathUtilities.h" />
+    <ClCompile Include="Cache.cpp" />
+    <ClCompile Include="db\Database.cpp" />
+    <ClCompile Include="db\DataType.cpp" />
+    <ClCompile Include="db\DBException.cpp" />
+    <ClCompile Include="db\DBQueue.cpp" />
+    <ClCompile Include="db\types\Table.cpp" />
+    <ClCompile Include="io\DiskWatcher.cpp" />
+    <ClCompile Include="io\sockets\ProtoClient.cpp" />
+    <ClCompile Include="io\sockets\ProtoServer.cpp" />
+    <ClCompile Include="io\sockets\Socket.cpp" />
+    <ClCompile Include="log\server\proto\messages.pb.cc">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4068;4251;4275;4297;4244;4268;4267;4125;4127;4100</DisableSpecificWarnings>
+      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4068;4251;4275;4297;4244;4268;4267;4125;4127;4100</DisableSpecificWarnings>
+      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">/D JDE_NATIVE_VISIBILITY="__declspec( dllexport )" %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">/D JDE_NATIVE_VISIBILITY="__declspec( dllexport )" %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="pc.h">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+      </PrecompiledHeaderFile>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+      </PrecompiledHeaderFile>
+    </ClCompile>
+    <ClInclude Include="settings\Settings.h" />
+    <ClInclude Include="SmartPointer.h" />
+    <ClInclude Include="Stopwatch.h" />
+    <ClInclude Include="StringUtilities.h" />
+    <ClInclude Include="threading\InterruptibleThread.h" />
+    <ClInclude Include="threading\Interrupt.h" />
+    <ClInclude Include="threading\Pool.h" />
+    <ClInclude Include="threading\ReusableThread.h" />
+    <ClInclude Include="threading\Thread.h" />
+    <ClInclude Include="TypeDefs.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Application.cpp" />
+    <ClCompile Include="DateTime.cpp" />
+    <ClCompile Include="Diagnostics.cpp" />
+    <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="Exception.cpp" />
+    <ClCompile Include="io\File.cpp" />
+    <ClCompile Include="log\Logging.cpp" />
+    <ClCompile Include="log\server\ServerSink.cpp" />
+    <ClCompile Include="math\MathUtilities.cpp" />
+    <ClCompile Include="Settings.cpp" />
+    <ClCompile Include="Stopwatch.cpp" />
+    <ClCompile Include="StringUtilities.cpp" />
+    <ClCompile Include="threading\InterruptibleThread.cpp" />
+    <ClCompile Include="threading\Interrupt.cpp" />
+    <ClCompile Include="threading\Pool.cpp" />
+    <ClCompile Include="threading\Thread.cpp" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
