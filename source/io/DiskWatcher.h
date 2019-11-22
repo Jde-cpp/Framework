@@ -131,6 +131,7 @@ namespace Jde::IO
 		virtual VectorPtr<char> Load( const IDirEntry& dirEntry )=0;
 		//IDirEntryPtr Find( const fs::path& path );
 	};
+
 #pragma region DiskWatcher
 	struct JDE_NATIVE_VISIBILITY DiskWatcher : std::enable_shared_from_this<DiskWatcher>
 	{

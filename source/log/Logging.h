@@ -153,7 +153,7 @@ namespace Jde
 #else
 	extern spdlog::logger* pLogger;
 	extern Logging::IServerSink* _pServerSink;
-	inline spdlog::logger* GetDefaultLogger()noexcept{ assert(pLogger); return pLogger; }
+	inline spdlog::logger* GetDefaultLogger()noexcept{ /*assert(pLogger);*/ return pLogger; }
 	inline Logging::IServerSink* GetServerSink()noexcept{ return _pServerSink; }
 	inline void SetServerSink( Logging::IServerSink* p )noexcept{_pServerSink=p;}
 
@@ -238,7 +238,8 @@ namespace Jde
 		{
 			// if( messageBase.MessageView.find("has no bars")!=string::npos )
 			// 	DBG0( "here" );
-			GetDefaultLogger()->log( (spdlog::level::level_enum)messageBase.Level, messageBase.MessageView.data(), args... );
+			if( pLogger )
+				GetDefaultLogger()->log( (spdlog::level::level_enum)messageBase.Level, messageBase.MessageView.data(), args... );
 			if( GetServerSink() )
 			{
 				vector<string> values; values.reserve( sizeof...(args) );

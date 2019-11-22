@@ -9,7 +9,7 @@ namespace Jde::IO::Sockets
 	struct ProtoClientSession
 	{
 		ProtoClientSession( boost::asio::io_context& context );
-		virtual ~ProtoClientSession(){ DBG0("~ProtoClientSession"); delete _pSocket; };
+		virtual ~ProtoClientSession(){ DBG0("~ProtoClientSession"); _pSocket=nullptr; };
 		void Close( std::condition_variable* pCvClient=nullptr )noexcept;
 		virtual void OnClose()noexcept{};
 		virtual void OnConnected()noexcept{};
@@ -23,8 +23,8 @@ namespace Jde::IO::Sockets
 		virtual void Process( google::protobuf::uint8* pData, uint size )noexcept=0;
 
 		std::atomic<bool> _connected{false};
-		//std::unique_ptr<basio::ip::tcp::socket> _pSocket;
-		basio::ip::tcp::socket* _pSocket{nullptr};
+		std::unique_ptr<basio::ip::tcp::socket> _pSocket;
+		//basio::ip::tcp::socket* _pSocket{nullptr};
 		char _readMessageSize[4];
 		vector<google::protobuf::uint8> _message;
 	};

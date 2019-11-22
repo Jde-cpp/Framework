@@ -14,15 +14,16 @@ ifeq ($(DEBUG), 1)
 	CXXFLAGS= $(CXXFLAGS_BASE) -O0 -I$(OUT_DIR) -fsanitize=address -fno-omit-frame-pointer
 	BIN_DIR=$(BIN_DIR_BASE)debug
 	LIB=-lasan $(LIB_BASE)
+	LINUX_DIR = ../../Linux/source/.obj/debug
 else
 	OUT_DIR=$(OUT_DIR_BASE)release
 	CXXFLAGS= $(CXXFLAGS_BASE) -march=native -DNDEBUG -O3 -I$(OUT_DIR)
 	BIN_DIR=$(BIN_DIR_BASE)release
 	LIB=$(LIB_BASE)
+	LINUX_DIR = ../../Linux/source/.obj/release
 endif
 
 OUTPUT = $(BIN_DIR)/libMy.so
-
 # test:
 # 	@echo $(DEBUG)
 # 	@echo $(OUTPUT)
@@ -35,7 +36,8 @@ OBJECTS = $(OUT_DIR)/DateTime.o $(OUT_DIR)/Diagnostics.o $(OUT_DIR)/Exception.o 
 	$(OUT_DIR)/Socket.o $(OUT_DIR)/ProtoClient.o $(OUT_DIR)/ProtoServer.o\
 	$(OUT_DIR)/File.o $(OUT_DIR)/DiskWatcher.o\
 	$(OUT_DIR)/Thread.o $(OUT_DIR)/Interrupt.o $(OUT_DIR)/InterruptibleThread.o $(OUT_DIR)/Pool.o\
-	$(OUT_DIR)/DBException.o $(OUT_DIR)/DataType.o $(OUT_DIR)/Database.o $(OUT_DIR)/DBQueue.o
+	$(OUT_DIR)/DBException.o $(OUT_DIR)/DataType.o $(OUT_DIR)/Database.o $(OUT_DIR)/DBQueue.o\
+	$(LINUX_DIR)/LinuxDrive.o
 #$(OUT_DIR)/XZ.o  
 LDFLAGS = -pthread -shared -Wl,-z,origin -Wl,-rpath='$$ORIGIN'
 

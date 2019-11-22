@@ -5,7 +5,7 @@ namespace Jde
 {
 	struct Cache final : public Jde::IShutdown
 	{
-		~Cache(){ DBG0("~Cache"); }
+		~Cache(){ if( HaveLogger() ) DBG0("~Cache"); }
 		static void CreateInstance()noexcept;
 		void Shutdown()noexcept;// override;
 

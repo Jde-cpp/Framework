@@ -17,7 +17,8 @@ namespace Jde::Settings
 	{
 		if( !fs::exists(jsonFile) )
 			THROW( IOException("file does not exsist:  {}", jsonFile.string()) );
-		std::ifstream is( jsonFile.string().c_str() );
+		var fileString = jsonFile.string();
+		std::ifstream is( fileString.c_str() );
 		if( is.bad() )
 			THROW( IOException("Could not open file:  {}", jsonFile.string()) );
 		is >> *_pJson;

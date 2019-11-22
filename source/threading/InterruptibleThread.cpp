@@ -21,7 +21,7 @@ namespace Jde::Threading
 		return _flag.load( std::memory_order_relaxed );
 	}
 
-	void InterruptFlag::Set()
+	void InterruptFlag::Set()noexcept
 	{
 		_flag.store( true, std::memory_order_relaxed );
 		std::lock_guard<std::mutex> lk( _setClearMutex );
@@ -36,7 +36,7 @@ namespace Jde::Threading
 			DBG( "~InterruptibleThread({})", Name );
 		Join();
 	}
-	void InterruptibleThread::Interrupt()
+	void InterruptibleThread::Interrupt()noexcept
 	{
 		DBG( "{} - Interrupt _pFlag={}", Name, _pFlag!=nullptr );
 		if( _pFlag )
@@ -47,6 +47,11 @@ namespace Jde::Threading
 		if( _internalThread.joinable() )//ProtoClient::Run
 			_internalThread.join();
 	}
+	void InterruptibleThread::Shutdown()noexcept
+	{ 
+		DBG("{} - Shutdown", Name); 
+		Interrupt(); 
+	};
 
 	ThreadInterrupted::ThreadInterrupted():
 		Exception( ELogLevel::Trace, "interupted" )

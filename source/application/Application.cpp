@@ -73,7 +73,7 @@ namespace Jde
 		InitializeLogger( appName );
 		SetConsoleTitle( appName );
 		Jde::Threading::SetThreadDescription( string(appName) );
-		INFO( "{} Running as console='{}'", appName, console );
+		INFO( "{}, settings='{}' Running as console='{}'", appName, settingsPath, console );
 
 		Cache::CreateInstance();
 	}

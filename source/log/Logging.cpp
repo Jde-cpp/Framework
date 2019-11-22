@@ -62,6 +62,12 @@ namespace Jde
 		InitializeLogger( level, path, server );
 	}
 	TimePoint _startTime = Clock::now(); Logging::Proto::Status _status; mutex _statusMutex; TimePoint _lastStatusUpdate;
+	void SecretDelFunc( spdlog::logger* p) 
+	{ 
+		delete p;
+		//spLogger = nullptr;
+		pLogger = nullptr;
+	}
 	void InitializeLogger( ELogLevel level2, const fs::path& path, bool server )noexcept
 	{
 		//auto sinkx = spdlog::stdout_color_mt( "console" );
@@ -80,7 +86,8 @@ namespace Jde
 //			sinks.push_back( pFileSink );
 			//std::shared_ptr<sinks::sink>
 			
-			spLogger = make_shared<spdlog::logger>( "my_logger", sinks.begin(), sinks.end() );
+			spLogger = sp<spdlog::logger>( new spdlog::logger{"my_logger", sinks.begin(), sinks.end()}, SecretDelFunc );
+			//spLogger = make_shared<spdlog::logger>( "my_logger", sinks.begin(), sinks.end() );
 		}
 		else
 			spLogger = make_shared<spdlog::logger>( "my_logger", pConsole );

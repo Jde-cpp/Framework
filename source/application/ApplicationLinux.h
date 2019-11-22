@@ -1,4 +1,5 @@
 #include "Application.h"
+#include <iostream>
 namespace Jde
 {
 	struct OSApp : IApplication

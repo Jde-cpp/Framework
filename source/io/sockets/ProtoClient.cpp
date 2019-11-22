@@ -31,7 +31,7 @@ namespace Jde::IO::Sockets
 		{
 			//if( _pSocket->get_executor() )
 			//	_pSocket->close();//_service==null throws...
-			delete _pSocket;
+			//delete _pSocket;
 			_pSocket = nullptr;
 		}
 		//OnDisconnect(); called in destructor
@@ -77,7 +77,8 @@ namespace Jde::IO::Sockets
 			{
 				ERR( "Read Body Failed - {}", ec.value() );
 				_pSocket->close();
-				delete _pSocket; _pSocket = nullptr;
+				//delete _pSocket; 
+				_pSocket = nullptr;
 			}
 			else
 			{
@@ -133,7 +134,7 @@ namespace Jde::IO::Sockets
 		try
 		{
 			if( !_pSocket )
-				_pSocket = new basio::ip::tcp::socket( _asyncHelper );//_pSocket = make_unique<basio::ip::tcp::socket>( _asyncHelper );
+				_pSocket = make_unique<basio::ip::tcp::socket>( _asyncHelper );//_pSocket = make_unique<basio::ip::tcp::socket>( _asyncHelper );
 			auto result = basio::connect( *_pSocket, endpoints );
 			TRACE0( "Client::Connect" );
 			onConnect( std::error_code(), result );

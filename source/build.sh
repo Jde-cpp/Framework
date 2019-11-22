@@ -2,6 +2,11 @@
 debug=${1:-1}
 clean=${2:-0}
 cd "${0%/*}"
+
+../../Linux/source/build.sh $debug $clean
+if [ $? -eq 1 ]; then
+	exit 1
+fi
 if [ $clean -eq 1 ]; then
 	echo "Build framework - Clean"
 	make clean DEBUG=$debug

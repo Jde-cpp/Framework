@@ -12,7 +12,7 @@ namespace Jde::Threading  //TODO Reflection remove Threading from public items.
 	{
 	public:
 		InterruptFlag()noexcept;
-		void Set();
+		void Set()noexcept;
 		template<typename Lockable>
 		void Wait(std::condition_variable_any& cv,Lockable& lk);
 		bool IsSet()const noexcept;
@@ -33,11 +33,11 @@ namespace Jde::Threading  //TODO Reflection remove Threading from public items.
 		template<typename FunctionType>
 		InterruptibleThread(string_view name, FunctionType f)noexcept;
 		JDE_NATIVE_VISIBILITY ~InterruptibleThread();
-		JDE_NATIVE_VISIBILITY void Interrupt();
+		JDE_NATIVE_VISIBILITY void Interrupt()noexcept;
 		JDE_NATIVE_VISIBILITY void Join();
 		bool IsDone()const noexcept{ return _pFlag && _pFlag->IsDone(); }
 		const string Name;
-		void Shutdown()noexcept override{ DBG("{} - Shutdown", Name); Interrupt(); };
+		void Shutdown()noexcept override;
 	private:
 		std::thread _internalThread;
 		InterruptFlag* _pFlag{nullptr};

@@ -31,12 +31,8 @@ namespace Jde::Settings
 
 	template<>
 	inline fs::path Container::Get<fs::path>( string_view path )const noexcept(false)
-	{ 
-		string value = (*_pJson)[string(path)];
-		if( !value.size() )
-			THROW( EnvironmentException(fmt::format("'{}' was not found in settings.", path)) );
-
-		return fs::path(value);
+	{
+		return fs::path{ Get<string>(path) };
 	}
 
 	template<typename T>
