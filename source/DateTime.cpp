@@ -199,7 +199,7 @@ namespace Jde
 		var secondsSinceEpoch = duration_cast<seconds>( time.time_since_epoch() ).count();
 		constexpr uint secondsPerDay = duration_cast<seconds>( 24h ).count();
 		var day = time - seconds( secondsSinceEpoch%secondsPerDay );
-		DBG( "Time {} switched to Date {}.", DateTime(time).ToIsoString(), DateTime(day).ToIsoString() );
+//		DBG( "Time {} switched to Date {}.", DateTime(time).ToIsoString(), DateTime(day).ToIsoString() );
 		return day;
 		//MarketOpenTime = DateTime::ToDate( time ); static_cast<uint32>( time - %TimeSpan::SecondsPerDay + 9*TimeSpan::SecondsPerHour+30*TimeSpan::SecondsPerMinute - timeZoneDiff );
 	}

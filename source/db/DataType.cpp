@@ -58,7 +58,8 @@ namespace Jde::DB
 		case EDataValue::DateOptional:
 		{
 			var& value = get<optional<DBDateTime>>( parameter );
-			os << value.has_value() ? Jde::to_string(value.value()) : nullString;
+			string value2 = value.has_value() ? Jde::to_string(value.value()) : string(nullString);
+			os << value2;
 		}
 		break;
 		default:

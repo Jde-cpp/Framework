@@ -54,7 +54,8 @@ namespace Jde::IO::Sockets
 				if( ec.value()==125 )
 					TRACE( "Client::ReadHeader closing - '{}'", CodeException::ToString(ec) );
 				else
-					ERR( "Client::ReadHeader Failed - '{}' closing", CodeException::ToString(ec) );
+					ERR( "Client::ReadHeader Failed - '{}' closing", ec.value() );
+					//ERR( "Client::ReadHeader Failed - '{}' closing", CodeException::ToString(ec) );crashes for some reason.
 				Disconnect();
 			}
 			else if( !headerLength )

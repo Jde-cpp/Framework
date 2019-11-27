@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Interrupt.h"
 #include "Thread.h"
+#include "InterruptibleThread.h"
 #define var const auto
 
 namespace Jde::Threading
@@ -24,8 +25,9 @@ namespace Jde::Threading
 	}
 	void Interrupt::Start2()noexcept
 	{
-		_continue = true; 
-		_pThread = make_unique<std::thread>( [&](){Worker();} ); 
+		//_continue = true; 
+		//_pThread = make_unique<std::thread>( [&](){Worker();} ); 
+		_pThread = make_unique<Threading::InterruptibleThread>( _threadName, [&](){Worker();} );
 	}
 	void Interrupt::Start()noexcept
 	{
@@ -55,10 +57,10 @@ namespace Jde::Threading
 	void Interrupt::Stop()noexcept
 	{
 		LOG( _logLevel, "{}::Stop()", _threadName );
-		_continue = false;
+		_pThread->Interrupt();
+		//_continue = false;
 		Wake();
-		if( _pThread->joinable() )
-			_pThread->join();
+		_pThread->Join();
 	}
 	using namespace std::chrono_literals;
 	void Interrupt::Worker()
@@ -67,7 +69,7 @@ namespace Jde::Threading
 		Threading::SetThreadDescription( _threadName );
 		std::cv_status status = std::cv_status::timeout;
     	std::unique_lock<std::mutex> lk( _cvMutex );
-    	while( _continue )
+    	while( !GetThreadInterruptFlag().IsSet() )
 		{
 			bool paused = _paused;
 			if( !paused )

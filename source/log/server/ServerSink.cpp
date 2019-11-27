@@ -30,7 +30,7 @@ namespace Jde::Logging
 
 	sp<ServerSink> ServerSink::Create( string_view host, uint16_t port )noexcept(false)
 	{
-		ASSRT_TR( !_pInstance );
+		ASSERT( !_pInstance );
 		auto pInstance = sp<ServerSink>( new ServerSink{host, port} );
 		_pInstance = pInstance;
 		pInstance->UnPause();

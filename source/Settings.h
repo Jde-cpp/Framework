@@ -1,5 +1,6 @@
 #pragma once
-//#include <nlohmann/json.hpp>
+#include "DateTime.h"
+#include "JdeAssert.h"
 #include "Exports.h"
 
 #define var const auto
@@ -29,11 +30,8 @@ namespace Jde::Settings
 		unique_ptr<nlohmann::json> _pJson;
 	};
 
-	template<>
-	inline fs::path Container::Get<fs::path>( string_view path )const noexcept(false)
-	{
-		return fs::path{ Get<string>(path) };
-	}
+	template<> inline TimePoint Container::Get<TimePoint>( string_view path )const noexcept(false){ return DateTime{ Get<string>(path) }.GetTimePoint(); }
+	template<> inline fs::path Container::Get<fs::path>( string_view path )const noexcept(false){ return fs::path{ Get<string>(path) }; }
 
 	template<typename T>
 	T Container::Get( string_view path )const noexcept(false)

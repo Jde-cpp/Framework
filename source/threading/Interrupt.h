@@ -8,6 +8,7 @@
 
 namespace Jde::Threading
 {
+	struct InterruptibleThread;
 	//derive from, sleeps till interrupted
 
 	class Interrupt
@@ -35,7 +36,7 @@ namespace Jde::Threading
 		void Worker();
 		std::once_flag _singleThread;
 		std::condition_variable _cvWait;  std::mutex _cvMutex;
-		up<std::thread> _pThread;
+		up<Threading::InterruptibleThread> _pThread;
 		std::atomic<bool> _continue{true};
 		const string _threadName;
 		std::atomic<bool> _paused{false};

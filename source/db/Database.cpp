@@ -60,7 +60,7 @@ namespace Jde::DB
 			Initialize( Settings::Global().Get<string>("dbDriver") );
 			_dataSource->ConnectionString = Settings::Global().Get<string>( "connectionString" );//			Initialize( "Jde.DB.Odbc.dll" );
 		}
-		ASSRT_TR( _dataSource );
+		ASSERT( _dataSource );
 		return _dataSource;
 	}
 

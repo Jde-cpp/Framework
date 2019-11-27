@@ -47,7 +47,8 @@ namespace Jde::DB
 				if( ch=='?' )
 				{
 					const DB::DataValue& value = (*pStatement->Parameters)[iParam++];
-					os << to_string( value );
+					string value2 = to_string( value );
+					os << value2;
 				}
 				else
 					os << ch;

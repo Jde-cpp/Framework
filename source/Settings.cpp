@@ -1,7 +1,6 @@
 #include "stdafx.h"
 #include "Settings.h"
 #include <fstream>
-//#include <nlohmann/json.hpp>
 //#include "../Exception.h"
 
 #define var const auto
@@ -55,6 +54,7 @@ namespace Jde::Settings
 	{
 		//var string = String( path );
 		//return string.size() ? TimeSpan::Parse(string) : ;
+		//var x = Get<TimePoint>("foo");
 		return dflt;//TODO implement
 	}
 
