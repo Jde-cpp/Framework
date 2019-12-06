@@ -23,8 +23,12 @@ namespace Logging
 
 		virtual void Destroy()noexcept;
 
+		//virtual void Log( const MessageBase& messageBase )noexcept=0;
+		//virtual void Log( const MessageBase& messageBase, const vector<string>& values )noexcept=0;
+		virtual void Log( const Messages::Message& message )noexcept=0;
 		virtual void Log( const MessageBase& messageBase )noexcept=0;
 		virtual void Log( const MessageBase& messageBase, const vector<string>& values )noexcept=0;
+
 		ELogLevel GetLogLevel()const noexcept{ return _level; } void SetLogLevel(ELogLevel level)noexcept{ _level=level; }
 
 		bool ShouldSendMessage( uint messageId )noexcept{ return _messagesSent.emplace(messageId); }
@@ -53,9 +57,10 @@ namespace Logging
 				_pMessage{ make_shared<string>(MessageView) }
 			{
 				MessageView = *_pMessage;
-				//DBG( "{:x}, {:x}, {}", (uint)MessageView.data(), (uint)_message.data(), MessageView );
 			}
-			Message(const MessageBase& base, const vector<string>& values);
+			Message(const MessageBase& base, const vector<string>& values)noexcept;
+			Message( const Message& other )noexcept;
+			Message( ELogLevel level, std::string_view message, std::string_view file, std::string_view function, uint line, const vector<string>& values )noexcept;
 			//Message( IO::IncomingMessage& message, EFields fields )noexcept(false);
 
 			TimePoint Timestamp{ Clock::now() };
@@ -77,8 +82,9 @@ namespace Logging
 		static JDE_NATIVE_VISIBILITY sp<ServerSink> Create( string_view host, uint16_t port )noexcept(false);
 		~ServerSink(){DBGX("{}", "~ServerSink");}
 		//void Log( ELogLevel level, std::string_view message, uint messageId, std::string_view file, std::string_view function, uint line );
-		void Log( const MessageBase& messageBase )noexcept;
-		void Log( const MessageBase& messageBase, const vector<string>& values )noexcept;
+		void Log( const Messages::Message& message )noexcept override;
+		void Log( const MessageBase& messageBase )noexcept override;
+		void Log( const MessageBase& messageBase, const vector<string>& values )noexcept override;
 
 		void OnTimeout()/*noexcept*/ override;
 		void OnAwake()noexcept override{OnTimeout();}//not expecting...

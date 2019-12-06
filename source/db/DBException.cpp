@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "DBException.h"
 
 namespace Jde::DB

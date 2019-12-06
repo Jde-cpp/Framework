@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "Settings.h"
 #include <fstream>
 //#include "../Exception.h"
@@ -39,6 +38,13 @@ namespace Jde::Settings
 	{
 		auto item = _pJson->find( path );
 		return item==_pJson->end() ? defaultValue : item->get<int>();
+	}
+
+	template<>
+	double Container::Get( string_view path, const double& defaultValue )const noexcept
+	{
+		auto item = _pJson->find( path );
+		return item==_pJson->end() ? defaultValue : item->get<double>();
 	}
 
 	shared_ptr<Container> Container::SubContainer( string_view entry )const throw()

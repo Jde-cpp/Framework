@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "DiskMirror.h"
 #include "../Defines.h"
 

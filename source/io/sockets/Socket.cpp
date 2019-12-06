@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "Socket.h"
 #include <iostream>
 #include "../../threading/Thread.h"

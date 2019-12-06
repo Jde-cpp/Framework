@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "Logging.h"
 #include "../Diagnostics.h"
 #include <boost/lexical_cast.hpp>
@@ -130,6 +129,11 @@ namespace Jde
 		{
 			if( _pServerSink->GetLogLevel()<=messageBase.Level )
 				_pServerSink->Log( messageBase, values );
+		}
+		void LogServer( const Logging::Messages::Message& message )
+		{
+			if( _pServerSink->GetLogLevel()<=message.Level )
+				_pServerSink->Log( message );
 		}
 		
 /*		void LogEtw( const Logging::MessageBase& messageBase )

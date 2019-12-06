@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "DBQueue.h"
 #include "DataSource.h"
 #include "../threading/InterruptibleThread.h"

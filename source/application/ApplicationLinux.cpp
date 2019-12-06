@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "ApplicationLinux.h"
 	#include <syslog.h>
 #include "../threading/InterruptibleThread.h"

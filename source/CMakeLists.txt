@@ -1,54 +1,53 @@
 #export CXX=g++-8
+set( CMAKE_CXX_COMPILER g++-8 )
+cmake_minimum_required(VERSION 3.16)
 project(Jde)
 set( CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../cmake )
 include(SetUpConfigurations)
 #######################################################
 
-add_library( JdeSsl SHARED Ssl.cpp )
-
+add_library( Jde SHARED DateTime.cpp Diagnostics.cpp Exception.cpp Stopwatch.cpp StringUtilities.cpp Cache.cpp Settings.cpp
+	math/MathUtilities.cpp 
+	application/Application.cpp application/ApplicationLinux.cpp
+	log/Logging.cpp log/server/ServerSink.cpp log/server/proto/messages.pb.cc
+	io/sockets/Socket.cpp io/sockets/ProtoClient.cpp io/sockets/ProtoServer.cpp
+	io/File.cpp io/DiskWatcher.cpp
+	threading/Thread.cpp threading/Interrupt.cpp threading/InterruptibleThread.cpp threading/Pool.cpp
+	db/DBException.cpp db/DataType.cpp db/Database.cpp db/DBQueue.cpp
+	../../Linux/source/LinuxDrive.cpp )
 #######################################################
-#find_program(CCACHE_FOUND ccache)
-#if(CCACHE_FOUND)
-#    set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
-#endif(CCACHE_FOUND)
+include_directories( "/home/duffyj/code/libraries/eigen" )
+target_link_libraries(Jde Threads::Threads)
 #######################################################
-#set(THREADS_PREFER_PTHREAD_FLAG ON)
-#find_package(Threads REQUIRED)
-target_link_libraries(JdeSsl Threads::Threads)
-#######################################################
-#set(Boost_USE_STATIC_LIBS OFF) 
-#set(Boost_USE_MULTITHREADED ON)  
-#set(Boost_USE_STATIC_RUNTIME OFF) 
-#find_package(Boost 1.71.0 COMPONENTS)
-#if(Boost_FOUND)
-#    include_directories( ${Boost_INCLUDE_DIRS} )
-#endif()
-#######################################################
-include_directories(  "/home/duffyj/code/libraries/spdlog/include" )
-include_directories( "/home/duffyj/code/libraries/json/include" )
-#set (CMAKE_SHARED_LINKER_FLAGS "-Wl,--as-needed")
-#add_link_options( "LINKER:-rpath='$ORIGIN'" )
-#######################################################
-target_precompile_headers(JdeSsl
-  PUBLIC
-#    project_header.h
-#    "$<$<COMPILE_LANGUAGE:CXX>:cxx_only.h>"
+target_precompile_headers(Jde
   PRIVATE
-		<boost/crc.hpp> 
-		<boost/beast/core.hpp>
-		<boost/beast/http.hpp>
-		<boost/asio/ssl.hpp>
-		<boost/beast/version.hpp>
-		<boost/asio/ip/tcp.hpp>
-		<boost/asio/connect.hpp>
-		<boost/system/error_code.hpp>
-		<spdlog/spdlog.h>
-		<spdlog/sinks/basic_file_sink.h>
-		<spdlog/fmt/ostr.h>
-		<nlohmann/json.hpp>
-		../../Framework/source/DateTime.h
-		../../Framework/source/Exception.h
-		../../Framework/source/JdeAssert.h
-		../../Framework/source/log/Logging.h
-		../../Framework/source/TypeDefs.h
-		../../Framework/source/io/File.h)
+	<functional>
+	<list>
+	<map>
+	<memory>
+	<mutex>
+	<set>
+	<shared_mutex>
+	<string>
+	<vector>
+	<iostream>
+	<filesystem>
+	<Eigen/Dense>
+	<Eigen/Sparse>
+	<Eigen/SVD>
+	<boost/crc.hpp>
+	<boost/exception/diagnostic_information.hpp> 
+	<boost/asio.hpp>
+	<boost/asio/ts/io_context.hpp>
+	<boost/core/noncopyable.hpp>
+	<nlohmann/json.hpp>
+	<spdlog/spdlog.h>
+	<spdlog/sinks/basic_file_sink.h>
+	<spdlog/fmt/ostr.h>
+	<google/protobuf/message.h>
+	"log/Logging.h"
+	"Exception.h"
+	"JdeAssert.h"
+	"TypeDefs.h"
+	"log/server/proto/messages.pb.h"
+)

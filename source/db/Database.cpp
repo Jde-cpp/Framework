@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "Database.h"
 #include "../application/Application.h"
 #include "../Settings.h"

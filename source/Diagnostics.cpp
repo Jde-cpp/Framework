@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "Diagnostics.h"
 #ifdef _WINDOWS
 	#include <Windows.h>

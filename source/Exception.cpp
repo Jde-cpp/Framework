@@ -1,11 +1,11 @@
-#include "stdafx.h"
 #include "Exception.h"
 #include <iostream>
 #include <spdlog/spdlog.h>
 #include <spdlog/fmt/ostr.h>
 #include "log/Logging.h"
+#include "log/server/ServerSink.h"
 #include "TypeDefs.h"
-
+#define var const auto
 
 namespace Jde
 {
@@ -17,14 +17,17 @@ namespace Jde
 	Exception::Exception( ELogLevel level, std::string_view value ):
 		std::exception(),
 		_level{level},
-		_what{ value }
+		_format{ value },
+		_what(value)
 	{}
 	Exception::Exception( std::string_view value ):
-		_what{ value }
+		_format{ value },
+		_what(value)
 	{}
 
 	Exception::Exception( const std::exception& exp ):
-		_what( exp.what() )
+		_format( exp.what() ),
+		_what( _format )
 	{}
 	
 	Exception::~Exception()
@@ -34,12 +37,25 @@ namespace Jde
 
 	void Exception::Log( std::string_view pszAdditionalInformation, ELogLevel level )const
 	{
-		std::ostringstream os;
+		std::ostringstream os; std::ostringstream os2;
 		if( pszAdditionalInformation.size() )
-			os << "[" << pszAdditionalInformation << "]";
-		os << *this;
+		{
+			os << "[" << pszAdditionalInformation << "] ";
+			os2 << os.str();
+		}
+		os << _what;
+		os2 << _format;
+		var level2 = (spdlog::level::level_enum)level;
 		if( HaveLogger() )
-			GetDefaultLogger()->log( (spdlog::level::level_enum)level, os.str() );
+		{
+			GetDefaultLogger()->log( level2, os.str() );
+			if( GetServerSink() )
+			{
+				string msg{ os2.str() };
+				//const Logging::MessageBase base{  };
+				LogServer( Logging::Messages::Message{level, msg, _fileName, _functionName, (uint32)_line, _args} );
+			}
+		}
 		else
 			std::cerr << os.str() << endl;
 	}
@@ -49,7 +65,7 @@ namespace Jde
 		return os;
 	}
 
-	const char* Exception::what() const noexcept
+	const char* Exception::what()const noexcept
 	{
 		return _what.c_str();
 	}

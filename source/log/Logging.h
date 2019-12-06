@@ -94,6 +94,7 @@ namespace Jde
 		void LogNoServer( const Logging::MessageBase& messageBase );
 		JDE_NATIVE_VISIBILITY void LogServer( const Logging::MessageBase& messageBase );
 		JDE_NATIVE_VISIBILITY void LogServer( const Logging::MessageBase& messageBase, const vector<string>& values );
+		JDE_NATIVE_VISIBILITY void LogServer( const Logging::Messages::Message& message );
 
 		//JDE_NATIVE_VISIBILITY void LogEtw( const Logging::MessageBase& messageBase );
 		//JDE_NATIVE_VISIBILITY void LogEtw( const Logging::MessageBase& messageBase, const vector<string>& values );
@@ -114,6 +115,7 @@ namespace Jde
 #define WARNN( message, ... ) Logging::Log( Logging::MessageBase(ELogLevel::Warning, message, __FILE__, __func__, __LINE__, IO::Crc::Calc32RunTime(message), IO::Crc::Calc32RunTime(__FILE__), IO::Crc::Calc32RunTime(__func__)), __VA_ARGS__ )
 #define INFO0(message) Logging::Log( Logging::MessageBase(ELogLevel::Information, message, __FILE__, __func__, __LINE__) )
 #define INFO(message,...) Jde::Logging::Log( Jde::Logging::MessageBase(Jde::ELogLevel::Information, message, __FILE__, __func__, __LINE__), __VA_ARGS__ )
+#define INFON( message, ... ) Logging::Log( Logging::MessageBase(ELogLevel::Information, message, __FILE__, __func__, __LINE__, IO::Crc::Calc32RunTime(message), IO::Crc::Calc32RunTime(__FILE__), IO::Crc::Calc32RunTime(__func__)), __VA_ARGS__ )
 #define INFO0_ONCE(message) Logging::LogOnce( Logging::MessageBase(ELogLevel::Information, message, __FILE__, __func__, __LINE__) )
 #define DBG(message,...) Jde::Logging::Log( Jde::Logging::MessageBase(Jde::ELogLevel::Debug, message, __FILE__, __func__, __LINE__), __VA_ARGS__ )
 #define DBG0( message ) Logging::Log( Logging::MessageBase(ELogLevel::Debug, message, __FILE__, __func__, __LINE__) )
@@ -236,8 +238,6 @@ namespace Jde
 		template<class... Args >
 		inline void Log( const Logging::MessageBase& messageBase, Args&&... args )
 		{
-			// if( messageBase.MessageView.find("has no bars")!=string::npos )
-			// 	DBG0( "here" );
 			if( pLogger )
 				GetDefaultLogger()->log( (spdlog::level::level_enum)messageBase.Level, messageBase.MessageView.data(), args... );
 			if( GetServerSink() )

@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "ServerSink.h"
 //#include "ReceivedMessages.h"
 #include "../../Diagnostics.h"
@@ -42,9 +41,6 @@ namespace Jde::Logging
 		ProtoBase{ host, port, "ServerSocket" }
 	{
 		Startup();
-//		_connected = false;
-		//Connect();
-		//UnPause();
 	}
 
 	void ServerSink::Destroy()noexcept
@@ -97,7 +93,8 @@ namespace Jde::Logging
 				DBGX( "Acknowledged - instance id={}", ack.instanceid() );
 				auto pTransmission = make_shared<Proto::ToServer>();
 				auto pInstance = new Proto::Instance();
-				pInstance->set_applicationname( Diagnostics::ApplicationName().stem().string() );
+				var applicationName = Diagnostics::ApplicationName().stem().string()=="Jde" ? Diagnostics::ApplicationName().extension().string().substr(1) : Diagnostics::ApplicationName().stem().string();
+				pInstance->set_applicationname( applicationName );
 				pInstance->set_hostname( Diagnostics::HostName() );
 				pInstance->set_processid( (int32)Diagnostics::ProcessId() );
 				pInstance->set_starttime( (google::protobuf::uint32)Clock::to_time_t(Logging::StartTime()) );
@@ -157,6 +154,11 @@ namespace Jde::Logging
 	{
 		_messages.Push( Messages::Message(message) );
 	}
+	void ServerSink::Log( const Messages::Message& message )noexcept
+	{
+		_messages.Push( message );
+	}
+
 	void ServerSink::Log( const MessageBase& message, const vector<string>& values )noexcept
 	{
 		_messages.Push( Messages::Message(message, values) );
@@ -239,7 +241,7 @@ namespace Jde::Logging
 
 	namespace Messages
 	{
-		Message::Message(const MessageBase& base, const vector<string>& values) :
+		Message::Message(const MessageBase& base, const vector<string>& values)noexcept:
 			MessageBase{ base },
 			Timestamp{ Clock::now() },
 			Variables{ values }
@@ -247,6 +249,24 @@ namespace Jde::Logging
 			//Thread = Threading::GetThreadDescription();
 			ThreadId = Threading::ThreadId;
 
+			Fields |= EFields::Timestamp | EFields::ThreadId | EFields::Thread;
+		}
+		Message::Message( ELogLevel level, std::string_view message, std::string_view file, std::string_view function, uint line, const vector<string>& values )noexcept:
+			MessageBase{ level, message, file, function, line },
+			Timestamp{ Clock::now() },
+			Variables{ values },
+			_pMessage{ make_shared<string>(message) }
+		{
+			MessageView = *_pMessage;
+			Fields |= EFields::Timestamp | EFields::ThreadId | EFields::Thread;
+		}
+
+		Message::Message( const Message& other )noexcept:
+			MessageBase{ other },
+			Timestamp{ Clock::now() },
+			Variables{ other.Variables },
+			_pMessage{ other._pMessage }
+		{
 			Fields |= EFields::Timestamp | EFields::ThreadId | EFields::Thread;
 		}
 	}

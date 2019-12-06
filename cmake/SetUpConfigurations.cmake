@@ -1,5 +1,4 @@
 #https://stackoverflow.com/questions/31546278/where-to-set-cmake-configuration-types-in-a-project-with-subprojects
-cmake_minimum_required(VERSION 3.16)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -14,7 +13,7 @@ if(NOT SET_UP_CONFIGURATIONS_DONE)
 		endif()
 		set_property( CACHE CMAKE_BUILD_TYPE PROPERTY HELPSTRING "Choose the type of build" )
 		# set the valid options for cmake-gui drop-down list
-		set_property( CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "DebugMem;Debug;Release;Profile" )
+		set_property( CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Asan;Debug;Release;Profile" )
 	endif()
 endif()
 #######################################################
@@ -52,6 +51,7 @@ include_directories( "/home/duffyj/code/libraries/spdlog/include" )
 include_directories( "/home/duffyj/code/libraries/json/include" )
 string(TOLOWER ${CMAKE_BUILD_TYPE} outDir)
 set( CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/../../bin/${outDir} )
+set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/../../bin/${outDir} )
 add_link_options( "LINKER:-z,origin-shared" )
 set(CMAKE_SHARED_LINKER_FLAGS ${CMAKE_SHARED_LINKER_FLAGS} "-Wl,-rpath=$ORIGIN")
 

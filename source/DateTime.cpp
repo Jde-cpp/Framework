@@ -1,6 +1,5 @@
-#include "stdafx.h"
 #include "DateTime.h"
-//#include <spdlog/spdlog.h>
+//#include <spdlog/fmt/ostr.h>
 #include "StringUtilities.h"
 #include "math/MathUtilities.h"
 #define var const auto
@@ -242,7 +241,7 @@ namespace Jde
 			gmtime_r( &dateValue, &gmt ); // further convert to GMT presuming now in local
 			mktime( &gmt );//sets time zone to 'edt'
 			if( string(gmt.tm_zone)!=string("EDT") && string(gmt.tm_zone)!=string("EST") )
-				THROW( Exception(fmt::format("Need to implement for {} timezone.", gmt.tm_zone)) );
+				THROW( Exception("Need to implement for {} timezone.", gmt.tm_zone) );
 			return seconds( gmt.tm_gmtoff );
 #endif
 		}

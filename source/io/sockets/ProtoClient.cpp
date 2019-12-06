@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "ProtoClient.h"
 #include "../../threading/Thread.h"
 #include "../../threading/InterruptibleThread.h"

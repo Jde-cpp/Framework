@@ -59,14 +59,22 @@ namespace Jde
 
 		ELogLevel _level{ELogLevel::Trace};
 	private:
+		std::string _format;
 		std::string _what;
+		//uint32 _messageId;
+		vector<string> _args;
 	};
 	
 
 	template<class... Args>
 	Exception::Exception( std::string_view value, Args&&... args ):
-		_what{ fmt::format(string(value), args...) }
-	{}
+		_format{ value },
+		_what{ fmt::format(value,args...) }
+	{
+		_args.reserve( sizeof...(args) );
+		ToVec::Append( _args, args... );
+	}
+
 	//Before program runs
 	class JDE_NATIVE_VISIBILITY LogicException : public Exception
 	{

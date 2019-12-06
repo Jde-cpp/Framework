@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "Table.h"
 #define var const auto
 

@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "DiskWatcher.h"
 #ifndef _MSC_VER
 	#include <sys/inotify.h>

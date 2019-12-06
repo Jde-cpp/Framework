@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "Interrupt.h"
 #include "Thread.h"
 #include "InterruptibleThread.h"

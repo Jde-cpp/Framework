@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "Pool.h"
 
 namespace Jde::Threading

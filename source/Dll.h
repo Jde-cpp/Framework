@@ -43,7 +43,7 @@ namespace Jde
 #else
 				THROW( IOException("Can not load library '{}':  '{}'", path.c_str(), dlerror()) );
 #endif
-			INFO( "Opened module '{}'.", path.string() );
+			INFON( "Opened module '{}'.", path.string() );
 		}
 		~DllHelper()
 		{

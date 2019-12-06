@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "InterruptibleThread.h"
 
 namespace Jde::Threading

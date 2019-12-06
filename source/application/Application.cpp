@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "Application.h"
 #include <signal.h>
 #include <sys/types.h>
@@ -8,7 +7,6 @@
 #include "../Diagnostics.h"
 #include "../Cache.h"
 #include "../log/server/ServerSink.h"
-//#include "db/Database.h"
 #include "../Settings.h"
 #include "../threading/InterruptibleThread.h"
 
@@ -64,8 +62,9 @@ namespace Jde
 			if( string(argv[i])=="-c" )
 				console = true;
 		}
+#ifdef NDEBUG
 		std::set_terminate( OnTerminate );
-
+#endif
 		if( !console )
 			AsService();
 		var settingsPath = std::filesystem::path( fmt::format("{}.json", appName) );
