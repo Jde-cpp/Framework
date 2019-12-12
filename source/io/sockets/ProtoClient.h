@@ -36,7 +36,7 @@ namespace Jde::IO::Sockets
 		void Connect()noexcept;
 		const string Name;
 	protected:
-		void Startup()noexcept;
+		void Startup( string_view clientThreadName )noexcept;
 	private:
 		void Connect( const basio::ip::tcp::resolver::results_type& endpoints )noexcept(false);
 		void Run( string_view name )noexcept;

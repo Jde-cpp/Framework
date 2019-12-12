@@ -1,5 +1,4 @@
 #export CXX=g++-8
-set( CMAKE_CXX_COMPILER g++-8 )
 cmake_minimum_required(VERSION 3.16)
 project(Jde)
 set( CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../cmake )

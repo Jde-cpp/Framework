@@ -102,10 +102,10 @@ namespace Jde::IO::Sockets
 		_port{port}
 	{}
 	
-	void ProtoClient::Startup()noexcept
+	void ProtoClient::Startup( string_view clientThreadName )noexcept
 	{
 		Connect();
-		RunAsyncHelper();
+		RunAsyncHelper( clientThreadName );
 	}
 	void ProtoClient::Connect()noexcept
 	{

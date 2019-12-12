@@ -100,33 +100,46 @@ namespace Jde
 		//JDE_NATIVE_VISIBILITY void LogEtw( const Logging::MessageBase& messageBase, const vector<string>& values );
 	}
 }
-//1
-#define CRITICAL(message,...) Jde::Logging::LogCritical( Jde::Logging::MessageBase(Jde:: ELogLevel::Critical, message, __FILE__, __func__, __LINE__), __VA_ARGS__ )
-#define CRITICAL0( message ) Jde::Logging::LogCritical( Jde::Logging::MessageBase(Jde::ELogLevel::Critical, message, __FILE__, __func__, __LINE__) )
-#define ERR0(message) Logging::Log( Logging::MessageBase(ELogLevel::Error, message, __FILE__, __func__, __LINE__) )
-#define ERR0_ONCE(message) Logging::LogOnce( Logging::MessageBase(ELogLevel::Error, message, __FILE__, __func__, __LINE__) )
-#define ERR(message,...) Logging::Log( Logging::MessageBase(ELogLevel::Error, message, __FILE__, __func__, __LINE__), __VA_ARGS__ )
-#define ERRX(message,...) Logging::LogNoServer( Logging::MessageBase(ELogLevel::Error, message, __FILE__, __func__, __LINE__), __VA_ARGS__ )
-#define ERRN( message, ... ) Logging::Log( Logging::MessageBase(ELogLevel::Error, message, __FILE__, __func__, __LINE__, IO::Crc::Calc32RunTime(message), IO::Crc::Calc32RunTime(__FILE__), IO::Crc::Calc32RunTime(__func__)), __VA_ARGS__ )
-#define ERR_ONCE(message,...) Logging::LogOnce( Logging::MessageBase(ELogLevel::Error, message, __FILE__, __func__, __LINE__), __VA_ARGS__ )
-#define WARN0(message) Logging::Log( Logging::MessageBase(ELogLevel::Warning, message, __FILE__, __func__, __LINE__) )
-#define WARN0N( message ) Logging::Log( Logging::MessageBase(ELogLevel::Warning, message, __FILE__, __func__, __LINE__, IO::Crc::Calc32RunTime(message), IO::Crc::Calc32RunTime(__FILE__), IO::Crc::Calc32RunTime(__func__)) )
-#define WARN(message,...) Logging::Log( Logging::MessageBase(ELogLevel::Warning, message, __FILE__, __func__, __LINE__), __VA_ARGS__ )
-#define WARNN( message, ... ) Logging::Log( Logging::MessageBase(ELogLevel::Warning, message, __FILE__, __func__, __LINE__, IO::Crc::Calc32RunTime(message), IO::Crc::Calc32RunTime(__FILE__), IO::Crc::Calc32RunTime(__func__)), __VA_ARGS__ )
-#define INFO0(message) Logging::Log( Logging::MessageBase(ELogLevel::Information, message, __FILE__, __func__, __LINE__) )
-#define INFO(message,...) Jde::Logging::Log( Jde::Logging::MessageBase(Jde::ELogLevel::Information, message, __FILE__, __func__, __LINE__), __VA_ARGS__ )
-#define INFON( message, ... ) Logging::Log( Logging::MessageBase(ELogLevel::Information, message, __FILE__, __func__, __LINE__, IO::Crc::Calc32RunTime(message), IO::Crc::Calc32RunTime(__FILE__), IO::Crc::Calc32RunTime(__func__)), __VA_ARGS__ )
-#define INFO0_ONCE(message) Logging::LogOnce( Logging::MessageBase(ELogLevel::Information, message, __FILE__, __func__, __LINE__) )
-#define DBG(message,...) Jde::Logging::Log( Jde::Logging::MessageBase(Jde::ELogLevel::Debug, message, __FILE__, __func__, __LINE__), __VA_ARGS__ )
-#define DBG0( message ) Logging::Log( Logging::MessageBase(ELogLevel::Debug, message, __FILE__, __func__, __LINE__) )
-#define DBGN( message, ... ) Logging::Log( Logging::MessageBase(ELogLevel::Debug, message, __FILE__, __func__, __LINE__, IO::Crc::Calc32RunTime(message), IO::Crc::Calc32RunTime(__FILE__), IO::Crc::Calc32RunTime(__func__)), __VA_ARGS__ )
-#define DBGX(message,...) Logging::LogNoServer( Logging::MessageBase(ELogLevel::Debug, message, __FILE__, __func__, __LINE__), __VA_ARGS__ )
-#define TRACE(message,...) Logging::Log( Logging::MessageBase(ELogLevel::Trace, message, __FILE__, __func__, __LINE__), __VA_ARGS__ )
-#define TRACE0(message) Logging::Log( Logging::MessageBase(ELogLevel::Trace, message, __FILE__, __func__, __LINE__) )
-#define TRACEX(message,...) Logging::LogNoServer( Logging::MessageBase(ELogLevel::Trace, message, __FILE__, __func__, __LINE__), __VA_ARGS__ )
-#define TRACE0X(message) Logging::LogNoServer( Logging::MessageBase(ELogLevel::Trace, message, __FILE__, __func__, __LINE__) )
-#define LOG(severity,message,...) Logging::Log( Logging::MessageBase(severity, message, __FILE__, __func__, __LINE__), __VA_ARGS__ )
-#define LOG0(severity,message) Logging::Log( Logging::MessageBase(severity, message, __FILE__, __func__, __LINE__) )
+// constexpr auto* GetFileName( const char* const path )
+// {
+// 	const auto* startPosition = path;
+// 	for( const auto* currentCharacter = path;*currentCharacter != '\0'; ++currentCharacter )
+// 	{
+// 		if( *currentCharacter == '\\' || *currentCharacter == '/' )
+// 			startPosition = currentCharacter;
+// 	}
+//     if( startPosition != path )
+// 			++startPosition;
+//     return startPosition;
+// }
+#define MY_FILE __FILE__
+
+#define CRITICAL(message,...) Jde::Logging::LogCritical( Jde::Logging::MessageBase(Jde:: ELogLevel::Critical, message, MY_FILE, __func__, __LINE__), __VA_ARGS__ )
+#define CRITICAL0( message ) Jde::Logging::LogCritical( Jde::Logging::MessageBase(Jde::ELogLevel::Critical, message, MY_FILE, __func__, __LINE__) )
+#define ERR0(message) Logging::Log( Logging::MessageBase(ELogLevel::Error, message, MY_FILE, __func__, __LINE__) )
+#define ERR0_ONCE(message) Logging::LogOnce( Logging::MessageBase(ELogLevel::Error, message, MY_FILE, __func__, __LINE__) )
+#define ERR(message,...) Logging::Log( Logging::MessageBase(ELogLevel::Error, message, MY_FILE, __func__, __LINE__), __VA_ARGS__ )
+#define ERRX(message,...) Logging::LogNoServer( Logging::MessageBase(ELogLevel::Error, message, MY_FILE, __func__, __LINE__), __VA_ARGS__ )
+#define ERRN( message, ... ) Logging::Log( Logging::MessageBase(ELogLevel::Error, message, MY_FILE, __func__, __LINE__, IO::Crc::Calc32RunTime(message), IO::Crc::Calc32RunTime(MY_FILE), IO::Crc::Calc32RunTime(__func__)), __VA_ARGS__ )
+#define ERR_ONCE(message,...) Logging::LogOnce( Logging::MessageBase(ELogLevel::Error, message, MY_FILE, __func__, __LINE__), __VA_ARGS__ )
+#define WARN0(message) Logging::Log( Logging::MessageBase(ELogLevel::Warning, message, MY_FILE, __func__, __LINE__) )
+#define WARN0N( message ) Logging::Log( Logging::MessageBase(ELogLevel::Warning, message, MY_FILE, __func__, __LINE__, IO::Crc::Calc32RunTime(message), IO::Crc::Calc32RunTime(MY_FILE), IO::Crc::Calc32RunTime(__func__)) )
+#define WARN(message,...) Logging::Log( Logging::MessageBase(ELogLevel::Warning, message, MY_FILE, __func__, __LINE__), __VA_ARGS__ )
+#define WARNN( message, ... ) Logging::Log( Logging::MessageBase(ELogLevel::Warning, message, MY_FILE, __func__, __LINE__, IO::Crc::Calc32RunTime(message), IO::Crc::Calc32RunTime(MY_FILE), IO::Crc::Calc32RunTime(__func__)), __VA_ARGS__ )
+#define INFO0(message) Logging::Log( Logging::MessageBase(ELogLevel::Information, message, MY_FILE, __func__, __LINE__) )
+#define INFO(message,...) Jde::Logging::Log( Jde::Logging::MessageBase(Jde::ELogLevel::Information, message, MY_FILE, __func__, __LINE__), __VA_ARGS__ )
+#define INFON( message, ... ) Logging::Log( Logging::MessageBase(ELogLevel::Information, message, MY_FILE, __func__, __LINE__, IO::Crc::Calc32RunTime(message), IO::Crc::Calc32RunTime(MY_FILE), IO::Crc::Calc32RunTime(__func__)), __VA_ARGS__ )
+#define INFO0_ONCE(message) Logging::LogOnce( Logging::MessageBase(ELogLevel::Information, message, MY_FILE, __func__, __LINE__) )
+#define DBG(message,...) Jde::Logging::Log( Jde::Logging::MessageBase(Jde::ELogLevel::Debug, message, MY_FILE, __func__, __LINE__), __VA_ARGS__ )
+#define DBG0( message ) Logging::Log( Logging::MessageBase(ELogLevel::Debug, message, MY_FILE, __func__, __LINE__) )
+#define DBGN( message, ... ) Logging::Log( Logging::MessageBase(ELogLevel::Debug, message, MY_FILE, __func__, __LINE__, IO::Crc::Calc32RunTime(message), IO::Crc::Calc32RunTime(MY_FILE), IO::Crc::Calc32RunTime(__func__)), __VA_ARGS__ )
+#define DBGX(message,...) Logging::LogNoServer( Logging::MessageBase(ELogLevel::Debug, message, MY_FILE, __func__, __LINE__), __VA_ARGS__ )
+#define TRACE(message,...) Logging::Log( Logging::MessageBase(ELogLevel::Trace, message, MY_FILE, __func__, __LINE__), __VA_ARGS__ )
+#define TRACE0(message) Logging::Log( Logging::MessageBase(ELogLevel::Trace, message, MY_FILE, __func__, __LINE__) )
+#define TRACEX(message,...) Logging::LogNoServer( Logging::MessageBase(ELogLevel::Trace, message, MY_FILE, __func__, __LINE__), __VA_ARGS__ )
+#define TRACE0X(message) Logging::LogNoServer( Logging::MessageBase(ELogLevel::Trace, message, MY_FILE, __func__, __LINE__) )
+#define LOG(severity,message,...) Logging::Log( Logging::MessageBase(severity, message, MY_FILE, __func__, __LINE__), __VA_ARGS__ )
+#define LOG0(severity,message) Logging::Log( Logging::MessageBase(severity, message, MY_FILE, __func__, __LINE__) )
 //#define LOG_SQL(sql,pParams) 
 
 namespace spdlog

@@ -59,8 +59,9 @@ namespace Logging
 				MessageView = *_pMessage;
 			}
 			Message(const MessageBase& base, const vector<string>& values)noexcept;
-			Message( const Message& other )noexcept;
+			//Message( const Message& other )noexcept;
 			Message( ELogLevel level, std::string_view message, std::string_view file, std::string_view function, uint line, const vector<string>& values )noexcept;
+			Message( ELogLevel level, std::string_view message, const std::string& file, const std::string& function, uint line, const vector<string>& values )noexcept;
 			//Message( IO::IncomingMessage& message, EFields fields )noexcept(false);
 
 			TimePoint Timestamp{ Clock::now() };
@@ -71,8 +72,8 @@ namespace Logging
 			//std::ostream& to_stream( std::ostream& os, ServerSink* pSink=nullptr )const noexcept;
 		private:
 			const sp<string> _pMessage;
-			//const string _file;
-			//const string _function;
+			const sp<string> _pFile;
+			const sp<string> _pFunction;
 			//uint _sessionId{0};
 		};
 	}

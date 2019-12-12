@@ -46,7 +46,7 @@ namespace Jde::IO::Sockets
 		//std::unique_ptr<boost::asio::io_context> _pContext;
 		boost::asio::io_context _asyncHelper;
 		void Join();
-		void RunAsyncHelper()noexcept;
+		void RunAsyncHelper( string_view clientThreadName )noexcept;
 		void Close()noexcept;
 		virtual void OnClose()noexcept{};
 		void Shutdown()noexcept;

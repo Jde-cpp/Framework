@@ -123,6 +123,7 @@ namespace Jde::IO
 		//VectorPtr<char> Load( const fs::path& path );
 		//void Merge( IDrive& disk );
 		virtual map<string,IDirEntryPtr> Recursive( const fs::path& path )noexcept(false)=0;
+		virtual IDirEntryPtr Get( const fs::path& path )noexcept(false)=0;
 		virtual IDirEntryPtr Save( const fs::path& path, const vector<char>& bytes, const IDirEntry& dirEntry )noexcept(false)=0;
 		virtual IDirEntryPtr CreateFolder( const fs::path& path, const IDirEntry& dirEntry )=0;
 		virtual void Remove( const fs::path& path )=0;

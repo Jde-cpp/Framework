@@ -85,7 +85,7 @@ namespace Jde
 					var& childElapsed = child.second;
 					os << "(" << child.first << "=" << FormatSeconds(childElapsed/index) << ")";
 				}
-				DBG0( os.str() );
+				DBG( "Progress={}", os.str() );
 			}
 		}
 		_previousProgressElapsed = elapsed;

@@ -37,10 +37,10 @@ namespace Jde::Logging
 	}
 
 	ServerSink::ServerSink( string_view host, uint16 port )noexcept:
-		Interrupt{ "ServerSink", 1s, true },
+		Interrupt{ "AppServerSend", 1s, true },
 		ProtoBase{ host, port, "ServerSocket" }
 	{
-		Startup();
+		Startup( "AppServerReceive" );
 	}
 
 	void ServerSink::Destroy()noexcept
@@ -48,6 +48,7 @@ namespace Jde::Logging
 		// Disconnect();
 		// while( _connected )
 		// 	std::this_thread::yield();
+		std::this_thread::sleep_for( 1s );//flush messages.
 		IServerSink::Destroy();
 	}
 	void ServerSink::OnConnected()noexcept
@@ -260,14 +261,29 @@ namespace Jde::Logging
 			MessageView = *_pMessage;
 			Fields |= EFields::Timestamp | EFields::ThreadId | EFields::Thread;
 		}
+		Message::Message( ELogLevel level, std::string_view message, const std::string& file, const std::string& function, uint line, const vector<string>& values )noexcept:
+			MessageBase{ level, message, file, function, line },
+			Timestamp{ Clock::now() },
+			Variables{ values },
+			_pMessage{ make_shared<string>(message) },
+			_pFile{ make_shared<string>(file) },
+			_pFunction{ make_shared<string>(function) }
+		{
+			MessageView = *_pMessage;
+			File = *_pFile;
+			Function = *_pFunction;
+			Fields |= EFields::Timestamp | EFields::ThreadId | EFields::Thread;
+		}
 
-		Message::Message( const Message& other )noexcept:
+		
+
+/*		Message::Message( const Message& other )noexcept:
 			MessageBase{ other },
 			Timestamp{ Clock::now() },
 			Variables{ other.Variables },
 			_pMessage{ other._pMessage }
 		{
 			Fields |= EFields::Timestamp | EFields::ThreadId | EFields::Thread;
-		}
+		}*/
 	}
 }

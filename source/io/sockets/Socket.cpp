@@ -42,10 +42,10 @@ namespace Jde::IO::Sockets
 	{
 		_asyncHelper.stop();
 	}
-	void AsyncSocket::RunAsyncHelper()noexcept
+	void AsyncSocket::RunAsyncHelper( string_view clientThreadName )noexcept
 	{
 		ASSERT( !_pThread );
-		_threadName = "AsyncSocket";
+		_threadName = clientThreadName;
 		_pThread = make_unique<Threading::InterruptibleThread>( _threadName, [&](){Run();} ); 
 	}
 	
