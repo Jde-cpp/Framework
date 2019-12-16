@@ -10,9 +10,9 @@
 		#define JDE_NATIVE_VISIBILITY __declspec( dllimport )
 		//#define _GLIBCXX_USE_NOEXCEPT noexcept
 		#if NDEBUG
-			#pragma comment(lib, "Jde.Native.lib")
+			#pragma comment(lib, "Jde.lib")
 		#else
-			#pragma comment(lib, "Jde.Native.lib")
+			#pragma comment(lib, "Jde.lib")
 		#endif
 	#else
 		#define JDE_NATIVE_VISIBILITY

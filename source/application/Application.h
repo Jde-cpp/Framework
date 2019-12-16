@@ -28,13 +28,13 @@ namespace Jde
 		static TimePoint StartTime()noexcept;
 		static void AddShutdownFunction( std::function<void()>&& shutdown )noexcept;
 		static void Pause()noexcept;
-
+		static std::list<sp<Threading::InterruptibleThread>>& GetBackgroundThreads()noexcept{ return  *_pBackgroundThreads; }
 	protected:
 		void Wait()noexcept;
-
+		virtual void OnTerminate()noexcept=0;
 		virtual void OSPause()noexcept=0;
 		virtual bool AsService()noexcept=0;
-		virtual void AddSignals()noexcept=0;
+		virtual void AddSignals()noexcept(false)=0;
 		virtual bool KillInstance( uint processId )noexcept=0;
 
 		static mutex _threadMutex;
@@ -43,6 +43,23 @@ namespace Jde
 		static sp<IApplication> _pInstance;
 	private:
 		virtual void SetConsoleTitle( string_view title )noexcept=0;
+	};
+
+	struct OSApp : IApplication
+	{
+		JDE_NATIVE_VISIBILITY static void Startup( int argc, char** argv, string_view appName )noexcept;
+	protected:
+		bool KillInstance( uint processId )noexcept override;
+		void SetConsoleTitle( string_view title )noexcept override;
+		void AddSignals()noexcept(false) override;
+		bool AsService()noexcept override;
+		void OSPause()noexcept override;
+		void OnTerminate()noexcept;
+	private:
+		static void ExitHandler( int s );
+#ifdef _MSC_VER
+		BOOL HandlerRoutine( DWORD  ctrlType );
+#endif
 	};
 
 namespace Application

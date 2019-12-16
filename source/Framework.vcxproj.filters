@@ -28,9 +28,6 @@
     <ClCompile Include="math\MathUtilities.cpp">
       <Filter>Source\math</Filter>
     </ClCompile>
-    <ClCompile Include="Application.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="threading\InterruptibleThread.cpp">
       <Filter>Source\threading</Filter>
     </ClCompile>
@@ -84,6 +81,12 @@
     </ClCompile>
     <ClCompile Include="db\types\Table.cpp">
       <Filter>Source\db\types</Filter>
+    </ClCompile>
+    <ClCompile Include="application\Application.cpp">
+      <Filter>Source\application</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Windows\source\WindowsApp.cpp">
+      <Filter>Source\application</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -168,9 +171,6 @@
     <ClInclude Include="math\DecimalOld.h">
       <Filter>Headers\math</Filter>
     </ClInclude>
-    <ClInclude Include="Application.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
     <ClInclude Include="threading\InterruptibleThread.h">
       <Filter>Headers\threading</Filter>
     </ClInclude>
@@ -179,9 +179,6 @@
     </ClInclude>
     <ClInclude Include="collections\Map.h">
       <Filter>Headers\collections</Filter>
-    </ClInclude>
-    <ClInclude Include="settings\Settings.h">
-      <Filter>Headers\Settings</Filter>
     </ClInclude>
     <ClInclude Include="log\server\ReceivedMessages.h">
       <Filter>Headers\log\server</Filter>
@@ -261,6 +258,12 @@
     <ClInclude Include="db\types\Table.h">
       <Filter>Headers\db\types</Filter>
     </ClInclude>
+    <ClInclude Include="application\Application.h">
+      <Filter>Headers\application</Filter>
+    </ClInclude>
+    <ClInclude Include="Settings.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Headers">
@@ -309,9 +312,6 @@
     <Filter Include="Headers\collections">
       <UniqueIdentifier>{f7d60aea-b307-40e6-a812-18c5350e7d1f}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Headers\Settings">
-      <UniqueIdentifier>{8487c156-298f-4dad-af94-49b6b92323dc}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source\log">
       <UniqueIdentifier>{7cca4a77-6d0a-4b3a-b97f-9055286bc36b}</UniqueIdentifier>
     </Filter>
@@ -341,6 +341,12 @@
     </Filter>
     <Filter Include="Source\db\types">
       <UniqueIdentifier>{95ad6653-3ffe-45d2-a48a-db0d945d0370}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\application">
+      <UniqueIdentifier>{11c6cd86-c9e8-4f70-9018-7010023fbc94}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\application">
+      <UniqueIdentifier>{118c135c-7ad9-4c23-bc92-a43e8da3cb94}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

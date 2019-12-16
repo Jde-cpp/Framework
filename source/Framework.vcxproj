@@ -45,18 +45,18 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\code\libraries\spdlog\include;C:\code\libraries\boost_1_69_0;C:\code\libraries\matio\src;C:\code\libraries\matio\visual_studio;C:\code\libraries\json\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(IncludePath)</IncludePath>
     <OutDir>$(SolutionDir).bin\$(Configuration)\</OutDir>
-    <TargetName>Jde.Native</TargetName>
-    <LibraryPath>C:\code\libraries\boost_1_69_0\stage\lib;$(LibraryPath)</LibraryPath>
+    <TargetName>Jde</TargetName>
+    <LibraryPath>$(LibraryPath)</LibraryPath>
     <IntDir>$(SolutionDir).obj\Core\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>C:\code\libraries\spdlog\include;C:\code\libraries\boost_1_69_0;C:\code\libraries\matio\src;C:\code\libraries\matio\visual_studio;C:\code\libraries\json\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(IncludePath)</IncludePath>
     <OutDir>$(SolutionDir).bin\$(Configuration)\</OutDir>
-    <TargetName>Jde.Native</TargetName>
-    <LibraryPath>C:\code\libraries\boost_1_69_0\stage\lib;$(LibraryPath)</LibraryPath>
+    <TargetName>Jde</TargetName>
+    <LibraryPath>$(LibraryPath)</LibraryPath>
     <IntDir>.obj\$(Configuration)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -65,11 +65,12 @@
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>JDE_NATIVE_EXPORTS;BOOST_ALL_DYN_LINK;_SCL_SECURE_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;_SILENCE_CXX17_ALLOCATOR_VOID_DEPRECATION_WARNING;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;NOMINMAX;_DEBUG;CORE_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>Jde_EXPORTS;BOOST_ALL_DYN_LINK;_SCL_SECURE_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;_SILENCE_CXX17_ALLOCATOR_VOID_DEPRECATION_WARNING;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;NOMINMAX;_DEBUG;CORE_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <DisableSpecificWarnings>4068;4251;4275;4297</DisableSpecificWarnings>
       <AdditionalOptions>/MP %(AdditionalOptions)</AdditionalOptions>
+      <ForcedIncludeFiles>stdafx.h</ForcedIncludeFiles>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -92,6 +93,7 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
       <DisableSpecificWarnings>4068;4251;4275;4297</DisableSpecificWarnings>
       <AdditionalOptions>/MP %(AdditionalOptions)</AdditionalOptions>
+      <ForcedIncludeFiles>stdafx.h</ForcedIncludeFiles>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -104,7 +106,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="Application.h" />
+    <ClInclude Include="application\Application.h" />
     <ClInclude Include="collections\UnorderedMapValue.h" />
     <ClInclude Include="db\c_api.h" />
     <ClInclude Include="db\Database.h" />
@@ -152,6 +154,8 @@
     <ClInclude Include="math\io\MatLab\MatLabFile.h" />
     <ClInclude Include="math\io\MatLab\MatLabVariable.h" />
     <ClInclude Include="math\MathUtilities.h" />
+    <ClCompile Include="..\..\Windows\source\WindowsApp.cpp" />
+    <ClCompile Include="application\Application.cpp" />
     <ClCompile Include="Cache.cpp" />
     <ClCompile Include="db\Database.cpp" />
     <ClCompile Include="db\DataType.cpp" />
@@ -180,7 +184,7 @@
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
       </PrecompiledHeaderFile>
     </ClCompile>
-    <ClInclude Include="settings\Settings.h" />
+    <ClInclude Include="Settings.h" />
     <ClInclude Include="SmartPointer.h" />
     <ClInclude Include="Stopwatch.h" />
     <ClInclude Include="StringUtilities.h" />
@@ -192,7 +196,6 @@
     <ClInclude Include="TypeDefs.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Application.cpp" />
     <ClCompile Include="DateTime.cpp" />
     <ClCompile Include="Diagnostics.cpp" />
     <ClCompile Include="dllmain.cpp" />

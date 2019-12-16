@@ -2,7 +2,12 @@
 #include <signal.h>
 #include <sys/types.h>
 #include <stdexcept>
-#include <execinfo.h>
+
+#ifndef _MSC_VER
+	#include <execinfo.h>
+#endif
+
+
 
 #include "../Diagnostics.h"
 #include "../Cache.h"
@@ -36,7 +41,8 @@ namespace Jde
 {
 	const TimePoint Start=Clock::now();
 	TimePoint IApplication::StartTime()noexcept{ return Start; }
-	void OnTerminate()
+#ifndef _MSC_VER
+	void OnTerminate()//TODO Move
 	{
 		void *trace_elems[20];
 		auto trace_elem_count( backtrace(trace_elems, 20) );
@@ -49,6 +55,8 @@ namespace Jde
 		free( stack_syms );
 		exit( EXIT_FAILURE );
 	}
+#endif
+
 	IApplication::~IApplication()
 	{
 		if( HaveLogger() )

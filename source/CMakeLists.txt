@@ -5,15 +5,20 @@ set( CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../cmake )
 include(SetUpConfigurations)
 #######################################################
 
-add_library( Jde SHARED DateTime.cpp Diagnostics.cpp Exception.cpp Stopwatch.cpp StringUtilities.cpp Cache.cpp Settings.cpp
+set( sources )
+list( APPEND sources DateTime.cpp Diagnostics.cpp Exception.cpp Stopwatch.cpp StringUtilities.cpp Cache.cpp Settings.cpp
 	math/MathUtilities.cpp 
-	application/Application.cpp application/ApplicationLinux.cpp
+	application/Application.cpp
 	log/Logging.cpp log/server/ServerSink.cpp log/server/proto/messages.pb.cc
 	io/sockets/Socket.cpp io/sockets/ProtoClient.cpp io/sockets/ProtoServer.cpp
 	io/File.cpp io/DiskWatcher.cpp
 	threading/Thread.cpp threading/Interrupt.cpp threading/InterruptibleThread.cpp threading/Pool.cpp
-	db/DBException.cpp db/DataType.cpp db/Database.cpp db/DBQueue.cpp
-	../../Linux/source/LinuxDrive.cpp )
+	db/DBException.cpp db/DataType.cpp db/Database.cpp db/DBQueue.cpp)
+if(NOT MSVC)
+    list(APPEND sources application/ApplicationLinux.cpp ../../Linux/source/LinuxDrive.cpp)
+endif()
+add_library( Jde SHARED ${sources} )
+	
 #######################################################
 include_directories( "/home/duffyj/code/libraries/eigen" )
 target_link_libraries(Jde Threads::Threads)

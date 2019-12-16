@@ -47,7 +47,7 @@ namespace Jde
 		else
 		{
 			l.unlock();
-			unique_lock l{_cacheLock};
+			unique_lock l2{_cacheLock};
 			pValue = std::static_pointer_cast<T>( _cache.try_emplace( name, make_shared<T>() ).first->second );
 		}
 		return pValue;

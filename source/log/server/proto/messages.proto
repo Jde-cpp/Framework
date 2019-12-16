@@ -1,5 +1,5 @@
 //MKLINK timestamp.proto C:\code\libraries\protobuf\src\google\protobuf\timestamp.proto
-//C:\code\libraries\vcpkg\installed\x64-windows\tools\protobuf\protoc.exe -I. -I=C:\code\libraries\protobuf\src --cpp_out dllexport_decl=JDE_NATIVE_VISIBILITY:. messages.proto
+//protoc --cpp_out dllexport_decl=JDE_NATIVE_VISIBILITY:. -I/c/code/libraries/vcpkg/installed/x64-windows/include -I. messages.proto
 //protoc --cpp_out dllexport_decl=JDE_NATIVE_VISIBILITY:. messages.proto
 //\code\7.0\web2\ClientApp>MKLINK ib.proto C:\code\7.0\native\framework\markets\types\proto\ib.proto
 //\code\7.0\web2\ClientApp>npx pbjs -t static-module -w es6 -o src\app\proto\ib.js ib.proto & npx pbts -o src\app\proto\ib.d.ts src\app\proto\ib.js

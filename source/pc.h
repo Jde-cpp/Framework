@@ -1,5 +1,8 @@
-#ifdef _MSC_VER
-//	#pragma once
+#ifdef _WINDLL
+#ifndef WINVER
+	#define WINVER 0x0A00
+	#define _WIN32_WINNT 0x0A00
+#endif
 	#include <SDKDDKVer.h>
 	#define _CRTDBG_MAP_ALLOC
 	#include <stdlib.h>
@@ -17,11 +20,11 @@
 #include <vector>
 #include <iostream>
 #include <filesystem>
-
+/*
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
 #include <Eigen/SVD>
-
+*/
 #pragma warning(push)
 #pragma warning( disable : 4245) 
 #pragma warning( disable : 4701)

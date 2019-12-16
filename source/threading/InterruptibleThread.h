@@ -37,7 +37,7 @@ namespace Jde::Threading  //TODO Reflection remove Threading from public items.
 		JDE_NATIVE_VISIBILITY void Join();
 		bool IsDone()const noexcept{ return _pFlag && _pFlag->IsDone(); }
 		const string Name;
-		void Shutdown()noexcept override;
+		JDE_NATIVE_VISIBILITY void Shutdown()noexcept override;
 	private:
 		std::thread _internalThread;
 		InterruptFlag* _pFlag{nullptr};

@@ -62,6 +62,13 @@ namespace Jde::Settings
 		return item==_pJson->end() ? defaultValue : fs::path( item->get<string>() );
 	}
 
+	template<>
+	inline double Container::Get( string_view path, const double& defaultValue )const noexcept
+	{
+		auto item = _pJson->find( path );
+		return item==_pJson->end() ? defaultValue : item->get<double>();
+	}
+
 	JDE_NATIVE_VISIBILITY Container& Global();
 	JDE_NATIVE_VISIBILITY void SetGlobal( shared_ptr<Container> container );
 

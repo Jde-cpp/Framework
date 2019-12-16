@@ -251,7 +251,7 @@ namespace Jde
 		template<class... Args >
 		inline void Log( const Logging::MessageBase& messageBase, Args&&... args )
 		{
-			if( pLogger )
+			if( GetDefaultLogger() )
 				GetDefaultLogger()->log( (spdlog::level::level_enum)messageBase.Level, messageBase.MessageView.data(), args... );
 			if( GetServerSink() )
 			{

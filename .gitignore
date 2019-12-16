@@ -34,5 +34,7 @@ source/.vscode/tasks.json
 source/.vscode/settings.json
 source/.vscode/c_cpp_properties.json
 source/Framework.sln
-source/log/server/proto
-
+source/log/server/proto/*.pb.*
+source/.vs
+source/.bin
+source/Framework.vcxproj.user
