@@ -6,37 +6,38 @@ namespace Jde::Math
 {
 	JDE_NATIVE_VISIBILITY size_t URound( double value );
 	//inline _int Round( double value ){ return static_cast<_iint>( llround(value) ); }
-
+	template<typename T>
 	struct StatResult
 	{
-		constexpr StatResult()=default;
-		StatResult( double average, double variance, double min, double max ):
+/*		constexpr StatResult()=default;
+		StatResult( T average, T variance, T min, T max ):
 			Average{average}, Variance{variance}, Min{min}, Max{max}
 		{}
-		StatResult& operator=(const Jde::Math::StatResult&)=default;
-		double Average{0.0};
-		double Variance{0.0};
-		double Min{0.0};
-		double Max{0.0};
+		StatResult& operator=(const Jde::Math::StatResult&)=default;*/
+		T Average{0.0};
+		T Variance{0.0};
+		T Min{0.0};
+		T Max{0.0};
 	};
 
-	//template<template<class> class TCollection>
+#define var const auto
 	template<typename TCollection>
-	StatResult Statistics( const TCollection& values, bool calcVariance=true )
+	StatResult<typename TCollection::value_type> Statistics( const TCollection& values, bool calcVariance=true )
 	{
-		const auto size = values.size();
-		double sum = 0.0;
-		double min = std::numeric_limits<double>::max();
-		double max = std::numeric_limits<double>::min();
-		double average = 0.0;
-		double variance = 0.0;
-		for( const auto& value : values )
+		typedef typename TCollection::value_type T;
+		var size = values.size();
+		ASSERT( size>0 );
+		T sum{};
+		T min{ std::numeric_limits<T>::max() };
+		T max{ std::numeric_limits<T>::min() };
+		T average{};
+		T variance{};
+		for( var& value : values )
 		{
 			sum += value;
 			min = std::min( min, value );
 			max = std::max( max, value );
 		}
-		ASSERT( size>0 );
 		if( size>0 )
 		{
 			average = sum/size;
@@ -44,12 +45,14 @@ namespace Jde::Math
 			{
 				auto varianceFunction = [&average, &size]( double accumulator, const double& val )
 				{
-					const auto diff = val - average;
+					var diff = val - average;
 					return accumulator + diff*diff / (size - 1);//sample?
 				};
-				variance = std::accumulate( values.begin(), values.end(), 0.0, varianceFunction );
+				double v2 = std::accumulate( values.begin(), values.end(), 0.0, varianceFunction );
+				variance = static_cast<T>( v2 );
 			}
 		}
-		return StatResult( average, variance, min, max );
+		return StatResult<T>{ average, variance, min, max };
 	}
+#undef var
 }

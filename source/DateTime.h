@@ -9,12 +9,13 @@
 namespace Jde
 {
 	using namespace std::literals::chrono_literals;
+	typedef uint16 DayIndex;
 	namespace Chrono
 	{
 		JDE_NATIVE_VISIBILITY TimePoint Epoch()noexcept;
 		inline uint MillisecondsSinceEpoch(const TimePoint& time)noexcept{ return duration_cast<std::chrono::milliseconds>( time-Epoch() ).count(); }
-		inline uint16 DaysSinceEpoch(const TimePoint& time)noexcept{ return duration_cast<std::chrono::hours>( time-Epoch()).count()/24; }
-		inline TimePoint FromDays( uint16 days )noexcept{ return Epoch()+days*24h; }
+		inline DayIndex DaysSinceEpoch(const TimePoint& time)noexcept{ return duration_cast<std::chrono::hours>( time-Epoch()).count()/24; }
+		inline TimePoint FromDays( DayIndex days )noexcept{ return Epoch()+days*24h; }
 		inline TimePoint Date( const TimePoint& time )noexcept{ return Clock::from_time_t( Clock::to_time_t(time)/(60*60*24)*(60*60*24) ); }
 		inline Duration Time( const TimePoint& time )noexcept{ return time-Date(time); }
 
@@ -41,7 +42,7 @@ namespace Jde
 		Clock::duration Parse( string_view stringValue );//https://en.wikipedia.org/wiki/ISO_8601 - "P0003-06-04T12:30:05
 		//constexpr string_view RegEx = "/^(R\d*\/)?P(?:\d+(?:\.\d+)?Y)?(?:\d+(?:\.\d+)?M)?(?:\d+(?:\.\d+)?W)?(?:\d+(?:\.\d+)?D)?(?:T(?:\d+(?:\.\d+)?H)?(?:\d+(?:\.\d+)?M)?(?:\d+(?:\.\d+)?S)?)?$/,";
 		//constexpr string_view RegEx2 = "^P(?!$)(\d+Y)?(\d+M)?(\d+W)?(\d+D)?(T(?=\d)(\d+H)?(\d+M)?(\d+S)?)?$";
-		
+
 #pragma warning (disable:4244)
 		constexpr static TimeSpan FromDays( double value ){ return TimeSpan( value*static_cast<double>(HoursPerDay*MinutesPerHour*SecondsPerMinute*NanosPerSecond) ); }
 #pragma warning (default:4244)
@@ -115,10 +116,10 @@ namespace Jde
 		TimePoint _time_point;
 		mutable std::unique_ptr<time_t> _pTime{nullptr};
 		mutable std::shared_ptr<std::tm> _pTm{nullptr};
-	
+
 		//std::tm	_tm;
 	};
-	
+
 	inline string ToIsoString( const TimePoint& time )noexcept{ return DateTime(time).ToIsoString(); }//TODOrefactor
 	inline string to_string( const TimePoint& time ){ return DateTime(time).ToIsoString(); }
 
@@ -132,6 +133,7 @@ namespace Jde
 		inline TimePoint EndOfMonth( const TimePoint& time )noexcept{ DateTime date{time}; return DateTime(date.Year()+(date.Month()==12 ? 1 : 0), date.Month()%12+1, 1).GetTimePoint()-1s; }
 		inline TimePoint to_timepoint( string_view iso )noexcept{ return DateTime{iso}.GetTimePoint(); }
 		inline string DateDisplay(const TimePoint& time)noexcept{ return DateTime{time}.DateDisplay(); }
+		inline string DateDisplay(DayIndex day)noexcept{ return DateTime{FromDays(day)}.DateDisplay(); }
 		inline TimePoint EndOfDay(const TimePoint& time){ DateTime date{time}; return DateTime(date.Year(), date.Month(), date.Day(), 23, 59, 59).GetTimePoint(); }
 		inline TimePoint BeginningOfDay(const TimePoint& time){ DateTime date{time}; return DateTime(date.Year(), date.Month(), date.Day(), 0, 0, 0).GetTimePoint(); }
 	}

@@ -2,6 +2,7 @@
 #include <iostream>
 namespace Jde
 {
+	/*
 	struct OSApp : IApplication
 	{
 		static void Startup( int argc, char** argv, string_view appName )noexcept;
@@ -14,4 +15,5 @@ namespace Jde
 	private:
 		static void ExitHandler( int s );
 	};
+	*/
 }

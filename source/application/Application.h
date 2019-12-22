@@ -31,7 +31,7 @@ namespace Jde
 		static std::list<sp<Threading::InterruptibleThread>>& GetBackgroundThreads()noexcept{ return  *_pBackgroundThreads; }
 	protected:
 		void Wait()noexcept;
-		virtual void OnTerminate()noexcept=0;
+		static void OnTerminate()noexcept;//implement in OSApp.cpp.
 		virtual void OSPause()noexcept=0;
 		virtual bool AsService()noexcept=0;
 		virtual void AddSignals()noexcept(false)=0;
@@ -54,7 +54,7 @@ namespace Jde
 		void AddSignals()noexcept(false) override;
 		bool AsService()noexcept override;
 		void OSPause()noexcept override;
-		void OnTerminate()noexcept;
+		//void OnTerminate()noexcept override;
 	private:
 		static void ExitHandler( int s );
 #ifdef _MSC_VER

@@ -1,5 +1,5 @@
 #!/bin/bash
-path=${1}
+ path=${1}
 type=${2:-asan}
 clean=${3:-0}
 

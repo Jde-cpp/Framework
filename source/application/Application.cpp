@@ -3,12 +3,6 @@
 #include <sys/types.h>
 #include <stdexcept>
 
-#ifndef _MSC_VER
-	#include <execinfo.h>
-#endif
-
-
-
 #include "../Diagnostics.h"
 #include "../Cache.h"
 #include "../log/server/ServerSink.h"
@@ -22,8 +16,8 @@ namespace Jde
 	sp<std::list<sp<Threading::InterruptibleThread>>> IApplication::_pBackgroundThreads{ make_shared<std::list<sp<Threading::InterruptibleThread>>>() };
 //	bool Stop{false};
 	std::function<void()> OnExit;
-	
-	auto _pDeletedThreads = make_shared<std::list<sp<Threading::InterruptibleThread>>>(); 
+
+	auto _pDeletedThreads = make_shared<std::list<sp<Threading::InterruptibleThread>>>();
 
 	auto _pObjects = make_shared<std::list<sp<void>>>();  mutex ObjectMutex;
 	auto _pShutdowns = make_shared<std::list<sp<IShutdown>>>();
@@ -41,21 +35,6 @@ namespace Jde
 {
 	const TimePoint Start=Clock::now();
 	TimePoint IApplication::StartTime()noexcept{ return Start; }
-#ifndef _MSC_VER
-	void OnTerminate()//TODO Move
-	{
-		void *trace_elems[20];
-		auto trace_elem_count( backtrace(trace_elems, 20) );
-		char **stack_syms( backtrace_symbols(trace_elems, trace_elem_count) );
-		ostringstream os;
-		for( auto i = 0; i < trace_elem_count ; ++i )
-			os << stack_syms[i] << std::endl;
-
-		IApplication::AddApplicationLog( ELogLevel::Critical, os.str() );
-		free( stack_syms );
-		exit( EXIT_FAILURE );
-	}
-#endif
 
 	IApplication::~IApplication()
 	{
@@ -65,14 +44,21 @@ namespace Jde
 	void IApplication::BaseStartup( int argc, char** argv, string_view appName )noexcept
 	{
 		bool console = false;
+		const string arg0{ argv[0] };
+#ifdef NDEBUG
+		bool terminate = true;
+#else
+		bool terminate = false;
+#endif
 		for( int i=1; i<argc; ++i )
 		{
 			if( string(argv[i])=="-c" )
 				console = true;
+			if( string(argv[i])=="-t" )
+				terminate = !terminate;
 		}
-#ifdef NDEBUG
-		std::set_terminate( OnTerminate );
-#endif
+		if( terminate )
+			std::set_terminate( OnTerminate );
 		if( !console )
 			AsService();
 		var settingsPath = std::filesystem::path( fmt::format("{}.json", appName) );
@@ -80,7 +66,7 @@ namespace Jde
 		InitializeLogger( appName );
 		SetConsoleTitle( appName );
 		Jde::Threading::SetThreadDescription( string(appName) );
-		INFO( "{}, settings='{}' Running as console='{}'", appName, settingsPath, console );
+		INFO( "{}, settings='{}' Running as console='{}'", arg0, settingsPath, console );
 
 		Cache::CreateInstance();
 	}
@@ -126,7 +112,7 @@ namespace Jde
 		}
 		DBG0( "Leaving Application::Wait" );
 	}
-	
+
 	void IApplication::AddThread( sp<Threading::InterruptibleThread> pThread )noexcept
 	{
 		TRACE0( "Adding Backgound thread" );

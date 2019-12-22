@@ -38,15 +38,13 @@ namespace Jde
 
 		Exception( const std::exception& exp );
 
-		//Exception( std::string_view value, const std::error_code& code, spdlog::level::level_enum level=spdlog::level::level_enum::err );
-		//Exception( const Exception& copyFrom );
 		virtual ~Exception();
 
 		//Exception& operator=( const Exception& copyFrom );
 		virtual void Log( std::string_view pszAdditionalInformation="", ELogLevel level=ELogLevel::Debug )const;
 		const char* what() const noexcept override;
 		ELogLevel GetLevel()const{return _level;}
-		
+
 		//shared_ptr<spdlog::logger> GetLogger()const{return _pLogger;}
 		void SetFunction( const char* pszFunction ){ _functionName = pszFunction; }
 		void SetFile( const char* pszFile ){ _fileName = pszFile; }
@@ -64,7 +62,7 @@ namespace Jde
 		//uint32 _messageId;
 		vector<string> _args;
 	};
-	
+
 
 	template<class... Args>
 	Exception::Exception( std::string_view value, Args&&... args ):
@@ -96,10 +94,10 @@ namespace Jde
 		{
 			_level = ELogLevel::Error;
 		}
-		
+
 	};
-	
-	
+
+
 	//errors detectable when the program executes
 	struct JDE_NATIVE_VISIBILITY RuntimeException : public Exception
 	{
@@ -122,7 +120,7 @@ namespace Jde
 	private:
 		std::shared_ptr<std::error_code> _pErrorCode;
 	};
-	
+
 	//https://stackoverflow.com/questions/10176471/is-it-possible-to-convert-a-boostsystemerror-code-to-a-stderror-code
 
 	struct JDE_NATIVE_VISIBILITY BoostCodeException : public RuntimeException
@@ -166,7 +164,7 @@ namespace Jde
 		exp.Log();
 		throw exp;
 	}
-	
+
 	JDE_NATIVE_VISIBILITY void catch_exception( std::string_view pszFunction, std::string_view pszFile, long line, std::string_view pszAdditional, const std::exception* pException=nullptr );
 	//https://stackoverflow.com/questions/35941045/can-i-obtain-c-type-names-in-a-constexpr-way/35943472#35943472
 	template<class T>
@@ -196,16 +194,16 @@ namespace Jde
 		}
 //		return "";
 	}
-	
+
 	inline bool Try( std::function<void()> func )
 	{
 		bool result = false;
-		try 
+		try
 		{
 			func();
 			result = true;
-		} 
-		catch( const Exception&) 
+		}
+		catch( const Exception&)
 		{}
 		return result;
 	}
@@ -213,15 +211,15 @@ namespace Jde
 	bool Try( std::function<T()> func )
 	{
 		bool result = false;
-		try 
+		try
 		{
 			func();
 			result = true;
-		} 
-		catch( const Exception&) 
+		}
+		catch( const Exception&)
 		{}
 		return result;
-	}	
+	}
 
 
 }

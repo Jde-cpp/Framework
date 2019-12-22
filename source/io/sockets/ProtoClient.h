@@ -28,7 +28,7 @@ namespace Jde::IO::Sockets
 		char _readMessageSize[4];
 		vector<google::protobuf::uint8> _message;
 	};
-	
+
 	struct ProtoClient : public PerpetualAsyncSocket, public ProtoClientSession
 	{
 		ProtoClient( string_view host, uint16 port, string_view name )noexcept;
@@ -64,7 +64,7 @@ namespace Jde::IO::Sockets
 	void TProtoClient<TOut,TIn>::Process( google::protobuf::uint8* pData, uint size )noexcept
 	{
 		google::protobuf::io::CodedInputStream input( pData, (int)size );
-		auto pTransmission = make_shared<TIn>(); 
+		auto pTransmission = make_shared<TIn>();
 		if( !pTransmission->MergePartialFromCodedStream(&input) )
 			THROW( IOException("MergePartialFromCodedStream returned false") );
 		OnReceive( pTransmission );
@@ -115,7 +115,8 @@ namespace Jde::IO::Sockets
 			if( ec )
 			{
 				Jde::GetDefaultLogger()->error( "Read Body Failed - {}", ec.value() );
-				_pSocket->close();
+				if( _pSocket )
+					_pSocket->close();
 				_pSocket = nullptr;
 			}
 			else
@@ -128,7 +129,7 @@ namespace Jde::IO::Sockets
 		TRACEX( "Writing:  {} - count={}", pData->size(), pMessage->messages_size() );
 #ifndef NDEBUG
 		//google::protobuf::io::CodedInputStream input( pData->data()+4, pData->size()-4 );
-		//auto pTransmission = make_shared<TOut>(); 
+		//auto pTransmission = make_shared<TOut>();
 		//if( !pTransmission->MergePartialFromCodedStream(&input) )
 		//	THROW( IOException("MergePartialFromCodedStream returned false, length={}", pData->size()) );
 #endif

@@ -100,7 +100,7 @@ namespace Jde::IO
 			Flags{ flags },
 			Path{ path },
 			Size{ size },
-			CreatedTime{ createTime }, 
+			CreatedTime{ createTime },
 			ModifiedTime{ modifyTime }
 		{}
 		virtual ~IDirEntry()
@@ -140,18 +140,18 @@ namespace Jde::IO
 		virtual ~DiskWatcher();
 		constexpr static EDiskWatcherEvents DefaultEvents = {EDiskWatcherEvents::Modify | EDiskWatcherEvents::MovedFrom | EDiskWatcherEvents::MovedTo | EDiskWatcherEvents::Create | EDiskWatcherEvents::Delete};
 	protected:
-		virtual void OnModify( const fs::path& path, const NotifyEvent& /*event*/ )noexcept{WARN( "No listener for OnModify {}.", path.string() );};
-		virtual void OnMovedFrom( const fs::path& path, const NotifyEvent& /*event*/ )noexcept{WARN( "No listener for OnMovedFrom {}.", path.string() );};
-		virtual void OnMovedTo( const fs::path& path, const NotifyEvent& /*event*/ )noexcept{WARN( "No listener for OnMovedTo {}.", path.string() );};
+		virtual void OnModify( const fs::path& path, const NotifyEvent& /*event*/ )noexcept{WARNN( "No listener for OnModify {}.", path.string() );};
+		virtual void OnMovedFrom( const fs::path& path, const NotifyEvent& /*event*/ )noexcept{WARNN( "No listener for OnMovedFrom {}.", path.string() );};
+		virtual void OnMovedTo( const fs::path& path, const NotifyEvent& /*event*/ )noexcept{WARNN( "No listener for OnMovedTo {}.", path.string() );};
 		virtual void OnCreate( const fs::path& path, const NotifyEvent& /*event*/ )noexcept=0;
-		virtual void OnDelete( const fs::path& path, const NotifyEvent& /*event*/ )noexcept{WARN( "No listener for OnDelete {}.", path.string() );};
+		virtual void OnDelete( const fs::path& path, const NotifyEvent& /*event*/ )noexcept{WARNN( "No listener for OnDelete {}.", path.string() );};
 	private:
 		void Run()noexcept;
 		void ReadEvent( const pollfd& fd, bool isRetry=false )noexcept(false);
 		EDiskWatcherEvents _events{DefaultEvents};
 		map<uint32_t, fs::path> _descriptors;
 		fs::path _path;
- 		int _fd; 
+ 		int _fd;
 		sp<Jde::Threading::InterruptibleThread> _pThread;
 
 		const ELogLevel _logLevel{ELogLevel::Debug};
@@ -166,7 +166,7 @@ namespace Jde::IO
 
 		void OnTimeout()noexcept override;
 		void OnAwake()noexcept override;
-		
+
 	private:
 		DiskWatcher();
 		void ReadEvent( bool isRetry=false )noexcept(false);
@@ -182,7 +182,7 @@ namespace Jde::IO
 	 */
 #pragma endregion
 #pragma region DiskWatcher
-//	struct DiskWatcherCollection : 
+//	struct DiskWatcherCollection :
 #pragma endregion
 #ifdef _WINDOWS
 #else

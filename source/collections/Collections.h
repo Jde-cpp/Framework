@@ -185,7 +185,7 @@ namespace Collections
 		{
 			const uint index = find( population.begin(), population.end(), subsetItem ) - population.begin();
 			if( index==population.size() )
-				CRITICAL( "Could not index {}", subsetItem );
+				ERRN( "Could not index {}", subsetItem );
 			results.push_back( index );
 		}
 		return results;
