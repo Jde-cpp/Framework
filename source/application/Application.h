@@ -38,7 +38,7 @@ namespace Jde
 		virtual bool KillInstance( uint processId )noexcept=0;
 
 		static mutex _threadMutex;
-		static sp<std::list<sp<Threading::InterruptibleThread>>> _pBackgroundThreads; 
+		static sp<std::list<sp<Threading::InterruptibleThread>>> _pBackgroundThreads;
 
 		static sp<IApplication> _pInstance;
 	private:
@@ -66,9 +66,9 @@ namespace Application
 {
 	//JDE_NATIVE_VISIBILITY void Startup( int argc, char** argv, string_view appName )noexcept;
 	//JDE_NATIVE_VISIBILITY void Pause()noexcept;
-	
-	
-	//JDE_NATIVE_VISIBILITY 
+
+
+	//JDE_NATIVE_VISIBILITY
 
 /*		template<class Function, class... Args>
 	static int Main( bool checkForDone, Function&& f, Args&&... args )
@@ -81,7 +81,7 @@ namespace Application
 		BackgroundThreads.push_front( Threading::InterruptibleThread(f, args...) );
 		WaitHandler( checkForDone );
 //			WaitHandler( std::function<void()> onExit );
-		return 0;	
+		return 0;
 	}
 		*/
 }}

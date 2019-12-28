@@ -57,8 +57,8 @@ namespace Jde
 		Friday=5,
 		Saturday=6
 	};
-	inline const TimePoint& min( const TimePoint& t1, const TimePoint& t2 ){ return t2<t1 ? t2 : t1;}
-	inline const TimePoint& max( const TimePoint& t1, const TimePoint& t2 ){ return t2>t1 ? t2 : t1;}
+	//inline const TimePoint& min( const TimePoint& t1, const TimePoint& t2 ){ return t2<t1 ? t2 : t1;}
+	//inline const TimePoint& max( const TimePoint& t1, const TimePoint& t2 ){ return t2>t1 ? t2 : t1;}
 	struct JDE_NATIVE_VISIBILITY DateTime
 	{
 		DateTime()noexcept;
@@ -123,9 +123,12 @@ namespace Jde
 	inline string ToIsoString( const TimePoint& time )noexcept{ return DateTime(time).ToIsoString(); }//TODOrefactor
 	inline string to_string( const TimePoint& time ){ return DateTime(time).ToIsoString(); }
 
-	namespace TimeZone
+	namespace Timezone
 	{
-		JDE_NATIVE_VISIBILITY Duration EasternTimeZoneDifference( const TimePoint& time )noexcept;
+		JDE_NATIVE_VISIBILITY Duration GetGmtOffset( string_view name, TimePoint utc )noexcept(false);
+		JDE_NATIVE_VISIBILITY Duration TryGetGmtOffset( string_view name, TimePoint utc )noexcept;
+		JDE_NATIVE_VISIBILITY Duration EasternTimezoneDifference( TimePoint time )noexcept;
+		inline TimePoint EasternTimeNow()noexcept{ const auto now=Clock::now(); return now+EasternTimezoneDifference(now); };
 	}
 	namespace Chrono
 	{

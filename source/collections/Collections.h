@@ -6,7 +6,13 @@
 
 namespace Jde
 {
-	using std::map;
+	template<typename TKey,typename TValue>
+	TValue Find( const std::map<TKey,TValue>& collection, TKey key )
+	{
+		auto pItem = collection.find( key );
+		return pItem==collection.end() ? TValue{} : pItem->second;
+	}
+
 namespace Collections
 {
 	uint32 Crc( const vector<string> values )noexcept;
@@ -58,7 +64,7 @@ namespace Collections
 		const auto& pItem = map.find(key);
 		return pItem==map.end() ? deflt : *pItem;
 	}
-	
+
 	template<typename T>
 	std::size_t Find( std::vector<T> allValues, const T& find )
 	{
@@ -71,7 +77,7 @@ namespace Collections
 		std::vector<SizeType> indexes;
 		for( const T& selection : selectedValues )
 		{
-			const auto iterator = std::find_if( allValues.begin(), allValues.end(), [&selection](const T& item){ return item==selection;} ); 
+			const auto iterator = std::find_if( allValues.begin(), allValues.end(), [&selection](const T& item){ return item==selection;} );
 			if( iterator==allValues.end() )
 				throw "wtf";
 			indexes.push_back( SizeType(std::distance(allValues.begin(), iterator)) );
@@ -86,7 +92,7 @@ namespace Collections
 		std::size_t size=initial.size();
 		for( const auto& pAppend : additions )
 			size+=pAppend->size()-offset;
-		
+
 		result.reserve(size);
 		result.insert( result.end(), initial.begin(), initial.end() );
 		for( const auto& pAppend : additions )
@@ -105,7 +111,7 @@ namespace Collections
 		shared_ptr<TValue> pValue{nullptr};
 		for( const auto& keyValuePtr : collection )
 		{
-			if( func(*keyValuePtr.second) )	
+			if( func(*keyValuePtr.second) )
 			{
 				pValue = keyValuePtr.second;
 				break;
@@ -120,7 +126,7 @@ namespace Collections
 		shared_ptr<TValue> pValue{nullptr};
 		for( const auto& keyValuePtr : collection )
 		{
-			if( func(*keyValuePtr.second) )	
+			if( func(*keyValuePtr.second) )
 			{
 				pValue = keyValuePtr.second;
 				break;
@@ -135,7 +141,7 @@ namespace Collections
 		std::forward_list<TKey> doomed;
 		for( const auto& keyValuePtr : collection )
 		{
-			if( func(*keyValuePtr.second) )	
+			if( func(*keyValuePtr.second) )
 				doomed.push_front( keyValuePtr.first );
 		}
 		for( const auto& key : doomed )
@@ -172,7 +178,7 @@ namespace Collections
 		{
 			result.process_bytes( value.c_str(), value.size() );
 			os << value;
-		}	
+		}
 		uint32 checksum = result.checksum();
 
 		assert( checksum==IO::Crc::Calc32(os.str()) );

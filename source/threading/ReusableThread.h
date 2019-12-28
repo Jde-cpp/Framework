@@ -6,7 +6,7 @@
 
 namespace Jde::Threading
 {
-	//single thread pool.
+	//single thread pool. TODO get rid of.
 	template<class TArgs>
 	class ReusableThread /*: public std::enable_shared_from_this<ReusableThread<TArgs>>*/
 	{
@@ -28,11 +28,11 @@ namespace Jde::Threading
 		std::mutex _queueMutex{}; std::condition_variable _queueCV;  //wait for queue to be added to.
 		//std::unique_lock<std::mutex> _queueEmptyWait{_mutex, std::defer_lock};
 		std::mutex _join{}; std::condition_variable _joinCV; //join wait for processing.
-		//std::unique_lock<std::mutex> _joinWait{_join, std::defer_lock};  
-		static constexpr size_t _maxSize=1; 
+		//std::unique_lock<std::mutex> _joinWait{_join, std::defer_lock};
+		static constexpr size_t _maxSize=1;
 		std::deque<std::shared_ptr<TArgs>> _argumentStack; std::shared_mutex _argumentStackMutex;
 	};
-	
+
 	template<class TArgs>
 	ReusableThread<TArgs>::ReusableThread( std::string_view name, std::function<void(std::shared_ptr<TArgs>)> method ):
 		_method( method ),
@@ -83,7 +83,7 @@ namespace Jde::Threading
 					_argumentStack.pop_front();
 				}
 				if( _argumentStack.size()<_maxSize )
-					_joinCV.notify_one();	
+					_joinCV.notify_one();
 			}
 			if( pArguments )
 				_method( pArguments );

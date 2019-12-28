@@ -61,7 +61,9 @@ namespace Jde
 			std::set_terminate( OnTerminate );
 		if( !console )
 			AsService();
-		var settingsPath = std::filesystem::path( fmt::format("{}.json", appName) );
+		std::filesystem::path settingsPath{ fmt::format("{}.json", appName) };
+		if( !fs::exists(settingsPath) )
+			settingsPath = std::filesystem::path( fmt::format("../{}.json", appName) );;
 		Settings::SetGlobal( std::make_shared<Jde::Settings::Container>(settingsPath) );
 		InitializeLogger( appName );
 		SetConsoleTitle( appName );

@@ -13,14 +13,14 @@
 namespace Jde
 {
 	//https://blog.benoitblanchon.fr/getprocaddress-like-a-boss/
-	struct ProcPtr 
+	struct ProcPtr
 	{
-		ProcPtr( FARPROC ptr ): 
+		ProcPtr( FARPROC ptr ):
 			_ptr(ptr)
 		{}
 
 		template <typename T, typename = std::enable_if_t<std::is_function_v<T>>>
-		operator T *() const 
+		operator T *() const
 		{
 			return reinterpret_cast<T *>(_ptr);
 		}
@@ -29,7 +29,7 @@ namespace Jde
 	};
 	struct DllHelper
 	{
-		DllHelper( const fs::path& path ): 
+		DllHelper( const fs::path& path ):
 			_path{path},
 #if _MSC_VER
 			_module{ ::LoadLibrary(path.string().c_str()) }
@@ -49,17 +49,17 @@ namespace Jde
 		{
 			if( GetDefaultLogger() )
 				DBGN( "Freeing '{}'.", _path.string() );
-#if _MSC_VER			
-			::FreeLibrary( _module ); 
+#if _MSC_VER
+			::FreeLibrary( _module );
 #else
 			::dlclose( _module );
 #endif
 			if( GetDefaultLogger() )
-				DBG( "Freed '{}'.", _path.string() );
+				DBGN( "Freed '{}'.", _path.string() );
 		}
-		
 
-		ProcPtr operator[](string_view proc_name) const 
+
+		ProcPtr operator[](string_view proc_name) const
 		{
 #if _MSC_VER
 			auto procAddress = ::GetProcAddress( _module, string(proc_name).c_str() );

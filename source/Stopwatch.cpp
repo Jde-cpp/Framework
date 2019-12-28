@@ -25,10 +25,10 @@ namespace Jde
 		_start{ started ? SClock::now() : STimePoint{} }
 	{}
 
-	Stopwatch::Stopwatch( Stopwatch* pParent, std::string_view what, string_view instance )noexcept:
+	Stopwatch::Stopwatch( Stopwatch* pParent, std::string_view what, string_view instance, bool started )noexcept:
 		_what{ what },//what.length()==0 ? StopwatchNS::Context :
 		_instance{instance},
-		_start{ SClock::now() },
+		_start{ started ? SClock::now() : STimePoint{} },
 		_pParent{ pParent },
 		_logMemory{ false }
 	{}
@@ -132,8 +132,8 @@ namespace Jde
 	}
 */
 /*	void Stopwatch::SetContext( const string& context )
-	{ 
-		StopwatchNS::Context=context; 
+	{
+		StopwatchNS::Context=context;
 	}
 */
 	std::string Stopwatch::FormatSeconds( const SDuration& duration )
@@ -210,7 +210,7 @@ namespace Jde
 		}
 		return name;
 	}
-*/	
+*/
 	void Stopwatch::UnPause()
 	{
 		if( _startPause.time_since_epoch().count() )

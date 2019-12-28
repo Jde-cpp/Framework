@@ -7,7 +7,7 @@ include(SetUpConfigurations)
 
 set( sources )
 list( APPEND sources DateTime.cpp Diagnostics.cpp Exception.cpp Stopwatch.cpp StringUtilities.cpp Cache.cpp Settings.cpp
-	math/MathUtilities.cpp 
+	math/MathUtilities.cpp
 	application/Application.cpp
 	log/Logging.cpp log/server/ServerSink.cpp log/server/proto/messages.pb.cc
 	io/sockets/Socket.cpp io/sockets/ProtoClient.cpp io/sockets/ProtoServer.cpp
@@ -15,10 +15,10 @@ list( APPEND sources DateTime.cpp Diagnostics.cpp Exception.cpp Stopwatch.cpp St
 	threading/Thread.cpp threading/Interrupt.cpp threading/InterruptibleThread.cpp threading/Pool.cpp
 	db/DBException.cpp db/DataType.cpp db/Database.cpp db/DBQueue.cpp)
 if(NOT MSVC)
-    list(APPEND sources application/ApplicationLinux.cpp ../../Linux/source/LinuxDrive.cpp)
+    list(APPEND sources ../../Linux/source/LinuxApp.cpp ../../Linux/source/LinuxDrive.cpp ../../Linux/source/LinuxTimezone.cpp)
 endif()
 add_library( Jde SHARED ${sources} )
-	
+
 #######################################################
 include_directories( "/home/duffyj/code/libraries/eigen" )
 target_link_libraries(Jde Threads::Threads)
@@ -40,7 +40,7 @@ target_precompile_headers(Jde
 	<Eigen/Sparse>
 	<Eigen/SVD>
 	<boost/crc.hpp>
-	<boost/exception/diagnostic_information.hpp> 
+	<boost/exception/diagnostic_information.hpp>
 	<boost/asio.hpp>
 	<boost/asio/ts/io_context.hpp>
 	<boost/core/noncopyable.hpp>

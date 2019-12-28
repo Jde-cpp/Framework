@@ -40,7 +40,13 @@ namespace Jde::Settings
 		return item==_pJson->end() ? defaultValue : item->get<int>();
 	}
 
-	
+	template<>
+	uint Container::Get( string_view path, const uint& defaultValue )const noexcept//TODO remove reference from default value
+	{
+		auto item = _pJson->find( path );
+		return item==_pJson->end() ? defaultValue : item->get<uint>();
+	}
+
 	shared_ptr<Container> Container::SubContainer( string_view entry )const throw()
 	{
 		auto item = _pJson->find( entry );
@@ -49,7 +55,7 @@ namespace Jde::Settings
 		return make_shared<Container>( *item );
 	}
 
-	
+
 	Jde::Duration Container::Duration( string_view /*path*/, const Jde::Duration& dflt )noexcept
 	{
 		//var string = String( path );
@@ -68,7 +74,7 @@ namespace Jde::Settings
 	{
 		return _pJson->find(path)==_pJson->end() ? dflt : (*_pJson)[string(path)].get<bool>();
 	}
-	
+
 	string Container::String( string_view path )noexcept
 	{
 		return _pJson->find(path)==_pJson->end() ? string() : (*_pJson)[string(path)].get<string>();
@@ -79,7 +85,7 @@ namespace Jde::Settings
 		return _pJson->find(path)==_pJson->end() ? 0 : (*_pJson)[string(path)].get<uint16>();
 	}
 
-	void to_json( nlohmann::json& j, const Server& server ) 
+	void to_json( nlohmann::json& j, const Server& server )
 	{
 		j = nlohmann::json{ {"name", server.Name}, {"port", server.Port} };
 	}

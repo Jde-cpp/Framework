@@ -10,10 +10,10 @@ namespace Jde::DB
 {
 	struct Statement
 	{
-		Statement( string_view sql, const VectorPtr<DB::DataValue>& parameters, bool isStoredProc );
-		string Sql;
+		Statement( string_view sql, const VectorPtr<DB::DataValue>& parameters, bool isStoredProc );//TODO remove this.
+		string Sql;//const?
 		const VectorPtr<DB::DataValue> Parameters;
-		bool IsStoredProc;
+		bool IsStoredProc;//const?
 	};
 
 	struct IDataSource;

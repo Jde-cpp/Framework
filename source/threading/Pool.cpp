@@ -15,7 +15,7 @@ namespace Jde::Threading
 	}
 	Pool::~Pool()
 	{
-		//while( !_workQueue.Empty() )
+		//while( !_queue.Empty() )
 		//	std::this_thread::yield();
 		_done = true;
 	}
@@ -24,13 +24,13 @@ namespace Jde::Threading
 	{
 		if( _name.size() )
 		{
-			//auto index = 
+			//auto index =
 			SetThreadDescription( fmt::format("{} {}", _name, _index++) );
 		}
-		while( !_done || !_workQueue.Empty() )
+		while( !_done || !_queue.Empty() )
 		{
 			std::function<void()> task;
-			if( _workQueue.TryPop(task) )
+			if( _queue.TryPop(task) )
 				task();
 			else
 				std::this_thread::yield();

@@ -72,7 +72,7 @@ namespace Jde
 	}
 
 	std::string DateTime::DateDisplay()const noexcept
-	{ 
+	{
 		return fmt::format("{:0>2}/{:0>2}/{:0>2}", Month(), Day(), Year()-2000);
 	}
 	DateTime DateTime::BeginingOfWeek()
@@ -130,7 +130,7 @@ namespace Jde
 	}
 */
 	uint32 DateTime::Nanos()const noexcept
-	{ 
+	{
 		return _time_point.time_since_epoch().count()%Chrono::TimeSpan::NanosPerSecond;
 	}
 
@@ -157,18 +157,18 @@ namespace Jde
 	}
 
 	unique_ptr<std::tm> DateTime::LocalTm()const noexcept
-	{ 
+	{
 		time_t time = TimeT();
 		auto pLocal = make_unique<std::tm>();
 #ifdef _WINDOWS
-		localtime_s( pLocal.get(), &time ); 
+		localtime_s( pLocal.get(), &time );
 #else
-		localtime_r( &time, pLocal.get() ); 
+		localtime_r( &time, pLocal.get() );
 #endif
 		return pLocal;
 		//return std::move(pLocal);
 	}
-	
+
 	/*time_t DateTime::LocalDate()const noexcept
 	{
 		var pLocal = LocalTime();
@@ -224,7 +224,8 @@ namespace Jde
 		var month = months[Month()-1];
 		return string{ (char)std::toupper(month[0]),month[1],month[2] };
 	}
-	namespace TimeZone
+
+/*	namespace TimeZone
 	{
 		Duration EasternTimeZoneDifference( const TimePoint& time )noexcept
 		{
@@ -246,13 +247,13 @@ namespace Jde
 #endif
 		}
 	}
-
+*/
 	std::ostream& operator<<( std::ostream &os, const Jde::DateTime& obj )noexcept
 	{
 		os << obj.ToIsoString( *obj.LocalTm() );
 //		os << fmt::format("{}-{:0>2}-{:0>2}T{:0>2}:{:0>2}:{:0>2}", pLocalTime->tm_year+1900, pLocalTime->tm_mon+1, pLocalTime->tm_mday, pLocalTime->tm_hour, pLocalTime->tm_min, pLocalTime->tm_sec).c_str();
 		return os;
-	}	
+	}
 }
 std::ostream& operator<<( std::ostream &os, const std::chrono::system_clock::time_point& obj )noexcept
 {

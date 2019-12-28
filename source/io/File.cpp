@@ -66,7 +66,7 @@ namespace Jde::IO
 			ifstream f( path, std::ios::binary );
 			if( f.fail() )
 				THROW( IOException("Could not open file '{}'", path.string()) );
-			
+
 			//auto pResult = make_unique<vector<char>>(); pResult->reserve( size );
 			return make_unique<vector<char>>( (istreambuf_iterator<char>(f)), istreambuf_iterator<char>() );  //vexing parse
 			//return move(pResult);
@@ -76,7 +76,7 @@ namespace Jde::IO
 			ofstream f( path, std::ios::binary );
 			if( f.fail() )
 				THROW( Exception(fmt::format("Could not open file '{}'", path.string())) );
-			
+
 			f.write( data.data(), data.size() );
 		}
 		void Save( const fs::path& path, const std::string& value )noexcept(false)
@@ -84,7 +84,7 @@ namespace Jde::IO
 			ofstream f( path );
 			if( f.fail() )
 				THROW( Exception(fmt::format("Could not open file '{}'", path.string())) );
-			
+
 			f.write( value.c_str(), value.size() );
 		}
 		void Compression::Save( const fs::path& path, const vector<char>& data )
@@ -133,7 +133,7 @@ namespace Jde::IO
 			fs::path compressedFile = path;
 			if( compressedFile.extension()!=Extension() )
 				compressedFile.replace_extension( fmt::format("{}{}", compressedFile.extension().string(),Extension()) );
-			
+
 			auto command = ExtractCommand( compressedFile, destination );// -y -bsp0 -bso0
 			GetDefaultLogger()->trace( command.c_str() );
 			if( system(command.c_str())==-1 )
@@ -168,7 +168,7 @@ namespace Jde::IO
 		std::vector<string> columnNames;
 		auto columnNameFunction = [&columnNames](string line){ columnNames = StringUtilities::Split<char>(line); };
 		IO::File::ForEachLine<char>( csvFileName.string(), columnNameFunction, 1 );
-		return columnNames; 
+		return columnNames;
 	}
 
 	void File::ForEachLine( string_view filePath, const std::function<void(string_view)>& function, const size_t lineCount )
@@ -178,7 +178,7 @@ namespace Jde::IO
 			THROW( Exception(fmt::format("Could not open file '{}'", filePath).c_str()) );
 		//String line;
 		std::string line;
-		
+
 		for( size_t index = 0; index<lineCount && getline<char>(file, line); ++index )
 			function( line );
 	}
@@ -249,7 +249,7 @@ namespace Jde::IO
 				}
 				while( tokens.size()>tokenIndex )
 					tokens.pop_back();
-				function( tokens, lineIndex ); 
+				function( tokens, lineIndex );
 				columnIndex=-1;
 				tokenIndex=0;
 				if( ++lineIndex-startLine>=maxLines )
@@ -267,11 +267,11 @@ namespace Jde::IO
 		std::ifstream file( path.string() );
 		if( file.fail() )
 			THROW( IOException("Could not open file '{}'", path.string()) );
-		
+
 
 		std::vector<char> rgBuffer( chunkSize );
 		vector<string> tokens;
-		
+
 		size_t lineIndex = 0;
 		//unique_ptr<Stopwatch> swForLoop( new Stopwatch(pStopwatch, StopwatchTypes::ReadFile, String("forLoop")) );
 		//unordered_set<size_t> columnIndexes2;
@@ -279,7 +279,7 @@ namespace Jde::IO
 		//	columnIndexes2.insert(i);
 		vector<uint_fast8_t> columnIndexes3;
 		size_t found=0;
-		
+
 		size_t index=0;
 		for( int i=0; i<1500; ++i )
 		{
@@ -328,7 +328,7 @@ namespace Jde::IO
 						tokens[tokenIndex] = token;
 					++tokenIndex;
 				}
-				
+
 				//swForLoop = unique_ptr<Stopwatch>( new Stopwatch( pStopwatch, StopwatchTypes::ReadFile, String("forLoop") ) );
 				++columnIndex;
 				if( newLineStart )
@@ -358,7 +358,7 @@ namespace Jde::IO
 
 		return lineIndex;
 	}
-	
+
 	size_t File::ForEachLine3( string_view pszFileName, const std::function<void(const std::vector<double>&, size_t lineIndex)>& function, const std::set<size_t>& columnIndexes, const size_t maxLines, const size_t startLine, const size_t chunkSize, size_t maxColumnCount, Stopwatch* /*sw*/ )
 	{
 		std::ifstream file( string(pszFileName).c_str() );
@@ -388,7 +388,7 @@ namespace Jde::IO
 			file.read( rgBuffer.data(), chunkSize );
 			const size_t charactersRead = file.gcount();
 			//auto pLastIndex = columnIndexes.begin();
-				//Stopwatch swSub( sw, StopwatchTypes::Calculate, L"getToken", false );  Stopwatch swSW( sw, StopwatchTypes::Calculate, L"Stopwatch", false ); swSW.Finish();// 7.6/15.35	
+				//Stopwatch swSub( sw, StopwatchTypes::Calculate, L"getToken", false );  Stopwatch swSW( sw, StopwatchTypes::Calculate, L"Stopwatch", false ); swSW.Finish();// 7.6/15.35
 			//24 seconds getting every float allocating rgTest.
 			if( false )
 			{
@@ -400,7 +400,7 @@ namespace Jde::IO
 				for( ; lineIndex2<startLine; ++lineIndex2 )
 					pStart = strchr( &rgBuffer[0], '\n' );
 				//int iVector=0;
-				
+
 				while( size_t(pStart-&rgBuffer[0])<charactersRead )
 				{
 					//if(  )
@@ -423,8 +423,8 @@ namespace Jde::IO
 				const uint_fast8_t getToken = pColumnIndexes3[columnIndex];
 				if( getToken && lineIndex>=startLine )
 				{
-					//Stopwatch swSub( sw, StopwatchTypes::Calculate, L"getToken", false );  Stopwatch swSW( sw, StopwatchTypes::Calculate, L"Stopwatch", false ); swSW.Finish();// 7.6/15.35	
-					//Stopwatch swSW( sw, StopwatchTypes::Calculate, L"Stopwatch", false ); swSW.Finish(); 
+					//Stopwatch swSub( sw, StopwatchTypes::Calculate, L"getToken", false );  Stopwatch swSW( sw, StopwatchTypes::Calculate, L"Stopwatch", false ); swSW.Finish();// 7.6/15.35
+					//Stopwatch swSW( sw, StopwatchTypes::Calculate, L"Stopwatch", false ); swSW.Finish();
 					//Stopwatch swConvert( sw, StopwatchTypes::Calculate, L"strtod", false );  	// 9.0/4:00:00
 					//if( tokenIndex==1154 )
 						//pLogger->debug( "new line" );
@@ -445,8 +445,8 @@ namespace Jde::IO
 						while( tokens.size()>tokenIndex )
 							tokens.pop_back();
 						auto threadStart=[tokens,lineIndex,&function]()
-						{ 
-							function(tokens, lineIndex); 
+						{
+							function(tokens, lineIndex);
 						};
 						if( pThread )
 							pThread->join();
@@ -500,7 +500,7 @@ namespace Jde::IO
 		do
 		{
 			file.read( rgBuffer.data(), size_t(chunkSize2)/**/ );
-			
+
 			const size_t charactersRead = file.gcount();
 			char* pStart = rgBuffer.data(); auto pEnd = pStart+charactersRead;
 			char* p = pStart;
@@ -530,14 +530,14 @@ namespace Jde::IO
 						const bool negative = *p == '-';
 						if( negative )
 							++p;
-						for( ;*p >= '0' && *p <= '9'; ++p ) 
+						for( ;*p >= '0' && *p <= '9'; ++p )
 							value = value*10.0 + *p - '0';
-						if (*p == '.') 
+						if (*p == '.')
 						{
 							++p;
 							int n = 0;
 							double f = 0.0;
-							for( ;*p >= '0' && *p <= '9'; ++p,++n ) 
+							for( ;*p >= '0' && *p <= '9'; ++p,++n )
 								f = f*10.0 + *p - '0';
 							value += f / std::pow(10.0, n);
 						}
@@ -546,8 +546,8 @@ namespace Jde::IO
 							++p;
 							bool positiveExponent = *p=='+';
 							++p;
-							size_t exponent = 0; 
-							for( ;*p >= '0' && *p <= '9'; ++p ) 
+							size_t exponent = 0;
+							for( ;*p >= '0' && *p <= '9'; ++p )
 								exponent = exponent*10 + *p - '0';
 							if( !positiveExponent )
 								exponent*=-1;
@@ -567,7 +567,7 @@ namespace Jde::IO
 				}
 				while( tokens.size()>tokenIndex )
 					tokens.pop_back();
-				function( tokens, lineIndex ); 
+				function( tokens, lineIndex );
 				columnIndex=-1;
 				tokenIndex=0;
 				if( ++lineIndex-startLine>=maxLines )
@@ -578,7 +578,7 @@ namespace Jde::IO
 		}while( !file.eof() );
 		return lineIndex-startLine;
 	}
-	
+
 	std::pair<std::vector<string>,std::set<size_t>> File::LoadColumnNames( string_view csvFileName, std::vector<string>& columnNamesToFetch, bool notColumns )
 	{
 		std::vector<string> columnNames;
@@ -614,7 +614,7 @@ namespace Jde::IO
 	}
 
 	std::string FileUtilities::DateFileName( uint16 year, uint8 month, uint8 day )noexcept
-	{ 
+	{
 		auto path = std::to_string(year);
 		if( month>0 )
 		{
@@ -626,10 +626,13 @@ namespace Jde::IO
 	}
 
 	tuple<uint16,uint8,uint8> FileUtilities::ExtractDate( const fs::path& path )noexcept
-	{ 
+	{
 		uint16 year=0;
 		uint8 month=0, day=0;
-		var stem = path.stem().string();
+		auto stem = path.stem().string();
+		uint16 index = 0;
+		for( ;index<stem.size() && (std::isalpha(stem[index]) || stem[index]=='-'); ++index );
+		stem = stem.substr( index );
 		try
 		{
 			if( stem.size()>=4 )

@@ -26,7 +26,7 @@ namespace Jde
 	{
 	public:
 		Stopwatch( std::string_view what, bool started=true )noexcept;
-		Stopwatch( Stopwatch* pParent, std::string_view what="", std::string_view instance="" )noexcept;
+		Stopwatch( Stopwatch* pParent, std::string_view what="", std::string_view instance="", bool started=true )noexcept;
 		virtual ~Stopwatch();
 
 		void Finish( string_view description );
@@ -46,10 +46,10 @@ namespace Jde
 		const std::string _what;
 		const std::string _instance;
 		std::chrono::steady_clock::time_point _start;
-		
+
 		Stopwatch* _pParent{nullptr};
 		std::map<std::string,SDuration> _children;
-		
+
 		bool _finished{false};
 		const bool _logMemory{false};
 		static SDuration _minimumToLog;

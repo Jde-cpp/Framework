@@ -5,7 +5,8 @@
 #include <shared_mutex>
 #include "Thread.h"
 #include "../collections/Queue.h"
-//#include "../Exception.h"
+#include "../application/Application.h"
+#include "InterruptibleThread.h"
 
 namespace Jde::Threading
 {
@@ -20,7 +21,7 @@ namespace Jde::Threading
 		std::atomic_bool _done;
 		std::atomic<uint> _index;
 		const string _name;
-    	QueueValue<std::function<void()>> _workQueue;
+    	QueueValue<std::function<void()>> _queue;
     	std::vector<std::thread> _threads;
     	ThreadCollection _joiner;
 		void Worker();
@@ -29,6 +30,94 @@ namespace Jde::Threading
 	template<typename FunctionType>
 	void Pool::Submit( FunctionType f )
 	{
-		_workQueue.Push( std::function<void()>(f) );
+		_queue.Push( std::function<void()>(f) );
 	}
+
+	template<typename T>
+	struct JDE_NATIVE_VISIBILITY TypePool : IShutdown
+	{
+		TypePool( uint8 threadCount, string_view name )noexcept;
+		~TypePool(){ DBG0("~TypePool"); }
+
+		virtual void Execute( sp<T> pValue )noexcept=0;
+		void Push( const sp<T> pValue )noexcept;
+		void Shutdown()noexcept override;
+
+	private:
+		void Run( string name )noexcept;
+		void AddThread()noexcept;
+
+		const uint8 MaxThreads;
+		const string Name;
+		std::atomic<uint8> RunningCount;
+    	std::vector<sp<InterruptibleThread>> _threads; mutable std::mutex _mtx;
+		Queue<T> _queue;
+	};
+#define var const auto
+	template<typename T>
+	TypePool<T>::TypePool( uint8 threadCount, string_view name )noexcept:
+		MaxThreads{ threadCount },
+		Name{name}
+	{
+		//AddThread();
+	}
+
+	template<typename T>
+	void TypePool<T>::AddThread()noexcept
+	{
+		unique_lock l{_mtx};
+		if( RunningCount<MaxThreads )
+		{
+			var name = fmt::format( "{}-{}", Name, _threads.size() );
+			auto pThread = make_shared<InterruptibleThread>( name, [&, name](){Run(name);} );
+			_threads.push_back( pThread );
+		}
+	}
+
+	template<typename T>
+	void TypePool<T>::Run( string name )noexcept
+	{
+		DBG( "({}) Starting", name  );
+		while( !GetThreadInterruptFlag().IsSet() )//fyi existing _queue is thrown out.
+		{
+			unique_lock l{ _mtx };
+			sp<T> p = _queue.TryPop();
+			if( p )
+			{
+				++RunningCount;
+				l.unlock();
+				Execute( p );
+				l.lock();
+				--RunningCount;
+			}
+			else
+			{
+				_threads.erase( remove_if(_threads.begin(),_threads.end(), [](auto pThread){ return pThread->IsDone();}) );
+				break;
+			}
+		}
+		DBG( "({}) Leaving", name  );
+	}
+
+	template<typename T>
+	void TypePool<T>::Push( const sp<T> pValue )noexcept
+	{
+		_queue.Push( pValue );
+		AddThread();
+	}
+	template<typename T>
+	void TypePool<T>::Shutdown()noexcept
+	{
+		DBG0( "TypePool<T>::Shutdown" );
+		unique_lock l{_mtx};
+		while( _threads.size() )
+		{
+			auto pThread = _threads[_threads.size()-1];
+			l.unlock();
+			pThread->Interrupt();
+			pThread->Join();
+			l.lock();
+		}
+	}
+#undef var
 }
