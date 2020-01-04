@@ -52,7 +52,7 @@ namespace Jde::IO::Sockets
 		SessionPK Id;
 		//virtual void Start()noexcept=0;
 		virtual void OnDisconnect()noexcept=0;
-	protected:		
+	protected:
 		void ReadHeader()noexcept;
 		basio::ip::tcp::socket _socket2;
 	private:
@@ -67,7 +67,7 @@ namespace Jde::IO::Sockets
 		TProtoSession( basio::ip::tcp::socket& socket, SessionPK id )noexcept:
 			ProtoSession{ socket, id }
 		{}
-		
+
 	protected:
 		//void Write( sp<TFromServer> pMessage )noexcept;
 		virtual void OnReceive( sp<TToServer> pValue )noexcept(false)=0;
@@ -75,7 +75,7 @@ namespace Jde::IO::Sockets
 		void Write( const TFromServer& message )noexcept;
 		vector<google::protobuf::uint8> _message;
 	};
-	
+
 	template<typename TToServer, typename TFromServer>
 	void TProtoSession<TToServer,TFromServer>::ReadBody( uint messageLength )noexcept
 	{
@@ -90,7 +90,7 @@ namespace Jde::IO::Sockets
 
 				TRACE( "ServerSession::ReadBody '{}' bytes", length );
 				google::protobuf::io::CodedInputStream input( _message.data(), (int)std::min(length,_message.size()) );
-				auto pTransmission = make_shared<TToServer>(); 
+				auto pTransmission = make_shared<TToServer>();
 				if( !pTransmission->MergePartialFromCodedStream(&input) )
 					THROW( IOException("MergePartialFromCodedStream returned false, length={}", length) );
 				OnReceive( pTransmission );
@@ -111,10 +111,10 @@ namespace Jde::IO::Sockets
 	void TProtoSession<TToServer,TFromServer>::Write( const TFromServer& message )noexcept
 	{
 		auto pData = ProtoClientSession::ToBuffer( message );
-		auto onDone = [pData]( std::error_code ec, std::size_t length )
+		auto onDone = [id=Id,pData]( std::error_code ec, std::size_t length )
 		{
 			if( ec )
-				ERR( "Write message returned '{}'.", ec.value() );
+				DBG( "({})Write message returned '{}'.", id, ec.value() );
 			else
 				TRACE( "Session::Write length:  '{}'.", length );
 		};
@@ -123,5 +123,5 @@ namespace Jde::IO::Sockets
 
 #pragma endregion
 	//template<typename T>
-	
+
 }

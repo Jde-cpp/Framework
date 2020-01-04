@@ -108,14 +108,13 @@ namespace Jde
 	void Stopwatch::Finish( string_view description )
 	{
 		var elapsed = Elapsed();
+		Pause();
 		if( _pParent  )
-		{
-			auto pChild = _pParent->_children.emplace( _what, std::chrono::nanoseconds(0) ).first;
-			pChild->second += elapsed;
-		}
+			_pParent->_children.emplace( _what, std::chrono::nanoseconds(0) ).first->second += elapsed;
 		if( elapsed-_previousProgressElapsed>_minimumToLog || _children.size()>0 )
 		{
-			Output( description.size() ? description : _instance.size() ? _instance : _what, elapsed, _logMemory );
+			_previousProgressElapsed = elapsed;
+			Output( description.size() ? description : _instance.size() ? _instance : _what, elapsed-_previousProgressElapsed, _logMemory );
 			for( var& child : _children )
 			{
 				if( child.second>_minimumToLog )
@@ -221,7 +220,7 @@ namespace Jde
 	}
 	void Stopwatch::Pause()
 	{
-		if( !_startPause.time_since_epoch().count() )
+		if( _startPause!=STimePoint{} )
 			_startPause = SClock::now();
 	}
 }

@@ -16,8 +16,6 @@
 #endif
 #define var const auto
 
-//_crtBreakAlloc = 155;
-
 namespace Jde
 {
 	Logging::IServerSink* _pServerSink{nullptr};
@@ -31,13 +29,13 @@ namespace Jde
 
 	void DestroyLogger()
 	{
-		TRACE0( "Destroying Logger" ); 
-		pLogger = nullptr; 
-		spLogger = nullptr; 
+		TRACE0( "Destroying Logger" );
+		pLogger = nullptr;
+		spLogger = nullptr;
 		Logging::_pOnceMessages = nullptr;
 		_pServerSink = nullptr;
 	};
-	
+
 	//std::shared_ptr<Logging::ServerSink> _spServerSink2{nullptr};
 	//std::shared_ptr<Logging::IServerSink> _spServerSink{nullptr};
 #ifdef _MSC_VER
@@ -61,8 +59,8 @@ namespace Jde
 		InitializeLogger( level, path, server );
 	}
 	TimePoint _startTime = Clock::now(); Logging::Proto::Status _status; mutex _statusMutex; TimePoint _lastStatusUpdate;
-	void SecretDelFunc( spdlog::logger* p) 
-	{ 
+	void SecretDelFunc( spdlog::logger* p)
+	{
 		delete p;
 		//spLogger = nullptr;
 		pLogger = nullptr;
@@ -81,10 +79,10 @@ namespace Jde
 			//auto rotating = make_shared<spdlog::sinks::rotating_file_sink_mt> ("logs/testlog", "log", 1024*1024, 5, false);
 			//std::vector<spdlog::sink_ptr> sinks;
 			std::vector<spdlog::sink_ptr> sinks{pConsole, pFileSink};
-//			sinks.push_back( pConsole ); 
+//			sinks.push_back( pConsole );
 //			sinks.push_back( pFileSink );
 			//std::shared_ptr<sinks::sink>
-			
+
 			spLogger = sp<spdlog::logger>( new spdlog::logger{"my_logger", sinks.begin(), sinks.end()}, SecretDelFunc );
 			//spLogger = make_shared<spdlog::logger>( "my_logger", sinks.begin(), sinks.end() );
 		}
@@ -135,7 +133,7 @@ namespace Jde
 			if( _pServerSink->GetLogLevel()<=message.Level )
 				_pServerSink->Log( message );
 		}
-		
+
 /*		void LogEtw( const Logging::MessageBase& messageBase )
 		{
 #ifdef _MSC_VER
@@ -228,8 +226,8 @@ namespace Jde
 		return pLogger;
 	}
 	inline Logging::IServerSink* GetServerSink()noexcept
-	{ 
-		return _pServerSink; 
+	{
+		return _pServerSink;
 	}
 	void SetServerSink( Logging::IServerSink* p )noexcept
 	{
