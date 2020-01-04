@@ -49,7 +49,7 @@ namespace Jde::Threading
 
 		const uint8 MaxThreads;
 		const string Name;
-		std::atomic<uint8> RunningCount;
+		std::atomic<uint8> RunningCount{0};
     	std::vector<sp<InterruptibleThread>> _threads; mutable std::mutex _mtx;
 		Queue<T> _queue;
 	};
@@ -92,7 +92,7 @@ namespace Jde::Threading
 			}
 			else
 			{
-				_threads.erase( remove_if(_threads.begin(),_threads.end(), [](auto pThread){ return pThread->IsDone();}) );
+				_threads.erase( remove_if(_threads.begin(),_threads.end(), [](auto pThread){ return pThread->IsDone(); }), _threads.end() );
 				break;
 			}
 		}

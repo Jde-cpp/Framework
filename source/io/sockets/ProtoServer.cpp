@@ -9,7 +9,7 @@ namespace Jde::IO::Sockets
 		auto endpoint = basio::ip::tcp::endpoint( basio::ip::tcp::v4(), port );
 		_pAcceptor = make_unique<basio::ip::tcp::acceptor>( _asyncHelper, endpoint ); //"bind: Address already in use
 	}
-	
+
 	ProtoServer::~ProtoServer()
 	{
 	/*	TODO
@@ -18,7 +18,7 @@ namespace Jde::IO::Sockets
 			try
 			{
 				//if( _pAcceptor )
-				//	_pAcceptor->close(); 
+				//	_pAcceptor->close();
 			}
 			catch( const std::system_error& e )
 			{
@@ -66,7 +66,7 @@ namespace Jde::IO::Sockets
 				// 	else
 				// 		DBG("length={}", length);
 				// };
-				
+
 				var id = ++_id;
 				DBG( "Accepted Connection - {}", id );
 //				basio::async_write( socket, basio::buffer(data.data(), data.size()), onDone );
@@ -84,13 +84,13 @@ namespace Jde::IO::Sockets
 	void ProtoServer::Run()noexcept
 	{
 		Threading::SetThreadDescription( "ProtoServer::Run" );
-		DBG0( "ProtoServer::Run" );		
+		DBG0( "ProtoServer::Run" );
 		_asyncHelper.run();
-		DBG0( "ProtoServer::Run Exit" );		
+		DBG0( "ProtoServer::Run Exit" );
 	}
 
 	ProtoSession::ProtoSession( basio::ip::tcp::socket& socket, SessionPK id )noexcept:
-		Id{ id }, 
+		Id{ id },
 		_socket2( std::move(socket) )
 	{
 		ReadHeader();
@@ -108,7 +108,7 @@ namespace Jde::IO::Sockets
 					OnDisconnect();
 				}
 				else
-					ERR0( CodeException::ToString(ec) );
+					ERR( "({})Read Header Failed - {}", Id, CodeException::ToString(ec) );
 			}
 			else if( headerLength!=4 )
 				ERR( "only read '{}'", headerLength );

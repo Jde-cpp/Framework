@@ -125,6 +125,7 @@ namespace Jde
 #define WARN0(message) Logging::Log( Logging::MessageBase(ELogLevel::Warning, message, MY_FILE, __func__, __LINE__) )
 #define WARN0N( message ) Logging::Log( Logging::MessageBase(ELogLevel::Warning, message, MY_FILE, __func__, __LINE__, IO::Crc::Calc32RunTime(message), IO::Crc::Calc32RunTime(MY_FILE), IO::Crc::Calc32RunTime(__func__)) )
 #define WARN(message,...) Logging::Log( Logging::MessageBase(ELogLevel::Warning, message, MY_FILE, __func__, __LINE__), __VA_ARGS__ )
+#define WARN_ONCE(message,...) Logging::LogOnce( Logging::MessageBase(ELogLevel::Warning, message, MY_FILE, __func__, __LINE__), __VA_ARGS__ )
 #define WARNN( message, ... ) Logging::Log( Logging::MessageBase(ELogLevel::Warning, message, MY_FILE, __func__, __LINE__, IO::Crc::Calc32RunTime(message), IO::Crc::Calc32RunTime(MY_FILE), IO::Crc::Calc32RunTime(__func__)), __VA_ARGS__ )
 #define INFO0(message) Logging::Log( Logging::MessageBase(ELogLevel::Information, message, MY_FILE, __func__, __LINE__) )
 #define INFO(message,...) Jde::Logging::Log( Jde::Logging::MessageBase(Jde::ELogLevel::Information, message, MY_FILE, __func__, __LINE__), __VA_ARGS__ )
@@ -135,19 +136,20 @@ namespace Jde
 #define DBGN( message, ... ) Logging::Log( Logging::MessageBase(ELogLevel::Debug, message, MY_FILE, __func__, __LINE__, IO::Crc::Calc32RunTime(message), IO::Crc::Calc32RunTime(MY_FILE), IO::Crc::Calc32RunTime(__func__)), __VA_ARGS__ )
 #define DBGX(message,...) Logging::LogNoServer( Logging::MessageBase(ELogLevel::Debug, message, MY_FILE, __func__, __LINE__), __VA_ARGS__ )
 #define TRACE(message,...) Logging::Log( Logging::MessageBase(ELogLevel::Trace, message, MY_FILE, __func__, __LINE__), __VA_ARGS__ )
+#define TRACE_ONCE(message,...) Logging::LogOnce( Logging::MessageBase(ELogLevel::Trace, message, MY_FILE, __func__, __LINE__), __VA_ARGS__ )
 #define TRACE0(message) Logging::Log( Logging::MessageBase(ELogLevel::Trace, message, MY_FILE, __func__, __LINE__) )
 #define TRACEX(message,...) Logging::LogNoServer( Logging::MessageBase(ELogLevel::Trace, message, MY_FILE, __func__, __LINE__), __VA_ARGS__ )
 #define TRACE0X(message) Logging::LogNoServer( Logging::MessageBase(ELogLevel::Trace, message, MY_FILE, __func__, __LINE__) )
 #define LOG(severity,message,...) Logging::Log( Logging::MessageBase(severity, message, MY_FILE, __func__, __LINE__), __VA_ARGS__ )
 #define LOG0(severity,message) Logging::Log( Logging::MessageBase(severity, message, MY_FILE, __func__, __LINE__) )
-//#define LOG_SQL(sql,pParams) 
+//#define LOG_SQL(sql,pParams)
 
 namespace spdlog
-{ 
+{
 #ifdef _MSC_VER
 	namespace level{ enum level_enum : int;}
 #endif
-} 
+}
 namespace Jde
 {
 	extern std::shared_ptr<spdlog::logger> spLogger;
@@ -176,7 +178,7 @@ namespace Jde
 	extern Logging::Lttng* _pLttng;
 	extern sp<Logging::Lttng> _spLttng;
 //	JDE_NATIVE_VISIBILITY Logging::Lttng* GetEtwSink();
-#endif	 
+#endif
 	//spd::stdout_color_mt
 //	using std::string;
 	JDE_NATIVE_VISIBILITY std::ostream& operator<<( std::ostream& os, const ELogLevel& value );
@@ -230,9 +232,6 @@ namespace Jde
 		inline void LogCritical( const Logging::MessageBase& messageBase, Args&&... args )
 		{
 			GetDefaultLogger()->log( spdlog::level::level_enum::critical, messageBase.MessageView.data(), args... );
-#ifdef NDEBUG
- 			LogCritical( Jde::Logging::MessageBase(Jde::ELogLevel::Critical, messageBase.MessageView, "Logging.h", "LogCritical", 218) );
-#endif
 			if( GetServerSink() )
 			{
 				vector<string> values; values.reserve( sizeof...(args) );
@@ -247,7 +246,7 @@ namespace Jde
 			// 	LogEtw( messageBase, values );
 			// }
 		}
-		
+
 		template<class... Args >
 		inline void Log( const Logging::MessageBase& messageBase, Args&&... args )
 		{
