@@ -11,7 +11,7 @@
 namespace Jde
 {
 	namespace fs=std::filesystem;
-	class Stopwatch;
+	struct Stopwatch;
 	class String;
 	//using std::list;
 namespace IO

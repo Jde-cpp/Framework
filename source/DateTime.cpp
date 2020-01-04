@@ -225,9 +225,20 @@ namespace Jde
 		return string{ (char)std::toupper(month[0]),month[1],month[2] };
 	}
 
-/*	namespace TimeZone
+	namespace Timezone
 	{
-		Duration EasternTimeZoneDifference( const TimePoint& time )noexcept
+		Duration TryGetGmtOffset( string_view name, TimePoint utc )noexcept
+		{
+			try
+			{
+				return GetGmtOffset( name, utc );
+			}
+			catch(Exception)
+			{}
+			return Duration{};
+		}
+	}
+/*		Duration EasternTimeZoneDifference( const TimePoint& time )noexcept
 		{
 #ifdef _WINDOWS
 			var timet = DateTime(time).TimeT();
@@ -247,7 +258,7 @@ namespace Jde
 #endif
 		}
 	}
-*/
+	*/
 	std::ostream& operator<<( std::ostream &os, const Jde::DateTime& obj )noexcept
 	{
 		os << obj.ToIsoString( *obj.LocalTm() );

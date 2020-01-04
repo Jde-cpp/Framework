@@ -7,23 +7,8 @@
 #include <functional>
 #include <locale>
 
-using namespace std;
 namespace Jde
 {
-	//https://stackoverflow.com/questions/2573834/c-convert-string-or-char-to-wstring-or-wchar-t
-	//static std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> _converter;
-	wstring StringUtilities::ToWChar( const string& value )
-	{
-		return wstring( value.data(), value.data()+value.size() );
-		// std::wstring_convert<std::codecvt<wchar_t>> converter;
-		// return converter.from_bytes( value );
-	}
-	// string StringUtilities::ToChar( const wstring& value )
-	// {
-	// 	// std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
-	// 	// return converter.to_bytes( value );
-	// 	return string( value.data(), value.data()+value.size() );
-	// }
 
 	int ci_char_traits::compare( const char* s1, const char* s2, size_t n )
 	{
@@ -81,7 +66,6 @@ namespace Jde
 		
 		return result;
 	}
-//#pragma warning
 	string StringUtilities::ToLower( string_view source )noexcept
 	{
 		string result(source);
@@ -94,20 +78,3 @@ namespace Jde
 		return result;
 	}
 }
-	
-
-	/*
-	std::wstring StringUtilities::LTrim(std::wstring &s) 
-	{
-		//	s.erase(s.begin(), std::find_if(s.begin(), s.end(), std::not1(std::ptr_fun<int, int>(std::isspace))));
-		return s;
-	}
-
-	std::wstring StringUtilities::Trim(std::wstring &s) 
-	{
-		std::wstring value = LTrim(s);
-		return RTrim( value );
-	}
-	*/
-	///https://www.cs.cmu.edu/~callan/Teaching/porter.c*/
-//#pragma warning( pop )

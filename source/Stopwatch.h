@@ -22,9 +22,8 @@ namespace Jde
 		WriteFile,
 		ServerCall
 	};
-	class JDE_NATIVE_VISIBILITY Stopwatch
+	struct JDE_NATIVE_VISIBILITY Stopwatch
 	{
-	public:
 		Stopwatch( std::string_view what, bool started=true )noexcept;
 		Stopwatch( Stopwatch* pParent, std::string_view what="", std::string_view instance="", bool started=true )noexcept;
 		virtual ~Stopwatch();

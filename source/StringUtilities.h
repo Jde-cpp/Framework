@@ -12,11 +12,8 @@ namespace Jde
 {
 	namespace StringUtilities
 	{
-		JDE_NATIVE_VISIBILITY wstring ToWChar( const string& value );
-		//JDE_NATIVE_VISIBILITY string ToChar( const wstring& value );
 		template<typename T>
 		std::basic_string<T> RTrim(std::basic_string<T> &s);
-//		JDE_NATIVE_VISIBILITY static std::wstring Trim(std::wstring &s);
 		
 		template<typename T>
 		std::vector<std::basic_string<T>> Split( const std::basic_string<T> &s, T delim=T{','} );
@@ -125,11 +122,6 @@ namespace Jde
 		}
 	}
 
-/*	template<class T>
-	constexpr std::string_view GetTypeName()
-	{
-		return "FOO";
-	}*/
 	template<typename T>
 	static T StringUtilities::TryTo( string_view value, T errorValue )
 	{

@@ -25,28 +25,6 @@ namespace Jde::Settings
 		_pJson{ make_unique<nlohmann::json>(json) }
 	{}
 
-
-	template<>
-	bool Container::Get( string_view path, const bool& defaultValue )const noexcept
-	{
-		auto item = _pJson->find( path );
-		return item==_pJson->end() ? defaultValue : item->get<bool>();
-	}
-
-	template<>
-	int Container::Get( string_view path, const int& defaultValue )const noexcept
-	{
-		auto item = _pJson->find( path );
-		return item==_pJson->end() ? defaultValue : item->get<int>();
-	}
-
-	template<>
-	uint Container::Get( string_view path, const uint& defaultValue )const noexcept//TODO remove reference from default value
-	{
-		auto item = _pJson->find( path );
-		return item==_pJson->end() ? defaultValue : item->get<uint>();
-	}
-
 	shared_ptr<Container> Container::SubContainer( string_view entry )const throw()
 	{
 		auto item = _pJson->find( entry );

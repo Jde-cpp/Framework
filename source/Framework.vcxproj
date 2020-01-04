@@ -155,6 +155,9 @@
     <ClInclude Include="math\io\MatLab\MatLabVariable.h" />
     <ClInclude Include="math\MathUtilities.h" />
     <ClCompile Include="..\..\Windows\source\WindowsApp.cpp" />
+    <ClCompile Include="..\..\Windows\source\WindowsDrive.cpp" />
+    <ClCompile Include="..\..\Windows\source\WindowsTimezone.cpp" />
+    <ClCompile Include="..\..\Windows\source\WindowsUtilities.cpp" />
     <ClCompile Include="application\Application.cpp" />
     <ClCompile Include="Cache.cpp" />
     <ClCompile Include="db\Database.cpp" />

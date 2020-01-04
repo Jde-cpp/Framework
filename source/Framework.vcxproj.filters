@@ -88,6 +88,15 @@
     <ClCompile Include="..\..\Windows\source\WindowsApp.cpp">
       <Filter>Source\application</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Windows\source\WindowsTimezone.cpp">
+      <Filter>Source\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Windows\source\WindowsUtilities.cpp">
+      <Filter>Source\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Windows\source\WindowsDrive.cpp">
+      <Filter>Source\application</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="StringUtilities.h">
@@ -347,6 +356,9 @@
     </Filter>
     <Filter Include="Source\application">
       <UniqueIdentifier>{118c135c-7ad9-4c23-bc92-a43e8da3cb94}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\windows">
+      <UniqueIdentifier>{ad6d81d5-6b26-4755-ae42-f20bb949ada7}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

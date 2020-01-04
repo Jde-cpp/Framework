@@ -34,7 +34,7 @@ namespace Jde::Threading
 	}
 
 	template<typename T>
-	struct JDE_NATIVE_VISIBILITY TypePool : IShutdown
+	struct TypePool : IShutdown
 	{
 		TypePool( uint8 threadCount, string_view name )noexcept;
 		~TypePool(){ DBG0("~TypePool"); }
