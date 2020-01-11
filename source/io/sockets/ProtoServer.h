@@ -97,7 +97,7 @@ namespace Jde::IO::Sockets
 			}
 			catch( const IOException& e )
 			{
-				ERR( "ReadBody failed, TODO return {}", e.what() );
+				ERR( "ReadBody failed - {}", e.what() );
 			}
 			ReadHeader();
 		};

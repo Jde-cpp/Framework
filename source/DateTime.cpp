@@ -8,13 +8,45 @@
 
 namespace Jde
 {
+	using namespace std::chrono;
 	namespace Chrono
 	{
 		TimePoint _epoch{ DateTime(1970,1,1).GetTimePoint() };
 		TimePoint Epoch()noexcept{ return _epoch; };
-	}
 
-	using namespace std::chrono;
+		Duration ToDuration( string_view iso )noexcept(false)//P3Y6M4DT12H30M5S
+		{
+			istringstream is{ string{iso} };
+			if( is.get()!='P' )
+				THROW( Exception("Expected 'P' as first character.") );
+			bool parsingTime = false;
+			Duration duration;
+			while( is.good() )
+			{
+				if( !parsingTime && (parsingTime = is.peek()=='T') )
+				{
+					is.get();
+					continue;
+				}
+				double value;
+				is >> value;
+				var type = is.get();
+				if( type=='Y' )
+					duration += hours( Math::URound(value*365.25*24) );
+				else if( !parsingTime && type=='M' )
+					duration += hours( Math::URound(value*30*24) );
+				else if( type=='D' )
+					duration += hours( Math::URound(value*24) );
+				else if( type=='H' )
+					duration += minutes( Math::URound(value*60) );
+				else if( type=='M' )
+					duration += seconds( Math::URound(value*60) );
+				else if( type=='S' )
+					duration += milliseconds( Math::URound(value*1000) );
+			}
+			return duration;
+		}
+	}
 
 	DateTime::DateTime()noexcept:
 		_time_point( std::chrono::system_clock::now() )
@@ -233,7 +265,7 @@ namespace Jde
 			{
 				return GetGmtOffset( name, utc );
 			}
-			catch(Exception)
+			catch( const Exception& )
 			{}
 			return Duration{};
 		}

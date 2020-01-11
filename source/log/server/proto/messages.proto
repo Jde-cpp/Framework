@@ -2,7 +2,7 @@
 //protoc --cpp_out dllexport_decl=JDE_NATIVE_VISIBILITY:. -I/c/code/libraries/vcpkg/installed/x64-windows/include -I. messages.proto
 //protoc --cpp_out dllexport_decl=JDE_NATIVE_VISIBILITY:. messages.proto
 //\code\7.0\web2\ClientApp>MKLINK ib.proto C:\code\7.0\native\framework\markets\types\proto\ib.proto
-//\code\7.0\web2\ClientApp>npx pbjs -t static-module -w es6 -o src\app\proto\ib.js ib.proto & npx pbts -o src\app\proto\ib.d.ts src\app\proto\ib.js
+//npx pbjs -t static-module -w es6 -o src/app/proto/messages.js messages.proto & npx pbts -o src/app/proto/messages.d.ts src/app/proto/messages.js
 
 syntax = "proto3";
 
@@ -28,7 +28,7 @@ message Instance
 	//ELogLevel dbLogLevel=4;
 	uint32 StartTime=5;
 }
- 
+
 message Message
 {
 	google.protobuf.Timestamp Time=1;
@@ -93,7 +93,7 @@ message ToServerUnion
 {
 	oneof Value
 	{
-		Instance Instance = 1;	
+		Instance Instance = 1;
 		Message Message = 2;
 		RequestString String = 3;
 		Status Status = 4;

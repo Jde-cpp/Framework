@@ -9,5 +9,7 @@ namespace Jde::DB
 	{
 		if( sql.find("log_message_insert")==string::npos )
 			DBG0( sql );
+		else
+			ERRX( "log_message_insert sql='{}'", sql );
 	}
 }

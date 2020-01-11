@@ -18,6 +18,7 @@ namespace Jde
 		inline TimePoint FromDays( DayIndex days )noexcept{ return Epoch()+days*24h; }
 		inline TimePoint Date( const TimePoint& time )noexcept{ return Clock::from_time_t( Clock::to_time_t(time)/(60*60*24)*(60*60*24) ); }
 		inline Duration Time( const TimePoint& time )noexcept{ return time-Date(time); }
+		Duration ToDuration( string_view iso )noexcept(false);
 
 		namespace TimeSpan
 		{

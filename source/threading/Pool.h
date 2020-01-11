@@ -117,6 +117,7 @@ namespace Jde::Threading
 			pThread->Interrupt();
 			pThread->Join();
 			l.lock();
+			_threads.pop_back();
 		}
 	}
 #undef var

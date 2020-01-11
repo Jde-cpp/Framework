@@ -68,7 +68,7 @@ namespace Jde::IO::Sockets
 				// };
 
 				var id = ++_id;
-				DBG( "Accepted Connection - {}", id );
+				TRACE( "Accepted Connection - {}", id );
 //				basio::async_write( socket, basio::buffer(data.data(), data.size()), onDone );
 				//Test( std::move(socket) );
 				auto pSession = CreateSession( std::move(socket), id );

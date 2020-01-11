@@ -631,7 +631,7 @@ namespace Jde::IO
 		uint8 month=0, day=0;
 		auto stem = path.stem().string();
 		uint16 index = 0;
-		for( ;index<stem.size() && (std::isalpha(stem[index]) || stem[index]=='-'); ++index );
+		for( ;index<stem.size() && !std::isdigit(stem[index]); ++index );
 		stem = stem.substr( index );
 		try
 		{

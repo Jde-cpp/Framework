@@ -128,6 +128,7 @@ namespace Jde::IO
 		virtual IDirEntryPtr CreateFolder( const fs::path& path, const IDirEntry& dirEntry )=0;
 		virtual void Remove( const fs::path& path )=0;
 		virtual void Trash( const fs::path& path )=0;
+		virtual void TrashDisposal( TimePoint latestDate )=0;
 		//virtual VectorPtr<char> Load( const fs::path& path )=0;
 		virtual VectorPtr<char> Load( const IDirEntry& dirEntry )=0;
 		//IDirEntryPtr Find( const fs::path& path );

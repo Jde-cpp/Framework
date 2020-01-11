@@ -2,7 +2,7 @@
 //#include "ReceivedMessages.h"
 #include "../../Diagnostics.h"
 #include "../../threading/Thread.h"
-
+#include "../../DateTime.h"
 #define var const auto
 
 namespace Jde::Logging
@@ -11,7 +11,7 @@ namespace Jde::Logging
 
 	shared_ptr<IServerSink> _pInstance;
 	IServerSink::~IServerSink()
-	{ 
+	{
 		DBGX( "{}", "~IServerSink~" );
 		SetServerSink( nullptr );
 		DBGX( "{}", "_pServerSink = nullptr" );
@@ -25,7 +25,7 @@ namespace Jde::Logging
 	{
 		return _pInstance;
 	}
-	
+
 
 	sp<ServerSink> ServerSink::Create( string_view host, uint16_t port )noexcept(false)
 	{
@@ -102,6 +102,7 @@ namespace Jde::Logging
 
 				pTransmission->add_messages()->set_allocated_instance( pInstance );
 				Write( pTransmission );
+				INFO_ONCE( "'{}' started at '{}'", applicationName, ToIsoString(Logging::StartTime()) );
 				_instanceId = ack.instanceid();
 			}
 			// else if( item.has_generic() )
@@ -128,7 +129,7 @@ namespace Jde::Logging
 			}
 		}
 	}
-	
+
 
 /*	void ServerSink::OnIncoming( IO::IncomingMessage& / *returnMessage* / )
 	{
@@ -275,7 +276,7 @@ namespace Jde::Logging
 			Fields |= EFields::Timestamp | EFields::ThreadId | EFields::Thread;
 		}
 
-		
+
 
 /*		Message::Message( const Message& other )noexcept:
 			MessageBase{ other },
