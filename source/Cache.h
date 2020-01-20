@@ -5,7 +5,7 @@ namespace Jde
 {
 	struct Cache final : public Jde::IShutdown
 	{
-		~Cache(){ if( HaveLogger() ) DBG0("~Cache"); }
+		~Cache(){ if( HaveLogger() ) DBG0("~Cache"sv); }
 		static void CreateInstance()noexcept;
 		void Shutdown()noexcept;// override;
 
@@ -31,7 +31,7 @@ namespace Jde
 		auto pInstance = GetInstance();
 		return pInstance ? pInstance->InstanceGet<T>( name ) : sp<T>{};
 	}
-	
+
 	template<class T>
 	sp<T> Cache::InstanceGet( const string& name )noexcept
 	{

@@ -85,7 +85,7 @@ namespace Jde
 					var& childElapsed = child.second;
 					os << "(" << child.first << "=" << FormatSeconds(childElapsed/index) << ")";
 				}
-				DBG( "Progress={}", os.str() );
+				DBG( "Progress={}"sv, os.str() );
 			}
 		}
 		_previousProgressElapsed = elapsed;
@@ -94,9 +94,9 @@ namespace Jde
 	void Stopwatch::Output( string_view what, const SDuration& elapsed, bool logMemory )
 	{
 		if( logMemory )
-			DBG( "{{}) time:  {} - {} Gigs", what, FormatSeconds(elapsed), Diagnostics::GetMemorySize()/std::pow(2,30) );
+			DBG( "{{}) time:  {} - {} Gigs"sv, what, FormatSeconds(elapsed), Diagnostics::GetMemorySize()/std::pow(2,30) );
 		else
-			DBG( "({}) time:  {}", what, FormatSeconds(elapsed) );
+			DBG( "({}) time:  {}"sv, what, FormatSeconds(elapsed) );
 	}
 	void Stopwatch::Finish( bool /*remove=true*/ )
 	{
@@ -111,10 +111,11 @@ namespace Jde
 		Pause();
 		if( _pParent  )
 			_pParent->_children.emplace( _what, std::chrono::nanoseconds(0) ).first->second += elapsed;
-		if( elapsed-_previousProgressElapsed>_minimumToLog || _children.size()>0 )
+		var delta = elapsed-_previousProgressElapsed;
+		if( delta>_minimumToLog || _children.size()>0 )
 		{
 			_previousProgressElapsed = elapsed;
-			Output( description.size() ? description : _instance.size() ? _instance : _what, elapsed-_previousProgressElapsed, _logMemory );
+			Output( description.size() ? description : _instance.size() ? _instance : _what, delta, _logMemory );
 			for( var& child : _children )
 			{
 				if( child.second>_minimumToLog )
@@ -212,7 +213,7 @@ namespace Jde
 */
 	void Stopwatch::UnPause()
 	{
-		if( _startPause.time_since_epoch().count() )
+		if( _startPause!=STimePoint{} )
 		{
 			_elapsedPause += duration_cast<SDuration>( SClock::now() - _startPause );
 			_startPause = STimePoint{};
@@ -220,7 +221,7 @@ namespace Jde
 	}
 	void Stopwatch::Pause()
 	{
-		if( _startPause!=STimePoint{} )
+		if( _startPause==STimePoint{} )
 			_startPause = SClock::now();
 	}
 }

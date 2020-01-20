@@ -29,7 +29,7 @@ namespace Jde
 		_format( exp.what() ),
 		_what( _format )
 	{}
-	
+
 	Exception::~Exception()
 	{
 		//std::cerr << "here";
@@ -45,16 +45,11 @@ namespace Jde
 		}
 		os << _what;
 		os2 << _format;
-		var level2 = (spdlog::level::level_enum)level;
 		if( HaveLogger() )
 		{
-			GetDefaultLogger()->log( level2, os.str() );
+			GetDefaultLogger()->log( (spdlog::level::level_enum)level, os.str() );
 			if( GetServerSink() )
-			{
-				string msg{ os2.str() };
-				//const Logging::MessageBase base{  };
-				LogServer( Logging::Messages::Message{level, msg, _fileName, _functionName, (uint32)_line, _args} );
-			}
+				LogServer( Logging::Messages::Message{level, os2.str(), _fileName, _functionName, (uint32)_line, _args} );
 		}
 		else
 			std::cerr << os.str() << endl;
@@ -76,7 +71,7 @@ namespace Jde
 	{
 		_level = level;
 	}
-	
+
 	BoostCodeException::BoostCodeException( const boost::system::error_code& errorCode ):
 		_errorCode{ errorCode }
 	{}
@@ -109,10 +104,10 @@ namespace Jde
 		Exception( inner )
 	{}
 
-/*	ostream& operator<<(ostream& os, const Exception& dt)  
-	{  
-		os << _what.c_str();  
-		return os;  
-	}  
+/*	ostream& operator<<(ostream& os, const Exception& dt)
+	{
+		os << _what.c_str();
+		return os;
+	}
 	*/
 }

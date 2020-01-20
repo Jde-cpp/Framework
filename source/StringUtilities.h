@@ -2,7 +2,7 @@
 #include <string>
 #include <sstream>
 #include <list>
-#include <functional> 
+#include <functional>
 #include <cctype>
 #include "Exception.h"
 //#include <charconv>
@@ -14,7 +14,7 @@ namespace Jde
 	{
 		template<typename T>
 		std::basic_string<T> RTrim(std::basic_string<T> &s);
-		
+
 		template<typename T>
 		std::vector<std::basic_string<T>> Split( const std::basic_string<T> &s, T delim=T{','} );
 
@@ -39,6 +39,11 @@ namespace Jde
 		template<typename T>
 		static float TryToFloat( const std::basic_string<T>& s );
 
+		template<typename Enum, typename Collection>
+		string_view FromEnum( const Collection& s, Enum value )noexcept;
+		template<typename Enum, typename Collection>
+		Enum ToEnum( const Collection& s, string_view text, Enum dflt )noexcept;
+
 		[[nodiscard]]inline bool EndsWith( const std::string_view value, const std::string_view& ending ){ return ending.size() > value.size() ? false : std::equal( ending.rbegin(), ending.rend(), value.rbegin() ); }
 		[[nodiscard]]inline bool StartsWith( const std::string_view value, const std::string_view& starting ){ return starting.size() > value.size() ? false : std::equal( starting.begin(), starting.end(), value.begin() ); }
 		[[nodiscard]]inline bool StartsWithInsensitive( const std::string_view value, const std::string_view& starting );
@@ -48,19 +53,19 @@ namespace Jde
 		inline void Trim( std::string &s ){ LTrim(s); RTrim(s); }
 	};
 
-	struct ci_char_traits : public char_traits<char> 
+	struct ci_char_traits : public char_traits<char>
 	{
 		JDE_NATIVE_VISIBILITY static bool eq(char c1, char c2) { return toupper(c1) == toupper(c2); }
 		JDE_NATIVE_VISIBILITY static bool ne(char c1, char c2) { return toupper(c1) != toupper(c2); }
 		JDE_NATIVE_VISIBILITY static bool lt(char c1, char c2) { return toupper(c1) <  toupper(c2); }
-		JDE_NATIVE_VISIBILITY static int compare( const char* s1, const char* s2, size_t n ); 
+		JDE_NATIVE_VISIBILITY static int compare( const char* s1, const char* s2, size_t n );
 		JDE_NATIVE_VISIBILITY static const char* find( const char* s, int n, char a );
 	};
 	typedef std::basic_string<char, ci_char_traits> CIString;
 
 
 	template<typename T>
-	std::basic_string<T> StringUtilities::RTrim(std::basic_string<T> &s) 
+	std::basic_string<T> StringUtilities::RTrim(std::basic_string<T> &s)
 	{
 #ifdef _MSC_VER
 		for( uint i=s.size()-1; i>=0; --i )
@@ -133,7 +138,7 @@ namespace Jde
 		{
 			GetDefaultLogger()->error( "Can't convert:  {}.  to {}.  {}", value, Jde::GetTypeName<T>(), e.what() );
 			return errorValue;
-		}		
+		}
 	}
 	inline bool StringUtilities::StartsWithInsensitive( const std::string_view value, const std::string_view& starting )
 	{
@@ -148,5 +153,17 @@ namespace Jde
 			}
 		}
 		return equal;
+	}
+
+	template<typename Enum, typename Collection>
+	Enum StringUtilities::ToEnum( const Collection& stringValues, string_view text, Enum dflt )noexcept
+	{
+		auto value = static_cast<Enum>( std::distance(std::find(std::begin(stringValues), std::end(stringValues), text), std::begin(stringValues)) );
+		return static_cast<uint>(value)<stringValues.size() ? value : dflt;
+	}
+	template<typename Enum, typename Collection>
+	string_view StringUtilities::FromEnum( const Collection& stringValues, Enum value )noexcept
+	{
+		return static_cast<uint>(value)<stringValues.size() ? stringValues[value] : nullptr;
 	}
 }

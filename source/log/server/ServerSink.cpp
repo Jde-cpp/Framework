@@ -12,13 +12,13 @@ namespace Jde::Logging
 	shared_ptr<IServerSink> _pInstance;
 	IServerSink::~IServerSink()
 	{
-		DBGX( "{}", "~IServerSink~" );
+		DBGX( "{}"sv, "~IServerSink~" );
 		SetServerSink( nullptr );
-		DBGX( "{}", "_pServerSink = nullptr" );
+		DBGX( "{}"sv, "_pServerSink = nullptr" );
 	}
 	void IServerSink::Destroy()noexcept
 	{
-		DBGX( "{}", "IServerSink::Destroy" );
+		DBGX( "{}"sv, "IServerSink::Destroy" );
 		_pInstance = nullptr;
 	}
 	sp<IServerSink> IServerSink::GetInstnace()noexcept
@@ -59,7 +59,7 @@ namespace Jde::Logging
 
 	void ServerSink::OnDisconnect()noexcept
 	{
-		DBG0( "Disconnected from LogServer." );
+		DBG0( "Disconnected from LogServer."sv );
 		_messagesSent.clear();
 		_filesSent.clear();
 		_functionsSent.clear();
@@ -72,7 +72,7 @@ namespace Jde::Logging
 
 	void ServerSink::OnReceive( std::shared_ptr<Proto::FromServer> pFromServer )noexcept
 	{
-		DBG( "ServerSink::OnReceive - count='{}'", pFromServer->messages_size() );
+		DBG( "ServerSink::OnReceive - count='{}'"sv, pFromServer->messages_size() );
 		for( var& item : pFromServer->messages() )
 		{
 			if( item.has_strings() )
@@ -91,7 +91,7 @@ namespace Jde::Logging
 			else if( item.has_acknowledgement() )
 			{
 				var& ack = item.acknowledgement();
-				DBGX( "Acknowledged - instance id={}", ack.instanceid() );
+				DBGX( "Acknowledged - instance id={}"sv, ack.instanceid() );
 				auto pTransmission = make_shared<Proto::ToServer>();
 				auto pInstance = new Proto::Instance();
 				var applicationName = Diagnostics::ApplicationName().stem().string()=="Jde" ? Diagnostics::ApplicationName().extension().string().substr(1) : Diagnostics::ApplicationName().stem().string();
@@ -102,7 +102,7 @@ namespace Jde::Logging
 
 				pTransmission->add_messages()->set_allocated_instance( pInstance );
 				Write( pTransmission );
-				INFO_ONCE( "'{}' started at '{}'", applicationName, ToIsoString(Logging::StartTime()) );
+				INFO_ONCE( "'{}' started at '{}'"sv, applicationName, ToIsoString(Logging::StartTime()) );
 				_instanceId = ack.instanceid();
 			}
 			// else if( item.has_generic() )
@@ -125,7 +125,7 @@ namespace Jde::Logging
 					std::thread( [&,requestId,bytes](){_customFunction(requestId, bytes);} ).detach(); //
 				}
 				else
-					ERR0_ONCE( "No custom function set" );
+					ERR0_ONCE( "No custom function set"sv );
 			}
 		}
 	}
@@ -254,23 +254,19 @@ namespace Jde::Logging
 			Fields |= EFields::Timestamp | EFields::ThreadId | EFields::Thread;
 		}
 		Message::Message( ELogLevel level, std::string_view message, std::string_view file, std::string_view function, uint line, const vector<string>& values )noexcept:
-			MessageBase{ level, message, file, function, line },
+			MessageBase{ level, make_shared<string>(message), file, function, line },
 			Timestamp{ Clock::now() },
-			Variables{ values },
-			_pMessage{ make_shared<string>(message) }
+			Variables{ values }
 		{
-			MessageView = *_pMessage;
 			Fields |= EFields::Timestamp | EFields::ThreadId | EFields::Thread;
 		}
 		Message::Message( ELogLevel level, std::string_view message, const std::string& file, const std::string& function, uint line, const vector<string>& values )noexcept:
-			MessageBase{ level, message, file, function, line },
+			MessageBase{ level, make_shared<string>(message), file, function, line },
 			Timestamp{ Clock::now() },
 			Variables{ values },
-			_pMessage{ make_shared<string>(message) },
 			_pFile{ make_shared<string>(file) },
 			_pFunction{ make_shared<string>(function) }
 		{
-			MessageView = *_pMessage;
 			File = *_pFile;
 			Function = *_pFunction;
 			Fields |= EFields::Timestamp | EFields::ThreadId | EFields::Thread;

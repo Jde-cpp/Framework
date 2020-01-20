@@ -36,7 +36,7 @@ namespace Logging
 		bool ShouldSendFunction( uint messageId )noexcept{ return _functionsSent.emplace(messageId); }
 		bool ShouldSendUser( uint messageId )noexcept{ return _usersSent.emplace(messageId); }
 		bool ShouldSendThread( uint messageId )noexcept{ return _threadsSent.emplace(messageId); }
-		virtual void SendCustom( uint32 /*requestId*/, const std::string& /*bytes*/ )noexcept{ CRITICAL0("SendCustom not implemented"); }
+		virtual void SendCustom( uint32 /*requestId*/, const std::string& /*bytes*/ )noexcept{ CRITICAL0("SendCustom not implemented"sv); }
 		std::atomic<bool> SendStatus{false};
 	protected:
 		sp<IServerSink> GetInstnace()noexcept;
@@ -52,13 +52,12 @@ namespace Logging
 	{
 		struct JDE_NATIVE_VISIBILITY Message : public MessageBase
 		{
-			Message(const MessageBase& base) ://get application id...
-				MessageBase(base),
-				_pMessage{ make_shared<string>(MessageView) }
+			Message( const MessageBase& base ) ://get application id...
+				MessageBase(base)
 			{
-				MessageView = *_pMessage;
+				//MessageView = *_pMessage;
 			}
-			Message(const MessageBase& base, const vector<string>& values)noexcept;
+			Message(const MessageBase& base, const vector<string>& values )noexcept;
 			//Message( const Message& other )noexcept;
 			Message( ELogLevel level, std::string_view message, std::string_view file, std::string_view function, uint line, const vector<string>& values )noexcept;
 			Message( ELogLevel level, std::string_view message, const std::string& file, const std::string& function, uint line, const vector<string>& values )noexcept;
@@ -71,7 +70,7 @@ namespace Logging
 			//void SetSessionId( uint value )noexcept{ if( value ) Fields|=EFields::SessionId; _sessionId = value; }
 			//std::ostream& to_stream( std::ostream& os, ServerSink* pSink=nullptr )const noexcept;
 		private:
-			const sp<string> _pMessage;
+			//const sp<string> _pMessage;
 			const sp<string> _pFile;
 			const sp<string> _pFunction;
 			//uint _sessionId{0};
@@ -81,7 +80,7 @@ namespace Logging
 	struct ServerSink : public IServerSink, Threading::Interrupt, public ProtoBase
 	{
 		static JDE_NATIVE_VISIBILITY sp<ServerSink> Create( string_view host, uint16_t port )noexcept(false);
-		~ServerSink(){DBGX("{}", "~ServerSink");}
+		~ServerSink(){DBGX("{}"sv, "~ServerSink");}
 		//void Log( ELogLevel level, std::string_view message, uint messageId, std::string_view file, std::string_view function, uint line );
 		void Log( const Messages::Message& message )noexcept override;
 		void Log( const MessageBase& messageBase )noexcept override;

@@ -109,7 +109,7 @@ namespace Jde
 
 	namespace Logging
 	{
-		void LogCritical( const Logging::MessageBase& messageBase )
+		void LogCritical( const Logging::MessageBase& messageBase )noexcept
 		{
 			GetDefaultLogger()->log( spdlog::level::level_enum::critical, messageBase.MessageView );
 			if( GetServerSink() )
@@ -117,18 +117,17 @@ namespace Jde
 			// if( GetEtwSink() )
 			// 	LogEtw( messageBase );
 		}
-
-		void LogServer( const Logging::MessageBase& messageBase )
+		void LogServer( const Logging::MessageBase& messageBase )noexcept
 		{
 			if( _pServerSink->GetLogLevel()<=messageBase.Level )
 				_pServerSink->Log( messageBase );
 		}
-		void LogServer( const Logging::MessageBase& messageBase, const vector<string>& values )
+		void LogServer( const Logging::MessageBase& messageBase, const vector<string>& values )noexcept
 		{
 			if( _pServerSink->GetLogLevel()<=messageBase.Level )
 				_pServerSink->Log( messageBase, values );
 		}
-		void LogServer( const Logging::Messages::Message& message )
+		void LogServer( const Logging::Messages::Message& message )noexcept
 		{
 			if( _pServerSink->GetLogLevel()<=message.Level )
 				_pServerSink->Log( message );
@@ -242,6 +241,12 @@ namespace Jde
 
 	namespace Logging
 	{
+		MessageBase::MessageBase( ELogLevel level, sp<string> pMessage, std::string_view file, std::string_view function, uint line )noexcept:
+			MessageBase( level, *pMessage, file, function, line, IO::Crc::Calc32(*pMessage), IO::Crc::Calc32(file), IO::Crc::Calc32(function) )
+		{
+			_pMessage = pMessage;
+		}
+
 /*		MessageBase::MessageBase( IO::IncomingMessage& message, EFields fields ):
 			Fields{ fields },
 			Level{ (fields & EFields::Level)!=EFields::None ? (ELogLevel)message.ReadUInt() : ELogLevel::Trace },

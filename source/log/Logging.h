@@ -63,6 +63,8 @@ namespace Jde
 		struct MessageBase
 		{
 			constexpr MessageBase( ELogLevel level, std::string_view message, std::string_view file, std::string_view function, uint line )noexcept;
+			//Causes ambiguous issue TODO refactor MessageBase( ELogLevel level, const std::string& message, std::string_view file, std::string_view function, uint line )noexcept;
+			MessageBase( ELogLevel level, sp<std::string> pMessage, std::string_view file, std::string_view function, uint line )noexcept;
 			constexpr MessageBase( ELogLevel level, std::string_view message, std::string_view file, std::string_view function, uint line, uint messageId, uint fileId, uint functionId )noexcept;
 			MessageBase( IO::IncomingMessage& message, EFields fields )noexcept(false);
 			EFields Fields{EFields::None};
@@ -76,12 +78,14 @@ namespace Jde
 			uint LineNumber;
 			uint UserId{0};
 			uint ThreadId{0};
+		protected:
+			sp<string> _pMessage;
 		};
 #pragma endregion
 		void Log( const Logging::MessageBase& messageBase );
-		JDE_NATIVE_VISIBILITY void LogCritical( const Logging::MessageBase& messageBase );
+		JDE_NATIVE_VISIBILITY void LogCritical( const Logging::MessageBase& messageBase )noexcept;
 		template<class... Args >
-		void Log( const Logging::MessageBase& messageBase, Args&&... args );
+		void Log( const Logging::MessageBase& messageBase, Args&&... args )noexcept;
 
 		JDE_NATIVE_VISIBILITY bool ShouldLogOnce( const Logging::MessageBase& messageBase );
 		JDE_NATIVE_VISIBILITY void LogOnce( const Logging::MessageBase& messageBase );
@@ -199,7 +203,7 @@ namespace Jde
 		}
 
     	template<typename T>
-    	std::string to_string( const T& x )
+    	std::string ToStringT( const T& x )
     	{
 			std::ostringstream os;
 			os << x;
@@ -209,7 +213,7 @@ namespace Jde
     	template<typename Head, typename... Tail>
     	void Append( vector<string>& values, Head&& h, Tail&&... t )
     	{
-			values.push_back( to_string(std::forward<Head>(h)) );
+			values.push_back( ToStringT(std::forward<Head>(h)) );
       	return Append( values, std::forward<Tail>(t)... );
     	}
 	}
@@ -316,7 +320,6 @@ namespace Jde::Logging
 	constexpr MessageBase::MessageBase( ELogLevel level, std::string_view message, std::string_view file, std::string_view function, uint line )noexcept:
 		MessageBase( level, message, file, function, line, IO::Crc::Calc32(message), IO::Crc::Calc32(file), IO::Crc::Calc32(function) )
 	{}
-
 }
 #pragma endregion
 

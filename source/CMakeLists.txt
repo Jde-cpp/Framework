@@ -20,7 +20,7 @@ endif()
 add_library( Jde SHARED ${sources} )
 
 #######################################################
-include_directories( "/home/duffyj/code/libraries/eigen" )
+include_directories( "$ENV{REPO_DIR}/eigen" )
 target_link_libraries(Jde Threads::Threads)
 #######################################################
 target_precompile_headers(Jde

@@ -1,5 +1,5 @@
 #!/bin/bash
- path=${1}
+path=${1}
 type=${2:-asan}
 clean=${3:-0}
 
@@ -8,7 +8,7 @@ if [ ! -d $output ]; then mkdir $output; fi;
 cd $output
 
 if [ $clean -eq 1 ]; then
-	rm CMakeCache.txt;
+	if [ -f CMakeCache.txt ]; then rm CMakeCache.txt; fi;
 	cmake -DCMAKE_BUILD_TYPE=$type  ../.. > /dev/null;
 	make clean;
 fi
