@@ -32,12 +32,12 @@ namespace Jde::Threading
 	InterruptibleThread::~InterruptibleThread()
 	{
 		if( GetDefaultLogger() )
-			DBG( "~InterruptibleThread({})", Name );
+			DBG( "~InterruptibleThread({})"sv, Name );
 		Join();
 	}
 	void InterruptibleThread::Interrupt()noexcept
 	{
-		DBG( "{} - Interrupt _pFlag={}", Name, _pFlag!=nullptr );
+		DBG( "{} - Interrupt _pFlag={}"sv, Name, _pFlag!=nullptr );
 		if( _pFlag )
 			_pFlag->Set();
 	}
@@ -47,9 +47,9 @@ namespace Jde::Threading
 			_internalThread.join();
 	}
 	void InterruptibleThread::Shutdown()noexcept
-	{ 
-		DBG("{} - Shutdown", Name); 
-		Interrupt(); 
+	{
+		DBG("{} - Shutdown"sv, Name);
+		Interrupt();
 	};
 
 	ThreadInterrupted::ThreadInterrupted():

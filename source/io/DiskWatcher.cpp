@@ -24,10 +24,10 @@ namespace Jde::IO
 	std::ostream& operator<<( std::ostream& os, const NotifyEvent& event )
 	{
 		std::ios_base::fmtflags f( os.flags() );
-		os << "wd=" << event.WatchDescriptor 
+		os << "wd=" << event.WatchDescriptor
 			<< ";  mask=" << std::hex << (uint)event.Mask;
 		os.flags( f );
-		os	<< ";  cookie=" << event.Cookie 
+		os	<< ";  cookie=" << event.Cookie
 			<< ";  name='" << event.Name << "'";
 
 		return os;
@@ -39,8 +39,8 @@ namespace Jde::IO
 		_fd{ ::inotify_init1(IN_NONBLOCK) }
 	{
 		if( _fd < 0 )
-			THROW( IOException("({})Could not init inotify.", errno) );
-		TRACE( "DiskWatcher::inotify_init returned {}", _fd );
+			THROW( IOException("({})Could not init inotify."sv, errno) );
+		TRACE( "DiskWatcher::inotify_init returned {}"sv, _fd );
 
 		try
 		{
@@ -48,9 +48,9 @@ namespace Jde::IO
 			{
 				var wd = ::inotify_add_watch( _fd, subPath.string().c_str(), (uint32_t)_events );
 				if( wd < 0 )
-					THROW( IOException("({})Could not init watch on {}.", errno, subPath.c_str()) );
+					THROW( IOException("({})Could not init watch on {}."sv, errno, subPath.c_str()) );
 				_descriptors.emplace( wd, subPath );
-				TRACE( "inotify_add_watch on {}, returned {}", subPath.c_str(), wd );
+				TRACE( "inotify_add_watch on {}, returned {}"sv, subPath.c_str(), wd );
 			};
 			add( _path );
 			// add recursive
@@ -63,24 +63,24 @@ namespace Jde::IO
 			close(_fd);
 			throw e;
 		}
-		DBG( "DiskWatcher::DiskWatcher on {}", path.c_str() );
+		DBG( "DiskWatcher::DiskWatcher on {}"sv, path.c_str() );
 		_pThread = make_shared<Jde::Threading::InterruptibleThread>( "Diskwatcher", [&](){ Run();} );
 		IApplication::AddThread( _pThread );
 	}
 	DiskWatcher::~DiskWatcher()
 	{
-		DBG( "DiskWatcher::~DiskWatcher on  {}", _path );
+		DBG( "DiskWatcher::~DiskWatcher on  {}"sv, _path );
 		close( _fd );
 	//	_pThread->Join();
 	}
 
 	void DiskWatcher::Run()noexcept
 	{
-		DBG( "DiskWatcher::Run  {}", _path );
+		DBG( "DiskWatcher::Run  {}"sv, _path );
 		struct pollfd fds;
 		fds.fd = _fd;
 		fds.events = POLLIN;
-		while( !Threading::GetThreadInterruptFlag().IsSet() ) 
+		while( !Threading::GetThreadInterruptFlag().IsSet() )
 		{
 			var result = ::poll( &fds, 1, 5000 );
 			if( result<0 )
@@ -88,11 +88,11 @@ namespace Jde::IO
 				var err = errno;
 				if( err!=EINTR )
 				{
-					ERR( "poll returned {}.", err );
+					ERR( "poll returned {}."sv, err );
 					break;
 				}
 				else
-					ERR( "poll returned {}.", err );
+					ERR( "poll returned {}."sv, err );
 			}
 			else if( result>0 && (fds.revents & POLLIN) )
 			{
@@ -108,7 +108,7 @@ namespace Jde::IO
 		auto pThis = shared_from_this();//keep alive
 		IApplication::Remove( pThis );
 	}
-	
+
 	void DiskWatcher::ReadEvent( const pollfd& fd, bool isRetry )noexcept(false)
 	{
 		for( ;; )
@@ -123,10 +123,10 @@ namespace Jde::IO
 			{
 				if( err == EINTR && !isRetry )
 				{
-					WARN0( "read return EINTR, retrying" );
+					WARN0( "read return EINTR, retrying"sv );
 					ReadEvent( fd, true );
 				}
-				THROW( IOException("read return '{}'", err) );
+				THROW( IOException("read return '{}'"sv, err) );
 			}
 			if( length<=0 )
 				break;
@@ -136,11 +136,11 @@ namespace Jde::IO
 				struct inotify_event *pEvent = (struct inotify_event *) &buffer[i];
 				string name( pEvent->len ? (char*)&pEvent->name : "" );
 				//DBG0( name );
-				DBG( "DiskWatcher::read=>wd={}, mask={}, len={}, cookie={}, name={}", pEvent->wd, pEvent->mask, pEvent->len, pEvent->cookie, name );
+				DBG( "DiskWatcher::read=>wd={}, mask={}, len={}, cookie={}, name={}"sv, pEvent->wd, pEvent->mask, pEvent->len, pEvent->cookie, name );
 				auto pDescriptorChange = _descriptors.find( pEvent->wd );
 				if( pDescriptorChange==_descriptors.end() )
 				{
-					ERR( "Could not find OnChange interface for wd '{}'", pEvent->wd );
+					ERR( "Could not find OnChange interface for wd '{}'"sv, pEvent->wd );
 					continue;
 				}
 				var path = pDescriptorChange->second/name;
@@ -283,8 +283,8 @@ namespace Jde::IO
 		thd.detach();
 	}
 	void DiskWatcher::OnTimeout()noexcept
-	{ 
-		OnAwake(); 
+	{
+		OnAwake();
 	}
 	void DiskWatcher::OnAwake()noexcept
 	{
@@ -298,7 +298,7 @@ namespace Jde::IO
 		var ret = select( _fd + 1, &rfds, nullptr, nullptr, &time );
 		if( ret < 0 )
 			ERR( "select returned '{}' , errno='{}'", ret, errno );
-		else if( ret && FD_ISSET(_fd, &rfds) )// not a timed out! 
+		else if( ret && FD_ISSET(_fd, &rfds) )// not a timed out!
 		{
 			try
 			{
@@ -312,22 +312,22 @@ namespace Jde::IO
 	}
 */
 	void IDriveChange::OnAccess( const fs::path& path, const NotifyEvent& event )noexcept
-	{ 
-		LOG( _logLevel, "IDriveChange::OnAccess( {}, {} )", path.string(), event ); 
+	{
+		LOG( _logLevel, "IDriveChange::OnAccess( {}, {} )"sv, path.string(), event );
 		//Logging::Log( Logging::MessageBase(_logLevel, "IDriveChange::OnAccess( {}, {} )", "__FILE__", "__func__", 201), path.string(), event );
 	}
-	void IDriveChange::OnModify( const fs::path& path, const NotifyEvent& event )noexcept{ LOG( _logLevel, "IDriveChange::OnModify( {}, {} )", path.string(), event ); }
-	void IDriveChange::OnAttribute( const fs::path& path, const NotifyEvent& event )noexcept{ LOG( _logLevel, "IDriveChange::OnAttribute( {}, {} )", path.string(), event ); }
-	void IDriveChange::OnCloseWrite( const fs::path& path, const NotifyEvent& event )noexcept{ LOG( _logLevel, "IDriveChange::OnCloseWrite( {}, {} )", path.string(), event ); }
-	void IDriveChange::OnCloseNoWrite( const fs::path& path, const NotifyEvent& event )noexcept{ LOG( _logLevel, "IDriveChange::OnCloseNoWrite( {}, {} )", path.string(), event ); }
-	void IDriveChange::OnOpen( const fs::path& path, const NotifyEvent& event )noexcept{ LOG( _logLevel, "IDriveChange::OnOpen( {}, {} )", path.string(), event ); }
-	void IDriveChange::OnMovedFrom( const fs::path& path, const NotifyEvent& event )noexcept{ LOG( _logLevel, "IDriveChange::OnMovedFrom( {}, {} )", path.string(), event ); }
-	void IDriveChange::OnMovedTo( const fs::path& path, const NotifyEvent& event )noexcept{ LOG( _logLevel, "IDriveChange::OnMovedTo( {}, {} )", path.string(), event ); }
-	void IDriveChange::OnCreate( const fs::path& path, const NotifyEvent& event )noexcept{ LOG( _logLevel, "IDriveChange::OnCreate( {}, {} )", path.string(), event ); }
-	void IDriveChange::OnDelete( const fs::path& path, const NotifyEvent& event )noexcept{ LOG( _logLevel, "IDriveChange::OnDelete( {}, {} )", path.string(), event ); }
-	void IDriveChange::OnDeleteSelf( const fs::path& path, const NotifyEvent& event )noexcept{ LOG( _logLevel, "IDriveChange::OnDeleteSelf( {}, {} )", path.string(), event ); }
-	void IDriveChange::OnMoveSelf( const fs::path& path, const NotifyEvent& event )noexcept{ LOG( _logLevel, "IDriveChange::OnMoveSelf( {}, {} )", path.string(), event ); }
-	void IDriveChange::OnUnmount( const fs::path& path, const NotifyEvent& event )noexcept{ LOG( _logLevel, "IDriveChange::OnUnmount( {}, {} )", path.string(), event ); }
-	void IDriveChange::OnQOverflow( const fs::path& path, const NotifyEvent& event )noexcept{ LOG( _logLevel, "IDriveChange::OnQOverflow( {}, {} )", path.string(), event ); }
-	void IDriveChange::OnIgnored( const fs::path& path, const NotifyEvent& event )noexcept{ LOG( _logLevel, "IDriveChange::OnIgnored( {}, {} )", path.string(), event ); }
+	void IDriveChange::OnModify( const fs::path& path, const NotifyEvent& event )noexcept{ LOG( _logLevel, "IDriveChange::OnModify( {}, {} )"sv, path.string(), event ); }
+	void IDriveChange::OnAttribute( const fs::path& path, const NotifyEvent& event )noexcept{ LOG( _logLevel, "IDriveChange::OnAttribute( {}, {} )"sv, path.string(), event ); }
+	void IDriveChange::OnCloseWrite( const fs::path& path, const NotifyEvent& event )noexcept{ LOG( _logLevel, "IDriveChange::OnCloseWrite( {}, {} )"sv, path.string(), event ); }
+	void IDriveChange::OnCloseNoWrite( const fs::path& path, const NotifyEvent& event )noexcept{ LOG( _logLevel, "IDriveChange::OnCloseNoWrite( {}, {} )"sv, path.string(), event ); }
+	void IDriveChange::OnOpen( const fs::path& path, const NotifyEvent& event )noexcept{ LOG( _logLevel, "IDriveChange::OnOpen( {}, {} )"sv, path.string(), event ); }
+	void IDriveChange::OnMovedFrom( const fs::path& path, const NotifyEvent& event )noexcept{ LOG( _logLevel, "IDriveChange::OnMovedFrom( {}, {} )"sv, path.string(), event ); }
+	void IDriveChange::OnMovedTo( const fs::path& path, const NotifyEvent& event )noexcept{ LOG( _logLevel, "IDriveChange::OnMovedTo( {}, {} )"sv, path.string(), event ); }
+	void IDriveChange::OnCreate( const fs::path& path, const NotifyEvent& event )noexcept{ LOG( _logLevel, "IDriveChange::OnCreate( {}, {} )"sv, path.string(), event ); }
+	void IDriveChange::OnDelete( const fs::path& path, const NotifyEvent& event )noexcept{ LOG( _logLevel, "IDriveChange::OnDelete( {}, {} )"sv, path.string(), event ); }
+	void IDriveChange::OnDeleteSelf( const fs::path& path, const NotifyEvent& event )noexcept{ LOG( _logLevel, "IDriveChange::OnDeleteSelf( {}, {} )"sv, path.string(), event ); }
+	void IDriveChange::OnMoveSelf( const fs::path& path, const NotifyEvent& event )noexcept{ LOG( _logLevel, "IDriveChange::OnMoveSelf( {}, {} )"sv, path.string(), event ); }
+	void IDriveChange::OnUnmount( const fs::path& path, const NotifyEvent& event )noexcept{ LOG( _logLevel, "IDriveChange::OnUnmount( {}, {} )"sv, path.string(), event ); }
+	void IDriveChange::OnQOverflow( const fs::path& path, const NotifyEvent& event )noexcept{ LOG( _logLevel, "IDriveChange::OnQOverflow( {}, {} )"sv, path.string(), event ); }
+	void IDriveChange::OnIgnored( const fs::path& path, const NotifyEvent& event )noexcept{ LOG( _logLevel, "IDriveChange::OnIgnored( {}, {} )"sv, path.string(), event ); }
 }

@@ -23,13 +23,13 @@ namespace Jde
 	spdlog::logger* pLogger{nullptr};
 	namespace Logging
 	{
-		auto _pOnceMessages = make_unique<map<uint,set<uint>>>();
+		auto _pOnceMessages = make_unique<map<uint,set<string>>>();
 		std::shared_mutex OnceMessageMutex;
 	}
 
 	void DestroyLogger()
 	{
-		TRACE0( "Destroying Logger" );
+		TRACE0( "Destroying Logger"sv );
 		pLogger = nullptr;
 		spLogger = nullptr;
 		Logging::_pOnceMessages = nullptr;
@@ -103,7 +103,7 @@ namespace Jde
 //			_pLttng = _spLttng.get();
 #endif
 		}
-		INFO( "Created log level:  {},  flush on:  {}", ELogLevelStrings[(uint)level2], ELogLevelStrings[(uint)ELogLevel::Information] );
+		INFO( "Created log level:  {},  flush on:  {}"sv, ELogLevelStrings[(uint)level2], ELogLevelStrings[(uint)ELogLevel::Information] );
 		//DBG0( ""sv );
 	}
 
@@ -199,8 +199,8 @@ namespace Jde
 		bool ShouldLogOnce( const Logging::MessageBase& messageBase )
 		{
 			std::unique_lock l( OnceMessageMutex );
-			auto& lineIds = _pOnceMessages->emplace( messageBase.FileId, set<uint>{} ).first->second;
-			return lineIds.emplace(messageBase.LineNumber).second;
+			auto& messages = _pOnceMessages->emplace( messageBase.FileId, set<string>{} ).first->second;
+			return messages.emplace(messageBase.MessageView).second;
 		}
 		void LogOnce( const Logging::MessageBase& messageBase )
 		{

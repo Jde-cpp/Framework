@@ -62,7 +62,7 @@ namespace Jde::IO
 		unique_ptr<vector<char>> LoadBinary( const fs::path& path )noexcept(false)//fs::filesystem_error
 		{
 			auto size = GetFileSize( path );
-			TRACE( "Opening {} - {} bytes ", path.string(), size );
+			TRACE( "Opening {} - {} bytes "sv, path.string(), size );
 			ifstream f( path, std::ios::binary );
 			if( f.fail() )
 				THROW( IOException("Could not open file '{}'", path.string()) );
@@ -648,7 +648,7 @@ namespace Jde::IO
 		}
 		catch( const std::invalid_argument& )
 		{
-			DBG( "Could not convert '{}' to date.", path.string() );
+			DBG( "Could not convert '{}' to date."sv, path.string() );
 		}
 		return make_tuple( year, month, day );
 	}

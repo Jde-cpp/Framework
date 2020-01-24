@@ -42,7 +42,7 @@ namespace Jde::IO::Sockets
 			if( ec )
 				ERR0( CodeException::ToString(ec) );
 			else
-				DBG("length={}", length);
+				DBG("length={}"sv, length);
 		};
 		basio::async_write( socket, basio::buffer(data.data(), data.size()), onDone );
 	}
@@ -68,7 +68,7 @@ namespace Jde::IO::Sockets
 				// };
 
 				var id = ++_id;
-				TRACE( "Accepted Connection - {}", id );
+				TRACE( "Accepted Connection - {}"sv, id );
 //				basio::async_write( socket, basio::buffer(data.data(), data.size()), onDone );
 				//Test( std::move(socket) );
 				auto pSession = CreateSession( std::move(socket), id );
@@ -84,9 +84,9 @@ namespace Jde::IO::Sockets
 	void ProtoServer::Run()noexcept
 	{
 		Threading::SetThreadDescription( "ProtoServer::Run" );
-		DBG0( "ProtoServer::Run" );
+		DBG0( "ProtoServer::Run"sv );
 		_asyncHelper.run();
-		DBG0( "ProtoServer::Run Exit" );
+		DBG0( "ProtoServer::Run Exit"sv );
 	}
 
 	ProtoSession::ProtoSession( basio::ip::tcp::socket& socket, SessionPK id )noexcept:
@@ -104,22 +104,22 @@ namespace Jde::IO::Sockets
 			{
 				if( ec.value()==2 || ec.value()==10054 )
 				{
-					TRACE( "disconnection - '{}'", CodeException::ToString(ec) );
+					TRACE( "disconnection - '{}'"sv, CodeException::ToString(ec) );
 					OnDisconnect();
 				}
 				else
-					ERR( "({})Read Header Failed - {}", Id, CodeException::ToString(ec) );
+					ERR( "({})Read Header Failed - {}"sv, Id, CodeException::ToString(ec) );
 			}
 			else if( headerLength!=4 )
-				ERR( "only read '{}'", headerLength );
+				ERR( "only read '{}'"sv, headerLength );
 			else
 			{
 				var messageLength = ProtoClientSession::MessageLength( _readMessageSize );
-				TRACE( "messageLength: {}", messageLength );
+				TRACE( "messageLength: {}"sv, messageLength );
 				ReadBody( messageLength );
 			}
 		};
-		TRACE0( "Server::Session::ReadHeader" );
+		TRACE0( "Server::Session::ReadHeader"sv );
 		basio::async_read( _socket2, basio::buffer(static_cast<void*>(_readMessageSize), sizeof(_readMessageSize)), onComplete );
 	}
 }

@@ -38,7 +38,7 @@ namespace Collections
 		bool Insert( function<void(TValue&)> afterInsert, Args&&... args );
 		bool TryEmplace( function<void(TValue&)> afterInsert, const TKey& key );
 		void Update( const TKey& key, function<void(TValue&)>& func );
-		void Where( const TKey& key, function<void(const TValue&)>& func );
+		void Where( const TKey& key, function<void(const TValue&)> func );
 		template<class... Args >
 		void AddOrUpdate( TKey key, function<sp<TValue>()> add, function<void(TValue&)> update );
 		std::shared_ptr<std::forward_list<std::shared_ptr<TValue>>> Values()const;
@@ -48,7 +48,7 @@ namespace Collections
 	private:
 		mutable std::shared_mutex _mutex;
 	};
-	
+
 	template<class TKey, class TValue> using UnorderedMapPtr = std::shared_ptr<UnorderedMap<TKey,TValue>>;
 
 	template<typename TKey, typename TValue>
@@ -67,9 +67,9 @@ namespace Collections
 		if( pItem!=BaseClass::end() )
 			func( *pItem->second );
 	}
-	
+
 	template<typename TKey, typename TValue>
-	void UnorderedMap<TKey,TValue>::Where( const TKey& key, function<void(const TValue&)>& func )
+	void UnorderedMap<TKey,TValue>::Where( const TKey& key, function<void(const TValue&)> func )
 	{
 		shared_lock<std::shared_mutex> l(_mutex);
 		auto pItem = BaseClass::find( key );
@@ -92,7 +92,7 @@ namespace Collections
 
 	template<typename TKey, typename TValue>
 	bool UnorderedMap<TKey,TValue>::erase( const TKey& item )noexcept
-	{ 
+	{
 		unique_lock<std::shared_mutex> l( _mutex );
 		return BaseClass::erase( item )>0;
 	}
@@ -125,9 +125,9 @@ namespace Collections
 	}
 	template<typename TKey, typename TValue>
 	uint UnorderedMap<TKey,TValue>::size()const noexcept
-	{ 
-		shared_lock<std::shared_mutex> l(_mutex);  
-		return BaseClass::size(); 
+	{
+		shared_lock<std::shared_mutex> l(_mutex);
+		return BaseClass::size();
 	}
 
 	template<typename TKey, typename TValue>
@@ -167,7 +167,7 @@ namespace Collections
 		return isNone;
 	}
 	template<typename TKey, typename TValue>
-	std::shared_ptr<TValue> UnorderedMap<TKey,TValue>::Find( const TKey& key )const noexcept 
+	std::shared_ptr<TValue> UnorderedMap<TKey,TValue>::Find( const TKey& key )const noexcept
 	{
  		shared_lock<std::shared_mutex> l(_mutex);
 		const auto pItem = BaseClass::find( key );

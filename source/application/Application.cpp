@@ -39,7 +39,7 @@ namespace Jde
 	IApplication::~IApplication()
 	{
 		if( HaveLogger() )
-			DBG0( "IApplication::~IApplication" );
+			DBG0( "IApplication::~IApplication"sv );
 	}
 	void IApplication::BaseStartup( int argc, char** argv, string_view appName )noexcept
 	{
@@ -68,7 +68,7 @@ namespace Jde
 		InitializeLogger( appName );
 		SetConsoleTitle( appName );
 		Jde::Threading::SetThreadDescription( string(appName) );
-		INFO( "{}, settings='{}' Running as console='{}'", arg0, settingsPath, console );
+		INFO( "{}, settings='{}' Running as console='{}'"sv, arg0, settingsPath, console );
 
 		Cache::CreateInstance();
 	}
@@ -85,7 +85,7 @@ namespace Jde
 	void IApplication::Wait()noexcept
 	{
 		//AddSignals();
-		INFO( "Waiting for process to complete. {}", Diagnostics::ProcessId() );
+		INFO( "Waiting for process to complete. {}"sv, Diagnostics::ProcessId() );
 		GarbageCollect();
 		{
 			lock_guard l{ObjectMutex};
@@ -112,19 +112,19 @@ namespace Jde
 			}
 			std::this_thread::sleep_for( 2s );
 		}
-		DBG0( "Leaving Application::Wait" );
+		DBG0( "Leaving Application::Wait"sv );
 	}
 
 	void IApplication::AddThread( sp<Threading::InterruptibleThread> pThread )noexcept
 	{
-		TRACE0( "Adding Backgound thread" );
+		TRACE0( "Adding Backgound thread"sv );
 		lock_guard l{_threadMutex};
 		_pBackgroundThreads->push_back( pThread );
 	}
 
 	void IApplication::RemoveThread( sp<Threading::InterruptibleThread> pThread )noexcept
 	{
-		TRACE0( "RemoveThread" );
+		TRACE0( "RemoveThread"sv );
 		lock_guard l{_threadMutex};
 		_pDeletedThreads->push_back( pThread );//TODO remove from _pBackgroundThreads
 		for( auto ppThread = _pBackgroundThreads->begin(); ppThread!=_pBackgroundThreads->end();  )
@@ -183,7 +183,7 @@ namespace Jde
 		//DB::CleanDataSources();  TODO ReAdd when adding a data source.
 		for( var shutdown : _shutdowns )
 			shutdown();
-		INFO0( "Clearing Logger" );
+		INFO0( "Clearing Logger"sv );
 		if( GetServerSink() )
 			GetServerSink()->Destroy();
 		Jde::DestroyLogger();

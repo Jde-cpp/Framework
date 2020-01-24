@@ -16,7 +16,7 @@ namespace Jde::Threading
 
 	//thread_local std::string ThreadName;
 	constexpr uint NameLength = 255;
-	thread_local char ThreadName[NameLength]={0};//string shows up as memory leak 
+	thread_local char ThreadName[NameLength]={0};//string shows up as memory leak
 	thread_local char ThreadName2[NameLength]={0};
 	thread_local uint ThreadId{0};
 	void Run( const size_t iMaxThreadCount, size_t runCount, std::function<void(size_t)> func )
@@ -62,14 +62,14 @@ namespace Jde::Threading
 			//char thread_name[NameLength];
 			var rc = pthread_getname_np( ThreadId, ThreadName, NameLength );
     		if (rc != 0)
-        		ERR( "pthread_getname_np returned {}", rc );
+        		ERR( "pthread_getname_np returned {}"sv, rc );
 			//else
 				//cscpy(ThreadName = thread_name;
 #endif
 		}
 		return ThreadName;
 	}
-	
+
 
 	void SetThreadDescription( std::thread& thread, std::string_view pszDescription )
 	{

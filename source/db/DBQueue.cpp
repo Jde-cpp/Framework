@@ -52,7 +52,7 @@ namespace Jde::DB
 				else
 					os << ch;
 			}
-			ERRX( "{} - {}", os.str(), e.what() );
+			ERRX( "{} - {}"sv, os.str(), e.what() );
 		}
 	}
 
@@ -85,10 +85,10 @@ namespace Jde::DB
 					else
 						os << ch;
 				}
-				ERRX( "{} - {}", os.str(), e.what() );
+				ERRX( "{} - {}"sv, os.str(), e.what() );
 			}
 		}
 		_stopped = true;
-		DBG0( "DBQueue::Run - Ending" );
+		DBG0( "DBQueue::Run - Ending"sv );
 	}
 }

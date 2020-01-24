@@ -66,12 +66,12 @@ namespace Jde
 		if( !pValue )
 		{
 			const bool erased = _cache.erase( name );
-			TRACE( "Cache::{} erased={}", name, erased );
+			TRACE( "Cache::{} erased={}"sv, name, erased );
 		}
 		else
 		{
 			_cache[name] = pValue;
-			TRACE( "Cache::{} set", name );
+			TRACE( "Cache::{} set"sv, name );
 		}
 		return pValue;
 	}

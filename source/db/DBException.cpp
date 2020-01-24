@@ -8,8 +8,8 @@ namespace Jde::DB
 		Parameters{ pValues ? *pValues : std::vector<DataValue>{} }
 	{
 		if( sql.find("log_message_insert")==string::npos )
-			DBG0( sql );
+			DBG0( Sql );
 		else
-			ERRX( "log_message_insert sql='{}'", sql );
+			ERRX( "log_message_insert sql='{}'"sv, sql );
 	}
 }

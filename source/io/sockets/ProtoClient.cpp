@@ -51,18 +51,18 @@ namespace Jde::IO::Sockets
 			{
 				_connected = false;
 				if( ec.value()==125 )
-					TRACE( "Client::ReadHeader closing - '{}'", CodeException::ToString(ec) );
+					TRACE( "Client::ReadHeader closing - '{}'"sv, CodeException::ToString(ec) );
 				else
-					ERR( "Client::ReadHeader Failed - '{}' closing", ec.value() );
+					ERR( "Client::ReadHeader Failed - '{}' closing"sv, ec.value() );
 					//ERR( "Client::ReadHeader Failed - '{}' closing", CodeException::ToString(ec) );crashes for some reason.
 				Disconnect();
 			}
 			else if( !headerLength )
-				ERR0( "Failed no length" );
+				ERR0( "Failed no length"sv );
 			else
 			{
 				var messageLength = MessageLength( _readMessageSize );
-				TRACE( "'{}' bytes", messageLength );
+				TRACE( "'{}' bytes"sv, messageLength );
 				ReadBody( messageLength );
 			}
 		};
@@ -75,17 +75,17 @@ namespace Jde::IO::Sockets
 		{
 			if( ec )
 			{
-				ERR( "Read Body Failed - {}", ec.value() );
+				ERR( "Read Body Failed - {}"sv, ec.value() );
 				_pSocket->close();
-				//delete _pSocket; 
+				//delete _pSocket;
 				_pSocket = nullptr;
 			}
 			else
 			{
 				if( length==messageLength )
-					TRACE( "'{}' bytes read==expecting", length );
+					TRACE( "'{}' bytes read==expecting"sv, length );
 				else
-					ERR( "'{}' read!='{}' expected", length, messageLength );
+					ERR( "'{}' read!='{}' expected"sv, length, messageLength );
 				Process( _message.data(), std::min<size_t>(length,messageLength) );
 				ReadHeader();
 			}
@@ -101,7 +101,7 @@ namespace Jde::IO::Sockets
 		_host{host},
 		_port{port}
 	{}
-	
+
 	void ProtoClient::Startup( string_view clientThreadName )noexcept
 	{
 		Connect();
@@ -123,7 +123,7 @@ namespace Jde::IO::Sockets
 		auto onConnect = [this](std::error_code ec, basio::ip::tcp::endpoint)
 		{
 			if( ec )
-				ERR( "Connect Failed - {}", ec.value() );
+				ERR( "Connect Failed - {}"sv, ec.value() );
 			else
 			{
 				_connected = true;
@@ -136,12 +136,12 @@ namespace Jde::IO::Sockets
 			if( !_pSocket )
 				_pSocket = make_unique<basio::ip::tcp::socket>( _asyncHelper );//_pSocket = make_unique<basio::ip::tcp::socket>( _asyncHelper );
 			auto result = basio::connect( *_pSocket, endpoints );
-			TRACE0( "Client::Connect" );
+			TRACE0( "Client::Connect"sv );
 			onConnect( std::error_code(), result );
 		}
 		catch( const boost::system::system_error& e )
 		{
-			ERR0( e.what() );
+			//ERR0( e.what() );
 			THROW( Exception( "Could not connect {}", e.what()) );
 		}
 	}

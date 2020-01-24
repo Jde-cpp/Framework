@@ -36,7 +36,7 @@ namespace Jde::DB
 	shared_ptr<Jde::DB::IDataSource> _dataSource;
 	void CleanDataSources()noexcept
 	{
-		DBG0( "CleanDataSources" );
+		DBG0( "CleanDataSources"sv );
 		_dataSource = nullptr;
 		std::unique_lock l{_dataSourcesMutex};
 		_dataSources.clear();
@@ -78,5 +78,5 @@ namespace Jde::DB
 	}
 
 	typedef IDataSource* (*pDataSourceFactory)();
-	typedef shared_ptr<IDataSource> IDataSourcePtr; 
+	typedef shared_ptr<IDataSource> IDataSourcePtr;
 }

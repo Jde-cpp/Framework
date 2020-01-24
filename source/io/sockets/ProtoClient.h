@@ -93,7 +93,7 @@ namespace Jde::IO::Sockets
 		var pMessage = _writeMessages.TryPop();
 		if( !pMessage )
 		{
-			CRITICAL0("no message to write.");
+			CRITICAL0( "no message to write."sv );
 			return;
 		}
 		var pData = ProtoClientSession::ToBuffer( *pMessage );
@@ -126,7 +126,7 @@ namespace Jde::IO::Sockets
 					Write2();
 			}
 		};
-		TRACEX( "Writing:  {} - count={}", pData->size(), pMessage->messages_size() );
+		TRACEX( "Writing:  {} - count={}"sv, pData->size(), pMessage->messages_size() );
 #ifndef NDEBUG
 		//google::protobuf::io::CodedInputStream input( pData->data()+4, pData->size()-4 );
 		//auto pTransmission = make_shared<TOut>();

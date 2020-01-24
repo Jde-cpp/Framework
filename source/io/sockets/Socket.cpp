@@ -11,12 +11,12 @@ namespace Jde::IO::Sockets
 	using std::system_error;
 	AsyncSocket::AsyncSocket()noexcept
 	{
-		TRACEX( "{}", "AsyncSocket::AsyncSocket" );
+		TRACEX( "{}"sv, "AsyncSocket::AsyncSocket"sv );
 	}
-	
+
 	AsyncSocket::~AsyncSocket()
 	{
-		TRACEX( "{}", "~AsyncSocket" );
+		TRACEX( "{}"sv, "~AsyncSocket"sv );
 		if( _pThread )
 			_pThread->Join();
 	}
@@ -29,13 +29,13 @@ namespace Jde::IO::Sockets
 			_pThread = nullptr;
 		}
 	}
-	
+
 	void AsyncSocket::Run()noexcept
 	{
 //		Threading::SetThreadDescription( _threadName );
-		TRACE( "Entering {}", _threadName );
+		TRACE( "Entering {}"sv, _threadName );
 		_asyncHelper.run();
-		TRACE( "Leaving {}", _threadName );
+		TRACE( "Leaving {}"sv, _threadName );
 		OnClose();
 	}
 	void AsyncSocket::Shutdown()noexcept
@@ -46,9 +46,9 @@ namespace Jde::IO::Sockets
 	{
 		ASSERT( !_pThread );
 		_threadName = clientThreadName;
-		_pThread = make_unique<Threading::InterruptibleThread>( _threadName, [&](){Run();} ); 
+		_pThread = make_unique<Threading::InterruptibleThread>( _threadName, [&](){Run();} );
 	}
-	
+
 	void AsyncSocket::Close()noexcept
 	{
 		_asyncHelper.stop();
