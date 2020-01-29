@@ -37,7 +37,7 @@ namespace Jde::Threading
 	struct TypePool : IShutdown
 	{
 		TypePool( uint8 threadCount, string_view name )noexcept;
-		~TypePool(){ DBG0("~TypePool"); }
+		~TypePool(){ DBG0("~TypePool"sv); }
 
 		virtual void Execute( sp<T> pValue )noexcept=0;
 		void Push( const sp<T> pValue )noexcept;
@@ -77,7 +77,7 @@ namespace Jde::Threading
 	template<typename T>
 	void TypePool<T>::Run( string name )noexcept
 	{
-		DBG( "({}) Starting", name  );
+		DBG( "({}) Starting"sv, name  );
 		while( !GetThreadInterruptFlag().IsSet() )//fyi existing _queue is thrown out.
 		{
 			unique_lock l{ _mtx };
@@ -96,7 +96,7 @@ namespace Jde::Threading
 				break;
 			}
 		}
-		DBG( "({}) Leaving", name  );
+		DBG( "({}) Leaving"sv, name  );
 	}
 
 	template<typename T>
@@ -108,7 +108,7 @@ namespace Jde::Threading
 	template<typename T>
 	void TypePool<T>::Shutdown()noexcept
 	{
-		DBG0( "TypePool<T>::Shutdown" );
+		DBG0( "TypePool<T>::Shutdown"sv );
 		unique_lock l{_mtx};
 		while( _threads.size() )
 		{

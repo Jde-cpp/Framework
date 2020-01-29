@@ -41,21 +41,21 @@ namespace Jde
 #ifdef _MSC_VER
 				THROW( IOException("Can not load library '{}' - '{:x}'", path.string(), GetLastError()) );
 #else
-				THROW( IOException("Can not load library '{}':  '{}'", path.c_str(), dlerror()) );
+				THROW( IOException("Can not load library '{}':  '{}'"sv, path.c_str(), dlerror()) );
 #endif
-			INFON( "Opened module '{}'.", path.string() );
+			DBG( "Opened module '{}'."sv, path.string() );
 		}
 		~DllHelper()
 		{
 			if( GetDefaultLogger() )
-				DBGN( "Freeing '{}'.", _path.string() );
+				DBGN( "Freeing '{}'."sv, _path.string() );
 #if _MSC_VER
 			::FreeLibrary( _module );
 #else
 			::dlclose( _module );
 #endif
 			if( GetDefaultLogger() )
-				DBGN( "Freed '{}'.", _path.string() );
+				DBGN( "Freed '{}'."sv, _path.string() );
 		}
 
 

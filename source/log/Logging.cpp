@@ -247,6 +247,13 @@ namespace Jde
 			_pMessage = pMessage;
 		}
 
+		MessageBase::MessageBase( ELogLevel level, const string& message, std::string_view file, std::string_view function, uint line )noexcept:
+			MessageBase( level, message, file, function, line, IO::Crc::Calc32(message), IO::Crc::Calc32(file), IO::Crc::Calc32(function) )
+		{
+			_pMessage = make_shared<string>( message );
+			MessageView = *_pMessage;
+		}
+
 /*		MessageBase::MessageBase( IO::IncomingMessage& message, EFields fields ):
 			Fields{ fields },
 			Level{ (fields & EFields::Level)!=EFields::None ? (ELogLevel)message.ReadUInt() : ELogLevel::Trace },

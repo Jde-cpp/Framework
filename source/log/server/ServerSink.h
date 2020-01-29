@@ -101,6 +101,7 @@ namespace Logging
 		QueueValue<Messages::Message> _messages;
 		uint _instanceId{0};
 		std::atomic<bool> _stringsLoaded{false};
+		string _applicationName;
 		function<void(uint32,sp<string>)> _customFunction;
 	};
 }}

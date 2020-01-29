@@ -61,8 +61,15 @@ namespace Jde
 		JDE_NATIVE_VISIBILITY static int compare( const char* s1, const char* s2, size_t n );
 		JDE_NATIVE_VISIBILITY static const char* find( const char* s, int n, char a );
 	};
-	typedef std::basic_string<char, ci_char_traits> CIString;
-
+	struct CIString : public std::basic_string<char, ci_char_traits>
+	{
+		typedef std::basic_string<char, ci_char_traits> base;
+		CIString( string_view sv )noexcept:base{sv.data(), sv.size()}{}
+		CIString( const string& s )noexcept:base{s.data(), s.size()}{}
+		inline bool operator !=( string_view s )const noexcept{ return base::compare( 0, s.size(), s.data(), s.size() )!=0; }
+		inline bool operator !=( const string& s )const noexcept{ return base::compare( 0, s.size(), s.data(), s.size() )!=0; }
+	};
+	//inline CIString operator=( string_view sv )
 
 	template<typename T>
 	std::basic_string<T> StringUtilities::RTrim(std::basic_string<T> &s)

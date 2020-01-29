@@ -94,15 +94,14 @@ namespace Jde::Logging
 				DBGX( "Acknowledged - instance id={}"sv, ack.instanceid() );
 				auto pTransmission = make_shared<Proto::ToServer>();
 				auto pInstance = new Proto::Instance();
-				var applicationName = Diagnostics::ApplicationName().stem().string()=="Jde" ? Diagnostics::ApplicationName().extension().string().substr(1) : Diagnostics::ApplicationName().stem().string();
-				pInstance->set_applicationname( applicationName );
+				_applicationName = Diagnostics::ApplicationName().stem().string()=="Jde" ? Diagnostics::ApplicationName().extension().string().substr(1) : Diagnostics::ApplicationName().stem().string();
+				pInstance->set_applicationname( _applicationName );
 				pInstance->set_hostname( Diagnostics::HostName() );
 				pInstance->set_processid( (int32)Diagnostics::ProcessId() );
 				pInstance->set_starttime( (google::protobuf::uint32)Clock::to_time_t(Logging::StartTime()) );
 
 				pTransmission->add_messages()->set_allocated_instance( pInstance );
 				Write( pTransmission );
-				INFO_ONCE( "'{}' started at '{}'"sv, applicationName, ToIsoString(Logging::StartTime()) );
 				_instanceId = ack.instanceid();
 			}
 			// else if( item.has_generic() )
@@ -114,6 +113,8 @@ namespace Jde::Logging
 			{
 				var& levels = item.loglevels();
 				Logging::SetLogLevel( (ELogLevel)levels.client(), (ELogLevel)levels.server() );
+				INFO_ONCE( "'{}' started at '{}'"sv, _applicationName, ToIsoString(Logging::StartTime()) );
+				DBG( "'{}' started at '{}'"sv, _applicationName, ToIsoString(Logging::StartTime()) );
 			}
 			else if( item.has_custom() )
 			{

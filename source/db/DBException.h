@@ -12,7 +12,7 @@ namespace Jde::DB
 		DBException( std::string_view value, Args&&... args ):
 			RuntimeException( value, args... )
 		{
-			DBG0( what() );
+			DBG0( string(what()) );
 		}
 
 
