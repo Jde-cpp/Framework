@@ -25,9 +25,8 @@
 
 namespace Jde
 {
-	class JDE_NATIVE_VISIBILITY Exception : public std::exception
+	struct JDE_NATIVE_VISIBILITY Exception : public std::exception
 	{
-	public:
 		Exception()=default;
 		Exception( const Exception&)=default;
 		Exception( Exception&&)=default;
@@ -74,9 +73,8 @@ namespace Jde
 	}
 
 	//Before program runs
-	class JDE_NATIVE_VISIBILITY LogicException : public Exception
+	struct JDE_NATIVE_VISIBILITY LogicException : public Exception
 	{
-	public:
 		template<class... Args>
 		LogicException( std::string_view value, Args&&... args ):
 			Exception( value, args... )
@@ -85,9 +83,8 @@ namespace Jde
 		}
 	};
 	//environment variables
-	class JDE_NATIVE_VISIBILITY EnvironmentException : public Exception
+	struct JDE_NATIVE_VISIBILITY EnvironmentException : public Exception
 	{
-	public:
 		template<class... Args>
 		EnvironmentException( std::string_view value, Args&&... args ):
 			Exception( value, args... )
@@ -109,9 +106,8 @@ namespace Jde
 		{}
 	};
 
-	class JDE_NATIVE_VISIBILITY CodeException : public RuntimeException
+	struct JDE_NATIVE_VISIBILITY CodeException : public RuntimeException
 	{
-	public:
 		CodeException( std::string_view value, const std::error_code& code, ELogLevel level=ELogLevel::Error );
 
 		static std::string ToString( const std::error_code& pErrorCode )noexcept;
@@ -138,7 +134,6 @@ namespace Jde
 			RuntimeException( value, args... )
 		{}
 	};
-
 
 	struct JDE_NATIVE_VISIBILITY IOException : public RuntimeException
 	{

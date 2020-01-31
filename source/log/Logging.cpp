@@ -119,17 +119,17 @@ namespace Jde
 		}
 		void LogServer( const Logging::MessageBase& messageBase )noexcept
 		{
-			if( _pServerSink->GetLogLevel()<=messageBase.Level )
+			if( _pServerSink && _pServerSink->GetLogLevel()<=messageBase.Level )
 				_pServerSink->Log( messageBase );
 		}
 		void LogServer( const Logging::MessageBase& messageBase, const vector<string>& values )noexcept
 		{
-			if( _pServerSink->GetLogLevel()<=messageBase.Level )
+			if( _pServerSink && _pServerSink->GetLogLevel()<=messageBase.Level )
 				_pServerSink->Log( messageBase, values );
 		}
 		void LogServer( const Logging::Messages::Message& message )noexcept
 		{
-			if( _pServerSink->GetLogLevel()<=message.Level )
+			if( _pServerSink && _pServerSink->GetLogLevel()<=message.Level )
 				_pServerSink->Log( message );
 		}
 

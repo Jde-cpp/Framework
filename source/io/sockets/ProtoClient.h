@@ -9,7 +9,7 @@ namespace Jde::IO::Sockets
 	struct ProtoClientSession
 	{
 		ProtoClientSession( boost::asio::io_context& context );
-		virtual ~ProtoClientSession(){ DBG0("~ProtoClientSession"sv); _pSocket=nullptr; };
+		virtual ~ProtoClientSession(){ DBGX( "~{}"sv, "ProtoClientSession" ); _pSocket=nullptr; };
 		void Close( std::condition_variable* pCvClient=nullptr )noexcept;
 		virtual void OnClose()noexcept{};
 		virtual void OnConnected()noexcept{};

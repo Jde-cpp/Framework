@@ -88,7 +88,7 @@ namespace Jde::IO::Sockets
 				if( length!=messageLength )
 					THROW( IOException("Read Body read '{}' expected '{}'", length, messageLength) );
 
-				TRACE( "ServerSession::ReadBody '{}' bytes", length );
+				TRACE( "ServerSession::ReadBody '{}' bytes"sv, length );
 				google::protobuf::io::CodedInputStream input( _message.data(), (int)std::min(length,_message.size()) );
 				auto pTransmission = make_shared<TToServer>();
 				if( !pTransmission->MergePartialFromCodedStream(&input) )
@@ -97,7 +97,7 @@ namespace Jde::IO::Sockets
 			}
 			catch( const IOException& e )
 			{
-				ERR( "ReadBody failed - {}", e.what() );
+				ERR( "ReadBody failed - {}"sv, e.what() );
 			}
 			ReadHeader();
 		};
@@ -114,9 +114,9 @@ namespace Jde::IO::Sockets
 		auto onDone = [id=Id,pData]( std::error_code ec, std::size_t length )
 		{
 			if( ec )
-				DBG( "({})Write message returned '{}'.", id, ec.value() );
+				DBG( "({})Write message returned '{}'."sv, id, ec.value() );
 			else
-				TRACE( "Session::Write length:  '{}'.", length );
+				TRACE( "Session::Write length:  '{}'."sv, length );
 		};
 		basio::async_write( _socket2, basio::buffer( pData->data(), pData->size() ), onDone );
 	}
