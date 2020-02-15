@@ -98,7 +98,7 @@ namespace Jde::Threading
 		//MultiByteToWideChar( CP_ACP, MB_COMPOSITE, description.data(), (int)description.size(), wdescription.data(), (int)description.size() );
 		HRESULT hr = ::SetThreadDescription( ::GetCurrentThread(), wdescription.c_str() );
 		if( FAILED(hr) )
-			WARN( "Could not set name for thread {}", string(description).c_str() );
+			WARN( "Could not set name for thread {}"sv, string(description).c_str() );
 #else
 		strncpy( ThreadName, description.c_str(), NameLength );
 //		strncpy( ThreadName2, (string("y")+string(description)).c_str(), 15 );

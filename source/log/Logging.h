@@ -97,9 +97,9 @@ namespace Jde
 		void LogCritical( const Logging::MessageBase& messageBase, Args&&... args );
 		template<class... Args >
 		void LogNoServer( const Logging::MessageBase& messageBase );
-		JDE_NATIVE_VISIBILITY void LogServer( const Logging::MessageBase& messageBase );
-		JDE_NATIVE_VISIBILITY void LogServer( const Logging::MessageBase& messageBase, const vector<string>& values );
-		JDE_NATIVE_VISIBILITY void LogServer( const Logging::Messages::Message& message );
+		JDE_NATIVE_VISIBILITY void LogServer( const Logging::MessageBase& messageBase )noexcept;
+		JDE_NATIVE_VISIBILITY void LogServer( const Logging::MessageBase& messageBase, const vector<string>& values )noexcept;
+		JDE_NATIVE_VISIBILITY void LogServer( const Logging::Messages::Message& message )noexcept;
 
 		//JDE_NATIVE_VISIBILITY void LogEtw( const Logging::MessageBase& messageBase );
 		//JDE_NATIVE_VISIBILITY void LogEtw( const Logging::MessageBase& messageBase, const vector<string>& values );
@@ -255,7 +255,7 @@ namespace Jde
 		}
 
 		template<class... Args >
-		inline void Log( const Logging::MessageBase& messageBase, Args&&... args )
+		inline void Log( const Logging::MessageBase& messageBase, Args&&... args )noexcept
 		{
 			if( GetDefaultLogger() )
 				GetDefaultLogger()->log( (spdlog::level::level_enum)messageBase.Level, messageBase.MessageView.data(), args... );
