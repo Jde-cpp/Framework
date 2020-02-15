@@ -64,7 +64,7 @@ namespace Jde
 		{
 			constexpr MessageBase( ELogLevel level, std::string_view message, std::string_view file, std::string_view function, uint line )noexcept;
 			//Causes ambiguous issue TODO refactor
-			MessageBase( ELogLevel level, const std::string& message, std::string_view file, std::string_view function, uint line )noexcept;
+			JDE_NATIVE_VISIBILITY MessageBase( ELogLevel level, const std::string& message, std::string_view file, std::string_view function, uint line )noexcept;
 			MessageBase( ELogLevel level, sp<std::string> pMessage, std::string_view file, std::string_view function, uint line )noexcept;
 			constexpr MessageBase( ELogLevel level, std::string_view message, std::string_view file, std::string_view function, uint line, uint messageId, uint fileId, uint functionId )noexcept;
 			MessageBase( IO::IncomingMessage& message, EFields fields )noexcept(false);
