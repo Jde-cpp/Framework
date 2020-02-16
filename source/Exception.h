@@ -28,8 +28,8 @@ namespace Jde
 	struct JDE_NATIVE_VISIBILITY Exception : public std::exception
 	{
 		Exception()=default;
-		Exception( const Exception&)=default;
-		Exception( Exception&&)=default;
+		Exception( const Exception& )=default;
+		Exception( Exception&& )=default;
 		Exception( ELogLevel level, std::string_view value );
 		Exception( std::string_view value );
 		template<class... Args>
