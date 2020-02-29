@@ -3,7 +3,7 @@
 
 #include "StringUtilities.h"
 
-#include <algorithm> 
+#include <algorithm>
 #include <functional>
 #include <locale>
 
@@ -20,9 +20,9 @@ namespace Jde
 		}
 		return 0;
 	}
-	const char* ci_char_traits::find(const char* s, int n, char a) 
+	const char* ci_char_traits::find(const char* s, int n, char a)
 	{
-		while( n-- > 0 && toupper(*s) != toupper(a) ) 
+		while( n-- > 0 && toupper(*s) != toupper(a) )
 			++s;
 		return s;
 	}
@@ -38,8 +38,8 @@ namespace Jde
 		return tokens;
 	}
 	std::vector<std::string> StringUtilities::Split( std::string_view s, char delim )
-	{ 
-		return Split<char>(string(s), delim); 
+	{
+		return Split<char>(string(s), delim);
 	}
 
 	string StringUtilities::Replace( string_view source, string_view find, string_view replace )noexcept
@@ -55,7 +55,7 @@ namespace Jde
 		}
 		if( iLast<source.size() )
 			os << source.substr( iLast, source.size()-iLast );
-		
+
 		return os.str();
 	}
 	string StringUtilities::Replace( string_view source, char find, char replace )noexcept
@@ -63,18 +63,25 @@ namespace Jde
 		string result{ source };
 		for( char* pFrom=(char*)source.data(), *pTo=(char*)result.data(); pFrom<source.data()+source.size(); ++pFrom, ++pTo )
 			*pTo = *pFrom==find ? replace : *pFrom;
-		
+
 		return result;
 	}
-	string StringUtilities::ToLower( string_view source )noexcept
+	string StringUtilities::ToLower( const string& source )noexcept
 	{
-		string result(source);
+		string result{ source };
 #if _WINDOWS
 		for( int i=0; i<source.size(); ++i )
 			result[i] = static_cast<char>( ::tolower( result[i]) );
 #else
 		std::transform( result.begin(), result.end(), result.begin(), ::tolower );
 #endif
+		return result;
+	}
+
+	string StringUtilities::ToUpper( const string& source )noexcept
+	{
+		string result{ source };
+		std::transform( result.begin(), result.end(), result.begin(), ::toupper );
 		return result;
 	}
 }

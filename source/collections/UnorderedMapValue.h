@@ -18,12 +18,13 @@ namespace Jde
 		void erase( const TKey& item )noexcept{ unique_lock<std::shared_mutex> l( _mutex ); BaseClass::erase( item ); }
 		const unordered_map<TKey,TValue> Find( std::function<bool(const TValue&)> func )const;
 		TValue Find( const TKey& key, const TValue& dflt )noexcept;
+		uint ForEach( std::function<void(const TKey&, const TValue&)> fncn )const noexcept;
 		bool Has( const TKey& key )noexcept;
 		template<class... Args >
 		bool emplace( Args&&... args )noexcept;
 		void Replace( const TKey& id, const TValue& value )noexcept;
 	private:
-		mutable std::shared_mutex _mutex;	
+		mutable std::shared_mutex _mutex;
 	};
 	template<typename TKey, typename TValue>
 	template<class... Args >
@@ -37,7 +38,7 @@ namespace Jde
 	const unordered_map<TKey,TValue> UnorderedMapValue<TKey,TValue>::Find( std::function<bool(const TValue&)> func )const
 	{
 		unordered_map<TKey,TValue> results;
-		shared_lock<std::shared_mutex> l( _mutex ); 
+		shared_lock<std::shared_mutex> l( _mutex );
 		for( const auto& keyValue : *this )
 		{
 			if( func(keyValue.second) )
@@ -53,7 +54,7 @@ namespace Jde
 		const auto pKeyValue = BaseClass::find( key );
 		return pKeyValue==BaseClass::end() ? dflt : pKeyValue->second;
 	}
-	
+
 	template<typename TKey, typename TValue>
 	void UnorderedMapValue<TKey,TValue>::Replace( const TKey& id, const TValue& value )noexcept
 	{
@@ -68,5 +69,15 @@ namespace Jde
 	{
 		shared_lock<std::shared_mutex> l(_mutex);
 		return BaseClass::find(id)!=BaseClass::end();
+	}
+
+	template<typename TKey, typename TValue>
+	uint UnorderedMapValue<TKey,TValue>::ForEach( std::function<void(const TKey&, const TValue&)> fncn )const noexcept
+	{
+ 		shared_lock<std::shared_mutex> l(_mutex);
+		const auto count = BaseClass::size();
+		for( const auto& [id, value] : *this )
+			fncn( id, value );
+		return count;
 	}
 }

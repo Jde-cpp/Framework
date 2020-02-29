@@ -246,7 +246,7 @@ namespace Jde
 	constexpr std::array<string_view,12> months{ "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec" };
 	uint DateTime::ParseMonth( string_view month )noexcept(false)
 	{
-		var index = find( months.begin(), months.end(), StringUtilities::ToLower(month) )-months.begin();
+		var index = find( months.begin(), months.end(), StringUtilities::ToLower(string(month)) )-months.begin();
 		if( index>=(int)months.size() )
 			THROW( ArgumentException("Could not parse month '{}'", month) );
 		return index+1;

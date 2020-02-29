@@ -31,7 +31,8 @@ namespace Jde
 
 		JDE_NATIVE_VISIBILITY string Replace( string_view source, string_view find, string_view replace )noexcept;
 		JDE_NATIVE_VISIBILITY string Replace( string_view source, char find, char replace )noexcept;
-		JDE_NATIVE_VISIBILITY string ToLower( string_view source )noexcept;
+		JDE_NATIVE_VISIBILITY string ToLower( const string& source )noexcept;
+		JDE_NATIVE_VISIBILITY string ToUpper( const string& source )noexcept;
 
 		template<typename T>
 		static T TryTo( string_view value, T errorValue );
