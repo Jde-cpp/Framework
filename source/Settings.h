@@ -15,9 +15,12 @@ namespace Jde::Settings
 		bool Bool( string_view path, bool dflt )noexcept;
 		string String( string_view path )noexcept;
 		uint16 Uint16( string_view path )noexcept;
-		
+
 		template<typename T>
-		vector<T> Array( string_view path )noexcept;
+		vector<T> Array( string_view path )noexcept(false);
+
+		template<typename TValue>
+		map<string,TValue> Map( string_view path )noexcept;
 
 		//fs::path Path( string_view path, const fs::path& dflt=fs::path() )const noexcept;
 		shared_ptr<Container> SubContainer( string_view entry )const throw();
@@ -43,7 +46,7 @@ namespace Jde::Settings
 	}
 
 	template<typename T>
-	vector<T> Container::Array( string_view path )noexcept
+	vector<T> Container::Array( string_view path )noexcept(false)
 	{
 		auto item = _pJson->find( path );
 		if( item==_pJson->end() )
@@ -54,6 +57,18 @@ namespace Jde::Settings
 		return values;
 	}
 
+	template<typename TValue>
+	map<string,TValue> Container::Map( string_view path )noexcept
+	{
+		auto pItem = _pJson->find( path );
+		map<string,TValue> values;
+		if( pItem!=_pJson->end() )
+		{
+			for( var& [key,value] : pItem->items() )
+				values.emplace( key, value );
+		}
+		return values;
+	}
 
 	template<>
 	inline fs::path Container::Get( string_view path, fs::path defaultValue )const noexcept
@@ -68,7 +83,7 @@ namespace Jde::Settings
 		auto item = _pJson->find( path );
 		return item==_pJson->end() ? defaultValue : item->get<T>();
 	}
-	
+
 
 	JDE_NATIVE_VISIBILITY Container& Global();
 	JDE_NATIVE_VISIBILITY void SetGlobal( shared_ptr<Container> container );

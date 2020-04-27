@@ -30,7 +30,8 @@ namespace Jde
 		Exception()=default;
 		Exception( const Exception& )=default;
 		Exception( Exception&& )=default;
-		Exception( ELogLevel level, std::string_view value );
+		Exception( ELogLevel level, string_view value );
+		Exception( ELogLevel level, string_view value, string_view function, string_view file, long line );
 		Exception( std::string_view value );
 		template<class... Args>
 		Exception( std::string_view value, Args&&... args );

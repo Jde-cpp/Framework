@@ -19,7 +19,7 @@ namespace Jde
 		const unordered_map<TKey,TValue> Find( std::function<bool(const TValue&)> func )const;
 		TValue Find( const TKey& key, const TValue& dflt )noexcept;
 		uint ForEach( std::function<void(const TKey&, const TValue&)> fncn )const noexcept;
-		bool Has( const TKey& key )noexcept;
+		bool Has( const TKey& key )const noexcept;
 		template<class... Args >
 		bool emplace( Args&&... args )noexcept;
 		void Replace( const TKey& id, const TValue& value )noexcept;
@@ -65,7 +65,7 @@ namespace Jde
 			BaseClass::emplace( id, value );
 	}
 	template<typename TKey, typename TValue>
-	bool UnorderedMapValue<TKey,TValue>::Has( const TKey& id )noexcept
+	bool UnorderedMapValue<TKey,TValue>::Has( const TKey& id )const noexcept
 	{
 		shared_lock<std::shared_mutex> l(_mutex);
 		return BaseClass::find(id)!=BaseClass::end();

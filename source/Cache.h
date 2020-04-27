@@ -8,12 +8,13 @@ namespace Jde
 		~Cache(){ if( HaveLogger() ) DBG0("~Cache"sv); }
 		static void CreateInstance()noexcept;
 		void Shutdown()noexcept;// override;
-
+		static bool Has( const string& name )noexcept;
 		template<class T>
 		static sp<T> Get( const string& name )noexcept;
 		template<class T>
 		static sp<T> Set( const string& name, sp<T> pValue )noexcept;
 	private:
+		bool InstanceHas( const string& name )const noexcept{ shared_lock l{_cacheLock}; return _cache.find( name )!=_cache.end(); }
 		template<class T>
 		sp<T> InstanceGet( const string& name )noexcept;
 
@@ -22,8 +23,14 @@ namespace Jde
 
 		Cache()noexcept{};
 		JDE_NATIVE_VISIBILITY static sp<Cache> GetInstance()noexcept;
-		map<string,sp<void>> _cache; shared_mutex _cacheLock;
+		map<string,sp<void>> _cache; mutable shared_mutex _cacheLock;
 	};
+
+	inline bool Cache::Has( const string& name )noexcept
+	{
+		auto pInstance = GetInstance();
+		return pInstance && pInstance->InstanceHas( name );
+	}
 
 	template<class T>
 	sp<T> Cache::Get( const string& name )noexcept
