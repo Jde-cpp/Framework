@@ -10,13 +10,17 @@ namespace Jde
 		void Shutdown()noexcept;// override;
 		static bool Has( const string& name )noexcept;
 		template<class T>
-		static sp<T> Get( const string& name )noexcept;
+		static sp<T> TryGet( const string& name )noexcept;
+		template<class T>
+		static sp<T> Get( const string& name )noexcept(false);
 		template<class T>
 		static sp<T> Set( const string& name, sp<T> pValue )noexcept;
 	private:
 		bool InstanceHas( const string& name )const noexcept{ shared_lock l{_cacheLock}; return _cache.find( name )!=_cache.end(); }
 		template<class T>
-		sp<T> InstanceGet( const string& name )noexcept;
+		sp<T> InstanceGet( const string& name )noexcept(false);
+		template<class T>
+		sp<T> InstanceTryGet( const string& name )noexcept;
 
 		template<class T>
 		sp<T> InstanceSet( const string& name, sp<T> pValue )noexcept;
@@ -33,14 +37,32 @@ namespace Jde
 	}
 
 	template<class T>
-	sp<T> Cache::Get( const string& name )noexcept
+	sp<T> Cache::Get( const string& name )noexcept(false)
 	{
 		auto pInstance = GetInstance();
-		return pInstance ? pInstance->InstanceGet<T>( name ) : sp<T>{};
+		if( !pInstance )
+			THROW( Exception("no cache instance.") );
+		return pInstance->InstanceGet<T>( name );
+	}
+	template<class T>
+	sp<T> Cache::TryGet( const string& name )noexcept
+	{
+		auto pInstance = GetInstance();
+		return pInstance ? pInstance->InstanceTryGet<T>( name ) : make_shared<T>();
+	}
+	template<class T>
+	sp<T> Cache::InstanceGet( const string& name )noexcept(false)
+	{
+		sp<T> pValue;
+		shared_lock l{_cacheLock};
+		auto p = _cache.find( name );
+		//if( p==_cache.end() )
+		//	THROW( Exception("'{}' not found in cache.", name) );
+		return p==_cache.end() ? sp<T>{} : std::static_pointer_cast<T>( p->second );
 	}
 
 	template<class T>
-	sp<T> Cache::InstanceGet( const string& name )noexcept
+	sp<T> Cache::InstanceTryGet( const string& name )noexcept
 	{
 		sp<T> pValue;
 		shared_lock l{_cacheLock};
