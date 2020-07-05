@@ -40,11 +40,11 @@ namespace Logging
 		std::atomic<bool> SendStatus{false};
 	protected:
 		sp<IServerSink> GetInstnace()noexcept;
-		Collections::UnorderedSet<uint> _messagesSent;
-		Collections::UnorderedSet<uint> _filesSent;
-		Collections::UnorderedSet<uint> _functionsSent;
-		Collections::UnorderedSet<uint> _usersSent;
-		Collections::UnorderedSet<uint> _threadsSent;
+		UnorderedSet<uint> _messagesSent;
+		UnorderedSet<uint> _filesSent;
+		UnorderedSet<uint> _functionsSent;
+		UnorderedSet<uint> _usersSent;
+		UnorderedSet<uint> _threadsSent;
 	private:
 		ELogLevel _level{ELogLevel::Error};
 	};

@@ -6,8 +6,6 @@ namespace Jde
 {
 	using std::unordered_set;
 	using std::function;
-namespace Collections //TODOreflection
-{
 	template<typename TKey>
 	class UnorderedSet : unordered_set<TKey>
 	{
@@ -103,4 +101,4 @@ namespace Collections //TODOreflection
 			func( value );
 		return count;
 	}
-}}
+}

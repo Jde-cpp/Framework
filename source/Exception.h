@@ -6,6 +6,10 @@
 #ifndef  THROW
 # define THROW(x) Jde::throw_exception(x, __func__,__FILE__,__LINE__)
 #endif
+#ifndef  THROW_IF
+# define THROW_IF(condition,x) if(condition) Jde::throw_exception(x, __func__,__FILE__,__LINE__)
+#endif
+
 //mysql undefs THROW :(
 #ifndef  THROW2
 # define THROW2(x) Jde::throw_exception(x, __func__,__FILE__,__LINE__)
@@ -56,9 +60,9 @@ namespace Jde
 		long _line;
 
 		ELogLevel _level{ELogLevel::Trace};
+		mutable std::string _what;
 	private:
 		std::string _format;
-		std::string _what;
 		//uint32 _messageId;
 		vector<string> _args;
 	};
@@ -148,7 +152,9 @@ namespace Jde
 			RuntimeException( value, args... ),
 			ErrorCode{errorCode}
 		{}
+		const char* what() const noexcept override;
 		const uint ErrorCode{0};
+		fs::path Path;
 	};
 
 	template<class TException>

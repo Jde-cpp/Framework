@@ -20,24 +20,24 @@ namespace Jde
 		_fileName{file},
 		_line{line},
 		_level{level},
-		_format{ value },
-		_what{value}
+		_what{value},
+		_format{ value }
 	{}
 
 	Exception::Exception( ELogLevel level, std::string_view value ):
 		std::exception(),
-		_level{level},
-		_format{ value },
-		_what(value)
+		_level{ level },
+		_what{ value },
+		_format{ value }
 	{}
 	Exception::Exception( std::string_view value ):
-		_format{ value },
-		_what(value)
+		_what{ value },
+		_format{ value }
 	{}
 
 	Exception::Exception( const std::exception& exp ):
-		_format( exp.what() ),
-		_what( _format )
+		_what{ exp.what() },
+		_format( _what )
 	{}
 
 	Exception::~Exception()
@@ -114,6 +114,11 @@ namespace Jde
 		Exception( inner )
 	{}
 
+	const char* IOException::what()const noexcept
+	{
+		_what = fmt::format( "{} - ErrorCode='{}', path='{}'", RuntimeException::what(), ErrorCode, Path.string() );
+		return _what.c_str();
+	}
 /*	ostream& operator<<(ostream& os, const Exception& dt)
 	{
 		os << _what.c_str();
