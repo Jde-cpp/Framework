@@ -24,7 +24,7 @@ namespace Jde::IO
 		{
 			auto items = make_unique<std::set<fs::directory_entry>>();
 			Jde::IO::FileUtilities::ForEachItem( directory, [&items]( fs::directory_entry item ){items->emplace(item);} );
-			return move( items );
+			return items;
 		}
 
 		// set<fs::directory_entry> GetDirectoryRecursive( const fs::path& directory, set<fs::directory_entry>& values )noexcept
@@ -107,7 +107,7 @@ namespace Jde::IO
 			else
 				fs::remove( uncompressedFile );
 			GetDefaultLogger()->trace( "removed {}.", (leaveUncompressed ? compressedPath.string() : uncompressedFile.string()) );
-			return move( pResult );
+			return pResult;
 		}
 		fs::path Compression::Compress( const fs::path& path, bool deleteAfter )noexcept(false)
 		{

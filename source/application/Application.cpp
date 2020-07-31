@@ -13,11 +13,11 @@ namespace Jde
 {
 	sp<IApplication> IApplication::_pInstance;
 	mutex IApplication::_threadMutex;
-	sp<std::list<sp<Threading::InterruptibleThread>>> IApplication::_pBackgroundThreads{ make_shared<std::list<sp<Threading::InterruptibleThread>>>() };
+	VectorPtr<sp<Threading::InterruptibleThread>> IApplication::_pBackgroundThreads{ make_shared<std::vector<sp<Threading::InterruptibleThread>>>() };
 //	bool Stop{false};
 	std::function<void()> OnExit;
 
-	auto _pDeletedThreads = make_shared<std::list<sp<Threading::InterruptibleThread>>>();
+	auto _pDeletedThreads = make_shared<std::vector<sp<Threading::InterruptibleThread>>>();
 
 	auto _pObjects = make_shared<std::list<sp<void>>>();  mutex ObjectMutex;
 	auto _pShutdowns = make_shared<std::list<sp<IShutdown>>>();
@@ -41,7 +41,7 @@ namespace Jde
 		if( HaveLogger() )
 			DBG0( "IApplication::~IApplication"sv );
 	}
-	void IApplication::BaseStartup( int argc, char** argv, string_view appName )noexcept
+	set<string> IApplication::BaseStartup( int argc, char** argv, string_view appName )noexcept
 	{
 		bool console = false;
 		const string arg0{ argv[0] };
@@ -50,12 +50,15 @@ namespace Jde
 #else
 		bool terminate = false;
 #endif
+		set<string> values;
 		for( int i=1; i<argc; ++i )
 		{
 			if( string(argv[i])=="-c" )
 				console = true;
-			if( string(argv[i])=="-t" )
+			else if( string(argv[i])=="-t" )
 				terminate = !terminate;
+			else
+				values.emplace( argv[i] );
 		}
 		if( terminate )
 			std::set_terminate( OnTerminate );
@@ -71,6 +74,7 @@ namespace Jde
 		INFO( "{}, settings='{}' Running as console='{}'"sv, arg0, settingsPath, console );
 
 		Cache::CreateInstance();
+		return values;
 	}
 	// bool IApplication::Kill( uint processId )noexcept
 	// {
@@ -143,7 +147,7 @@ namespace Jde
 		for( auto ppThread = _pDeletedThreads->begin(); ppThread!=_pDeletedThreads->end(); )
 		{
 			(*ppThread)->Join();
-			ppThread = _pBackgroundThreads->erase( ppThread );
+			ppThread = _pDeletedThreads->erase( ppThread );
 		}
 	}
 
@@ -181,7 +185,7 @@ namespace Jde
 		_pBackgroundThreads = nullptr;
 		_pDeletedThreads = nullptr;
 		//DB::CleanDataSources();  TODO ReAdd when adding a data source.
-		for( var shutdown : _shutdowns )
+		for( var& shutdown : _shutdowns )
 			shutdown();
 		INFO0( "Clearing Logger"sv );
 		if( GetServerSink() )

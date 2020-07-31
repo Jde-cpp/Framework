@@ -96,7 +96,7 @@ namespace Logging
 		void SetCustomFunction( function<void(uint32,sp<string>)>&& fnctn )noexcept{_customFunction=fnctn;}
 	private:
 		ServerSink( string_view host, uint16 port )noexcept;
-		void OnReceive( std::shared_ptr<Logging::Proto::FromServer> pFromServer )noexcept;
+		void OnReceive( std::shared_ptr<Logging::Proto::FromServer> pFromServer )noexcept override;
 		TimePoint _lastConnectionCheck;
 		QueueValue<Messages::Message> _messages;
 		uint _instanceId{0};

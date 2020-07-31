@@ -155,7 +155,7 @@ namespace Jde::IO
  		int _fd;
 		sp<Jde::Threading::InterruptibleThread> _pThread;
 
-		const ELogLevel _logLevel{ELogLevel::Debug};
+		//const ELogLevel _logLevel{ELogLevel::Debug};
 	};
 	/*class DiskWatcherBatch : Jde::Threading::Interrupt
 	{

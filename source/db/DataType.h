@@ -7,7 +7,7 @@ namespace Jde::DB
 	typedef std::chrono::system_clock DBClock;
 	typedef DBClock::time_point DBDateTime;
 	enum class EDataValue: uint8 {Null,String,StringView,StringPtr,Bool,Int,Int64,Uint,Decimal2,Double,DoubleOptional,DateOptional };
-	typedef std::variant<nullptr_t,string,string_view,sp<string>,bool,int,_int,uint,Decimal2,double,std::optional<double>,std::optional<DBDateTime>> DataValue;
+	typedef std::variant<std::nullptr_t,string,string_view,sp<string>,bool,int,_int,uint,Decimal2,double,std::optional<double>,std::optional<DBDateTime>> DataValue;
 	string to_string( const DataValue& parameter );
 	enum DataType
 	{

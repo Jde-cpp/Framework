@@ -12,6 +12,7 @@
 #include <unordered_map>
 #include <string_view>
 #include <vector>
+//#include <format>
 
 namespace Jde
 {
@@ -40,7 +41,6 @@ namespace Jde
 	typedef Clock::duration Duration;
 	typedef Clock::time_point TimePoint;
 	typedef std::optional<TimePoint> TimePoint_;
-	//#define TimePoint_ std::optional<TimePoint>;
 
 	typedef std::chrono::steady_clock SClock;
 	typedef SClock::duration SDuration;
@@ -70,11 +70,11 @@ namespace Jde
 
 	template<class T> using sp = std::shared_ptr<T>;
 	template<class T> using up = std::unique_ptr<T>;
-	
+
 	using std::vector;
 	template<class T> using VectorPtr = std::shared_ptr<std::vector<T>>;
 
-	using std::map; 
+	using std::map;
 	template<class K, class V> using MapPtr = std::shared_ptr<std::map<K,V>>;
 	template<class K, class V> using UMapPtr = std::unique_ptr<std::map<K,V>>;
 	template<class K, class V> using UnorderedPtr = std::shared_ptr<std::unordered_map<K,V>>;
@@ -83,9 +83,9 @@ namespace Jde
 
 	typedef unsigned short PortType;
 /*	using std::function;
-	
+
 	using std::vector;
-*/	
+*/
 	namespace fs=std::filesystem;
 }
 #ifdef _MSC_VER

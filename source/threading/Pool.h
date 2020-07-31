@@ -37,7 +37,7 @@ namespace Jde::Threading
 	struct TypePool : IShutdown
 	{
 		TypePool( uint8 threadCount, string_view name )noexcept;
-		~TypePool(){ DBG0("~TypePool"sv); }
+		virtual ~TypePool(){ DBG0("~TypePool"sv); }
 
 		virtual void Execute( sp<T> pValue )noexcept=0;
 		void Push( const sp<T> pValue )noexcept;

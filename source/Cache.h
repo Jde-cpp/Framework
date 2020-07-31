@@ -10,7 +10,7 @@ namespace Jde
 		void Shutdown()noexcept;// override;
 		static bool Has( const string& name )noexcept;
 		template<class T>
-		static sp<T> TryGet( const string& name )noexcept;
+		static sp<T> TryGet( const string& name )noexcept;//returns non-null value.
 		template<class T>
 		static sp<T> Get( const string& name )noexcept(false);
 		template<class T>

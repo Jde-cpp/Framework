@@ -14,7 +14,7 @@ namespace Jde
 	struct JDE_NATIVE_VISIBILITY IApplication
 	{
 		virtual ~IApplication();
-		void BaseStartup( int argc, char** argv, string_view appName )noexcept;
+		set<string> BaseStartup( int argc, char** argv, string_view appName )noexcept;
 
 		static void AddThread( sp<Threading::InterruptibleThread> pThread )noexcept;
 		static void RemoveThread( sp<Threading::InterruptibleThread> pThread )noexcept;
@@ -28,7 +28,7 @@ namespace Jde
 		static TimePoint StartTime()noexcept;
 		static void AddShutdownFunction( std::function<void()>&& shutdown )noexcept;
 		static void Pause()noexcept;
-		static std::list<sp<Threading::InterruptibleThread>>& GetBackgroundThreads()noexcept{ return  *_pBackgroundThreads; }
+		//static VectorPtr<sp<Threading::InterruptibleThread>>& GetBackgroundThreads()noexcept{ return  *_pBackgroundThreads; }
 	protected:
 		void Wait()noexcept;
 		static void OnTerminate()noexcept;//implement in OSApp.cpp.
@@ -38,7 +38,7 @@ namespace Jde
 		virtual bool KillInstance( uint processId )noexcept=0;
 
 		static mutex _threadMutex;
-		static sp<std::list<sp<Threading::InterruptibleThread>>> _pBackgroundThreads;
+		static VectorPtr<sp<Threading::InterruptibleThread>> _pBackgroundThreads;
 
 		static sp<IApplication> _pInstance;
 	private:
@@ -47,7 +47,7 @@ namespace Jde
 
 	struct OSApp : IApplication
 	{
-		JDE_NATIVE_VISIBILITY static void Startup( int argc, char** argv, string_view appName )noexcept;
+		JDE_NATIVE_VISIBILITY static set<string> Startup( int argc, char** argv, string_view appName )noexcept;
 	protected:
 		bool KillInstance( uint processId )noexcept override;
 		void SetConsoleTitle( string_view title )noexcept override;

@@ -23,7 +23,7 @@ namespace Jde::Threading  //TODO Reflection remove Threading from public items.
 		std::condition_variable* _pThreadCondition{nullptr};
 		std::condition_variable_any* _pThreadConditionAny{nullptr};
 		std::mutex _setClearMutex;
-		// rest as before   
+		// rest as before
 	};
 	extern thread_local InterruptFlag ThreadInterruptFlag;
 	JDE_NATIVE_VISIBILITY InterruptFlag& GetThreadInterruptFlag()noexcept;
@@ -32,7 +32,7 @@ namespace Jde::Threading  //TODO Reflection remove Threading from public items.
 	{
 		template<typename FunctionType>
 		InterruptibleThread(string_view name, FunctionType f)noexcept;
-		JDE_NATIVE_VISIBILITY ~InterruptibleThread();
+		virtual JDE_NATIVE_VISIBILITY ~InterruptibleThread();
 		JDE_NATIVE_VISIBILITY void Interrupt()noexcept;
 		JDE_NATIVE_VISIBILITY void Join();
 		bool IsDone()const noexcept{ return _pFlag && _pFlag->IsDone(); }
