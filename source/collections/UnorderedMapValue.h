@@ -1,6 +1,5 @@
 #pragma once
 
-
 namespace Jde
 {
 	//using std::unordered_map;
@@ -16,7 +15,7 @@ namespace Jde
 		UnorderedMapValue( )=default;
 		UnorderedMapValue( const UnorderedMapValue& copy )=delete;
 		void erase( const TKey& item )noexcept{ unique_lock<std::shared_mutex> l( _mutex ); BaseClass::erase( item ); }
-		const unordered_map<TKey,TValue> Find( std::function<bool(const TValue&)> func )const;
+		const std::unordered_map<TKey,TValue> Find( std::function<bool(const TValue&)> func )const;
 		TValue Find( const TKey& key, const TValue& dflt )noexcept;
 		uint ForEach( std::function<void(const TKey&, const TValue&)> fncn )const noexcept;
 		bool Has( const TKey& key )const noexcept;
@@ -35,9 +34,9 @@ namespace Jde
 		return result.second;
 	}
 	template<typename TKey, typename TValue>
-	const unordered_map<TKey,TValue> UnorderedMapValue<TKey,TValue>::Find( std::function<bool(const TValue&)> func )const
+	const std::unordered_map<TKey,TValue> UnorderedMapValue<TKey,TValue>::Find( std::function<bool(const TValue&)> func )const
 	{
-		unordered_map<TKey,TValue> results;
+		std::unordered_map<TKey,TValue> results;
 		shared_lock<std::shared_mutex> l( _mutex );
 		for( const auto& keyValue : *this )
 		{

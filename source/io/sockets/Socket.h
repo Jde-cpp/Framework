@@ -1,4 +1,5 @@
 #pragma once
+#include "boost/asio.hpp"
 #include <deque>
 #include "../../Exports.h"
 #include "../../application/Application.h"
@@ -68,7 +69,7 @@ namespace Jde::IO::Sockets
 	template<typename T>
 	sp<OStreamBuffer> SessionToBuffer( const T& object, uint type=0 )noexcept
 	{
-		auto pBuffer = std::make_shared<OStreamBuffer>( std::make_unique<std::vector<char>>(8192) ); 
+		auto pBuffer = std::make_shared<OStreamBuffer>( std::make_unique<std::vector<char>>(8192) );
 		pBuffer->WriteLength();
 		std::ostream os( pBuffer.get() );
 		if( type!=0 )
@@ -76,8 +77,8 @@ namespace Jde::IO::Sockets
 		object.Write( os );
 		return pBuffer;
 	}
-	
-	template<typename T> 
+
+	template<typename T>
 	void Session::Write( const T& object, OnDone onDone )noexcept
 	{
 		Write( SessionToBuffer(object), onDone );
@@ -85,7 +86,7 @@ namespace Jde::IO::Sockets
 / *template<typename T>
 	void Session::Write( const T& object )noexcept
 	{
-		
+
 	}*/
 	/*
 	template<typename T>

@@ -70,8 +70,8 @@ namespace Jde
 
 	template<class... Args>
 	Exception::Exception( std::string_view value, Args&&... args ):
-		_format{ value },
-		_what{ fmt::format(value,args...) }
+		_what{ fmt::format(value,args...) },
+		_format{ value }
 	{
 		_args.reserve( sizeof...(args) );
 		ToVec::Append( _args, args... );

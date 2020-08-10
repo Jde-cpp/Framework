@@ -13,6 +13,7 @@ namespace Jde::Settings
 		Container( const fs::path& jsonFile );
 		Jde::Duration Duration( string_view path, const Jde::Duration& dflt )noexcept;
 		bool Bool( string_view path, bool dflt )noexcept;
+		bool Have( string_view path )noexcept;
 		string String( string_view path )noexcept;
 		uint16 Uint16( string_view path )noexcept;
 

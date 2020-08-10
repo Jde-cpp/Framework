@@ -2,7 +2,7 @@
 path=${1}
 type=${2:-asan}
 clean=${3:-0}
-
+export CXX=clang++
 output=$path/.obj/$type
 if [ ! -d $output ]; then mkdir $output; fi;
 cd $output
@@ -15,3 +15,4 @@ fi
 make -j7;
 cd - > /dev/null
 exit $?
+1

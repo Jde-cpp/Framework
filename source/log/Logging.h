@@ -7,6 +7,8 @@
 #include "../Exports.h"
 #include "../io/Crc.h"
 #include "../TypeDefs.h"
+#include "../DateTime.h"
+
 //#ifdef _MSC_VER
 //	#include "server/EtwSink.h"
 //#endif
@@ -63,6 +65,7 @@ namespace Jde
 		struct MessageBase
 		{
 			constexpr MessageBase( ELogLevel level, std::string_view message, std::string_view file, std::string_view function, uint line )noexcept;
+			constexpr  MessageBase( ELogLevel level, std::string_view message, std::string_view file, std::string_view function, uint line, uint messageId )noexcept;
 			//Causes ambiguous issue TODO refactor
 			JDE_NATIVE_VISIBILITY MessageBase( ELogLevel level, const std::string& message, std::string_view file, std::string_view function, uint line )noexcept;
 			JDE_NATIVE_VISIBILITY MessageBase( ELogLevel level, sp<std::string> pMessage, std::string_view file, std::string_view function, uint line )noexcept;
@@ -100,6 +103,7 @@ namespace Jde
 		JDE_NATIVE_VISIBILITY void LogServer( const Logging::MessageBase& messageBase )noexcept;
 		JDE_NATIVE_VISIBILITY void LogServer( const Logging::MessageBase& messageBase, const vector<string>& values )noexcept;
 		JDE_NATIVE_VISIBILITY void LogServer( const Logging::Messages::Message& message )noexcept;
+		void LogMemory( const Logging::MessageBase& messageBase, const vector<string>* pValues=nullptr )noexcept;
 
 		//JDE_NATIVE_VISIBILITY void LogEtw( const Logging::MessageBase& messageBase );
 		//JDE_NATIVE_VISIBILITY void LogEtw( const Logging::MessageBase& messageBase, const vector<string>& values );
@@ -138,7 +142,7 @@ namespace Jde
 #define INFON( message, ... ) Logging::Log( Logging::MessageBase(ELogLevel::Information, message, MY_FILE, __func__, __LINE__, IO::Crc::Calc32RunTime(message), IO::Crc::Calc32RunTime(MY_FILE), IO::Crc::Calc32RunTime(__func__)), __VA_ARGS__ )
 #define INFO0_ONCE(message) Logging::LogOnce( Logging::MessageBase(ELogLevel::Information, message, MY_FILE, __func__, __LINE__) )
 #define DBG(message,...) Jde::Logging::Log( Jde::Logging::MessageBase(Jde::ELogLevel::Debug, message, MY_FILE, __func__, __LINE__), __VA_ARGS__ )
-#define DBG0( message ) Logging::Log( Logging::MessageBase(ELogLevel::Debug, message, MY_FILE, __func__, __LINE__) )
+#define DBG0( message ) Jde::Logging::Log( Logging::MessageBase(ELogLevel::Debug, message, MY_FILE, __func__, __LINE__) )
 #define DBGN( message, ... ) Logging::Log( Logging::MessageBase(ELogLevel::Debug, message, MY_FILE, __func__, __LINE__, IO::Crc::Calc32RunTime(message), IO::Crc::Calc32RunTime(MY_FILE), IO::Crc::Calc32RunTime(__func__)), __VA_ARGS__ )
 #define DBGX(message,...) Logging::LogNoServer( Logging::MessageBase(ELogLevel::Debug, message, MY_FILE, __func__, __LINE__), __VA_ARGS__ )
 #define DBG_ONCE(message,...) Logging::LogOnce( Logging::MessageBase(ELogLevel::Debug, message, MY_FILE, __func__, __LINE__), __VA_ARGS__ )
@@ -148,6 +152,7 @@ namespace Jde
 #define TRACEX(message,...) Logging::LogNoServer( Logging::MessageBase(ELogLevel::Trace, message, MY_FILE, __func__, __LINE__), __VA_ARGS__ )
 #define TRACE0X(message) Logging::LogNoServer( Logging::MessageBase(ELogLevel::Trace, message, MY_FILE, __func__, __LINE__) )
 #define LOG(severity,message,...) Logging::Log( Logging::MessageBase(severity, message, MY_FILE, __func__, __LINE__), __VA_ARGS__ )
+#define LOGN(severity,message,messageId,...) Logging::Log( Logging::MessageBase(severity, message, MY_FILE, __func__, __LINE__, messageId), __VA_ARGS__ )
 #define LOG0(severity,message) Logging::Log( Logging::MessageBase(severity, message, MY_FILE, __func__, __LINE__) )
 //#define LOG_SQL(sql,pParams)
 
@@ -164,8 +169,10 @@ namespace Jde
 
    using namespace std::literals;
 	JDE_NATIVE_VISIBILITY void InitializeLogger( string_view fileName )noexcept;
-	JDE_NATIVE_VISIBILITY void InitializeLogger( ELogLevel level2=ELogLevel::Debug, const fs::path& path=fs::path{}, bool sendToServer=false )noexcept;
+	JDE_NATIVE_VISIBILITY void InitializeLogger( ELogLevel level2=ELogLevel::Debug, const fs::path& path=fs::path{}, uint16 serverPort=0, bool memory=false )noexcept;
 	JDE_NATIVE_VISIBILITY bool HaveLogger()noexcept;
+	JDE_NATIVE_VISIBILITY void ClearMemoryLog()noexcept;
+	JDE_NATIVE_VISIBILITY vector<Logging::Messages::Message> FindMemoryLog( uint32 messageId )noexcept;
 #if _MSC_VER
 	JDE_NATIVE_VISIBILITY spdlog::logger* GetDefaultLogger()noexcept;
 	JDE_NATIVE_VISIBILITY Logging::IServerSink* GetServerSink()noexcept;
@@ -176,6 +183,7 @@ namespace Jde
 //	JDE_NATIVE_VISIBILITY Logging::EtwSink* GetEtwSink();
 #else
 	extern spdlog::logger* pLogger;
+	extern bool _logMemory;
 	extern Logging::IServerSink* _pServerSink;
 	inline spdlog::logger* GetDefaultLogger()noexcept{ /*assert(pLogger);*/ return pLogger; }
 	inline Logging::IServerSink* GetServerSink()noexcept{ return _pServerSink; }
@@ -231,6 +239,8 @@ namespace Jde
 			GetDefaultLogger()->log( ( spdlog::level::level_enum)messageBase.Level, messageBase.MessageView );
 			if( GetServerSink() )
 				LogServer( messageBase );
+			if( _logMemory )
+				LogMemory( messageBase );
 			// if( GetEtwSink() )
 			// 	LogEtw( messageBase );
 		}
@@ -239,13 +249,16 @@ namespace Jde
 		inline void LogCritical( const Logging::MessageBase& messageBase, Args&&... args )
 		{
 			GetDefaultLogger()->log( spdlog::level::level_enum::critical, messageBase.MessageView.data(), args... );
-			if( GetServerSink() )
+			if( GetServerSink() || _logMemory )
 			{
 				vector<string> values; values.reserve( sizeof...(args) );
 				ToVec::Append( values, args... );
 				if( GetServerSink() )
 					LogServer( messageBase, values );
+				if( _logMemory )
+					LogMemory( messageBase, &values );
 			}
+
 			// if( GetEtwSink() )
 			// {
 			// 	vector<string> values; values.reserve( sizeof...(args) );
@@ -259,11 +272,14 @@ namespace Jde
 		{
 			if( GetDefaultLogger() )
 				GetDefaultLogger()->log( (spdlog::level::level_enum)messageBase.Level, messageBase.MessageView.data(), args... );
-			if( GetServerSink() )
+			if( GetServerSink() || _logMemory )
 			{
 				vector<string> values; values.reserve( sizeof...(args) );
 				ToVec::Append( values, args... );
-				LogServer( messageBase, values );
+				if( GetServerSink() )
+					LogServer( messageBase, values );
+				if( _logMemory )
+					LogMemory( messageBase, &values );
 			}
 /*			if( GetEtwSink() )
 			{
@@ -320,7 +336,10 @@ namespace Jde::Logging
 			//static_assert(IO::Crc::Calc32(message)==0, "Test constexpr");
 	}
 	constexpr MessageBase::MessageBase( ELogLevel level, std::string_view message, std::string_view file, std::string_view function, uint line )noexcept:
-		MessageBase( level, message, file, function, line, IO::Crc::Calc32(message), IO::Crc::Calc32(file), IO::Crc::Calc32(function) )
+		MessageBase( level, message, file, function, line, IO::Crc::Calc32(message) )
+	{}
+	constexpr MessageBase::MessageBase( ELogLevel level, std::string_view message, std::string_view file, std::string_view function, uint line, uint32 messageId )noexcept:
+		MessageBase( level, message, file, function, line, messageId, IO::Crc::Calc32(file), IO::Crc::Calc32(function) )
 	{}
 }
 #pragma endregion

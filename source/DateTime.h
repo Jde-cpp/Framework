@@ -8,6 +8,36 @@
 
 namespace Jde
 {
+//#ifdef NDEBUG
+	typedef std::chrono::system_clock Clock;
+/*#else
+	struct JDE_NATIVE_VISIBILITY TimePoint final : private std::chrono::system_clock::time_point
+	{
+		typedef std::chrono::system_clock::time_point base;
+		typedef std::chrono::system_clock::duration DurationType;
+		TimePoint()noexcept{};
+		TimePoint( const base& tp )noexcept;
+		base Base()const noexcept{ return base{ time_since_epoch() }; }
+		constexpr TimePoint& operator+=( const DurationType& x )noexcept;
+
+	private:
+		string _text;
+	};
+	TimePoint operator+( const TimePoint& a, const TimePoint::DurationType& b )noexcept{ return TimePoint{ a.Base()+b }; }
+	TimePoint operator-( const TimePoint& a, const TimePoint::DurationType& b )noexcept{ return TimePoint{ a.Base()-b }; }
+	struct JDE_NATIVE_VISIBILITY Clock : std::chrono::system_clock
+	{
+		typedef TimePoint	time_point;
+		typedef std::chrono::system_clock base;
+		static TimePoint now()noexcept{ return TimePoint{base::now()}; }
+		static std::time_t to_time_t( const time_point& t ){ return base::to_time_t(t.Base()); }
+		static TimePoint from_time_t( std::time_t t ){ return TimePoint{base::from_time_t(t)}; }
+	};
+#endif*/
+	typedef Clock::time_point TimePoint;
+	typedef std::optional<TimePoint> TimePoint_;
+	typedef Clock::duration Duration;
+
 	using namespace std::literals::chrono_literals;
 	typedef uint16 DayIndex;
 	namespace Chrono
@@ -15,6 +45,7 @@ namespace Jde
 		JDE_NATIVE_VISIBILITY TimePoint Epoch()noexcept;
 		inline uint MillisecondsSinceEpoch(const TimePoint& time)noexcept{ return duration_cast<std::chrono::milliseconds>( time-Epoch() ).count(); }
 		inline DayIndex DaysSinceEpoch(const TimePoint& time)noexcept{ return duration_cast<std::chrono::hours>( time-Epoch()).count()/24; }
+		inline const TimePoint& Min( const TimePoint& a, const TimePoint& b )noexcept{ return a.time_since_epoch()<b.time_since_epoch() ? a : b; }
 		inline DayIndex ToDay(time_t time)noexcept{ return DaysSinceEpoch(Clock::from_time_t(time)); }
 		inline TimePoint FromDays( DayIndex days )noexcept{ return Epoch()+days*24h; }
 		inline TimePoint Date( const TimePoint& time )noexcept{ return Clock::from_time_t( Clock::to_time_t(time)/(60*60*24)*(60*60*24) ); }
@@ -35,20 +66,7 @@ namespace Jde
 			constexpr static size_t NanosPerMinute{ NanosPerSecond*SecondsPerMinute };
 		}
 	}
-/*	struct JDE_NATIVE_VISIBILITY TimeSpan //TODO Refactor
-	{
-		constexpr TimeSpan( _int nanos ):_ticks( nanos ){}
-		constexpr TimeSpan( Clock::duration& duration ):_ticks( duration ){}
-		TimeSpan operator-()const noexcept{return TimeSpan(8);}
-		Clock::duration Ticks()const noexcept{ return _ticks; }
-		Clock::duration Parse( string_view stringValue );//https://en.wikipedia.org/wiki/ISO_8601 - "P0003-06-04T12:30:05
-		//constexpr string_view RegEx = "/^(R\d*\/)?P(?:\d+(?:\.\d+)?Y)?(?:\d+(?:\.\d+)?M)?(?:\d+(?:\.\d+)?W)?(?:\d+(?:\.\d+)?D)?(?:T(?:\d+(?:\.\d+)?H)?(?:\d+(?:\.\d+)?M)?(?:\d+(?:\.\d+)?S)?)?$/,";
-		//constexpr string_view RegEx2 = "^P(?!$)(\d+Y)?(\d+M)?(\d+W)?(\d+D)?(T(?=\d)(\d+H)?(\d+M)?(\d+S)?)?$";
 
-#pragma warning (disable:4244)
-		constexpr static TimeSpan FromDays( double value ){ return TimeSpan( value*static_cast<double>(HoursPerDay*MinutesPerHour*SecondsPerMinute*NanosPerSecond) ); }
-#pragma warning (default:4244)
-	};*/
 	enum class DayOfWeek : uint8
 	{
 		Sunday=0,
@@ -59,8 +77,7 @@ namespace Jde
 		Friday=5,
 		Saturday=6
 	};
-	//inline const TimePoint& min( const TimePoint& t1, const TimePoint& t2 ){ return t2<t1 ? t2 : t1;}
-	//inline const TimePoint& max( const TimePoint& t1, const TimePoint& t2 ){ return t2>t1 ? t2 : t1;}
+
 	struct JDE_NATIVE_VISIBILITY DateTime
 	{
 		DateTime()noexcept;
@@ -68,19 +85,13 @@ namespace Jde
 		DateTime( time_t time )noexcept;
 		DateTime( uint16 year, uint8 month, uint8 day, uint8 hour=0, uint8 minute=0, uint8 second=0, Duration nanoFraction=Duration{0} )noexcept;
 		DateTime( string_view iso )noexcept(false);
-		//DateTime( uint16 year, uint8 month, uint8 day, uint8 hour=0, uint8 minute=0, uint8 second=0, uint8 milliseconds )noexcept;
 		DateTime( const TimePoint& tp )noexcept;
-		//std::chrono::time_point<Clock, std::chrono::duration<long int, std::ratio<1, 1000000000> > >
 		static DateTime BeginingOfWeek();
 		DateTime& operator=(const DateTime& other)noexcept;
 		bool operator==(const DateTime& other)const noexcept{return _time_point==other._time_point; }
 		bool operator<(const DateTime& other)const noexcept{return _time_point<other._time_point;}
-		//DateTime operator+( const TimeSpan& timeSpan )const;
 		DateTime operator+( const Duration& timeSpan )const;
-		//DateTime& operator+=( const TimeSpan& timeSpan );
 		DateTime& operator+=( const Duration& timeSpan );
-		//DateTime operator-( const TimeSpan& timeSpan )const;
-		//DateTime& operator-=( const TimeSpan& timeSpan );
 
 		static DayOfWeek DayOfWk( const TimePoint& time )noexcept{ return DateTime{time}.DayOfWk();}
 		DayOfWeek DayOfWk()const noexcept{ return (DayOfWeek)(Tm()->tm_wday);}
@@ -93,7 +104,6 @@ namespace Jde
 		string MonthAbbrev()const noexcept;
 		uint_fast16_t Year()const noexcept{ return static_cast<uint_fast16_t>(Tm()->tm_year+1900); }
 
-		//time_t LocalDate()const noexcept{ return TimeT()/(60*60*24); }
 		TimePoint Date()const noexcept{ return Clock::from_time_t( TimeT()/(60*60*24)*(60*60*24) ); }
 		static TimePoint Today()noexcept{ return Clock::from_time_t( time(nullptr)/(60*60*24)*(60*60*24) ); }
 		std::string DateDisplay()const noexcept;
@@ -122,8 +132,8 @@ namespace Jde
 		//std::tm	_tm;
 	};
 
-	inline string ToIsoString( const TimePoint& time )noexcept{ return DateTime(time).ToIsoString(); }//TODOrefactor
-	inline string to_string( const TimePoint& time ){ return DateTime(time).ToIsoString(); }
+	inline string ToIsoString( const TimePoint& time )noexcept{ return DateTime(time).ToIsoString(); }
+	inline string to_string( const TimePoint& time ){ return DateTime(time).ToIsoString(); }//TODO take out.
 
 	namespace Timezone
 	{

@@ -47,7 +47,18 @@ namespace Jde
 			return duration;
 		}
 	}
-
+#ifndef __cplusplus
+	TimePoint::TimePoint( const TimePoint& tp )noexcept:
+		base{ tp },
+		_text{ DateTime(tp).ToIsoString() }
+	{}
+	constexpr TimePoint& TimePoint::operator+=( const DurationType& x )noexcept
+	{
+		base::operator+=(x);
+		_text=ToIsoString(base);
+		return *this;
+	}
+#endif
 	DateTime::DateTime()noexcept:
 		_time_point( std::chrono::system_clock::now() )
 	{}

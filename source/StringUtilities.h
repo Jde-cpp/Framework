@@ -32,6 +32,7 @@ namespace Jde
 		JDE_NATIVE_VISIBILITY string Replace( string_view source, string_view find, string_view replace )noexcept;
 		JDE_NATIVE_VISIBILITY string Replace( string_view source, char find, char replace )noexcept;
 		JDE_NATIVE_VISIBILITY string ToLower( const string& source )noexcept;
+		[[nodiscard]]inline string ToLower( const string_view source )noexcept{ return ToLower( string{source}); }
 		JDE_NATIVE_VISIBILITY string ToUpper( const string& source )noexcept;
 
 		template<typename T>
@@ -84,7 +85,7 @@ namespace Jde
 				break;
 		}
 #else
-		s.erase( std::find_if(s.rbegin(), s.rend(), std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end() );
+		s.erase( std::find_if(s.rbegin(), s.rend(), [](int ch){return !std::isspace(ch);}).base(), s.end() );
 #endif
 		return s;
 	}

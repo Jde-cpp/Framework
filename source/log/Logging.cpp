@@ -19,6 +19,8 @@
 namespace Jde
 {
 	Logging::IServerSink* _pServerSink{nullptr};
+	bool _logMemory{false};
+	std::unique_ptr<std::vector<Logging::Messages::Message>> _pMemoryLog;
 	std::shared_ptr<spdlog::logger> spLogger{nullptr};
 	spdlog::logger* pLogger{nullptr};
 	namespace Logging
@@ -32,6 +34,7 @@ namespace Jde
 		TRACE0( "Destroying Logger"sv );
 		pLogger = nullptr;
 		spLogger = nullptr;
+		_pMemoryLog = nullptr;
 		Logging::_pOnceMessages = nullptr;
 		_pServerSink = nullptr;
 	};
@@ -55,17 +58,18 @@ namespace Jde
 		auto path =  pSettings->Get<fs::path>( "path", fs::path() );
 		if( fileName.size() && !path.empty() )
 			path/=fmt::format( "{}.log", fileName );
-		var server =  pSettings->Get<bool>( "server", false );
-		InitializeLogger( level, path, server );
+		var serverPort =  pSettings->Get<uint16>( "serverPort", 0 );
+		var memory =  pSettings->Get<uint16>( "memory", false );
+		InitializeLogger( level, path, serverPort, memory );
 	}
 	TimePoint _startTime = Clock::now(); Logging::Proto::Status _status; mutex _statusMutex; TimePoint _lastStatusUpdate;
-	void SecretDelFunc( spdlog::logger* p)
+	void SecretDelFunc( spdlog::logger* p )
 	{
 		delete p;
 		//spLogger = nullptr;
 		pLogger = nullptr;
 	}
-	void InitializeLogger( ELogLevel level2, const fs::path& path, bool server )noexcept
+	void InitializeLogger( ELogLevel level2, const fs::path& path, uint16 serverPort, bool memory )noexcept
 	{
 		//auto sinkx = spdlog::stdout_color_mt( "console" );
 		_status.set_starttime( (google::protobuf::uint32)Clock::to_time_t(_startTime) );
@@ -73,28 +77,18 @@ namespace Jde
 		auto pConsole = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
 		if( !path.empty() )
 		{
-			//string fileName(  );
 			auto pFileSink = make_shared<spdlog::sinks::basic_file_sink_mt>( path.string(), true );
-			//auto pLogger2 = spdlog::basic_logger_mt( "basic_logger", string(fileName) );
-			//auto rotating = make_shared<spdlog::sinks::rotating_file_sink_mt> ("logs/testlog", "log", 1024*1024, 5, false);
-			//std::vector<spdlog::sink_ptr> sinks;
 			std::vector<spdlog::sink_ptr> sinks{pConsole, pFileSink};
-//			sinks.push_back( pConsole );
-//			sinks.push_back( pFileSink );
-			//std::shared_ptr<sinks::sink>
-
 			spLogger = sp<spdlog::logger>( new spdlog::logger{"my_logger", sinks.begin(), sinks.end()}, SecretDelFunc );
-			//spLogger = make_shared<spdlog::logger>( "my_logger", sinks.begin(), sinks.end() );
 		}
 		else
 			spLogger = make_shared<spdlog::logger>( "my_logger", pConsole );
-			//spLogger = spdlog::stdout_color_mt( "console" );
 		pLogger = spLogger.get();
 		pLogger->set_level( (spdlog::level::level_enum)level2 );
 		pLogger->flush_on( spdlog::level::level_enum::info );
-		if( server )
+		if( serverPort )
 		{
-			_pServerSink = Logging::ServerSink::Create( Diagnostics::HostName(), (uint16)4321 ).get();
+			_pServerSink = Logging::ServerSink::Create( Diagnostics::HostName(), (uint16)serverPort ).get();
 #if _MSC_VER
 			//_spEtwSink =  Logging::EtwSink::Create( boost::lexical_cast<boost::uuids::uuid>("1D6E1834-B684-4CA1-A5AC-ADA270FF8F24") );
 			//_pEtwSink = _spEtwSink.get();
@@ -103,6 +97,8 @@ namespace Jde
 //			_pLttng = _spLttng.get();
 #endif
 		}
+		if( memory )
+			ClearMemoryLog();
 		INFO( "Created log level:  {},  flush on:  {}"sv, ELogLevelStrings[(uint)level2], ELogLevelStrings[(uint)ELogLevel::Information] );
 		//DBG0( ""sv );
 	}
@@ -132,6 +128,18 @@ namespace Jde
 			if( _pServerSink && _pServerSink->GetLogLevel()<=message.Level )
 				_pServerSink->Log( message );
 		}
+
+		void LogMemory( const Logging::MessageBase& messageBase, const vector<string>* pValues )noexcept
+		{
+			if( _pMemoryLog )
+			{
+				if( pValues )
+					_pMemoryLog->push_back( Logging::Messages::Message{messageBase, *pValues} );
+				else
+					_pMemoryLog->push_back( Logging::Messages::Message{messageBase} );
+			}
+		}
+
 
 /*		void LogEtw( const Logging::MessageBase& messageBase )
 		{
@@ -233,6 +241,15 @@ namespace Jde
 		_pServerSink = p;
 	}
 #endif
+	void ClearMemoryLog()noexcept{ _logMemory = true; _pMemoryLog = std::make_unique<std::vector<Logging::Messages::Message>>(); }
+	vector<Logging::Messages::Message> FindMemoryLog( uint32 messageId )noexcept
+	{
+		assert( _pMemoryLog );
+		vector<Logging::Messages::Message>  results;
+		for_each( _pMemoryLog->begin(), _pMemoryLog->end(), [messageId,&results](var& msg){if( msg.MessageId==messageId) results.push_back(msg);} );
+		return results;
+	}
+
 	std::ostream& operator<<( std::ostream& os, const ELogLevel& value )
 	{
 		os << (spdlog::level::level_enum)value;

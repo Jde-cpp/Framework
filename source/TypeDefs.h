@@ -37,15 +37,11 @@ namespace Jde
 
 	typedef uint_fast64_t uint; //todo make const
 	typedef int_fast64_t _int; //todo make const
-	typedef std::chrono::system_clock Clock;
-	typedef Clock::duration Duration;
-	typedef Clock::time_point TimePoint;
-	typedef std::optional<TimePoint> TimePoint_;
-
 	typedef std::chrono::steady_clock SClock;
 	typedef SClock::duration SDuration;
 	typedef SClock::time_point STimePoint;
 
+	using std::array;
 	using std::lock_guard;
 	using std::make_unique;
 	using std::make_shared;
