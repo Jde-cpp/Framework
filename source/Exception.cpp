@@ -114,9 +114,20 @@ namespace Jde
 		Exception( inner )
 	{}
 
+
+	uint IOException::ErrorCode()const noexcept
+	{
+		return  _pUnderLying ? _pUnderLying->code().value() : _errorCode;
+	}
+
+	const fs::path& IOException::Path()const noexcept
+	{
+		return  _pUnderLying? _pUnderLying->path1() : _path;
+	}
+
 	const char* IOException::what()const noexcept
 	{
-		_what = fmt::format( "{} - ErrorCode='{}', path='{}'", RuntimeException::what(), ErrorCode, Path.string() );
+		_what = _pUnderLying ? _pUnderLying->what() : fmt::format( "{} - ErrorCode='{}', path='{}'", RuntimeException::what(), ErrorCode(), Path().string() );
 		return _what.c_str();
 	}
 /*	ostream& operator<<(ostream& os, const Exception& dt)

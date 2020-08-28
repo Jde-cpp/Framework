@@ -146,15 +146,32 @@ namespace Jde
 		IOException( std::string_view value, Args&&... args ):
 			RuntimeException( value, args... )
 		{}
+		template<class... Args>
+		IOException( const fs::path& path, std::string_view value, Args&&... args ):
+			RuntimeException( value, args... ),
+			_path{path}
+		{}
 
 		template<class... Args>
 		IOException( uint errorCode, std::string_view value, Args&&... args ):
 			RuntimeException( value, args... ),
-			ErrorCode{errorCode}
+			_errorCode{errorCode}
 		{}
+
+		IOException( const fs::filesystem_error& e ):
+			RuntimeException{},
+			_pUnderLying( make_unique<fs::filesystem_error>(e) )
+		{}
+
+
+		uint ErrorCode()const noexcept;
+		const fs::path& Path()const noexcept; void SetPath( const fs::path& x )noexcept{ _path=x; }
+		static void TestExists( const fs::path& path )noexcept(false){if( !fs::exists(path) ) throw IOException{path, "'{}' does not exist", path.string().c_str()}; }
 		const char* what() const noexcept override;
-		const uint ErrorCode{0};
-		fs::path Path;
+	private:
+		const uint _errorCode{0};
+		sp<const fs::filesystem_error> _pUnderLying;
+		fs::path _path;
 	};
 
 	template<class TException>

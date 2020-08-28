@@ -20,7 +20,8 @@ namespace IO
 	{
 		JDE_NATIVE_VISIBILITY std::unique_ptr<std::vector<char>> LoadBinary( const fs::path& path )noexcept(false);
 		JDE_NATIVE_VISIBILITY void SaveBinary( const fs::path& path, const std::vector<char>& values )noexcept(false);
-		JDE_NATIVE_VISIBILITY void Save( const fs::path& path, const std::string& value )noexcept(false);
+		JDE_NATIVE_VISIBILITY void Save( const fs::path& path, const std::string& value, std::ios_base::openmode openMode = std::ios_base::out )noexcept(false);
+		inline void SaveBinary( const fs::path& path, const std::string& value )noexcept(false){ return Save(path, value, std::ios::binary); }
 		JDE_NATIVE_VISIBILITY size_t GetFileSize( const fs::path& path );
 		JDE_NATIVE_VISIBILITY void ForEachItem( const fs::path& directory, std::function<void(const fs::directory_entry&)> function );//todo get rid of, 1 liner
 		JDE_NATIVE_VISIBILITY std::unique_ptr<std::set<fs::directory_entry>> GetDirectory( const fs::path& directory );
@@ -79,7 +80,7 @@ namespace IO
 		static size_t GetFileSize( std::ifstream& file );
 
 		static std::pair<std::vector<std::string>,std::set<size_t>> LoadColumnNames( string_view csvFileName, std::vector<std::string>& columnNamesToFetch, bool notColumns=false );
-		
+
 		template<typename T, template<typename> typename C >
 		static void WriteLine( const fs::path& filePath, C<T> collection, const std::function<const char*(T item)>& function );
 
@@ -145,7 +146,7 @@ namespace IO
 		{
 			os<< line << endl;
 		};
-		IO::File::ForEachLine<char>( "C:\\Users\\duffyj\\Google Drive\\WorkShare\\Bosch\\train_categorical.csv", saveLine, 100000 );*/	
+		IO::File::ForEachLine<char>( "C:\\Users\\duffyj\\Google Drive\\WorkShare\\Bosch\\train_categorical.csv", saveLine, 100000 );*/
 
 	}
 

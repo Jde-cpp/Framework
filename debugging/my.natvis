@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+	<Type Name="std::__1::__vector_base&lt;*&gt;">
+		<DisplayString>{{size={__end_-__begin_}}}</DisplayString>
+		<Expand>
+			<ArrayItems>
+				<Size>__end_-__begin_</Size>
+				<ValuePointer>__begin_</ValuePointer>
+			</ArrayItems>
+		</Expand>
+	</Type>
+	<Type Name="std::__1::basic_string&lt;*&gt;">
+		<DisplayString>{__r_.__value_.__s.__data_}</DisplayString>
+	</Type>
+	<!-- <Type Name="char*">
+		<DisplayString>{__pn_}</DisplayString>
+	</Type> -->
+	<Type Name="std::__1::__fs::filesystem::path">
+		<DisplayString>{{xxx={__pn_}}}</DisplayString>
+	</Type>
+	<Type Name="std::__1::string_view">
+		<DisplayString>{__data}</DisplayString>
+	</Type>
+	<Type Name="std::__1::basic_string_view&lt;*&gt;">
+		<DisplayString>{__data}</DisplayString>
+	</Type>
+	<Type Name="std::__1::shared_ptr&lt;*&gt;">
+		<DisplayString Condition="__ptr_!=0">{__ptr_}</DisplayString>
+		<DisplayString Condition="__ptr_==0">{{nullptr}}</DisplayString>
+	</Type>
+	<Type Name="std::__1::unique_ptr&lt;*&gt;">
+		<DisplayString Condition="__ptr_!=0">{__ptr_}</DisplayString>
+		<DisplayString Condition="__ptr_==0">{{nullptr}}</DisplayString>
+	</Type>
+	<Type Name="std::__1::optional&lt;*&gt;">
+		<DisplayString Condition="__engaged_">{__val_}</DisplayString>
+		<DisplayString Condition="!__engaged_">{{nullptr}}</DisplayString>
+	</Type>
+<!-- https://github.com/KindDragon/CPPDebuggerVisualizers/blob/master/VS2019/Visualizers/boost_Containers.natvis -->
+	<Type Name="const boost::container::flat_set&lt;*&gt;">
+		<DisplayString>{{flat_set=}}</DisplayString>
+		<!-- <ArrayItems>
+			<Size>dates.m_data.m_seq.m_holder.m_size</Size>
+			<ValuePointer>dates.m_data.m_seq.m_holder.m_start</ValuePointer>
+		</ArrayItems> -->
+	</Type>
+	<Type Name="boost::container::dtl::flat_tree&lt;*&gt;">
+		<DisplayString>{{flat_tree=}}</DisplayString>
+		<!-- <ArrayItems>
+			<Size>dates.m_data.m_seq.m_holder.m_size</Size>
+			<ValuePointer>dates.m_data.m_seq.m_holder.m_start</ValuePointer>
+		</ArrayItems> -->
+	</Type>
+	<!-- <Type Name="std::__1::__map_iterator&lt;*&gt;">
+		<DisplayString>{{fooz={__i_->__cc}}}</DisplayString>
+	</Type>
+	<Type Name="std::__1::__tree_iterator&lt;*&gt;">
+		<DisplayString>{{fooxxx={__cc}}}</DisplayString>
+	</Type> -->
+
+	<Type Name="std::__1::map&lt;*&gt;">
+   	<DisplayString>{{size = {__tree_.__pair3_.__value_}}}</DisplayString>
+		<Expand>
+			<TreeItems>
+				<Size>__tree_.__pair3_.__value_</Size>
+				<HeadPointer>__begin_node</HeadPointer>
+				<LeftPointer>__left_</LeftPointer>
+				<RightPointer>__rigth_</RightPointer>
+				<ValueNode Condition="!((bool)_Isnil)">__value_</ValueNode>
+			</TreeItems>
+		</Expand>
+  </Type>
+	<Type Name="Jde::sp&lt;*&gt;">
+		<DisplayString Condition="__ptr_!=0">{__ptr_}</DisplayString>
+		<DisplayString Condition="__ptr_==0">{{nullptr}}</DisplayString>
+	</Type>
+</AutoVisualizer>

@@ -83,6 +83,7 @@ namespace Jde
 	using std::vector;
 */
 	namespace fs=std::filesystem;
+	using fmt::format;
 }
 #ifdef _MSC_VER
 	#define __PRETTY_FUNCTION__ __FUNCSIG__

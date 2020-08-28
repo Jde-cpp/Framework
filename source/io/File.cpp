@@ -5,7 +5,8 @@
 #include <streambuf>
 #include <thread>
 #include <unordered_set>
-
+#include <spdlog/fmt/ostr.h>
+#include "../TypeDefs.h"
 #include "../Stopwatch.h"
 #include "../StringUtilities.h"
 #define var const auto
@@ -61,6 +62,7 @@ namespace Jde::IO
 
 		unique_ptr<vector<char>> LoadBinary( const fs::path& path )noexcept(false)//fs::filesystem_error
 		{
+			IOException::TestExists( path );
 			auto size = GetFileSize( path );
 			TRACE( "Opening {} - {} bytes "sv, path.string(), size );
 			ifstream f( path, std::ios::binary );
@@ -75,15 +77,15 @@ namespace Jde::IO
 		{
 			ofstream f( path, std::ios::binary );
 			if( f.fail() )
-				THROW( Exception(fmt::format("Could not open file '{}'", path.string())) );
+				THROW( Exception(format("Could not open file '{}'", path.string())) );
 
 			f.write( data.data(), data.size() );
 		}
-		void Save( const fs::path& path, const std::string& value )noexcept(false)
+		void Save( const fs::path& path, const std::string& value, std::ios_base::openmode openMode )noexcept(false)
 		{
-			ofstream f( path );
+			ofstream f( path, openMode );
 			if( f.fail() )
-				THROW( Exception(fmt::format("Could not open file '{}'", path.string())) );
+				THROW( IOException(path, "Could not open file") );
 
 			f.write( value.c_str(), value.size() );
 		}
@@ -114,14 +116,14 @@ namespace Jde::IO
 			var command = CompressCommand( path );
 			GetDefaultLogger()->trace( command );
 			if( system(command.c_str())==-1 )
-				THROW( Exception(fmt::format("{} failed.", command)) );
+				THROW( Exception(format("{} failed.", command)) );
 			if( deleteAfter && !CompressAutoDeletes() )
 			{
 				GetDefaultLogger()->trace( "removed {}.", path.string() );
 				VERIFY( fs::remove(path) );
 			}
 			auto compressedFile = path;
-			return compressedFile.replace_extension( fmt::format("{}{}", path.extension().string(),Extension()) );
+			return compressedFile.replace_extension( format("{}{}", path.extension().string(),Extension()) );
 		}
 // find . -depth -name '*.zip' -execdir /usr/bin/unzip -n {} \; -delete
 // sudo find . -type d -exec chmod 777 {} \;
@@ -132,12 +134,12 @@ namespace Jde::IO
 			auto destination = string( path.parent_path().string() );
 			fs::path compressedFile = path;
 			if( compressedFile.extension()!=Extension() )
-				compressedFile.replace_extension( fmt::format("{}{}", compressedFile.extension().string(),Extension()) );
+				compressedFile.replace_extension( format("{}{}", compressedFile.extension().string(),Extension()) );
 
 			auto command = ExtractCommand( compressedFile, destination );// -y -bsp0 -bso0
 			GetDefaultLogger()->trace( command.c_str() );
 			if( system(command.c_str())==-1 )
-				THROW( IOException(fmt::format("{} failed.", command)) );
+				THROW( IOException(format("{} failed.", command)) );
 		}
 	}
 
@@ -175,7 +177,7 @@ namespace Jde::IO
 	{
 		std::ifstream file( string(filePath).c_str() );
 		if( file.fail() )
-			THROW( Exception(fmt::format("Could not open file '{}'", filePath).c_str()) );
+			THROW( Exception(format("Could not open file '{}'", filePath).c_str()) );
 		//String line;
 		std::string line;
 
@@ -189,7 +191,7 @@ namespace Jde::IO
 		file2.close();
 		std::ifstream file( string(pszFileName).c_str() );
 		if( file.fail() )
-			THROW( Exception(fmt::format("Could not open file '{}'", pszFileName).c_str()) );
+			THROW( Exception(format("Could not open file '{}'", pszFileName).c_str()) );
 		size_t chunkSize2=fileSize;
 		std::vector<char> rgBuffer( chunkSize2 );
 		vector<string> tokens;
@@ -363,7 +365,7 @@ namespace Jde::IO
 	{
 		std::ifstream file( string(pszFileName).c_str() );
 		if( file.fail() )
-			THROW( Exception(fmt::format("Could not open file '{}'", pszFileName).c_str()) );
+			THROW( Exception(format("Could not open file '{}'", pszFileName).c_str()) );
 
 
 		std::vector<char> rgBuffer( chunkSize );
@@ -476,7 +478,7 @@ namespace Jde::IO
 		file2.close();
 		std::ifstream file( string(pszFileName).c_str() );
 		if( file.fail() )
-			THROW( Exception(fmt::format("Could not open file '{}'", pszFileName).c_str()) );
+			THROW( Exception(format("Could not open file '{}'", pszFileName).c_str()) );
 		size_t chunkSize2=fileSize;
 		std::vector<char> rgBuffer( chunkSize2 );
 		vector<double> tokens;
@@ -618,9 +620,9 @@ namespace Jde::IO
 		auto path = std::to_string(year);
 		if( month>0 )
 		{
-			path = fmt::format( "{}-{:=02d}", path, month );
+			path = format( "{}-{:=02d}", path, month );
 			if( day>0 )
-				path = fmt::format( "{}-{:=02d}", path, day );
+				path = format( "{}-{:=02d}", path, day );
 		}
 		return path;
 	}

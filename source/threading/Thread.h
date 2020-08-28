@@ -41,7 +41,7 @@ namespace Jde::Threading
 			_pUniqueLock{ nullptr },
 			_pUniqueSharedLock{nullptr},
 			_pSharedLock{nullptr},
-			_description( fmt::format("{}.{} - line={}, thread={}", instance, name, lineNumber, Threading::GetThreadDescription()) )
+			_description( format("{}.{} - line={}, thread={}", instance, name, lineNumber, Threading::GetThreadDescription()) )
 		{
 			LOG( _logLevel, "unique lock - {}"sv, _description );
 			_pUniqueLock = make_unique<std::unique_lock<std::mutex>>( mutex );
@@ -50,7 +50,7 @@ namespace Jde::Threading
 			_pUniqueLock{ nullptr },
 			_pUniqueSharedLock{ nullptr },
 			_pSharedLock{  nullptr },
-			_description( fmt::format("{} {}.{} - line={}, thread={}", (shared ? "Shared" : "Unique"), instance, name, lineNumber, Threading::GetThreadDescription()) )
+			_description( format("{} {}.{} - line={}, thread={}", (shared ? "Shared" : "Unique"), instance, name, lineNumber, Threading::GetThreadDescription()) )
 		{
 			if( shared )
 			{
