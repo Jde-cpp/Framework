@@ -68,6 +68,7 @@ namespace Jde
 		typedef std::basic_string<char, ci_char_traits> base;
 		CIString( string_view sv )noexcept:base{sv.data(), sv.size()}{}
 		CIString( const string& s )noexcept:base{s.data(), s.size()}{}
+		inline bool operator ==( string_view s)const noexcept { return !(*this!=s); }
 		inline bool operator !=( string_view s )const noexcept{ return base::compare( 0, s.size(), s.data(), s.size() )!=0; }
 		inline bool operator !=( const string& s )const noexcept{ return base::compare( 0, s.size(), s.data(), s.size() )!=0; }
 	};
@@ -113,7 +114,6 @@ namespace Jde
 	std::vector<std::basic_string<T>> StringUtilities::Split( const std::basic_string<T> &s, T delim/*=T{','}*/ )
 	{
 		vector<basic_string<T>> tokens;
-		//std::vector<std::string> tokens;
 		basic_string<T> token;
 		std::basic_istringstream<T> tokenStream(s);
 		while( std::getline(tokenStream, token, delim) )

@@ -38,3 +38,4 @@ source/log/server/proto/*.pb.*
 source/.vs
 source/.bin
 source/Framework.vcxproj.user
+.vs/*

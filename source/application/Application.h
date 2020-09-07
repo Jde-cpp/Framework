@@ -1,6 +1,4 @@
 #pragma once
-//#include <forward_list>
-//#include "threading/InterruptibleThread.h"
 #include "../Exports.h"
 namespace Jde::Threading{ struct InterruptibleThread; }
 
@@ -28,7 +26,7 @@ namespace Jde
 		static TimePoint StartTime()noexcept;
 		static void AddShutdownFunction( std::function<void()>&& shutdown )noexcept;
 		static void Pause()noexcept;
-		//static VectorPtr<sp<Threading::InterruptibleThread>>& GetBackgroundThreads()noexcept{ return  *_pBackgroundThreads; }
+		static vector<sp<Threading::InterruptibleThread>>& GetBackgroundThreads()noexcept{ return  *_pBackgroundThreads; }
 	protected:
 		void Wait()noexcept;
 		static void OnTerminate()noexcept;//implement in OSApp.cpp.
@@ -61,27 +59,4 @@ namespace Jde
 		BOOL HandlerRoutine( DWORD  ctrlType );
 #endif
 	};
-
-namespace Application
-{
-	//JDE_NATIVE_VISIBILITY void Startup( int argc, char** argv, string_view appName )noexcept;
-	//JDE_NATIVE_VISIBILITY void Pause()noexcept;
-
-
-	//JDE_NATIVE_VISIBILITY
-
-/*		template<class Function, class... Args>
-	static int Main( bool checkForDone, Function&& f, Args&&... args )
-	{
-		/ *auto pLogger = Jde::GetDefaultLogger();
-		Jde::Threading::SetThreadDescription( "main" );
-		pLogger->set_level( spdlog::level::debug );
-		pLogger->info( "Start" );* /
-
-		BackgroundThreads.push_front( Threading::InterruptibleThread(f, args...) );
-		WaitHandler( checkForDone );
-//			WaitHandler( std::function<void()> onExit );
-		return 0;
-	}
-		*/
-}}
+}

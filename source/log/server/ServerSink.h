@@ -4,7 +4,6 @@
 #include "../../collections/UnorderedSet.h"
 #include "../../io/sockets/ProtoClient.h"
 #include "./proto/messages.pb.h"
-//#include "ReceivedMessages.h"
 
 namespace Jde
 {
@@ -23,8 +22,6 @@ namespace Logging
 
 		virtual void Destroy()noexcept;
 
-		//virtual void Log( const MessageBase& messageBase )noexcept=0;
-		//virtual void Log( const MessageBase& messageBase, const vector<string>& values )noexcept=0;
 		virtual void Log( const Messages::Message& message )noexcept=0;
 		virtual void Log( const MessageBase& messageBase )noexcept=0;
 		virtual void Log( const MessageBase& messageBase, const vector<string>& values )noexcept=0;
@@ -54,41 +51,29 @@ namespace Logging
 		{
 			Message( const MessageBase& base ) ://get application id...
 				MessageBase(base)
-			{
-				//MessageView = *_pMessage;
-			}
+			{}
 			Message(const MessageBase& base, const vector<string>& values )noexcept;
-			//Message( const Message& other )noexcept;
 			Message( ELogLevel level, std::string_view message, std::string_view file, std::string_view function, uint line, const vector<string>& values )noexcept;
 			Message( ELogLevel level, std::string_view message, const std::string& file, const std::string& function, uint line, const vector<string>& values )noexcept;
-			//Message( IO::IncomingMessage& message, EFields fields )noexcept(false);
 
 			TimePoint Timestamp{ Clock::now() };
-			//string Thread;
-			//string User;
 			vector<string> Variables;
-			//void SetSessionId( uint value )noexcept{ if( value ) Fields|=EFields::SessionId; _sessionId = value; }
-			//std::ostream& to_stream( std::ostream& os, ServerSink* pSink=nullptr )const noexcept;
 		private:
-			//const sp<string> _pMessage;
 			const sp<string> _pFile;
 			const sp<string> _pFunction;
-			//uint _sessionId{0};
 		};
 	}
 	typedef IO::Sockets::TProtoClient<Logging::Proto::ToServer,Logging::Proto::FromServer> ProtoBase;
 	struct ServerSink : public IServerSink, Threading::Interrupt, public ProtoBase
 	{
-		static JDE_NATIVE_VISIBILITY sp<ServerSink> Create( string_view host, uint16_t port )noexcept(false);
+		static JDE_NATIVE_VISIBILITY sp<ServerSink> Create( string_view host, uint16 port )noexcept(false);
 		~ServerSink(){DBGX("{}"sv, "~ServerSink");}
-		//void Log( ELogLevel level, std::string_view message, uint messageId, std::string_view file, std::string_view function, uint line );
 		void Log( const Messages::Message& message )noexcept override;
 		void Log( const MessageBase& messageBase )noexcept override;
 		void Log( const MessageBase& messageBase, const vector<string>& values )noexcept override;
 
 		void OnTimeout()/*noexcept*/ override;
 		void OnAwake()noexcept override{OnTimeout();}//not expecting...
-		//static void OnIncoming( IO::IncomingMessage& returnMessage );
 		void OnDisconnect()noexcept override;
 		void OnConnected()noexcept override;
 		void Destroy()noexcept override;

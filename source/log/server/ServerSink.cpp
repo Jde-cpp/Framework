@@ -7,8 +7,6 @@
 
 namespace Jde::Logging
 {
-	//using Messages::EMessages;
-
 	shared_ptr<IServerSink> _pInstance;
 	IServerSink::~IServerSink()
 	{
@@ -27,7 +25,7 @@ namespace Jde::Logging
 	}
 
 
-	sp<ServerSink> ServerSink::Create( string_view host, uint16_t port )noexcept(false)
+	sp<ServerSink> ServerSink::Create( string_view host, uint16 port )noexcept(false)
 	{
 		ASSERT( !_pInstance );
 		auto pInstance = sp<ServerSink>( new ServerSink{host, port} );
@@ -45,9 +43,6 @@ namespace Jde::Logging
 
 	void ServerSink::Destroy()noexcept
 	{
-		// Disconnect();
-		// while( _connected )
-		// 	std::this_thread::yield();
 		std::this_thread::sleep_for( 1s );//flush messages.
 		IServerSink::Destroy();
 	}
@@ -104,11 +99,6 @@ namespace Jde::Logging
 				Write( pTransmission );
 				_instanceId = ack.instanceid();
 			}
-			// else if( item.has_generic() )
-			// {
-			// 	var generic = item.generic();
-			// 	if( generic.what()==Proto::EFromServer::Shutdown )
-			// }
 			else if( item.has_loglevels() )
 			{
 				var& levels = item.loglevels();
@@ -132,27 +122,6 @@ namespace Jde::Logging
 	}
 
 
-/*	void ServerSink::OnIncoming( IO::IncomingMessage& / *returnMessage* / )
-	{
-		//var messageType = (EMessages)returnMessage.ReadInt32();
-// 		switch( messageType )
-// 		{
-// 		case EMessages::None:
-// 			break;
-// 		case EMessages::Acknowledgement:
-// //			HandleAcknowledgement();
-// 			break;
-// 		case EMessages::Application:
-// //			HandleAcknowledgement();
-// 			break;
-// 		case EMessages::Message:
-// //			HandleAcknowledgement();
-// 			break;
-// 		case EMessages::Strings:
-// //			HandleAcknowledgement();
-// 			break;
-// 		}
-	}*/
 	void ServerSink::Log( const MessageBase& message )noexcept
 	{
 		_messages.Push( Messages::Message(message) );
@@ -228,9 +197,7 @@ namespace Jde::Logging
 			pProto->set_threadid( message.ThreadId );
 			for( var& variable : message.Variables )
 				pProto->add_variables( variable );
-			//DBGX("size={}", pTransmission->messages_size() );
 			pTransmission->add_messages()->set_allocated_message( pProto );
-			//DBGX("size={}", pTransmission->messages_size() );
 		};
 		_messages.ForEach( func );
 		if( SendStatus )
@@ -249,9 +216,7 @@ namespace Jde::Logging
 			Timestamp{ Clock::now() },
 			Variables{ values }
 		{
-			//Thread = Threading::GetThreadDescription();
 			ThreadId = Threading::ThreadId;
-
 			Fields |= EFields::Timestamp | EFields::ThreadId | EFields::Thread;
 		}
 		Message::Message( ELogLevel level, std::string_view message, std::string_view file, std::string_view function, uint line, const vector<string>& values )noexcept:
@@ -272,16 +237,5 @@ namespace Jde::Logging
 			Function = *_pFunction;
 			Fields |= EFields::Timestamp | EFields::ThreadId | EFields::Thread;
 		}
-
-
-
-/*		Message::Message( const Message& other )noexcept:
-			MessageBase{ other },
-			Timestamp{ Clock::now() },
-			Variables{ other.Variables },
-			_pMessage{ other._pMessage }
-		{
-			Fields |= EFields::Timestamp | EFields::ThreadId | EFields::Thread;
-		}*/
 	}
 }

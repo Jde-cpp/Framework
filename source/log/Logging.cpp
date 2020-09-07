@@ -1,7 +1,6 @@
 #include "Logging.h"
 #include "../Diagnostics.h"
 #include <boost/lexical_cast.hpp>
-//#include "../io/Buffer.h"
 #include "server/ServerSink.h"
 #include "../Settings.h"
 #include <spdlog/sinks/stdout_color_sinks.h>
@@ -39,9 +38,8 @@ namespace Jde
 		_pServerSink = nullptr;
 	};
 
-	//std::shared_ptr<Logging::ServerSink> _spServerSink2{nullptr};
-	//std::shared_ptr<Logging::IServerSink> _spServerSink{nullptr};
 #ifdef _MSC_VER
+	bool ShouldLogMemory()noexcept{ return _logMemory; }
 	//std::shared_ptr<Logging::EtwSink> _spEtwSink;
 	//Logging::EtwSink* _pEtwSink;
 	//Logging::EtwSink* GetEtwSink(){ return _pEtwSink;}
@@ -66,12 +64,10 @@ namespace Jde
 	void SecretDelFunc( spdlog::logger* p )
 	{
 		delete p;
-		//spLogger = nullptr;
 		pLogger = nullptr;
 	}
 	void InitializeLogger( ELogLevel level2, const fs::path& path, uint16 serverPort, bool memory )noexcept
 	{
-		//auto sinkx = spdlog::stdout_color_mt( "console" );
 		_status.set_starttime( (google::protobuf::uint32)Clock::to_time_t(_startTime) );
 
 		auto pConsole = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
@@ -220,8 +216,6 @@ namespace Jde
 #ifdef _MSC_VER
 	spdlog::logger* GetDefaultLogger()noexcept
 	{
-		//static std::shared_ptr<spdlog::logger> spLogger = nullptr;
-		//static spdlog::logger* pLogger = nullptr;
 		if( !spLogger )
 		{
 			auto pFoo = new spdlog::sinks::msvc_sink_st();
@@ -271,38 +265,6 @@ namespace Jde
 			MessageView = *_pMessage;
 		}
 
-/*		MessageBase::MessageBase( IO::IncomingMessage& message, EFields fields ):
-			Fields{ fields },
-			Level{ (fields & EFields::Level)!=EFields::None ? (ELogLevel)message.ReadUInt() : ELogLevel::Trace },
-			MessageId{ (fields & EFields::MessageId)!=EFields::None ? message.ReadUInt() : 0 },
-			FileId{ (fields & EFields::FileId)!=EFields::None ? message.ReadUInt() : 0 },
-			FunctionId{ (fields & EFields::FunctionId)!=EFields::None ? message.ReadUInt() : 0 },
-			LineNumber{ (fields & EFields::LineNumber)!=EFields::None ? message.ReadUInt() : 0 },
-			UserId{ (fields & EFields::UserId)!=EFields::None ? message.ReadUInt() : 0 },
-			ThreadId{ (fields & EFields::ThreadId)!=EFields::None ? message.ReadUInt() : 0 }
-		{}
-*/
-		//set<Messages::Message> OnceMessages;
-		//std::shared_mutex OnceMessageMutex;
-/*		void LogOnceVec( const Logging::MessageBase& messageBase, const vector<string>& values )
-		{
-			bool log = false;
-			Messages::Message message( messageBase, values );
-			{
-				std::shared_lock l( OnceMessageMutex );
-				log = OnceMessages.emplace(message).second;
-			}
-			if( log )
-			{
-				pLogger->log( ( spdlog::level::level_enum)messageBase.Level, messageBase.MessageView.data(), args... );
-				if( _pServerSink )
-				{
-					vector<string> values; values.reserve( sizeof...(args) );
-					ToVec::Append( values, args... );
-					LogServer( messageBase, values );
-				}
-			}
-		}*/
 	}
 }
 

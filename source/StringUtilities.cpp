@@ -1,6 +1,3 @@
-//#pragma warning( push )
-//#pragma warning( disable : 4996)
-
 #include "StringUtilities.h"
 
 #include <algorithm>
@@ -66,22 +63,20 @@ namespace Jde
 
 		return result;
 	}
-	string StringUtilities::ToLower( const string& source )noexcept
+#pragma warning( disable: 4244 )
+	string Transform( const string& source, function<int(int)> fnctn )noexcept
 	{
 		string result{ source };
-#if _WINDOWS
-		for( int i=0; i<source.size(); ++i )
-			result[i] = static_cast<char>( ::tolower( result[i]) );
-#else
-		std::transform( result.begin(), result.end(), result.begin(), ::tolower );
-#endif
+		std::transform( result.begin(), result.end(), result.begin(), fnctn );
 		return result;
+	}
+	string StringUtilities::ToLower( const string& source )noexcept
+	{
+		return Transform( source, ::tolower );
 	}
 
 	string StringUtilities::ToUpper( const string& source )noexcept
 	{
-		string result{ source };
-		std::transform( result.begin(), result.end(), result.begin(), ::toupper );
-		return result;
+		return Transform( source, ::toupper );
 	}
 }
