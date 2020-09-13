@@ -65,7 +65,7 @@ namespace Jde
 		struct MessageBase
 		{
 			constexpr MessageBase( ELogLevel level, std::string_view message, std::string_view file, std::string_view function, uint line )noexcept;
-			constexpr  MessageBase( ELogLevel level, std::string_view message, std::string_view file, std::string_view function, uint line, uint messageId )noexcept;
+			constexpr MessageBase( ELogLevel level, std::string_view message, std::string_view file, std::string_view function, uint line, uint32 messageId )noexcept;
 			//Causes ambiguous issue TODO refactor
 			JDE_NATIVE_VISIBILITY MessageBase( ELogLevel level, const std::string& message, std::string_view file, std::string_view function, uint line )noexcept;
 			JDE_NATIVE_VISIBILITY MessageBase( ELogLevel level, sp<std::string> pMessage, std::string_view file, std::string_view function, uint line )noexcept;
@@ -105,24 +105,12 @@ namespace Jde
 		JDE_NATIVE_VISIBILITY void LogServer( const Logging::MessageBase& messageBase )noexcept;
 		JDE_NATIVE_VISIBILITY void LogServer( const Logging::MessageBase& messageBase, const vector<string>& values )noexcept;
 		JDE_NATIVE_VISIBILITY void LogServer( const Logging::Messages::Message& message )noexcept;
-		void LogMemory( const Logging::MessageBase& messageBase, const vector<string>* pValues=nullptr )noexcept;
+		JDE_NATIVE_VISIBILITY void LogMemory( const Logging::MessageBase& messageBase, const vector<string>* pValues=nullptr )noexcept;
 
 		//JDE_NATIVE_VISIBILITY void LogEtw( const Logging::MessageBase& messageBase );
 		//JDE_NATIVE_VISIBILITY void LogEtw( const Logging::MessageBase& messageBase, const vector<string>& values );
 	}
 }
-// constexpr auto* GetFileName( const char* const path )
-// {
-// 	const auto* startPosition = path;
-// 	for( const auto* currentCharacter = path;*currentCharacter != '\0'; ++currentCharacter )
-// 	{
-// 		if( *currentCharacter == '\\' || *currentCharacter == '/' )
-// 			startPosition = currentCharacter;
-// 	}
-//     if( startPosition != path )
-// 			++startPosition;
-//     return startPosition;
-// }
 #define MY_FILE __FILE__
 
 #define CRITICAL(message,...) Jde::Logging::LogCritical( Jde::Logging::MessageBase(Jde:: ELogLevel::Critical, message, MY_FILE, __func__, __LINE__), __VA_ARGS__ )
@@ -180,13 +168,14 @@ namespace Jde
 	JDE_NATIVE_VISIBILITY spdlog::logger* GetDefaultLogger()noexcept;
 	JDE_NATIVE_VISIBILITY Logging::IServerSink* GetServerSink()noexcept;
 	JDE_NATIVE_VISIBILITY void SetServerSink( Logging::IServerSink* p )noexcept;
-	namespace Logging{ struct EtwSink; }
-	extern std::shared_ptr<Logging::EtwSink> _spEtwSink;
-	extern Logging::EtwSink* _pEtwSink;
+	JDE_NATIVE_VISIBILITY bool ShouldLogMemory()noexcept;
+	#define _logMemory ShouldLogMemory()
+	//namespace Logging{ struct EtwSink; }
+	//extern std::shared_ptr<Logging::EtwSink> _spEtwSink;
+	//extern Logging::EtwSink* _pEtwSink;
 //	JDE_NATIVE_VISIBILITY Logging::EtwSink* GetEtwSink();
 #else
 	extern spdlog::logger* pLogger;
-	extern bool _logMemory;
 	extern Logging::IServerSink* _pServerSink;
 	inline spdlog::logger* GetDefaultLogger()noexcept{ /*assert(pLogger);*/ return pLogger; }
 	inline Logging::IServerSink* GetServerSink()noexcept{ return _pServerSink; }
@@ -195,6 +184,7 @@ namespace Jde
 	namespace Logging{ struct Lttng; }
 	extern Logging::Lttng* _pLttng;
 	extern sp<Logging::Lttng> _spLttng;
+	extern bool _logMemory;
 //	JDE_NATIVE_VISIBILITY Logging::Lttng* GetEtwSink();
 #endif
 	//spd::stdout_color_mt
@@ -349,15 +339,15 @@ namespace Jde::Logging
 			Fields |= EFields::Function | EFields::FunctionId;
 		if( LineNumber )
 			Fields |= EFields::LineNumber;
-		//if( message.size()==0 )
-			//static_assert(IO::Crc::Calc32(message)==0, "Test constexpr");
 	}
 	constexpr MessageBase::MessageBase( ELogLevel level, std::string_view message, std::string_view file, std::string_view function, uint line )noexcept:
 		MessageBase( level, message, file, function, line, IO::Crc::Calc32(message) )
 	{}
+
 	constexpr MessageBase::MessageBase( ELogLevel level, std::string_view message, std::string_view file, std::string_view function, uint line, uint32 messageId )noexcept:
 		MessageBase( level, message, file, function, line, messageId, IO::Crc::Calc32(file), IO::Crc::Calc32(function) )
 	{}
 }
 #pragma endregion
 
+#undef _logMemory

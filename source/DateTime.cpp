@@ -1,10 +1,8 @@
 #include "DateTime.h"
-//#include <spdlog/fmt/ostr.h>
 #include "StringUtilities.h"
 #include "math/MathUtilities.h"
+
 #define var const auto
-
-
 
 namespace Jde
 {
@@ -20,7 +18,7 @@ namespace Jde
 			if( is.get()!='P' )
 				THROW( Exception("Expected 'P' as first character.") );
 			bool parsingTime = false;
-			Duration duration;
+			Duration duration{ Duration::zero() };
 			while( is.good() )
 			{
 				if( !parsingTime && (parsingTime = is.peek()=='T') )
@@ -116,7 +114,7 @@ namespace Jde
 
 	std::string DateTime::DateDisplay()const noexcept
 	{
-		return fmt::format("{:0>2}/{:0>2}/{:0>2}", Month(), Day(), Year()-2000);
+		return format( "{:0>2}/{:0>2}/{:0>2}", Month(), Day(), Year()-2000 );
 	}
 	DateTime DateTime::BeginingOfWeek()
 	{
@@ -134,16 +132,10 @@ namespace Jde
 		_pTm = nullptr;
 		return *this;
 	}
-/*	DateTime& DateTime::operator+=( const TimeSpan& timeSpan )
-	{
-		_time_point += timeSpan.Ticks();//_time_point + std::chrono::nanoseconds(8);
-		_pTime = nullptr;
-		_pTm = nullptr;
-		return *this;
-	}*/
+
 	DateTime& DateTime::operator+=( const Duration& timeSpan )
 	{
-		_time_point += timeSpan;//_time_point + std::chrono::nanoseconds(8);
+		_time_point += timeSpan;
 		_pTime = nullptr;
 		_pTm = nullptr;
 		return *this;
@@ -151,27 +143,10 @@ namespace Jde
 	DateTime DateTime::operator+( const Duration& timeSpan )const
 	{
 		DateTime result{*this};
-		result += timeSpan;//_time_point + std::chrono::nanoseconds(8);
+		result += timeSpan;
 		return result;
 	}
-/*	DateTime DateTime::operator+( const TimeSpan& timeSpan )const
-	{
-		DateTime result{*this};
-		result+=timeSpan;
-		return result;
-	}
-	DateTime DateTime::operator-( const TimeSpan& timeSpan )const
-	{
-		DateTime result{*this};
-		result-=timeSpan;
-		return result;
-	}
-	DateTime& DateTime::operator-=( const TimeSpan& timeSpan )
-	{
-		*this+=-timeSpan;
-		return *this;
-	}
-*/
+
 	uint32 DateTime::Nanos()const noexcept
 	{
 		return _time_point.time_since_epoch().count()%Chrono::TimeSpan::NanosPerSecond;
@@ -209,15 +184,8 @@ namespace Jde
 		localtime_r( &time, pLocal.get() );
 #endif
 		return pLocal;
-		//return std::move(pLocal);
 	}
 
-	/*time_t DateTime::LocalDate()const noexcept
-	{
-		var pLocal = LocalTime();
-		return mktime( pLocal.get() )/(60*60*24);
-	}
-	*/
 	std::string DateTime::TimeDisplay()const noexcept
 	{
 		return fmt::format( "{:0>2}:{:0>2}", Hour(), Minute() );
@@ -241,9 +209,7 @@ namespace Jde
 		var secondsSinceEpoch = duration_cast<seconds>( time.time_since_epoch() ).count();
 		constexpr uint secondsPerDay = duration_cast<seconds>( 24h ).count();
 		var day = time - seconds( secondsSinceEpoch%secondsPerDay );
-//		DBG( "Time {} switched to Date {}.", DateTime(time).ToIsoString(), DateTime(day).ToIsoString() );
 		return day;
-		//MarketOpenTime = DateTime::ToDate( time ); static_cast<uint32>( time - %TimeSpan::SecondsPerDay + 9*TimeSpan::SecondsPerHour+30*TimeSpan::SecondsPerMinute - timeZoneDiff );
 	}
 	std::string DateTime::ToIsoString()const noexcept
 	{
@@ -281,31 +247,10 @@ namespace Jde
 			return Duration{};
 		}
 	}
-/*		Duration EasternTimeZoneDifference( const TimePoint& time )noexcept
-		{
-#ifdef _WINDOWS
-			var timet = DateTime(time).TimeT();
-			struct tm tm;
-			gmtime_s( &tm, &timet );
-			tm.tm_isdst = -1;
-			var gmt = mktime( &tm );
-			return seconds( Math::URound(difftime(timet, gmt)) );
-#else
-			var dateValue = Clock::to_time_t( time ); // UTC
-			tm gmt;
-			gmtime_r( &dateValue, &gmt ); // further convert to GMT presuming now in local
-			mktime( &gmt );//sets time zone to 'edt'
-			if( string(gmt.tm_zone)!=string("EDT") && string(gmt.tm_zone)!=string("EST") )
-				THROW( Exception("Need to implement for {} timezone.", gmt.tm_zone) );
-			return seconds( gmt.tm_gmtoff );
-#endif
-		}
-	}
-	*/
+
 	std::ostream& operator<<( std::ostream &os, const Jde::DateTime& obj )noexcept
 	{
 		os << obj.ToIsoString( *obj.LocalTm() );
-//		os << fmt::format("{}-{:0>2}-{:0>2}T{:0>2}:{:0>2}:{:0>2}", pLocalTime->tm_year+1900, pLocalTime->tm_mon+1, pLocalTime->tm_mday, pLocalTime->tm_hour, pLocalTime->tm_min, pLocalTime->tm_sec).c_str();
 		return os;
 	}
 }
