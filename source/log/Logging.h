@@ -99,6 +99,8 @@ namespace Jde
 		template<class... Args >
 		void LogCritical( const Logging::MessageBase& messageBase, Args&&... args );
 		template<class... Args >
+		void LogError( const Logging::MessageBase& messageBase, Args&&... args );
+		template<class... Args >
 		void LogNoServer( const Logging::MessageBase& messageBase );
 		JDE_NATIVE_VISIBILITY void LogServer( const Logging::MessageBase& messageBase )noexcept;
 		JDE_NATIVE_VISIBILITY void LogServer( const Logging::MessageBase& messageBase, const vector<string>& values )noexcept;
@@ -127,7 +129,7 @@ namespace Jde
 #define CRITICAL0( message ) Jde::Logging::LogCritical( Jde::Logging::MessageBase(Jde::ELogLevel::Critical, message, MY_FILE, __func__, __LINE__) )
 #define ERR0(message) Logging::Log( Logging::MessageBase(ELogLevel::Error, message, MY_FILE, __func__, __LINE__) )
 #define ERR0_ONCE(message) Logging::LogOnce( Logging::MessageBase(ELogLevel::Error, message, MY_FILE, __func__, __LINE__) )
-#define ERR(message,...) Logging::Log( Logging::MessageBase(ELogLevel::Error, message, MY_FILE, __func__, __LINE__), __VA_ARGS__ )
+#define ERR(message,...) Logging::LogError( Logging::MessageBase(ELogLevel::Error, message, MY_FILE, __func__, __LINE__), __VA_ARGS__ )
 #define ERRX(message,...) Logging::LogNoServer( Logging::MessageBase(ELogLevel::Error, message, MY_FILE, __func__, __LINE__), __VA_ARGS__ )
 #define ERRN( message, ... ) Logging::Log( Logging::MessageBase(ELogLevel::Error, message, MY_FILE, __func__, __LINE__, IO::Crc::Calc32RunTime(message), IO::Crc::Calc32RunTime(MY_FILE), IO::Crc::Calc32RunTime(__func__)), __VA_ARGS__ )
 #define ERR_ONCE(message,...) Logging::LogOnce( Logging::MessageBase(ELogLevel::Error, message, MY_FILE, __func__, __LINE__), __VA_ARGS__ )
@@ -266,6 +268,20 @@ namespace Jde
 			// 	ToVec::Append( values, args... );
 			// 	LogEtw( messageBase, values );
 			// }
+		}
+		template<class... Args >
+		void LogError( const Logging::MessageBase& messageBase, Args&&... args )
+		{
+			GetDefaultLogger()->log( spdlog::level::level_enum::err, messageBase.MessageView.data(), args... );
+			if( GetServerSink() || _logMemory )
+			{
+				vector<string> values; values.reserve( sizeof...(args) );
+				ToVec::Append( values, args... );
+				if( GetServerSink() )
+					LogServer( messageBase, values );
+				if( _logMemory )
+					LogMemory( messageBase, &values );
+			}
 		}
 
 		template<class... Args >
