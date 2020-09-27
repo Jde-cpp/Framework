@@ -12,7 +12,8 @@ namespace Jde
 	struct JDE_NATIVE_VISIBILITY IApplication
 	{
 		virtual ~IApplication();
-		set<string> BaseStartup( int argc, char** argv, string_view appName )noexcept;
+		static IApplication& Instance(){ ASSERT(_pInstance); return *_pInstance; }
+		set<string> BaseStartup( int argc, char** argv, string_view appName, string_view companyName="jde-cpp" )noexcept(false);
 
 		static void AddThread( sp<Threading::InterruptibleThread> pThread )noexcept;
 		static void RemoveThread( sp<Threading::InterruptibleThread> pThread )noexcept;
@@ -27,6 +28,12 @@ namespace Jde
 		static void AddShutdownFunction( std::function<void()>&& shutdown )noexcept;
 		static void Pause()noexcept;
 		static vector<sp<Threading::InterruptibleThread>>& GetBackgroundThreads()noexcept{ return  *_pBackgroundThreads; }
+		static string_view CompanyName()noexcept{ return _pCompanyName ? *_pCompanyName : ""sv;}
+		static string_view ApplicationName()noexcept{ return _pApplicationName ? *_pApplicationName : ""sv;}
+		virtual fs::path ProgramDataFolder()noexcept=0;
+		virtual fs::path ApplicationDataFolder()noexcept{ return ProgramDataFolder()/CompanyName()/ApplicationName(); }
+
+		
 	protected:
 		void Wait()noexcept;
 		static void OnTerminate()noexcept;//implement in OSApp.cpp.
@@ -34,24 +41,30 @@ namespace Jde
 		virtual bool AsService()noexcept=0;
 		virtual void AddSignals()noexcept(false)=0;
 		virtual bool KillInstance( uint processId )noexcept=0;
+		virtual string GetEnvironmentVariable( string_view variable )noexcept=0;
 
 		static mutex _threadMutex;
 		static VectorPtr<sp<Threading::InterruptibleThread>> _pBackgroundThreads;
 
 		static sp<IApplication> _pInstance;
+		static unique_ptr<string> _pApplicationName;
+		static unique_ptr<string> _pCompanyName;
 	private:
 		virtual void SetConsoleTitle( string_view title )noexcept=0;
 	};
 
 	struct OSApp : IApplication
 	{
-		JDE_NATIVE_VISIBILITY static set<string> Startup( int argc, char** argv, string_view appName )noexcept;
+		JDE_NATIVE_VISIBILITY static set<string> Startup( int argc, char** argv, string_view appName )noexcept(false);
+		string GetEnvironmentVariable( string_view variable )noexcept;
+		fs::path ProgramDataFolder()noexcept;
 	protected:
 		bool KillInstance( uint processId )noexcept override;
 		void SetConsoleTitle( string_view title )noexcept override;
 		void AddSignals()noexcept(false) override;
 		bool AsService()noexcept override;
 		void OSPause()noexcept override;
+		
 		//void OnTerminate()noexcept override;
 	private:
 		static void ExitHandler( int s );

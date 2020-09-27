@@ -53,9 +53,15 @@ namespace Jde
 	{
 		var pSettings = Settings::Global().SubContainer( "logging" );
 		var level = (ELogLevel)pSettings->Get<int>( "level", (int)ELogLevel::Debug );
-		auto path =  pSettings->Get<fs::path>( "path", fs::path() );
-		if( fileName.size() && !path.empty() )
-			path/=fmt::format( "{}.log", fileName );
+		auto path =  pSettings->Get<fs::path>( "path", fs::path{} );
+		if( fileName.size() )
+		{
+			var fileNameWithExt = fmt::format( "{}.log", fileName );
+			if( !path.empty() )
+				path /= fileNameWithExt;
+			else
+				path = IApplication::Instance().ApplicationDataFolder()/"logs"/fileNameWithExt;
+		}
 		var serverPort =  pSettings->Get<uint16>( "serverPort", 0 );
 		var memory =  pSettings->Get<uint16>( "memory", false );
 		InitializeLogger( level, path, serverPort, memory );

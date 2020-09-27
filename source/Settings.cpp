@@ -10,22 +10,22 @@ namespace Jde::Settings
 	Container& Global(){ ASSERT(_pGlobal); return *_pGlobal;}
 	void SetGlobal( shared_ptr<Container> settings ){ _pGlobal = settings; }
 
-	Container::Container( const fs::path& jsonFile ):
+	Container::Container( const fs::path& jsonFile )noexcept(false):
 		_pJson{ make_unique<nlohmann::json>() }
 	{
 		if( !fs::exists(jsonFile) )
-			THROW( IOException("file does not exsist:  {}", jsonFile.string()) );
+			THROW( EnvironmentException("file does not exsist:  {}", jsonFile.string()) );
 		var fileString = jsonFile.string();
 		std::ifstream is( fileString.c_str() );
 		if( is.bad() )
-			THROW( IOException("Could not open file:  {}", jsonFile.string()) );
+			THROW( EnvironmentException("Could not open file:  {}", jsonFile.string()) );
 		is >> *_pJson;
 	}
-	Container::Container( const nlohmann::json& json ):
+	Container::Container( const nlohmann::json& json )noexcept:
 		_pJson{ make_unique<nlohmann::json>(json) }
 	{}
 
-	shared_ptr<Container> Container::SubContainer( string_view entry )const throw()
+	shared_ptr<Container> Container::SubContainer( string_view entry )const noexcept(false)
 	{
 		auto item = _pJson->find( entry );
 		if( item==_pJson->end() )

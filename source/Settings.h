@@ -9,8 +9,8 @@ namespace Jde::Settings
 	using nlohmann::json;
 	struct JDE_NATIVE_VISIBILITY Container
 	{
-		Container( const nlohmann::json& json );
-		Container( const fs::path& jsonFile );
+		Container( const nlohmann::json& json )noexcept;
+		Container( const fs::path& jsonFile )noexcept(false);
 		Jde::Duration Duration( string_view path, const Jde::Duration& dflt )noexcept;
 		bool Bool( string_view path, bool dflt )noexcept;
 		bool Have( string_view path )noexcept;
@@ -24,7 +24,7 @@ namespace Jde::Settings
 		map<string,TValue> Map( string_view path )noexcept;
 
 		//fs::path Path( string_view path, const fs::path& dflt=fs::path() )const noexcept;
-		shared_ptr<Container> SubContainer( string_view entry )const throw();
+		shared_ptr<Container> SubContainer( string_view entry )const noexcept(false);
 		template<typename T>
 		T Get( string_view path )const noexcept(false);
 		template<typename T>

@@ -12,6 +12,9 @@
 namespace Jde
 {
 	sp<IApplication> IApplication::_pInstance;
+	unique_ptr<string> IApplication::_pApplicationName;
+	unique_ptr<string> IApplication::_pCompanyName;
+
 	mutex IApplication::_threadMutex;
 	VectorPtr<sp<Threading::InterruptibleThread>> IApplication::_pBackgroundThreads{ make_shared<std::vector<sp<Threading::InterruptibleThread>>>() };
 //	bool Stop{false};
@@ -41,8 +44,11 @@ namespace Jde
 		if( HaveLogger() )
 			DBG0( "IApplication::~IApplication"sv );
 	}
-	set<string> IApplication::BaseStartup( int argc, char** argv, string_view appName )noexcept
+	set<string> IApplication::BaseStartup( int argc, char** argv, string_view appName, string_view companyName )noexcept(false)//no config file
 	{
+		_pApplicationName = std::make_unique<string>( appName );
+		_pCompanyName = std::make_unique<string>(companyName);
+
 		bool console = false;
 		const string arg0{ argv[0] };
 #ifdef NDEBUG
@@ -64,9 +70,15 @@ namespace Jde
 			std::set_terminate( OnTerminate );
 		if( !console )
 			AsService();
-		std::filesystem::path settingsPath{ fmt::format("{}.json", appName) };
+		var fileName = std::filesystem::path{ format("{}.json", appName) };
+		//std::filesystem::path settingsPath = ProgramDataFolder()/companyName/appName/fileName;
+		std::filesystem::path settingsPath{ fileName };
 		if( !fs::exists(settingsPath) )
-			settingsPath = std::filesystem::path( fmt::format("../{}.json", appName) );;
+		{
+			settingsPath = std::filesystem::path{".."}/fileName;
+			if( !fs::exists(settingsPath) )
+				settingsPath = ProgramDataFolder()/companyName/appName/fileName;
+		}
 		Settings::SetGlobal( std::make_shared<Jde::Settings::Container>(settingsPath) );
 		InitializeLogger( appName );
 		SetConsoleTitle( appName );
