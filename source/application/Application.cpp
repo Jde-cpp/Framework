@@ -82,7 +82,7 @@ namespace Jde
 		Settings::SetGlobal( std::make_shared<Jde::Settings::Container>(settingsPath) );
 		InitializeLogger( appName );
 		SetConsoleTitle( appName );
-		Jde::Threading::SetThreadDescription( string(appName) );
+		Threading::SetThreadDscrptn( string(appName) );
 		INFO( "{}, settings='{}' Running as console='{}'"sv, arg0, settingsPath, console );
 
 		Cache::CreateInstance();

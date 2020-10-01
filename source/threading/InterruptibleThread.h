@@ -52,7 +52,7 @@ namespace Jde::Threading  //TODO Reflection remove Threading from public items.
 		_internalThread = std::thread( [f,&promise, nameCopy]
 		{
 			promise.set_value( &GetThreadInterruptFlag() );
-			Jde::Threading::SetThreadDescription( nameCopy );
+			SetThreadDscrptn( nameCopy );
 			f();
 			GetThreadInterruptFlag().SetIsDone();
 		});

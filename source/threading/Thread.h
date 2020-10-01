@@ -7,9 +7,9 @@ namespace Jde::Threading
 	void Run( const size_t maxWorkerCount, size_t runCount, std::function<void(size_t)> func );
 	//extern thread_local char* ThreadName;
 	extern thread_local uint ThreadId;
-	JDE_NATIVE_VISIBILITY void SetThreadDescription( std::thread& thread, std::string_view pszDescription );
-	JDE_NATIVE_VISIBILITY void SetThreadDescription( const std::string& pszDescription );
-	JDE_NATIVE_VISIBILITY const char* GetThreadDescription();
+	JDE_NATIVE_VISIBILITY void SetThreadDscrptn( std::thread& thread, std::string_view pszDescription )noexcept;
+	JDE_NATIVE_VISIBILITY void SetThreadDscrptn( const std::string& pszDescription )noexcept;
+	JDE_NATIVE_VISIBILITY const char* GetThreadDescription()noexcept;
 
 	//taken from https://livebook.manning.com/#!/book/c-plus-plus-concurrency-in-action-second-edition/chapter-8/v-7/1
 	class ThreadCollection

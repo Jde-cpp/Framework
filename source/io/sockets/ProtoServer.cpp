@@ -83,7 +83,7 @@ namespace Jde::IO::Sockets
 	//	virtual ISession OnSessionStart( SessionPK id )noexcept=0;
 	void ProtoServer::Run()noexcept
 	{
-		Threading::SetThreadDescription( "ProtoServer::Run" );
+		Threading::SetThreadDscrptn( "ProtoServer::Run" );
 		DBG0( "ProtoServer::Run"sv );
 		_asyncHelper.run();
 		DBG0( "ProtoServer::Run Exit"sv );

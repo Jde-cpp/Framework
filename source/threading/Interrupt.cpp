@@ -65,7 +65,7 @@ namespace Jde::Threading
 	void Interrupt::Worker()
 	{
 		LOG( _logLevel, "{}::Worker(paused:  {})"sv, _threadName, (bool)_paused );
-		Threading::SetThreadDescription( _threadName );
+		SetThreadDscrptn( _threadName );
 		std::cv_status status = std::cv_status::timeout;
     	std::unique_lock<std::mutex> lk( _cvMutex );
     	while( !GetThreadInterruptFlag().IsSet() )

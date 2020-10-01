@@ -25,7 +25,7 @@ namespace Jde::Threading
 		if( _name.size() )
 		{
 			//auto index =
-			SetThreadDescription( fmt::format("{} {}", _name, _index++) );
+			SetThreadDscrptn( format("{} {}", _name, _index++) );
 		}
 		while( !_done || !_queue.Empty() )
 		{
