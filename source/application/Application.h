@@ -33,7 +33,7 @@ namespace Jde
 		virtual fs::path ProgramDataFolder()noexcept=0;
 		virtual fs::path ApplicationDataFolder()noexcept{ return ProgramDataFolder()/CompanyName()/ApplicationName(); }
 
-		
+
 	protected:
 		void Wait()noexcept;
 		static void OnTerminate()noexcept;//implement in OSApp.cpp.
@@ -56,15 +56,15 @@ namespace Jde
 	struct OSApp : IApplication
 	{
 		JDE_NATIVE_VISIBILITY static set<string> Startup( int argc, char** argv, string_view appName )noexcept(false);
-		string GetEnvironmentVariable( string_view variable )noexcept;
-		fs::path ProgramDataFolder()noexcept;
+		string GetEnvironmentVariable( string_view variable )noexcept override;
+		fs::path ProgramDataFolder()noexcept override;
 	protected:
 		bool KillInstance( uint processId )noexcept override;
 		void SetConsoleTitle( string_view title )noexcept override;
 		void AddSignals()noexcept(false) override;
 		bool AsService()noexcept override;
 		void OSPause()noexcept override;
-		
+
 		//void OnTerminate()noexcept override;
 	private:
 		static void ExitHandler( int s );
