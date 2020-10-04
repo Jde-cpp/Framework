@@ -1,5 +1,6 @@
 #pragma once
 #include "../Exports.h"
+#include "../JdeAssert.h"
 namespace Jde::Threading{ struct InterruptibleThread; }
 
 namespace Jde
@@ -12,7 +13,7 @@ namespace Jde
 	struct JDE_NATIVE_VISIBILITY IApplication
 	{
 		virtual ~IApplication();
-		static IApplication& Instance(){ ASSERT(_pInstance); return *_pInstance; }
+		static IApplication& Instance()noexcept{ ASSERT_DESC(_pInstance, "No Application Instance"sv); return *_pInstance; }
 		set<string> BaseStartup( int argc, char** argv, string_view appName, string_view companyName="jde-cpp" )noexcept(false);
 
 		static void AddThread( sp<Threading::InterruptibleThread> pThread )noexcept;

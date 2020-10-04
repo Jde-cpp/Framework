@@ -71,6 +71,8 @@ namespace Jde
 		inline bool operator ==( string_view s )const noexcept{ return base::compare( 0, s.size(), s.data(), s.size() )==0; }
 		inline bool operator !=( string_view s )const noexcept{ return base::compare( 0, s.size(), s.data(), s.size() )!=0; }
 		inline bool operator !=( const string& s )const noexcept{ return base::compare( 0, s.size(), s.data(), s.size() )!=0; }
+		operator string()const noexcept{ return string{data(), size()}; }
+
 	};
 	//inline CIString operator=( string_view sv )
 
