@@ -15,4 +15,3 @@ fi
 make -j7;
 cd - > /dev/null
 exit $?
-1
