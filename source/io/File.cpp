@@ -620,9 +620,9 @@ namespace Jde::IO
 		auto path = std::to_string(year);
 		if( month>0 )
 		{
-			path = format( "{}-{:=02d}", path, month );
+			path = format( "{}-{:02d}", path, month );
 			if( day>0 )
-				path = format( "{}-{:=02d}", path, day );
+				path = format( "{}-{:02d}", path, day );
 		}
 		return path;
 	}
