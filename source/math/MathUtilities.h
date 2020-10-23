@@ -4,7 +4,12 @@
 
 namespace Jde::Math
 {
-	JDE_NATIVE_VISIBILITY size_t URound( double value );
+	template<typename T=uint>
+	T URound( double value )
+	{
+		return static_cast<T>( llround(value) );
+	}
+
 	//inline _int Round( double value ){ return static_cast<_iint>( llround(value) ); }
 	template<typename T>
 	struct StatResult

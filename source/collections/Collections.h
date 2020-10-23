@@ -4,6 +4,7 @@
 #include <sstream>
 #include "../io/Crc.h"
 
+#define var const auto
 namespace Jde
 {
 	template<typename TKey,typename TValue>
@@ -196,4 +197,40 @@ namespace Collections
 		}
 		return results;
 	}
+
+	template<template<class, class,class...> class M, class K, class V, class... Ts>
+	up<V>& InsertUnique( M<K,up<V>,Ts...>& map, const K& key )noexcept
+	{
+		auto p = map.find( key );//M<K,std::unique_ptr<V>>::iterator
+		if( p == map.end() )
+			p = map.emplace( key, make_unique<V>() ).first;
+		return p->second;
+	}
+
+	template<template<class, class,class...> class M, class K, class V, class... Ts>
+	V& InsertShared( M<K,sp<V>,Ts...>& map, const K& key )noexcept
+	{
+		auto p = map.find( key );//M<K,sp<V>>::iterator
+		if( p == map.end() )
+			p = map.emplace( key, make_shared<V>() ).first;
+		return *p->second;
+	}
+
+/*	template<template<class, class,class...> class M, class K, class V, class... Ts>
+	V TryGet( M<K,V,Ts...>& map, const K& key, function<V()> fnctn )noexcept
+	{
+		auto p = map.find( key );//M<K,sp<V>>::iterator
+		if( p == map.end() )
+			p = map.emplace( key, make_shared<V>() );
+		return *p->second;
+	}
+*/
+
+/*	template<template<class, class> class M, class K, class V>
+	void If( const M<K,V>& map, const K& key, function<void(const K&)> fnctn )
+	{
+		if( var p = map.find( key ); p!=map.end() )
+			fnctn( p->second );
+	}*/
 }}
+#undef var

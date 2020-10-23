@@ -36,7 +36,8 @@ namespace Jde::Logging
 
 	ServerSink::ServerSink( string_view host, uint16 port )noexcept:
 		Interrupt{ "AppServerSend", 1s, true },
-		ProtoBase{ host, port, "ServerSocket" }
+		ProtoBase{ host, port, "ServerSocket" },
+		_messages{ Messages::Message{MessageBase{ELogLevel::Trace, ""sv, __FILE__, __func__, __LINE__}} }
 	{
 		Startup( "AppServerReceive" );
 	}

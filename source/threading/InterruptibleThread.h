@@ -44,7 +44,7 @@ namespace Jde::Threading  //TODO Reflection remove Threading from public items.
 	};
 
 	template<typename FunctionType>
-	InterruptibleThread::InterruptibleThread(string_view name,FunctionType f)noexcept:
+	InterruptibleThread::InterruptibleThread( string_view name, FunctionType f )noexcept:
 		Name{name}
 	{
 		std::promise<InterruptFlag*> promise;

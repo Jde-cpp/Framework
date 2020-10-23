@@ -35,7 +35,7 @@ namespace Jde
 		auto pInstance = GetInstance();
 		return pInstance && pInstance->InstanceHas( name );
 	}
-
+	//possible null return
 	template<class T>
 	sp<T> Cache::Get( const string& name )noexcept(false)
 	{
@@ -44,6 +44,7 @@ namespace Jde
 			THROW( Exception("no cache instance.") );
 		return pInstance->InstanceGet<T>( name );
 	}
+	//non-null return TODO change name/pass in default args.
 	template<class T>
 	sp<T> Cache::TryGet( const string& name )noexcept
 	{

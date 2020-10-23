@@ -7,7 +7,6 @@ include(SetUpConfigurations)
 
 set( sources )
 list( APPEND sources DateTime.cpp Diagnostics.cpp Exception.cpp Stopwatch.cpp StringUtilities.cpp Cache.cpp Settings.cpp
-	math/MathUtilities.cpp
 	application/Application.cpp
 	log/Logging.cpp log/server/ServerSink.cpp log/server/proto/messages.pb.cc
 	io/sockets/Socket.cpp io/sockets/ProtoClient.cpp io/sockets/ProtoServer.cpp

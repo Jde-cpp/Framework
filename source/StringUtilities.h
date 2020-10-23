@@ -5,7 +5,6 @@
 #include <functional>
 #include <cctype>
 #include "Exception.h"
-//#include <charconv>
 
 using namespace std;
 namespace Jde
@@ -68,13 +67,12 @@ namespace Jde
 		typedef std::basic_string<char, ci_char_traits> base;
 		CIString( string_view sv )noexcept:base{sv.data(), sv.size()}{}
 		CIString( const string& s )noexcept:base{s.data(), s.size()}{}
-		inline bool operator ==( string_view s )const noexcept{ return base::compare( 0, s.size(), s.data(), s.size() )==0; }
-		inline bool operator !=( string_view s )const noexcept{ return base::compare( 0, s.size(), s.data(), s.size() )!=0; }
-		inline bool operator !=( const string& s )const noexcept{ return base::compare( 0, s.size(), s.data(), s.size() )!=0; }
+		inline bool operator ==( string_view s )const noexcept{ return size()==s.size() && base::compare( 0, s.size(), s.data(), s.size() )==0; }
+		inline bool operator !=( string_view s )const noexcept{ return !(s==*this); }
+		inline bool operator !=( const string& s )const noexcept{ return *this!=string_view{s}; }
 		operator string()const noexcept{ return string{data(), size()}; }
 
 	};
-	//inline CIString operator=( string_view sv )
 
 	template<typename T>
 	std::basic_string<T> StringUtilities::RTrim(std::basic_string<T> &s)
@@ -175,6 +173,6 @@ namespace Jde
 	template<typename Enum, typename Collection>
 	string_view StringUtilities::FromEnum( const Collection& stringValues, Enum value )noexcept
 	{
-		return static_cast<uint>(value)<stringValues.size() ? stringValues[value] : nullptr;
+		return static_cast<uint>(value)<stringValues.size() ? stringValues[value] : string_view{};
 	}
 }

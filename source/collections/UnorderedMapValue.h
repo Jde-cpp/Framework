@@ -22,6 +22,9 @@ namespace Jde
 		template<class... Args >
 		bool emplace( Args&&... args )noexcept;
 		void Replace( const TKey& id, const TValue& value )noexcept;
+
+		//std::unique_lock<std::shared_mutex> UniqueLock()noexcept{return std::unique_lock<std::shared_mutex>{_mutex};}
+		//BaseClass& Underlying()noexcept{ return *this; }
 	private:
 		mutable std::shared_mutex _mutex;
 	};
@@ -29,7 +32,7 @@ namespace Jde
 	template<class... Args >
 	bool UnorderedMapValue<TKey,TValue>::emplace( Args&&... args )noexcept
 	{
-		std::unique_lock<std::shared_mutex> l;
+		std::unique_lock<std::shared_mutex> l{ _mutex };
 		const auto result = BaseClass::emplace( args... );
 		return result.second;
 	}
@@ -47,7 +50,7 @@ namespace Jde
 	}
 
 	template<typename TKey, typename TValue>
-	TValue UnorderedMapValue<TKey,TValue>::Find( const TKey& key, const TValue& dflt )noexcept
+	TValue UnorderedMapValue<TKey,TValue>::Find( const TKey& key, const TValue& dflt )noexcept//TODO forward args like try_emplace
 	{
 		shared_lock<std::shared_mutex> l(_mutex);
 		const auto pKeyValue = BaseClass::find( key );
