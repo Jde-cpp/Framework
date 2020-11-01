@@ -44,6 +44,9 @@
 #include <nlohmann/json.hpp>
 
 #ifndef __INTELLISENSE__
+#ifdef _WINDLL
+	#include <fmt/core.h>
+#endif
 	#include <spdlog/spdlog.h>
 	#include <spdlog/sinks/basic_file_sink.h>
 	#include <spdlog/fmt/ostr.h>

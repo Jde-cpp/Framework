@@ -217,7 +217,7 @@ namespace Jde::Logging
 			Timestamp{ Clock::now() },
 			Variables{ values }
 		{
-			ThreadId = Threading::ThreadId;
+			ThreadId = Threading::GetThreadId();
 			Fields |= EFields::Timestamp | EFields::ThreadId | EFields::Thread;
 		}
 		Message::Message( ELogLevel level, std::string_view message, std::string_view file, std::string_view function, uint line, const vector<string>& values )noexcept:

@@ -4,9 +4,9 @@
 
 namespace Jde::Threading
 {
-	void Run( const size_t maxWorkerCount, size_t runCount, std::function<void(size_t)> func );
-	//extern thread_local char* ThreadName;
-	extern thread_local uint ThreadId;
+	//void Run( const size_t maxWorkerCount, size_t runCount, std::function<void(size_t)> func );
+	//extern thread_local uint ThreadId;
+	JDE_NATIVE_VISIBILITY uint GetThreadId()noexcept;
 	JDE_NATIVE_VISIBILITY void SetThreadDscrptn( std::thread& thread, std::string_view pszDescription )noexcept;
 	JDE_NATIVE_VISIBILITY void SetThreadDscrptn( const std::string& pszDescription )noexcept;
 	JDE_NATIVE_VISIBILITY const char* GetThreadDescription()noexcept;
@@ -30,10 +30,6 @@ namespace Jde::Threading
 			std::vector<std::thread>& _threads;
 	};
 
-
-
-
-	//template<typename TMutex>
 	class MyLock
 	{
 	public:

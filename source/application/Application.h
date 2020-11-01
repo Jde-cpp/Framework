@@ -59,6 +59,12 @@ namespace Jde
 		JDE_NATIVE_VISIBILITY static set<string> Startup( int argc, char** argv, string_view appName )noexcept(false);
 		string GetEnvironmentVariable( string_view variable )noexcept override;
 		fs::path ProgramDataFolder()noexcept override;
+
+		JDE_NATIVE_VISIBILITY uint GetThreadId()noexcept;
+		JDE_NATIVE_VISIBILITY void SetThreadDscrptn( std::thread& thread, std::string_view pszDescription )noexcept;
+		JDE_NATIVE_VISIBILITY void SetThreadDscrptn( const std::string& pszDescription )noexcept;
+		JDE_NATIVE_VISIBILITY const char* GetThreadDescription()noexcept;
+
 	protected:
 		bool KillInstance( uint processId )noexcept override;
 		void SetConsoleTitle( string_view title )noexcept override;

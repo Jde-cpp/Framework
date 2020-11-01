@@ -77,7 +77,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ShowProgress>NotSet</ShowProgress>
-      <AdditionalDependencies>Ws2_32.lib;libprotobuf.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Ws2_32.lib;fmt.lib;libprotobuf.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -102,7 +102,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ShowProgress>NotSet</ShowProgress>
-      <AdditionalDependencies>Ws2_32.lib;libprotobuf.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Ws2_32.lib;fmt.lib;libprotobuf.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -154,8 +154,10 @@
     <ClInclude Include="math\io\MatLab\MatLabFile.h" />
     <ClInclude Include="math\io\MatLab\MatLabVariable.h" />
     <ClInclude Include="math\MathUtilities.h" />
+    <ClCompile Include="..\..\Windows\source\dllmain.cpp" />
     <ClCompile Include="..\..\Windows\source\WindowsApp.cpp" />
     <ClCompile Include="..\..\Windows\source\WindowsDrive.cpp" />
+    <ClCompile Include="..\..\Windows\source\WindowsThread.cpp" />
     <ClCompile Include="..\..\Windows\source\WindowsTimezone.cpp" />
     <ClCompile Include="..\..\Windows\source\WindowsUtilities.cpp" />
     <ClCompile Include="application\Application.cpp" />
@@ -209,7 +211,6 @@
   <ItemGroup>
     <ClCompile Include="DateTime.cpp" />
     <ClCompile Include="Diagnostics.cpp" />
-    <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="Exception.cpp" />
     <ClCompile Include="io\File.cpp" />
     <ClCompile Include="log\Logging.cpp" />
@@ -221,7 +222,6 @@
     <ClCompile Include="threading\InterruptibleThread.cpp" />
     <ClCompile Include="threading\Interrupt.cpp" />
     <ClCompile Include="threading\Pool.cpp" />
-    <ClCompile Include="threading\Thread.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

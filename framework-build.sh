@@ -13,29 +13,35 @@ cd $REPO_DIR
 echo REPO_DIR=$REPO_DIR
 #echo `pwd`
 #exit 1;
+
+echo dsfdsaf
 function findExecutable
 {
 	exe=$1;
 	echo exe=$1;
 	defaultPath=$2;
+	exitFailure=${3:-1};
 	echo defaultPath=$2;
 	echo path_to_exe='$(which $exe 2> /dev/null)';
    path_to_exe=$(which "$exe" 2> /dev/null);
-   if [ ! -x "$path_to_exe" ] ; then
+   if [ ! -x "$path_to_exe" ]; then
 		echo 'PATH=$PATH:$defaultPath;'
       PATH=$PATH:$defaultPath;
-		echo $PATH
+		#echo $PATH
 		path_to_exe=$(which "$exe" 2> /dev/null);
 		echo $path_to_exe;
-		if [ ! -x "$path_to_exe" ] ; then
+		if [ ! -x "$path_to_exe" ]; then
 			echo can not find $defaultPath/$exe;
-			exit 1;
+			if [ $exitFailure -eq 1 ]; then
+				exit 1;
+			fi;
 		fi;
 	fi;
 }
 
 if [ $windows -eq 1 ]; then
-	findExecutable MSBuild.exe '/c/Program\ Files\ \(X86\)/Microsoft\ Visual\ Studio/2019/BuildTools/MSBuild/Current/Bin'
+	findExecutable MSBuild.exe '/c/Program\ Files\ \(X86\)/Microsoft\ Visual\ Studio/2019/BuildTools/MSBuild/Current/Bin' 0
+	findExecutable MSBuild.exe '/c/Program\ Files\ \(X86\)/Microsoft\ Visual\ Studio/2019/Enterprise/MSBuild/Current/Bin' 1
 fi;
 
 # if [ $windows -eq 1 ]; then
@@ -58,8 +64,9 @@ if [ ! -x "$path_to_exe" ] ; then
 	findExecutable vcpkg.exe `pwd`/vcpkg
 fi;
 if [ $fetch -eq 1 ]; then
-	vcpkg.exe install nlohmann-json
-	vcpkg.exe install spdlog
+	vcpkg.exe install nlohmann-json --triplet x64-windows
+	vcpkg.exe install fmt --triplet x64-windows
+	vcpkg.exe install spdlog --triplet x64-windows
 	vcpkg.exe install boost --triplet x64-windows
 
 	vcpkg.exe install protobuf[zlib]:x64-windows

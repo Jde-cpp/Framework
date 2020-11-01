@@ -68,7 +68,7 @@ namespace Jde
 		CIString( string_view sv )noexcept:base{sv.data(), sv.size()}{}
 		CIString( const string& s )noexcept:base{s.data(), s.size()}{}
 		inline bool operator ==( string_view s )const noexcept{ return size()==s.size() && base::compare( 0, s.size(), s.data(), s.size() )==0; }
-		inline bool operator !=( string_view s )const noexcept{ return !(s==*this); }
+		inline bool operator !=( string_view s )const noexcept{ return size() == s.size() && base::compare(0, s.size(), s.data(), s.size())!=0; }
 		inline bool operator !=( const string& s )const noexcept{ return *this!=string_view{s}; }
 		operator string()const noexcept{ return string{data(), size()}; }
 
