@@ -14,7 +14,7 @@ namespace Jde
 	thread_local char ThreadName[NameLength]={0};//string shows up as memory leak
 	thread_local char ThreadName2[NameLength]={0};
 	thread_local uint ThreadId{0};
-/*	void Threading::Run( const size_t iMaxThreadCount, size_t runCount, std::function<void(size_t)> func )
+	void Threading::Run( const size_t iMaxThreadCount, size_t runCount, std::function<void(size_t)> func )noexcept
 	{
 		size_t maxThreadCount = std::min( runCount, std::max( iMaxThreadCount,size_t(1)) );
 		std::vector<std::thread> threads;
@@ -30,7 +30,7 @@ namespace Jde
 		for( auto& thread : threads )
 			thread.join();
 	}
-*/
+
 	ELogLevel Threading::MyLock::_defaultLogLevel{ ELogLevel::Trace };
 	void Threading::MyLock::SetDefaultLogLevel( ELogLevel logLevel )noexcept{ _defaultLogLevel=logLevel; }
 	ELogLevel Threading::MyLock::GetDefaultLogLevel()noexcept{ return _defaultLogLevel; }

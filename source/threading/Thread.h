@@ -4,7 +4,7 @@
 
 namespace Jde::Threading
 {
-	//void Run( const size_t maxWorkerCount, size_t runCount, std::function<void(size_t)> func );
+	void Run( const size_t maxWorkerCount, size_t runCount, std::function<void(size_t)> func )noexcept;
 	//extern thread_local uint ThreadId;
 	JDE_NATIVE_VISIBILITY uint GetThreadId()noexcept;
 	JDE_NATIVE_VISIBILITY void SetThreadDscrptn( std::thread& thread, std::string_view pszDescription )noexcept;

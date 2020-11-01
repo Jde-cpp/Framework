@@ -11,10 +11,10 @@ list( APPEND sources DateTime.cpp Diagnostics.cpp Exception.cpp Stopwatch.cpp St
 	log/Logging.cpp log/server/ServerSink.cpp log/server/proto/messages.pb.cc
 	io/sockets/Socket.cpp io/sockets/ProtoClient.cpp io/sockets/ProtoServer.cpp
 	io/File.cpp io/DiskWatcher.cpp
-	threading/Thread.cpp threading/Interrupt.cpp threading/InterruptibleThread.cpp threading/Pool.cpp
+	threading/Interrupt.cpp threading/InterruptibleThread.cpp threading/Pool.cpp
 	db/DBException.cpp db/DataType.cpp db/Database.cpp db/DBQueue.cpp)
 if(NOT MSVC)
-    list(APPEND sources ../../Linux/source/LinuxApp.cpp ../../Linux/source/LinuxDrive.cpp ../../Linux/source/LinuxTimezone.cpp)
+    list(APPEND sources ../../Linux/source/LinuxApp.cpp ../../Linux/source/LinuxDrive.cpp ../../Linux/source/LinuxTimezone.cpp  ../../Linux/source/LinuxThread.cpp)
 endif()
 add_library( Jde SHARED ${sources} )
 
