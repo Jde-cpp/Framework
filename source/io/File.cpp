@@ -15,20 +15,20 @@ namespace Jde::IO
 {
 	namespace FileUtilities
 	{
-		void ForEachItem( const fs::path& path, std::function<void(const fs::directory_entry&)> function )
+		void ForEachItem( path path, std::function<void(const fs::directory_entry&)> function )noexcept(false)//__fs::filesystem::filesystem_error
 		{
 			for( const auto& dirEntry : fs::directory_iterator(path) )
      			function( dirEntry );
 		}
 
-		std::unique_ptr<std::set<fs::directory_entry>> GetDirectory( const fs::path& directory )
+		std::unique_ptr<std::set<fs::directory_entry>> GetDirectory( path directory )
 		{
 			auto items = make_unique<std::set<fs::directory_entry>>();
 			Jde::IO::FileUtilities::ForEachItem( directory, [&items]( fs::directory_entry item ){items->emplace(item);} );
 			return items;
 		}
 
-		// set<fs::directory_entry> GetDirectoryRecursive( const fs::path& directory, set<fs::directory_entry>& values )noexcept
+		// set<fs::directory_entry> GetDirectoryRecursive( path directory, set<fs::directory_entry>& values )noexcept
 		// {
 		// 	for( const auto& entry : fs::directory_iterator(path) )
 		// 	{
@@ -39,7 +39,7 @@ namespace Jde::IO
 		// 	Jde::IO::FileUtilities::ForEachItem( directory, func );
 		// 	return pItems;
 		// }
-		std::unique_ptr<std::set<fs::directory_entry>> GetDirectories( const fs::path& directory, std::unique_ptr<std::set<fs::directory_entry>> pItems )
+		std::unique_ptr<std::set<fs::directory_entry>> GetDirectories( path directory, std::unique_ptr<std::set<fs::directory_entry>> pItems )
 		{
 			if( !pItems )
 				pItems = make_unique<std::set<fs::directory_entry>>();
@@ -55,12 +55,12 @@ namespace Jde::IO
 			return pItems;
 		}
 
-		size_t GetFileSize( const fs::path& path )noexcept(false)//fs::filesystem_error
+		size_t GetFileSize( path path )noexcept(false)//fs::filesystem_error
 		{
 			return fs::file_size( fs::canonical(path) );
 		}
 
-		unique_ptr<vector<char>> LoadBinary( const fs::path& path )noexcept(false)//fs::filesystem_error
+		unique_ptr<vector<char>> LoadBinary( path path )noexcept(false)//fs::filesystem_error
 		{
 			IOException::TestExists( path );
 			auto size = GetFileSize( path );
@@ -73,7 +73,7 @@ namespace Jde::IO
 			return make_unique<vector<char>>( (istreambuf_iterator<char>(f)), istreambuf_iterator<char>() );  //vexing parse
 			//return move(pResult);
 		}
-		void SaveBinary( const fs::path& path, const std::vector<char>& data )noexcept(false)
+		void SaveBinary( path path, const std::vector<char>& data )noexcept(false)
 		{
 			ofstream f( path, std::ios::binary );
 			if( f.fail() )
@@ -81,7 +81,7 @@ namespace Jde::IO
 
 			f.write( data.data(), data.size() );
 		}
-		void Save( const fs::path& path, const std::string& value, std::ios_base::openmode openMode )noexcept(false)
+		void Save( path path, const std::string& value, std::ios_base::openmode openMode )noexcept(false)
 		{
 			ofstream f( path, openMode );
 			if( f.fail() )
@@ -89,12 +89,12 @@ namespace Jde::IO
 
 			f.write( value.c_str(), value.size() );
 		}
-		void Compression::Save( const fs::path& path, const vector<char>& data )
+		void Compression::Save( path path, const vector<char>& data )
 		{
 			SaveBinary( path, data );
 			Compress( path );
 		}
-		unique_ptr<vector<char>> Compression::LoadBinary( const fs::path& uncompressed, const fs::path& compressed, bool setPermissions, bool leaveUncompressed )noexcept(false)
+		unique_ptr<vector<char>> Compression::LoadBinary( path uncompressed, path compressed, bool setPermissions, bool leaveUncompressed )noexcept(false)
 		{
 			var compressedPath = compressed.string().size() ? compressed : uncompressed;
 			Extract( compressedPath );
@@ -111,7 +111,7 @@ namespace Jde::IO
 			GetDefaultLogger()->trace( "removed {}.", (leaveUncompressed ? compressedPath.string() : uncompressedFile.string()) );
 			return pResult;
 		}
-		fs::path Compression::Compress( const fs::path& path, bool deleteAfter )noexcept(false)
+		fs::path Compression::Compress( path path, bool deleteAfter )noexcept(false)
 		{
 			var command = CompressCommand( path );
 			GetDefaultLogger()->trace( command );
@@ -129,7 +129,7 @@ namespace Jde::IO
 // sudo find . -type d -exec chmod 777 {} \;
 // sudo find . -type f -exec chmod 666 {} \;
 
-		void Compression::Extract( const fs::path& path )noexcept(false)
+		void Compression::Extract( path path )noexcept(false)
 		{
 			auto destination = string( path.parent_path().string() );
 			fs::path compressedFile = path;
@@ -155,7 +155,7 @@ namespace Jde::IO
 		str.assign( (istreambuf_iterator<wchar_t>(t)), istreambuf_iterator<wchar_t>() );
 		return str;
 	}*/
-	std::string FileUtilities::ToString( const fs::path& filePath )
+	std::string FileUtilities::ToString( path filePath )
 	{
 		auto fileSize = GetFileSize( filePath );
 		ifstream t( filePath );
@@ -165,7 +165,7 @@ namespace Jde::IO
 		return str;
 	}
 
-	vector<string> FileUtilities::LoadColumnNames( const fs::path& csvFileName )
+	vector<string> FileUtilities::LoadColumnNames( path csvFileName )
 	{
 		std::vector<string> columnNames;
 		auto columnNameFunction = [&columnNames](string line){ columnNames = StringUtilities::Split<char>(line); };
@@ -263,7 +263,7 @@ namespace Jde::IO
 		return lineIndex-startLine;
 	}
 
-	size_t File::ForEachLine2( const fs::path& path, const std::function<void(const std::vector<std::string>&, size_t lineIndex)>& function, const std::set<size_t>& columnIndexes, const size_t lineCount/*=std::numeric_limits<size_t>::max()*/, const size_t startLine, const size_t chunkSize/*=2^30*/, Stopwatch* /* pStopwatch*/ )noexcept(false)
+	size_t File::ForEachLine2( path path, const std::function<void(const std::vector<std::string>&, size_t lineIndex)>& function, const std::set<size_t>& columnIndexes, const size_t lineCount/*=std::numeric_limits<size_t>::max()*/, const size_t startLine, const size_t chunkSize/*=2^30*/, Stopwatch* /* pStopwatch*/ )noexcept(false)
 	{
 		//FILE* pFile = fopen( file.c_str(), "r" );
 		std::ifstream file( path.string() );
@@ -627,7 +627,7 @@ namespace Jde::IO
 		return path;
 	}
 
-	tuple<uint16,uint8,uint8> FileUtilities::ExtractDate( const fs::path& path )noexcept
+	tuple<uint16,uint8,uint8> FileUtilities::ExtractDate( path path )noexcept
 	{
 		uint16 year=0;
 		uint8 month=0, day=0;

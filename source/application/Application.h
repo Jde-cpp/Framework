@@ -32,7 +32,7 @@ namespace Jde
 		static string_view CompanyName()noexcept{ return _pCompanyName ? *_pCompanyName : ""sv;}
 		static string_view ApplicationName()noexcept{ return _pApplicationName ? *_pApplicationName : ""sv;}
 		virtual fs::path ProgramDataFolder()noexcept=0;
-		virtual fs::path ApplicationDataFolder()noexcept{ return ProgramDataFolder()/CompanyName()/ApplicationName(); }
+		virtual fs::path ApplicationDataFolder()noexcept{ return ProgramDataFolder()/format(".{}", CompanyName())/ApplicationName(); }
 
 
 	protected:

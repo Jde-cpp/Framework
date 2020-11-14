@@ -10,7 +10,7 @@ namespace Jde::DB
 	{
 		DllHelper _dll;
 	public:
-		DataSourceApi( const fs::path& path ):
+		DataSourceApi( path path ):
 			_dll{ path },
 			GetDataSourceFunction{ _dll["GetDataSource"] }
 		{}
@@ -41,7 +41,7 @@ namespace Jde::DB
 		std::unique_lock l{_dataSourcesMutex};
 		_dataSources.clear();
 	}
-	void Initialize( const fs::path& libraryName )
+	void Initialize( path libraryName )
 	{
 		static DataSourceApi api{ libraryName };
 		_dataSource = shared_ptr<Jde::DB::IDataSource>{ api.GetDataSourceFunction() };
@@ -63,7 +63,7 @@ namespace Jde::DB
 		return _dataSource;
 	}
 
-	shared_ptr<IDataSource> DataSource( const fs::path& libraryName, string_view connectionString )
+	shared_ptr<IDataSource> DataSource( path libraryName, string_view connectionString )
 	{
 		shared_ptr<IDataSource> pDataSource;
 		std::unique_lock l{_dataSourcesMutex};

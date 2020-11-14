@@ -20,7 +20,7 @@ namespace Jde
 		std::shared_ptr<T> WaitAndPop( Duration duration );
 		std::shared_ptr<T> TryPop();
 		bool Empty()const noexcept;
-		bool ForEach( std::function<void(T&)>& func );
+		bool ForEach( std::function<void(T&)> func )noexcept;
 		uint size()const{ std::lock_guard<std::mutex> lk(_mtx); return _queue.size(); }
 	private:
 		//function<void()> _onPush;
@@ -81,7 +81,7 @@ namespace Jde
 	}
 
 	template<typename T>
-	bool Queue<T>::ForEach( std::function<void(T&)>& func )
+	bool Queue<T>::ForEach( std::function<void(T&)> func )noexcept
 	{
 		bool result = false;
 		{

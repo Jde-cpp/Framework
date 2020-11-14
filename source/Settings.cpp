@@ -10,7 +10,7 @@ namespace Jde::Settings
 	Container& Global(){ ASSERT(_pGlobal); return *_pGlobal;}
 	void SetGlobal( shared_ptr<Container> settings ){ _pGlobal = settings; }
 
-	Container::Container( const fs::path& jsonFile )noexcept(false):
+	Container::Container( path jsonFile )noexcept(false):
 		_pJson{ make_unique<nlohmann::json>() }
 	{
 		if( !fs::exists(jsonFile) )
@@ -42,7 +42,7 @@ namespace Jde::Settings
 		return dflt;//TODO implement
 	}
 
-	// fs::path Container::Path( string_view path, const fs::path& dflt )const noexcept
+	// fs::path Container::Path( string_view path, path dflt )const noexcept
 	// {
 	// 	auto pEntry = _pJson->find( path );
 	// 	return pEntry==_pJson->end() ? dflt : fs::path( pEntry->get<string>() );

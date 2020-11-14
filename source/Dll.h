@@ -29,7 +29,7 @@ namespace Jde
 	};
 	struct DllHelper
 	{
-		DllHelper( const fs::path& path ):
+		DllHelper( path path ):
 			_path{path},
 #if _MSC_VER
 			_module{ ::LoadLibrary(path.string().c_str()) }

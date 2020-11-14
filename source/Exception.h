@@ -147,7 +147,7 @@ namespace Jde
 			RuntimeException( value, args... )
 		{}
 		template<class... Args>
-		IOException( const fs::path& path, std::string_view value, Args&&... args ):
+		IOException( path path, std::string_view value, Args&&... args ):
 			RuntimeException( value, args... ),
 			_path{path}
 		{}
@@ -165,8 +165,8 @@ namespace Jde
 
 
 		uint ErrorCode()const noexcept;
-		const fs::path& Path()const noexcept; void SetPath( const fs::path& x )noexcept{ _path=x; }
-		static void TestExists( const fs::path& path )noexcept(false){if( !fs::exists(path) ) throw IOException{path, "'{}' does not exist", path.string().c_str()}; }
+		path Path()const noexcept; void SetPath( path x )noexcept{ _path=x; }
+		static void TestExists( path path )noexcept(false){if( !fs::exists(path) ) throw IOException{path, "'{}' does not exist", path.string().c_str()}; }
 		const char* what() const noexcept override;
 	private:
 		const uint _errorCode{0};

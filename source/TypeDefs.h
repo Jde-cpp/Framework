@@ -12,7 +12,11 @@
 #include <unordered_map>
 #include <string_view>
 #include <vector>
-//#include <format>
+#include <spdlog/spdlog.h>
+#include <spdlog/sinks/basic_file_sink.h>
+#include <spdlog/fmt/ostr.h>
+
+
 
 namespace Jde
 {
@@ -84,6 +88,8 @@ namespace Jde
 */
 	namespace fs=std::filesystem;
 	using fmt::format;
+	using path = const fs::path&;
+	using sv = std::string_view;
 }
 #ifdef _MSC_VER
 	#define __PRETTY_FUNCTION__ __FUNCSIG__

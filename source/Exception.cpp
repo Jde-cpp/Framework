@@ -120,7 +120,7 @@ namespace Jde
 		return  _pUnderLying ? _pUnderLying->code().value() : _errorCode;
 	}
 
-	const fs::path& IOException::Path()const noexcept
+	path IOException::Path()const noexcept
 	{
 		return  _pUnderLying? _pUnderLying->path1() : _path;
 	}

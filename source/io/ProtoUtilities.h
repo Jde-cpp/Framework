@@ -1,21 +1,25 @@
 #pragma once
+#include "File.h"
 
 namespace Jde::IO::ProtoUtilities
 {
 	template<typename T>
-	sp<T> Load( const fs::path& path, bool stupidPointer=false )noexcept(false);
+	up<T> Load( path path )noexcept(false);
 	template<typename T>
-	sp<T> TryLoad( const fs::path& path, bool stupidPointer=false )noexcept;
+	up<T> TryLoad( path path )noexcept;
+	template<typename T>
+	void Load( path path, T& p )noexcept(false);
+
 	template<typename T>
 	vector<T> ToVector( const google::protobuf::RepeatedPtrField<T>& x )noexcept;
 
-	void Save( const google::protobuf::MessageLite& msg, const fs::path& path )noexcept(false);
+	void Save( const google::protobuf::MessageLite& msg, path path )noexcept(false);
 }
 
 
 namespace Jde::IO
 {
-	inline void ProtoUtilities::Save( const google::protobuf::MessageLite& msg, const fs::path& path )noexcept(false)
+	inline void ProtoUtilities::Save( const google::protobuf::MessageLite& msg, path path )noexcept(false)
 	{
 		string output;
 		msg.SerializeToString( &output );
@@ -23,9 +27,9 @@ namespace Jde::IO
 	}
 
 	template<typename T>
-	sp<T> ProtoUtilities::Load( const fs::path& path, bool stupidPointer )noexcept(false)
+	void ProtoUtilities::Load( path path, T& proto )noexcept(false)
 	{
-		unique_ptr<vector<char>> pBytes;
+		up<vector<char>> pBytes;
 		try
 		{
 			pBytes = IO::FileUtilities::LoadBinary( path );
@@ -41,23 +45,24 @@ namespace Jde::IO
 		}
 
 		google::protobuf::io::CodedInputStream input{ (const uint8*)pBytes->data(), (int)pBytes->size() };
-		auto pValue = stupidPointer ? shared_ptr<T>( new T, [](T*){} ) : make_shared<T>();
-		if( !pValue->MergePartialFromCodedStream(&input) )
-		{
-			if( stupidPointer )
-				delete pValue.get();
+		if( !proto.MergePartialFromCodedStream(&input) )
 			THROW( IOException(path, "MergePartialFromCodedStream returned false.") );
-		}
+	}
 
-		return pValue;
+	template<typename T>
+	up<T> ProtoUtilities::Load( path path )noexcept(false)
+	{
+		auto p = make_unique<T>();
+		Load( path, *p );
+		return p;
 	}
 	template<typename T>
-	sp<T> ProtoUtilities::TryLoad( const fs::path& path, bool stupidPointer )noexcept
+	up<T> ProtoUtilities::TryLoad( path path )noexcept
 	{
-		sp<T> pValue{};
+		up<T> pValue{};
 		try
 		{
-			pValue = Load<T>( path, stupidPointer );
+			pValue = Load<T>( path );
 		}
 		catch( Jde::Exception& e )
 		{

@@ -72,7 +72,7 @@ namespace Jde
 		delete p;
 		pLogger = nullptr;
 	}
-	void InitializeLogger( ELogLevel level2, const fs::path& path, uint16 serverPort, bool memory )noexcept
+	void InitializeLogger( ELogLevel level2, path path, uint16 serverPort, bool memory )noexcept
 	{
 		_status.set_starttime( (google::protobuf::uint32)Clock::to_time_t(_startTime) );
 

@@ -9,12 +9,12 @@ namespace Jde::IO
 	struct DiskMirror : Jde::Threading::Interrupt, public IDriveChange
 	{
 		typedef std::chrono::steady_clock::time_point TimePoint;
-		DiskMirror( const fs::path& path );
-		
+		DiskMirror( path path );
+
 		void OnTimeout()noexcept override;
 		void OnAwake()noexcept override;
-		void OnChange( const fs::path& path )noexcept;
-		fs::path GetRootTar( const fs::path& path )noexcept;
+		void OnChange( path path )noexcept;
+		fs::path GetRootTar( path path )noexcept;
 
 	private:
 		//map<fs::path, std::chrono::steady_clock::time_point> _changes; std::unique_mutex _changesMutex;
