@@ -51,6 +51,7 @@ namespace Jde
 		inline TimePoint Date( const TimePoint& time )noexcept{ return Clock::from_time_t( Clock::to_time_t(time)/(60*60*24)*(60*60*24) ); }
 		inline Duration Time( const TimePoint& time )noexcept{ return time-Date(time); }
 		JDE_NATIVE_VISIBILITY Duration ToDuration( string_view iso )noexcept(false);
+		string ToString( Duration d )noexcept;
 
 		namespace TimeSpan
 		{

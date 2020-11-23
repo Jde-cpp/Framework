@@ -7,7 +7,7 @@ namespace Jde
 	void Cache::CreateInstance()noexcept
 	{
 		ASSERT( !_pInstance );
-		_pInstance = sp<Cache>( new Cache() );
+		_pInstance = sp<Cache>( new Cache{} );
 		IApplication::AddShutdown( _pInstance );
 	}
 	void Cache::Shutdown()noexcept

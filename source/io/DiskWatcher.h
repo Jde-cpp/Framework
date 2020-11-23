@@ -131,7 +131,7 @@ namespace Jde::IO
 		virtual void TrashDisposal( TimePoint latestDate )=0;
 		//virtual VectorPtr<char> Load( path path )=0;
 		virtual VectorPtr<char> Load( const IDirEntry& dirEntry )=0;
-		//IDirEntryPtr Find( path path );
+		virtual void Restore( sv name )noexcept(false)=0;
 	};
 
 #pragma region DiskWatcher

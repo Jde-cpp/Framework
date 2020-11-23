@@ -2,6 +2,7 @@
 #include <signal.h>
 #include <sys/types.h>
 #include <stdexcept>
+//#include <experimental/source_location>
 
 #include "../Diagnostics.h"
 #include "../Cache.h"
@@ -16,6 +17,7 @@ namespace Jde
 	unique_ptr<string> IApplication::_pCompanyName;
 
 	mutex IApplication::_threadMutex;
+	bool IApplication::_shuttingDown{false};
 	VectorPtr<sp<Threading::InterruptibleThread>> IApplication::_pBackgroundThreads{ make_shared<std::vector<sp<Threading::InterruptibleThread>>>() };
 //	bool Stop{false};
 	std::function<void()> OnExit;
@@ -23,7 +25,7 @@ namespace Jde
 	auto _pDeletedThreads = make_shared<std::vector<sp<Threading::InterruptibleThread>>>();
 
 	auto _pObjects = make_shared<std::list<sp<void>>>();  mutex ObjectMutex;
-	auto _pShutdowns = make_shared<std::list<sp<IShutdown>>>();
+	auto _pShutdowns = make_shared<std::vector<sp<IShutdown>>>();
 }
 
 #ifdef _MSC_VER
@@ -77,7 +79,7 @@ namespace Jde
 		{
 			settingsPath = std::filesystem::path{".."}/fileName;
 			if( !fs::exists(settingsPath) )
-				settingsPath = ProgramDataFolder()/companyName/appName/fileName;
+				settingsPath = ApplicationDataFolder()/fileName;
 		}
 		Settings::SetGlobal( std::make_shared<Jde::Settings::Container>(settingsPath) );
 		InitializeLogger( appName );
@@ -100,13 +102,18 @@ namespace Jde
 
 	void IApplication::Wait()noexcept
 	{
-		//AddSignals();
+		_shuttingDown = true;
 		INFO( "Waiting for process to complete. {}"sv, Diagnostics::ProcessId() );
 		GarbageCollect();
 		{
 			lock_guard l{ObjectMutex};
 			for( auto pShutdown : *_pShutdowns )
+			{
+				if( pShutdown.use_count()>4 )//1 pShutdown, 1 class, 1 _pShutdowns, 1 _pObjects
+					CRITICAL( "Use Count=={}"sv, pShutdown.use_count() );
 				pShutdown->Shutdown();
+			}
+			_pShutdowns->clear();
 		}
 		for(;;)
 		{

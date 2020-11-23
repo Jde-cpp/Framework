@@ -44,6 +44,33 @@ namespace Jde
 			}
 			return duration;
 		}
+		string ToString( Duration d )noexcept
+		{
+			ostringstream os;
+			os << 'P';
+			#define output(period,suffix) if( d>=period{1} || d<=period{-1} ){ os << duration_cast<period>(d).count() << suffix; d%=period{1}; }
+			/*auto output = [&d,&os]<T>( auto period, sv suffix )
+			{
+				if( d>period )
+				{
+					os << duration_cast<years>(d).count() << suffix;
+					d%=period;
+				}
+			};*/
+			output( years, "Y" );
+			output( months, "M" );
+			output( days, "D" );
+			if( d!=Duration::zero() )
+			{
+				os << "T";
+				output( hours, "H" );
+				output( minutes, "M" );
+				output( seconds, "S" );
+				if( d!=Duration::zero() )
+					os << duration_cast<milliseconds>(d).count();
+			}
+			return os.str();
+		}
 	}
 #ifndef __cplusplus
 	TimePoint::TimePoint( const TimePoint& tp )noexcept:

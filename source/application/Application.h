@@ -33,10 +33,10 @@ namespace Jde
 		static string_view ApplicationName()noexcept{ return _pApplicationName ? *_pApplicationName : ""sv;}
 		virtual fs::path ProgramDataFolder()noexcept=0;
 		virtual fs::path ApplicationDataFolder()noexcept{ return ProgramDataFolder()/format(".{}", CompanyName())/ApplicationName(); }
-
-
-	protected:
+		static bool ShuttingDown()noexcept{ return _shuttingDown; }
 		void Wait()noexcept;
+	protected:
+
 		static void OnTerminate()noexcept;//implement in OSApp.cpp.
 		virtual void OSPause()noexcept=0;
 		virtual bool AsService()noexcept=0;
@@ -52,6 +52,7 @@ namespace Jde
 		static unique_ptr<string> _pCompanyName;
 	private:
 		virtual void SetConsoleTitle( string_view title )noexcept=0;
+		static bool _shuttingDown;
 	};
 
 	struct OSApp : IApplication

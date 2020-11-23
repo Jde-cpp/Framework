@@ -12,6 +12,8 @@
 #include <unordered_map>
 #include <string_view>
 #include <vector>
+#include <boost/container/flat_map.hpp>
+
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/fmt/ostr.h>
@@ -67,6 +69,7 @@ namespace Jde
 	using std::chrono::duration_cast;
 	using std::make_tuple;
 	using std::list;
+	using boost::container::flat_multimap;
 
 	template<class T> using sp = std::shared_ptr<T>;
 	template<class T> using up = std::unique_ptr<T>;

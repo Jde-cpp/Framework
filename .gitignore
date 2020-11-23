@@ -39,3 +39,7 @@ source/.vs
 source/.bin
 source/Framework.vcxproj.user
 .vs/*
+tests/.vscode/launch.json
+tests/.vscode/settings.json
+tests/.vscode/tasks.json
+tests/my.natvis
