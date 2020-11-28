@@ -27,7 +27,7 @@ add_subdirectory(${CMAKE_CURRENT_BINARY_DIR}/googletest-src
 
 
 link_directories( ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} )
-add_executable(Tests.Framework main.cpp AlarmTests.cpp)
+add_executable(Tests.Framework main.cpp AlarmTests.cpp CoroutineTests.cpp)
 include_directories( "$ENV{REPO_DIR}/tws-api/source/cppclient/client" )
 #set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -stdlib=libc++")
 #target_link_libraries(Tests.Framework c++abi)

@@ -37,9 +37,12 @@ namespace Jde::Threading
 	}
 	void InterruptibleThread::Interrupt()noexcept
 	{
-		DBG( "{} - Interrupt _pFlag={}"sv, Name, _pFlag!=nullptr );
-		if( _pFlag )
+		if( _pFlag && !_pFlag->IsSet() )
+		{
+			DBG( "{} - Interrupt _pFlag={}"sv, Name, _pFlag!=nullptr );
 			_pFlag->Set();
+		}
+
 	}
 	void InterruptibleThread::Join()
 	{
@@ -51,9 +54,9 @@ namespace Jde::Threading
 		DBG("{} - Shutdown"sv, Name);
 		Interrupt();
 	};
-
+/*
 	ThreadInterrupted::ThreadInterrupted():
 		Exception( ELogLevel::Trace, "interupted" )
 	{}
-
+*/
 }

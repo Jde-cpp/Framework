@@ -23,7 +23,7 @@ namespace Jde
 		uint size()const noexcept;
 		void clear()noexcept{ std::unique_lock<std::shared_mutex> l(_mutex);  return base::clear(); }
 		template<class... Args >
-		bool emplace( Args&&... args );//constructor could throw
+		bool emplace( Args&&... args )noexcept;
 		uint ForEach( std::function<void(const TKey& key)> func )const;
 	private:
 		mutable std::shared_mutex _mutex;
@@ -86,7 +86,7 @@ namespace Jde
 
 	template<typename TKey>
 	template<class... Args >
-	bool UnorderedSet<TKey>::emplace( Args&&... args )
+	bool UnorderedSet<TKey>::emplace( Args&&... args )noexcept
 	{
 		std::unique_lock<std::shared_mutex> l(_mutex);
 		const auto result = base::emplace( args... );

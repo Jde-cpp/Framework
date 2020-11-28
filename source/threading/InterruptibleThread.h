@@ -8,13 +8,12 @@
 namespace Jde::Threading  //TODO Reflection remove Threading from public items.
 {
 	void InterruptionPoint()noexcept(false);
-	class JDE_NATIVE_VISIBILITY InterruptFlag
+	struct JDE_NATIVE_VISIBILITY InterruptFlag
 	{
-	public:
 		InterruptFlag()noexcept;
 		void Set()noexcept;
 		template<typename Lockable>
-		void Wait(std::condition_variable_any& cv,Lockable& lk);
+		void Wait( std::condition_variable_any& cv, Lockable& lk );
 		bool IsSet()const noexcept;
 		bool IsDone()const noexcept{return _done;} void SetIsDone(){_done=true;}
 	private:
@@ -31,7 +30,7 @@ namespace Jde::Threading  //TODO Reflection remove Threading from public items.
 	struct InterruptibleThread : public IShutdown
 	{
 		template<typename FunctionType>
-		InterruptibleThread(string_view name, FunctionType f)noexcept;
+		InterruptibleThread( string_view name, FunctionType f )noexcept;
 		virtual JDE_NATIVE_VISIBILITY ~InterruptibleThread();
 		JDE_NATIVE_VISIBILITY void Interrupt()noexcept;
 		JDE_NATIVE_VISIBILITY void Join();
@@ -60,7 +59,7 @@ namespace Jde::Threading  //TODO Reflection remove Threading from public items.
 	}
 
 	template<typename Lockable>
-	void InterruptFlag::Wait( std::condition_variable_any& cv,Lockable& lk )
+	void InterruptFlag::Wait( std::condition_variable_any& cv, Lockable& lk )
 	{
 		struct CustomLock
 		{
@@ -93,9 +92,5 @@ namespace Jde::Threading  //TODO Reflection remove Threading from public items.
 		cv.wait( cl );
 		InterruptionPoint();
 	}
-	class ThreadInterrupted : public Exception
-	{
-	public:
-		ThreadInterrupted();
-	};
+	struct ThreadInterrupted : public Exception{	ThreadInterrupted()noexcept:Exception{ELogLevel::Trace, "interupted"sv}{} };
 }

@@ -145,7 +145,7 @@ namespace Jde
 		}
 		catch( const std::invalid_argument& e )
 		{
-			GetDefaultLogger()->error( "Can't convert:  {}.  to {}.  {}", value, Jde::GetTypeName<T>(), e.what() );
+			ERR( "Can't convert:  {}.  to {}.  {}"sv, value, Jde::GetTypeName<T>(), e.what() );
 			return errorValue;
 		}
 	}

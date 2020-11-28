@@ -102,15 +102,15 @@ namespace Jde
 	class QueueValue
 	{
 	public:
-		QueueValue( T defaultValue )noexcept;
+		QueueValue()noexcept;
 		QueueValue( const QueueValue& other )noexcept;
 		void Push( const T& new_value )noexcept;
 		void Push( const vector<T>& new_value )noexcept;
 		void WaitAndPop( T& value );
 		T WaitAndPop()noexcept;
-		T WaitAndPop( Duration duration )noexcept;
+		optional<T> WaitAndPop( Duration duration )noexcept;
 		bool TryPop( T& value )noexcept;
-		T TryPop()noexcept;
+		optional<T> TryPop()noexcept;
 		bool Empty()const noexcept;
 		bool ForEach( std::function<void(T&)>& func )noexcept;
 		uint size()const noexcept{ std::lock_guard<std::mutex> lk(_mtx); return _queue.size(); }
@@ -118,16 +118,13 @@ namespace Jde
 		mutable std::mutex _mtx;
 		std::queue<T> _queue;
 		std::condition_variable _cv;
-		const T _defaultValue;
 	};
 	template<typename T>
-	QueueValue<T>::QueueValue( T defaultValue )noexcept:
-		_defaultValue{defaultValue}
+	QueueValue<T>::QueueValue()noexcept
 	{}
 
 	template<typename T>
-	QueueValue<T>::QueueValue( const QueueValue<T>& other )noexcept:
-		_defaultValue{other._defaultValue}
+	QueueValue<T>::QueueValue( const QueueValue<T>& other )noexcept
 	{
 		std::lock_guard<std::mutex> lk(other._mtx);
 		_queue=other._queue;
@@ -164,11 +161,11 @@ namespace Jde
 		return value;
 	}
 	template<typename T>
-	T QueueValue<T>::WaitAndPop( Duration duration )noexcept
+	optional<T> QueueValue<T>::WaitAndPop( Duration duration )noexcept
 	{
 		std::unique_lock<std::mutex> lk( _mtx );
 		bool hasValues = _cv.wait_for( lk, duration, [this]{return !_queue.empty();} );
-		auto value = hasValues ? _queue.front() : _defaultValue;
+		auto value = hasValues ? _queue.front() : optional<T>{};
 		if( hasValues )
 			_queue.pop();
 		return value;
@@ -185,11 +182,11 @@ namespace Jde
 		return true;
 	}
 	template<typename T>
-	T QueueValue<T>::TryPop()noexcept
+	optional<T> QueueValue<T>::TryPop()noexcept
 	{
 		std::lock_guard<std::mutex> lk( _mtx );
 		var empty = _queue.empty();
-		var value = empty ? _defaultValue : _queue.front();
+		var value = empty ? optional<T>{} : _queue.front();
 		if( !empty )
 			_queue.pop();
 		return value;
@@ -218,38 +215,44 @@ namespace Jde
 			ForEach( func );
 		return result;
 	}
-
+#define SLOCK shared_lock l(_mtx)
+#define LOCK unique_lock l(_mtx)
 	template<typename T>
 	class QueueMove
 	{
 	public:
 		QueueMove()=default;
 		void Push( T&& new_value )noexcept;
-		bool TryPop( T& value, Duration duration )noexcept;
-		bool Empty()const noexcept{ std::lock_guard<std::mutex> lk(_mtx); return _queue.empty(); }
+		optional<T> TryPop( Duration duration )noexcept;
+		bool empty()const noexcept{ SLOCK; return _queue.empty(); }
+		//uint size()const noexcept{ SLOCK; return _queue.size(); }
 	private:
-		mutable std::mutex _mtx;
+		mutable std::shared_mutex _mtx;
 		std::queue<T> _queue;
-		std::condition_variable _cv;
+		std::condition_variable_any _cv;
 	};
 	template<typename T>
 	void QueueMove<T>::Push( T&& new_value )noexcept
 	{
-		std::unique_lock<std::mutex> lk( _mtx );
+		LOCK;
 		_queue.push( std::move(new_value) );
 		_cv.notify_one();
 	}
 	template<typename T>
-	bool QueueMove<T>::TryPop( T& value, Duration duration )noexcept
+	optional<T> QueueMove<T>::TryPop( Duration duration )noexcept
 	{
-		std::unique_lock<std::mutex> lk( _mtx );
-		var hasValues = _cv.wait_for( lk, duration, [this]{return !_queue.empty();} );
-		if( hasValues )
+		SLOCK;
+		optional<T> result;
+		if( _cv.wait_for(l, duration, [this]{return !_queue.empty();}) )
 		{
-			value = std::move( _queue.front() );
+			l.unlock();
+			unique_lock l2( _mtx );
+			result = std::move( _queue.front() );
 			_queue.pop();
 		}
-		return hasValues;
+		return result;
 	}
 }
 #undef var
+#undef SLOCK
+#undef LOCK

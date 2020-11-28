@@ -10,10 +10,10 @@
 
 namespace Jde::Threading
 {
-	std::atomic<Coroutine::Handle> AlarmAwaitable::_handleIndex{0};
+	//std::atomic<Coroutine::Handle> AlarmAwaitable::_handleIndex{0};
 	void AlarmAwaitable::await_suspend( AlarmAwaitable::Handle h )noexcept
 	{
-		Alarm::Add( _alarm, h, _handle );
+		Alarm::Add( _alarm, h, _hClient );
 	}
 
 	void Alarm::Add( TimePoint t, AlarmAwaitable::Handle h, Coroutine::Handle myHandle )noexcept

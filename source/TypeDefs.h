@@ -69,6 +69,7 @@ namespace Jde
 	using std::chrono::duration_cast;
 	using std::make_tuple;
 	using std::list;
+	using std::atomic;
 	using boost::container::flat_multimap;
 
 	template<class T> using sp = std::shared_ptr<T>;
@@ -93,6 +94,7 @@ namespace Jde
 	using fmt::format;
 	using path = const fs::path&;
 	using sv = std::string_view;
+	using str = std::string;
 }
 #ifdef _MSC_VER
 	#define __PRETTY_FUNCTION__ __FUNCSIG__

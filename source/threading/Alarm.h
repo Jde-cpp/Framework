@@ -12,18 +12,16 @@ namespace Jde::Threading
 	using std::experimental::coroutine_handle;
 	using std::experimental::suspend_never;
 
-	struct JDE_NATIVE_VISIBILITY AlarmAwaitable final
+	struct JDE_NATIVE_VISIBILITY AlarmAwaitable final : Coroutine::CancelAwaitable<Coroutine::TaskVoid>
 	{
-		typedef coroutine_handle<Coroutine::TaskVoid::promise_type> Handle;
-		AlarmAwaitable( TimePoint& alarm, Coroutine::Handle& handle )noexcept:_alarm{alarm},_handle{ ++_handleIndex}{ handle = _handle; }
+		//typedef coroutine_handle<Coroutine::TaskVoid::promise_type> Handle;
+		AlarmAwaitable( TimePoint& alarm, Coroutine::Handle& handle )noexcept:CancelAwaitable{handle}, _alarm{alarm}{}
 		~AlarmAwaitable(){ /*DBG("({})AlarmAwaitable::~Awaitable"sv, std::this_thread::get_id());*/ }
 		bool await_ready()noexcept{ return _alarm<Clock::now(); }
 		void await_suspend( AlarmAwaitable::Handle h )noexcept; //if( !await_ready){ await_suspend();} await_resume()
 		void await_resume()noexcept{ DBG("({})AlarmAwaitable::await_resume"sv, std::this_thread::get_id()); }//returns the result value for co_await expression.
 	private:
 		TimePoint _alarm;
-		Coroutine::Handle _handle;
-		static std::atomic<Coroutine::Handle> _handleIndex;
 	};
 	struct JDE_NATIVE_VISIBILITY Alarm final: Worker
 	{

@@ -9,11 +9,21 @@
 
 namespace Jde
 {
-	//thread_local std::string ThreadName;
 	constexpr uint NameLength = 255;
 	thread_local char ThreadName[NameLength]={0};//string shows up as memory leak
-	thread_local char ThreadName2[NameLength]={0};
-	thread_local uint ThreadId{0};
+	thread_local uint Threading::ThreadId{0};
+	thread_local Threading::HThread AppThreadHandle{0};
+
+	uint Threading::GetAppThreadHandle()noexcept{ return AppThreadHandle; }
+	atomic<Threading::HThread> AppThreadHandleIndex{ (uint)Threading::EThread::AppSpecific };
+	Threading::HThread Threading::BumpThreadHandle()noexcept{ return AppThreadHandleIndex++; }
+
+	void Threading::SetThreadInfo( const ThreadParam& param )noexcept
+	{
+		AppThreadHandle = param.AppHandle;
+		SetThreadDscrptn( param.Name );
+	}
+
 	void Threading::Run( const size_t iMaxThreadCount, size_t runCount, std::function<void(size_t)> func )noexcept
 	{
 		size_t maxThreadCount = std::min( runCount, std::max( iMaxThreadCount,size_t(1)) );

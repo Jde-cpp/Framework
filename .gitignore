@@ -43,3 +43,4 @@ tests/.vscode/launch.json
 tests/.vscode/settings.json
 tests/.vscode/tasks.json
 tests/my.natvis
+tests/.vscode/.settings.json

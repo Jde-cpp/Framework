@@ -11,7 +11,7 @@ namespace Jde::Settings
 	{
 		Container( const nlohmann::json& json )noexcept;
 		Container( path jsonFile )noexcept(false);
-		Jde::Duration Duration( string_view path, const Jde::Duration& dflt )noexcept;
+		//Jde::Duration Duration( string_view path, const Jde::Duration& dflt )noexcept;
 		bool Bool( string_view path, bool dflt )noexcept;
 		bool Have( string_view path )noexcept;
 		string String( string_view path )noexcept;
@@ -29,6 +29,11 @@ namespace Jde::Settings
 		T Get( string_view path )const noexcept(false);
 		template<typename T>
 		T Get( string_view path, T defaultValue )const noexcept;
+
+//		void Set( const string& path, uint size )noexcept;
+		template<typename T>
+		optional<T> Get2( string_view path )const noexcept;
+
 		nlohmann::json& Json()noexcept{ ASSERT(_pJson); return *_pJson; }
 	private:
 		unique_ptr<nlohmann::json> _pJson;
@@ -44,6 +49,23 @@ namespace Jde::Settings
 		if( item==_pJson->end() )
 			THROW( EnvironmentException(fmt::format("'{}' was not found in settings.", path)) );
 		return item->get<T>();
+	}
+
+	template<>
+	inline optional<Duration> Container::Get2<Duration>( string_view path )const noexcept
+	{
+		var strng = Get2<string>( path );
+		optional<std::chrono::system_clock::duration> result;
+		if( strng.has_value() )
+			Try( [strng, &result](){ result = Chrono::ToDuration(*strng);} );
+		return  result;
+	}
+
+	template<typename T>
+	optional<T> Container::Get2( string_view path )const noexcept
+	{
+		auto item = _pJson->find( path );
+		return item==_pJson->end() ? optional<T>{} : optional<T>{ item->get<T>() };
 	}
 
 	template<typename T>

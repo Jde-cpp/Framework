@@ -6,7 +6,7 @@ namespace Jde::Threading
 		_done(false),
 		_index{0},
 		_name{ name },
-		_queue{ [](){} },
+		_queue{},
 		_joiner(_threads)
 	{
 		if( threadCount==0 )

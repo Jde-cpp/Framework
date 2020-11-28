@@ -33,14 +33,20 @@ namespace Jde::Settings
 		return make_shared<Container>( *item );
 	}
 
+/*	void Container::Set( const string& path, uint size )noexcept
+	{
+		//nlohmann::json j;
+		//j[string{path}] = 23;
+		(*_pJson)[path] = size;
+	}
 
-	Jde::Duration Container::Duration( string_view /*path*/, const Jde::Duration& dflt )noexcept
+	Jde::Duration Container::Duration( string_view / *path* /, const Jde::Duration& dflt )noexcept
 	{
 		//var string = String( path );
 		//return string.size() ? TimeSpan::Parse(string) : ;
 		//var x = Get<TimePoint>("foo");
 		return dflt;//TODO implement
-	}
+	}*/
 
 	// fs::path Container::Path( string_view path, path dflt )const noexcept
 	// {

@@ -19,7 +19,7 @@ namespace Jde
 {
 	Logging::IServerSink* _pServerSink{nullptr};
 	bool _logMemory{false};
-	std::unique_ptr<std::vector<Logging::Messages::Message>> _pMemoryLog;
+	std::unique_ptr<std::vector<Logging::Messages::Message>> _pMemoryLog; shared_mutex MemoryLogMutex;
 	std::shared_ptr<spdlog::logger> spLogger{nullptr};
 	spdlog::logger* pLogger{nullptr};
 	namespace Logging
@@ -33,7 +33,10 @@ namespace Jde
 		TRACE0( "Destroying Logger"sv );
 		pLogger = nullptr;
 		spLogger = nullptr;
-		_pMemoryLog = nullptr;
+		{
+			unique_lock l{ MemoryLogMutex };
+			_pMemoryLog = nullptr;
+		}
 		Logging::_pOnceMessages = nullptr;
 		_pServerSink = nullptr;
 	};
@@ -135,6 +138,7 @@ namespace Jde
 		{
 			if( _pMemoryLog )
 			{
+				unique_lock l{ MemoryLogMutex };
 				if( pValues )
 					_pMemoryLog->push_back( Logging::Messages::Message{messageBase, *pValues} );
 				else
@@ -241,9 +245,15 @@ namespace Jde
 		_pServerSink = p;
 	}
 #endif
-	void ClearMemoryLog()noexcept{ _logMemory = true; _pMemoryLog = std::make_unique<std::vector<Logging::Messages::Message>>(); }
+	void ClearMemoryLog()noexcept
+	{
+		_logMemory = true;
+		unique_lock l{ MemoryLogMutex };
+		_pMemoryLog = std::make_unique<std::vector<Logging::Messages::Message>>();
+	}
 	vector<Logging::Messages::Message> FindMemoryLog( uint32 messageId )noexcept
 	{
+		shared_lock l{ MemoryLogMutex };
 		assert( _pMemoryLog );
 		vector<Logging::Messages::Message>  results;
 		for_each( _pMemoryLog->begin(), _pMemoryLog->end(), [messageId,&results](var& msg){if( msg.MessageId==messageId) results.push_back(msg);} );
