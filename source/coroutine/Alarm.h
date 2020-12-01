@@ -1,7 +1,9 @@
 #pragma once
 #include <experimental/coroutine>
-#include "Worker.h"
+#include "../threading/Worker.h"
 #include "Coroutine.h"
+#include "Awaitable.h"
+#include "Task.h"
 /*#include <functional>
 #include <mutex>
 #include <thread>
@@ -23,7 +25,7 @@ namespace Jde::Threading
 	private:
 		TimePoint _alarm;
 	};
-	struct JDE_NATIVE_VISIBILITY Alarm final: Worker
+	struct JDE_NATIVE_VISIBILITY Alarm final: Threading::Worker
 	{
 		Alarm():Worker{"Alarm"}{};
 		~Alarm(){ DBG0("Alarm::~Alarm"sv); }

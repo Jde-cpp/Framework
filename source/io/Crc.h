@@ -1,12 +1,13 @@
 #pragma once
+#include <vector>
 //https://gist.github.com/oktal/5573082
-// #pragma warning( disable : 4245) 
-// #include <boost/crc.hpp> 
-// #pragma warning( default : 4245) 
+// #pragma warning( disable : 4245)
+// #include <boost/crc.hpp>
+// #pragma warning( default : 4245)
 
 namespace Jde::IO::Crc
 {
-	constexpr unsigned int crc32_table[] = 
+	constexpr unsigned int crc32_table[] =
 	{
 		0, 0x77073096, 0xEE0E612C, 0x990951BA,
 		0x076DC419, 0x706AF48F, 0xE963A535, 0x9E6495A3,
@@ -74,16 +75,16 @@ namespace Jde::IO::Crc
 		0xB40BBE37, 0xC30C8EA1, 0x5A05DF1B, 0x2D02EF8D
 	};
 
-	template<unsigned int CRC, char ...Chars> struct Crc32Impl 
+	template<unsigned int CRC, char ...Chars> struct Crc32Impl
 	{
 	};
 #pragma warning( disable : 4309 )
-	template<unsigned int CRC, char Head, char ...Tail> struct Crc32Impl<CRC, Head, Tail...> 
+	template<unsigned int CRC, char Head, char ...Tail> struct Crc32Impl<CRC, Head, Tail...>
 	{
 		static constexpr unsigned int value = Crc32Impl<crc32_table[static_cast<unsigned char>(CRC) ^ static_cast<unsigned char>(Head)] ^ (CRC >> 8), Tail...>::value;
 	};
 #pragma warning( default : 4309 )
-	template<unsigned int CRC> struct Crc32Impl<CRC> 
+	template<unsigned int CRC> struct Crc32Impl<CRC>
 	{
 		static constexpr unsigned int value = CRC ^ 0xFFFFFFFF;
 	};
@@ -93,34 +94,36 @@ namespace Jde::IO::Crc
 
 	constexpr unsigned int crc32_rec( unsigned int crc, const char *s )
 	{
-		return *s == 0 
-			? crc ^ 0xFFFFFFFF 
+		return *s == 0
+			? crc ^ 0xFFFFFFFF
 			: crc32_rec( crc32_table[static_cast<unsigned char>(crc) ^ static_cast<unsigned char>(*s)] ^ (crc >> 8), s + 1 );
 	}
 
-	constexpr unsigned int operator "" _crc32( const char *s, size_t ) 
+	constexpr unsigned int operator "" _crc32( const char *s, size_t )
 	{
 		return crc32_rec( 0xFFFFFFFF, s );
 	}
-	
+
 	constexpr unsigned int Calc32( std::string_view value, unsigned int crc=0xFFFFFFFF, size_t index=0 )
 	{
-		return index == value.size() 
-			? crc ^ 0xFFFFFFFF 
+		return index == value.size()
+			? crc ^ 0xFFFFFFFF
 			: Calc32( value, crc32_table[static_cast<unsigned char>(crc) ^ static_cast<unsigned char>(value[index])] ^ (crc >> 8), index + 1 );
 	}
 
 	inline unsigned int Calc32RunTime( std::string_view value )
 	{
-		boost::crc_32_type result;
+		return Calc32( value );
+		/*boost::crc_32_type result;
 		result.process_bytes( value.data(), value.size() );
-		return result.checksum();
+		return result.checksum();*/
 	}
+
 
 	inline unsigned int Calc32( const std::vector<char>& value, unsigned int crc=0xFFFFFFFF, size_t index=0 )
 	{
-		return index == value.size() 
-			? crc ^ 0xFFFFFFFF 
+		return index == value.size()
+			? crc ^ 0xFFFFFFFF
 			: Calc32( value, crc32_table[static_cast<unsigned char>(crc) ^ static_cast<unsigned char>(value[index])] ^ (crc >> 8), index + 1 );
 	}
 

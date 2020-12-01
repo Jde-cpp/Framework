@@ -63,7 +63,7 @@ namespace Jde
 		friend bool operator>(const Decimal2& value, double other)noexcept{ return value._value>llround(other*100); }
 		friend bool operator<(const Decimal2& value, const Decimal2& value2)noexcept{ return value._value<value2._value; }
 		friend bool operator>(const Decimal2& value, const Decimal2& value2)noexcept{ return value._value>value2._value; }
-		
+
 		Decimal2& operator -=(Decimal2 decrement)noexcept{ _value-=decrement._value; return *this;}
 		Decimal2& operator +=(Decimal2 decrement)noexcept{ _value+=decrement._value; return *this;}
 		template<typename T> std::basic_string<T> to_string()const noexcept;// override;
@@ -75,7 +75,8 @@ namespace Jde
 	protected:
 		static constexpr uint Multiplier()noexcept/* override*/{ return 100;}
 	};
-	static const Decimal2 AmountMax{ Decimal2(DecimalType::Max) };
+	//static const Decimal2 AmountMax{ Decimal2(DecimalType::Max) };
+	static const double AmountMax{ std::numeric_limits<double>::max() };
 	//static constexpr int64_t _max{  };
 	template<typename T>
 	std::basic_ostream<T>& operator<<( std::basic_ostream<T>& os, const Decimal2& decimal )noexcept
@@ -84,8 +85,8 @@ namespace Jde
 		return os;
 	}
 
-	template<typename T> 
-	inline std::basic_string<T> Decimal2::to_string()const noexcept 
+	template<typename T>
+	inline std::basic_string<T> Decimal2::to_string()const noexcept
 	{
 		std::basic_ostringstream<T> os;
 		os << std::fixed << std::setprecision(2)  << static_cast<double>(_value/100.0);
@@ -102,7 +103,7 @@ namespace Jde
 	private:
 		static uint _multiplier = static_cast<uint>( ::pow(10.0, TPlaces) );
 	};
-	
+
 	template<uint8 TPlaces>
 	Decimal<TPlaces>::Decimal( double value ):
 		IDecimal( value * _multiplier )

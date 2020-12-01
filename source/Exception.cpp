@@ -2,6 +2,8 @@
 #include <iostream>
 #include <spdlog/spdlog.h>
 #include <spdlog/fmt/ostr.h>
+#include <boost/system/error_code.hpp>
+
 #include "log/Logging.h"
 #include "log/server/ServerSink.h"
 #include "TypeDefs.h"
@@ -83,7 +85,7 @@ namespace Jde
 	}
 
 	BoostCodeException::BoostCodeException( const boost::system::error_code& errorCode ):
-		_errorCode{ errorCode }
+		_errorCode{ make_unique<boost::system::error_code>(errorCode) }
 	{}
 
 /*	EnvironmentException::EnvironmentException( std::string_view value ):

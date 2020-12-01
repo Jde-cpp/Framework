@@ -1,28 +1,28 @@
-#include "Worker.h"
-#include "Thread.h"
-#include "InterruptibleThread.h"
+#include "CoWorker.h"
+#include "../threading/InterruptibleThread.h"
 
-namespace Jde::Threading
+namespace Jde::Coroutine
 {
-	sp<Worker> Worker::_pInstance;
-	Worker::Worker( sv name )noexcept:
-		_name{ name }
-	{}
+	sp<CoWorker> CoWorker::_pInstance;
+	std::once_flag CoWorker::_singleThread;
 
-	void Worker::Start()noexcept
+
+	void CoWorker::Start()noexcept
 	{
-		_pInstance = shared_from_this();
+	//	_pInstance = shared_from_this();
 		IApplication::AddShutdown( _pInstance );
 		_pThread = make_unique<Threading::InterruptibleThread>( _name, [this](){Run();} );
 	}
-	void Worker::Shutdown()noexcept
+	void CoWorker::Shutdown()noexcept
 	{
 		_pThread->Interrupt();
+		std::unique_lock<std::mutex> lk( _mtx );
+		_cv.notify_one();
 		_pThread->Join();
 		_pInstance = nullptr;
 	}
 
-	void Worker::Run()noexcept
+	void CoWorker::Run()noexcept
 	{
 		Threading::SetThreadDscrptn( _name );
 		DBG( "{} - Starting"sv, _name );

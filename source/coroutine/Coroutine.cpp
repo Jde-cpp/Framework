@@ -1,14 +1,16 @@
 #include "Coroutine.h"
-#include "Thread.h"
-#include <chrono>
+#include "../threading/InterruptibleThread.h"
+//#include "../threading/Thread.h"
+//#include <chrono>
 #define var const auto
 
 using namespace std::chrono;
 namespace Jde::Coroutine
 {
-	std::atomic<Coroutine::Handle> _handleIndex{0};
-	std::atomic<Coroutine::Handle> TaskHandle{0};
-	std::atomic<Coroutine::Handle> TaskPromiseHandle{0};
+	typedef uint ClientHandle;
+	std::atomic<ClientHandle> _handleIndex{0};
+	std::atomic<ClientHandle> TaskHandle{0};
+	std::atomic<ClientHandle> TaskPromiseHandle{0};
 
 	std::shared_mutex CoroutinePool::_mtx;
 	sp<CoroutinePool> CoroutinePool::_pInstance;

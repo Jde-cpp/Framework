@@ -7,7 +7,7 @@
 #include "../Exports.h"
 #include "../io/Crc.h"
 #include "../TypeDefs.h"
-#include "../DateTime.h"
+//#include "../DateTime.h"
 
 //#ifdef _MSC_VER
 //	#include "server/EtwSink.h"
@@ -16,7 +16,7 @@ namespace Jde
 {
 	using namespace std::literals::string_view_literals;
 #pragma region ELogLevel
-	enum class ELogLevel
+	enum class ELogLevel : uint8
 	{
 		Trace = 0,
 		Debug = 1,

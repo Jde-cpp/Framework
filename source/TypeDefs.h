@@ -14,10 +14,10 @@
 #include <vector>
 #include <boost/container/flat_map.hpp>
 
+
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/fmt/ostr.h>
-
 
 
 namespace Jde
@@ -43,6 +43,11 @@ namespace Jde
 
 	typedef uint_fast64_t uint; //todo make const
 	typedef int_fast64_t _int; //todo make const
+
+	typedef std::chrono::system_clock Clock;
+	typedef Clock::duration Duration;
+	typedef Clock::time_point TimePoint;
+
 	typedef std::chrono::steady_clock SClock;
 	typedef SClock::duration SDuration;
 	typedef SClock::time_point STimePoint;

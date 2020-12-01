@@ -1,9 +1,12 @@
 #pragma once
 #include <string_view>
 #include <shared_mutex>
+#include "../log/Logging.h"
 
+namespace Jde{ enum class ELogLevel : uint8; }
 namespace Jde::Threading
 {
+	using namespace std::literals;
 	typedef uint HThread;
 	struct ThreadParam{ string Name; HThread AppHandle; };
 	extern thread_local uint ThreadId;

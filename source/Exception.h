@@ -1,7 +1,9 @@
 #pragma once
 //#include <boost/system/error_code.hpp>
 
-//#include <string>
+
+namespace boost::system{ class error_code; }
+
 #include "log/Logging.h"
 #ifndef  THROW
 # define THROW(x) Jde::throw_exception(x, __func__,__FILE__,__LINE__)
@@ -128,7 +130,7 @@ namespace Jde
 	{
 		BoostCodeException( const boost::system::error_code& ec );
 	private:
-		boost::system::error_code _errorCode;
+		up<boost::system::error_code> _errorCode;
 	};
 
 
