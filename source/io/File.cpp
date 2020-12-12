@@ -73,6 +73,19 @@ namespace Jde::IO
 			return make_unique<vector<char>>( (istreambuf_iterator<char>(f)), istreambuf_iterator<char>() );  //vexing parse
 			//return move(pResult);
 		}
+		string Load( path path )noexcept(false)
+		{
+			IOException::TestExists( path );
+			auto size = GetFileSize( path );
+			TRACE( "Opening {} - {} bytes "sv, path.string(), size );
+			ifstream f( path, std::ios::binary );
+			if( f.fail() )
+				THROW( IOException("Could not open file '{}'", path.string()) );
+			str result;
+			result.reserve( size );
+			result.assign( (istreambuf_iterator<char>(f)), istreambuf_iterator<char>() );  //vexing parse
+			return result;
+		}
 		void SaveBinary( path path, const std::vector<char>& data )noexcept(false)
 		{
 			ofstream f( path, std::ios::binary );
@@ -653,5 +666,12 @@ namespace Jde::IO
 			DBG( "Could not convert '{}' to date."sv, path.string() );
 		}
 		return make_tuple( year, month, day );
+	}
+	void FileUtilities::Replace( path source, path destination, const flat_map<string,string>& replacements )noexcept(false)
+	{
+		auto sourceContent = Load( source );
+		for( var& [search,replacement] : replacements )
+			sourceContent = StringUtilities::Replace( sourceContent, search, replacement );
+		Save( destination, sourceContent );
 	}
 }

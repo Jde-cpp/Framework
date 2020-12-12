@@ -5,6 +5,7 @@ namespace Jde::Threading{ struct InterruptibleThread; }
 
 namespace Jde
 {
+	namespace IO{ struct IDrive; }
 	struct IShutdown
 	{
 		virtual void Shutdown()noexcept=0;
@@ -13,7 +14,7 @@ namespace Jde
 	struct JDE_NATIVE_VISIBILITY IApplication
 	{
 		virtual ~IApplication();
-		static IApplication& Instance()noexcept{ ASSERT_DESC(_pInstance, "No Application Instance"sv); return *_pInstance; }
+		static IApplication& Instance()noexcept{ assert(_pInstance); return *_pInstance; }
 		set<string> BaseStartup( int argc, char** argv, string_view appName, string_view companyName="jde-cpp" )noexcept(false);
 
 		static void AddThread( sp<Threading::InterruptibleThread> pThread )noexcept;
@@ -34,6 +35,7 @@ namespace Jde
 		virtual fs::path ProgramDataFolder()noexcept=0;
 		virtual fs::path ApplicationDataFolder()noexcept{ return ProgramDataFolder()/format(".{}", CompanyName())/ApplicationName(); }
 		static bool ShuttingDown()noexcept{ return _shuttingDown; }
+		static sp<IO::IDrive> DriveApi()noexcept;
 		void Wait()noexcept;
 	protected:
 

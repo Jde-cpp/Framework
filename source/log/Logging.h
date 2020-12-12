@@ -5,6 +5,7 @@
 #include <shared_mutex>
 #include <sstream>
 #include "../Exports.h"
+#include "../collections/ToVec.h"
 #include "../io/Crc.h"
 #include "../TypeDefs.h"
 //#include "../DateTime.h"
@@ -14,20 +15,6 @@
 //#endif
 namespace Jde
 {
-	using namespace std::literals::string_view_literals;
-#pragma region ELogLevel
-	enum class ELogLevel : uint8
-	{
-		Trace = 0,
-		Debug = 1,
-		Information = 2,
-		Warning = 3,
-		Error = 4,
-		Critical = 5,
-		None = 6
-	};
-	constexpr std::array<string_view,7> ELogLevelStrings = { "Trace"sv, "Debug"sv, "Information"sv, "Warning"sv, "Error"sv, "Critical"sv, "None"sv };
-#pragma endregion
 #pragma region MessageBase
 	namespace IO{ class IncomingMessage; }
 	namespace Logging
@@ -187,39 +174,7 @@ namespace Jde
 	extern bool _logMemory;
 //	JDE_NATIVE_VISIBILITY Logging::Lttng* GetEtwSink();
 #endif
-	//spd::stdout_color_mt
-//	using std::string;
 	JDE_NATIVE_VISIBILITY std::ostream& operator<<( std::ostream& os, const ELogLevel& value );
-//https://stackoverflow.com/questions/21806561/concatenating-strings-and-numbers-in-variadic-template-function
-	namespace ToVec
-	{
-		inline void Append( vector<string>& /*values*/ ){}
-
-    	template<typename Head, typename... Tail>
-    	void Append( vector<string>& values, Head&& h, Tail&&... t );
-
-		template<typename... Tail>
-		void Append( vector<string>& values, std::string&& h, Tail&&... t )
-		{
-			values.push_back( h );
-			return Apend( values, std::forward<Tail>(t)... );
-		}
-
-    	template<typename T>
-    	std::string ToStringT( const T& x )
-    	{
-			std::ostringstream os;
-			os << x;
-      	return os.str();
-    	}
-
-    	template<typename Head, typename... Tail>
-    	void Append( vector<string>& values, Head&& h, Tail&&... t )
-    	{
-			values.push_back( ToStringT(std::forward<Head>(h)) );
-      	return Append( values, std::forward<Tail>(t)... );
-    	}
-	}
 	namespace Logging
 	{
 		namespace Proto{class Status;}

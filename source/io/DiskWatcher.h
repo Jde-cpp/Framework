@@ -90,11 +90,6 @@ namespace Jde::IO
 	};
 	struct IDirEntry
 	{
-/*		IDirEntry( EFileFlags flags, path path, uint size ):
-			Flags{ flags },
-			Path{ path },
-			Size{ size }
-		{}*/
 		IDirEntry()=default;
 		IDirEntry( EFileFlags flags, path path, uint size, const TimePoint& createTime=TimePoint(), const TimePoint& modifyTime=TimePoint() ):
 			Flags{ flags },
@@ -104,9 +99,8 @@ namespace Jde::IO
 			ModifiedTime{ modifyTime }
 		{}
 		virtual ~IDirEntry()
-		{
-			//DBG0("~IDirEntry");
-		}
+		{}
+
 		bool IsDirectory()const noexcept{return Flags & EFileFlags::Directory;}
 		EFileFlags Flags{EFileFlags::None};
 		fs::path Path;
@@ -118,10 +112,6 @@ namespace Jde::IO
 	typedef sp<const IDirEntry> IDirEntryPtr;
 	struct IDrive
 	{
-		//void Watch( path path, IDriveChange& callback, const WatcherSettings& watchSettings );
-		//void Save( path path, vector<char>& bytes );
-		//VectorPtr<char> Load( path path );
-		//void Merge( IDrive& disk );
 		virtual map<string,IDirEntryPtr> Recursive( path path )noexcept(false)=0;
 		virtual IDirEntryPtr Get( path path )noexcept(false)=0;
 		virtual IDirEntryPtr Save( path path, const vector<char>& bytes, const IDirEntry& dirEntry )noexcept(false)=0;
@@ -129,9 +119,9 @@ namespace Jde::IO
 		virtual void Remove( path path )=0;
 		virtual void Trash( path path )=0;
 		virtual void TrashDisposal( TimePoint latestDate )=0;
-		//virtual VectorPtr<char> Load( path path )=0;
 		virtual VectorPtr<char> Load( const IDirEntry& dirEntry )=0;
 		virtual void Restore( sv name )noexcept(false)=0;
+		virtual void SoftLink( path existingFile, path newSymLink )noexcept(false)=0;
 	};
 
 #pragma region DiskWatcher
@@ -154,40 +144,6 @@ namespace Jde::IO
 		fs::path _path;
  		int _fd;
 		sp<Jde::Threading::InterruptibleThread> _pThread;
-
-		//const ELogLevel _logLevel{ELogLevel::Debug};
 	};
-	/*class DiskWatcherBatch : Jde::Threading::Interrupt
-	{
-	public:
-		//DiskWatcher( path path, shared_ptr<IDriveChange>& pOnChange, DiskWatcherEvents events )noexcept(false);
-		//static void Add( path path, shared_ptr<IDriveChange>& pOnChange, EDiskWatcherEvents events )noexcept(false);
-		~DiskWatcher();
-		static void UnInitialize();
-
-		void OnTimeout()noexcept override;
-		void OnAwake()noexcept override;
-
-	private:
-		DiskWatcher();
-		void ReadEvent( bool isRetry=false )noexcept(false);
-
-		static std::shared_mutex _mutex;
-		map<uint32_t, tuple<shared_ptr<IDriveChange>,fs::path> > _descriptors;
-		static unique_ptr<DiskWatcher> _pInstance;
-		//uint32_t _wd;
-		//const fs::path _directory;
-		//IDriveChange& _onChange;
-		uint _interuptCheckSeconds{10};
-	};
-	 */
 #pragma endregion
-#pragma region DiskWatcher
-//	struct DiskWatcherCollection :
-#pragma endregion
-#ifdef _WINDOWS
-#else
-#endif
-#if 0
-#endif
 }

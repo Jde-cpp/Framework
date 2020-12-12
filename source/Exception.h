@@ -1,10 +1,10 @@
 #pragma once
-//#include <boost/system/error_code.hpp>
-
+#include "./Exports.h"
+#include "collections/ToVec.h"
 
 namespace boost::system{ class error_code; }
 
-#include "log/Logging.h"
+//#include "log/Logging.h"
 #ifndef  THROW
 # define THROW(x) Jde::throw_exception(x, __func__,__FILE__,__LINE__)
 #endif
@@ -51,7 +51,6 @@ namespace Jde
 		const char* what() const noexcept override;
 		ELogLevel GetLevel()const{return _level;}
 
-		//shared_ptr<spdlog::logger> GetLogger()const{return _pLogger;}
 		void SetFunction( const char* pszFunction ){ _functionName = pszFunction; }
 		void SetFile( const char* pszFile ){ _fileName = pszFile; }
 		void SetLine( long line ){ _line = line; }

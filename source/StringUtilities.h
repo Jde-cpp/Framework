@@ -5,6 +5,7 @@
 #include <functional>
 #include <cctype>
 #include "Exception.h"
+#include "./log/Logging.h"
 
 using namespace std;
 namespace Jde
@@ -35,7 +36,7 @@ namespace Jde
 		JDE_NATIVE_VISIBILITY string ToUpper( const string& source )noexcept;
 
 		template<typename T>
-		static T TryTo( string_view value, T errorValue );
+		static optional<T> TryTo( string_view value );
 
 		template<typename T>
 		static float TryToFloat( const std::basic_string<T>& s );
@@ -137,17 +138,18 @@ namespace Jde
 	}
 
 	template<typename T>
-	static T StringUtilities::TryTo( string_view value, T errorValue )
+	static optional<T> StringUtilities::TryTo( string_view value )
 	{
+		optional<T> v;
 		try
 		{
-			return static_cast<T>( std::stoull( string(value) ) );
+			v = static_cast<T>( std::stoull(string(value)) );
 		}
 		catch( const std::invalid_argument& e )
 		{
 			ERR( "Can't convert:  {}.  to {}.  {}"sv, value, Jde::GetTypeName<T>(), e.what() );
-			return errorValue;
 		}
+		return v;
 	}
 	inline bool StringUtilities::StartsWithInsensitive( const std::string_view value, const std::string_view& starting )
 	{

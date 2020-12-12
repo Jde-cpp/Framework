@@ -1,4 +1,6 @@
 #pragma once
+#include "./JdeAssert.h"
+
 #ifndef _MSC_VER
 #ifndef __INTELLISENSE__
 	#include <dlfcn.h>
@@ -54,8 +56,8 @@ namespace Jde
 #else
 			::dlclose( _module );
 #endif
-			if( GetDefaultLogger() )
-				DBGN( "Freed '{}'."sv, _path.string() );
+//			if( GetDefaultLogger() )
+//				DBGN( "Freed '{}'."sv, _path.string() );
 		}
 
 
@@ -64,6 +66,7 @@ namespace Jde
 #if _MSC_VER
 			auto procAddress = ::GetProcAddress( _module, string(proc_name).c_str() );
 #else
+			//auto procAddress2 = ::dlsym( _module, "MBlocklyVersion" );
 			auto procAddress = ::dlsym( _module, string(proc_name).c_str() );
 #endif
 			ASSRT_NN( procAddress );

@@ -4,6 +4,7 @@
 #include "Coroutine.h"
 #include "Awaitable.h"
 #include "Task.h"
+#include <boost/container/flat_map.hpp>
 /*#include <functional>
 #include <mutex>
 #include <thread>
@@ -11,6 +12,7 @@
 */
 namespace Jde::Threading
 {
+	using boost::container::flat_multimap;
 	using std::experimental::coroutine_handle;
 	using std::experimental::suspend_never;
 
