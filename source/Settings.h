@@ -34,7 +34,7 @@ namespace Jde::Settings
 		template<typename T>
 		optional<T> Get2( string_view path )const noexcept;
 
-		nlohmann::json& Json()noexcept{ ASSERT(_pJson); return *_pJson; }
+		nlohmann::json& Json()noexcept{ /*ASSERT(_pJson);*/ return *_pJson; }
 	private:
 		unique_ptr<nlohmann::json> _pJson;
 	};

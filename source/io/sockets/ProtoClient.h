@@ -1,6 +1,7 @@
 #pragma once
 #include "Socket.h"
 #include "../../collections/Queue.h"
+#include "../../log/Logging.h"
 #include <google/protobuf/message_lite.h>
 
 namespace Jde::IO::Sockets

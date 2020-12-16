@@ -15,7 +15,7 @@ namespace Jde::Coroutine
 
 	struct CoroutineTests;
 
-	struct CoroutineParam : Threading::ThreadParam
+	struct CoroutineParam /*: Threading::ThreadParam*/
 	{
 		coroutine_handle<> CoHandle;
 	};
@@ -34,7 +34,8 @@ namespace Jde::Coroutine
 
 	struct CoroutinePool final: IShutdown
 	{
-		static void Resume( coroutine_handle<>&& h, Threading::ThreadParam&& param )noexcept;
+		//[[deprecated("Awaitable should have threadParam")]]static void Resume( coroutine_handle<>&& h, Threading::ThreadParam&& param )noexcept;
+		static void Resume( coroutine_handle<>&& h )noexcept;
 		void Shutdown()noexcept;
 	private:
 		void InnerResume( CoroutineParam&& param )noexcept;

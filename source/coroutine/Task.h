@@ -1,5 +1,7 @@
 #pragma once
 #include <experimental/coroutine>
+#include <variant>
+
 
 namespace Jde::Coroutine
 {
@@ -35,11 +37,39 @@ namespace Jde::Coroutine
 			suspend_never initial_suspend()noexcept{ return {}; }
 			suspend_never final_suspend()noexcept{ return {}; }
 			void return_void()noexcept{}
-			void unhandled_exception()noexcept{}
+			void unhandled_exception()noexcept{ /*DBG0("unhandled_exception"sv);*/  }
 			Task<T> _returnObject;
 			const Handle _promiseHandle;
 		};
 		T Result;
+		//std::exception_ptr ExceptionPtr;
+		const Handle _taskHandle;
+	};
+
+
+	template<typename TTask>
+	struct PromiseType /*notfinal*/
+	{
+		PromiseType():_promiseHandle{++TaskPromiseHandle}
+		{}
+		TTask& get_return_object()noexcept{ return _returnObject; }
+		suspend_never initial_suspend()noexcept{ return {}; }
+		suspend_never final_suspend()noexcept{ return {}; }
+		void return_void()noexcept{}
+		void unhandled_exception()noexcept{ /*DBG0("unhandled_exception"sv);*/ }
+		TTask _returnObject;
+		const Handle _promiseHandle;
+	};
+
+
+	template<typename T>
+	struct TaskError final
+	{
+		typedef std::variant<T,std::exception_ptr> TResult;
+		TaskError():_taskHandle{++TaskHandle}{ /*DBG("Task::Task({})"sv, _taskHandle);*/ }
+		struct promise_type : PromiseType<TaskError<T>>
+		{};
+		TResult Result;
 		const Handle _taskHandle;
 	};
 

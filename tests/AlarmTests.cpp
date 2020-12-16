@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
-#include "../source/threading/Alarm.h"
-#include "../source/threading/Coroutine.h"
+#include "../source/coroutine/Alarm.h"
+#include "../source/coroutine/Coroutine.h"
 
 #define var const auto
 namespace Jde

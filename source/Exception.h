@@ -1,5 +1,12 @@
 #pragma once
 #include "./Exports.h"
+
+#ifndef NO_FORMAT
+#include <spdlog/spdlog.h>
+#include <spdlog/sinks/basic_file_sink.h>
+#include <spdlog/fmt/ostr.h>
+#endif
+
 #include "collections/ToVec.h"
 
 namespace boost::system{ class error_code; }

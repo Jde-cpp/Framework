@@ -1,5 +1,6 @@
 #pragma once
 #include "application/Application.h"
+#include "log/Logging.h"
 
 namespace Jde
 {

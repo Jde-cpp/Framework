@@ -43,7 +43,7 @@ namespace Jde::Coroutine
 						continue;
 					}
 				}
-				SetThreadInfo( *_param );
+				//SetThreadInfo( *_param ); let awaitable do this.
 				DBG0( "ResumeThread call resume"sv );
 				_param->CoHandle.resume();
 				DBG0( "ResumeThread finish resume"sv );
@@ -84,7 +84,7 @@ namespace Jde::Coroutine
 		}
 	}
 
-	void CoroutinePool::Resume( coroutine_handle<>&& h, Threading::ThreadParam&& param )noexcept
+	void CoroutinePool::Resume( coroutine_handle<>&& h/*, Threading::ThreadParam&& param*/ )noexcept
 	{
 		if( IApplication::ShuttingDown() )
 		{
@@ -95,11 +95,11 @@ namespace Jde::Coroutine
 			unique_lock l{ _mtx };
 			if( !_pSettings )
 			{
-				try
+/*				try
 				{
 					_pSettings = Settings::Global().SubContainer("coroutinePool");
 				}
-				catch( EnvironmentException& )
+				catch( EnvironmentException& )*/
 				{
 					INFO0( "coroutinePool settings not found."sv );
 					nlohmann::json j2 = { {"maxThreadCount", 100}, {"threadDuration", "PT5S"}, {"poolIdleThreshold", "PT60S"} };
@@ -114,7 +114,7 @@ namespace Jde::Coroutine
 				IApplication::AddShutdown( _pInstance );
 			}
 		}
-		_pInstance->InnerResume( CoroutineParam{move(param),move(h)} );
+		_pInstance->InnerResume( CoroutineParam{move(h)} );
 	}
 
 	void CoroutinePool::InnerResume( CoroutineParam&& param )noexcept

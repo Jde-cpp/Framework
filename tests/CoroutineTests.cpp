@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
-#include "../source/threading/Alarm.h"
-#include "../source/threading/Coroutine.h"
+#include "../source/coroutine/Alarm.h"
+#include "../source/coroutine/Coroutine.h"
 #include "../source/log/server/ServerSink.h"
 
 #define var const auto
@@ -16,7 +16,40 @@ namespace Jde::Coroutine
 		void TearDown() override {}
 	public:
 		Coroutine::Task<string> CallPool();
+		Coroutine::Task<string> CallThrow();
 	};
+
+/*	struct ThrowAwaitable final : CancelAwaitable<Task<string>>
+	{
+		typedef CancelAwaitable<Task<string>> base;
+		ThrowAwaitable()noexcept:base(_hClient){};
+		~ThrowAwaitable()=default;
+		bool await_ready()noexcept{return false;};
+		void await_suspend( ThrowAwaitable::Handle h )noexcept override
+		{
+			base::await_suspend( h );
+			//optional<CoroutineParam> param{ CoroutineParam{h} };
+			jthread( [h, this]()mutable
+			{
+				Threading::SetThreadDscrptn( "await_suspend" );
+				std::this_thread::yield();
+				_pPromise->get_return_object().ExceptionPtr = std::make_exception_ptr( Exception{"Error"} );
+				h.resume();
+			} ).detach();
+		}
+		string await_resume()noexcept(false)
+		{
+			if( OriginalThreadParam )
+				Threading::SetThreadInfo( *OriginalThreadParam );
+			auto& result = _pPromise->get_return_object();
+			if( result.ExceptionPtr )
+				throw result.ExceptionPtr;
+			return result.Result;
+		}
+		uint _hClient;
+	};
+*/
+
 	uint Count{0};
 	Duration MinTick{1ms};
 	using namespace Chrono;
@@ -32,7 +65,7 @@ namespace Jde::Coroutine
 		void await_suspend( Awaitable::Handle h )noexcept override
 		{
 			base::await_suspend( h );
-			optional<CoroutineParam> param{ CoroutineParam{OriginalThreadParam.value(), h} };
+			optional<CoroutineParam> param{ CoroutineParam{h} };
 			if( _pThreads )
 			{
 				if( _pThreads->size() )
@@ -46,12 +79,15 @@ namespace Jde::Coroutine
 					LOGN0( ELogLevel::Information, "Resumed", 1 );
 			}
 			else
-				CoroutinePool::Resume( move(h), move(*OriginalThreadParam) );
+				CoroutinePool::Resume( move(h) );
 		}
-		string await_resume()noexcept
+		string await_resume()noexcept(false)
 		{
 			//DBG( "({})TickManager::Awaitable::await_resume"sv, std::this_thread::get_id() );
-			return _pPromise->get_return_object().Result;
+			if( OriginalThreadParam )
+				Threading::SetThreadInfo( *OriginalThreadParam );
+			auto& result = _pPromise->get_return_object();
+			return result.Result;
 		}
 		const Duration IdleLimit;
 	private:
@@ -123,4 +159,34 @@ namespace Jde::Coroutine
 		cv.wait( l );
 		std::this_thread::sleep_for( MinTick*3 );
 	}
+
+/*	static auto Throw()noexcept{ return ThrowAwaitable{}; }
+	Coroutine::Task<string> CoroutineTests::CallThrow()
+	{
+		bool thrown;
+		try
+		{
+			co_await Throw();
+			thrown = false;
+		}
+		catch( Exception& e )
+		{
+			DBG0( string{e.what()} );
+			thrown = true;
+		}
+		ASSERT_DESC( thrown, "Expecting thrown exception." );
+
+		std::shared_lock l{ mtx };
+		cv.notify_one();
+	}
+
+	TEST_F(CoroutineTests, Error)
+	{
+		Threading::SetThreadDscrptn( "Test" );
+		CallThrow();
+
+		std::shared_lock l{ mtx };
+		cv.wait( l );
+		std::this_thread::sleep_for( MinTick*3 );
+	}*/
 }

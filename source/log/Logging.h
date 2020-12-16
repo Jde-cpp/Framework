@@ -1,6 +1,11 @@
 #pragma once
 #include <array>
 #include <memory>
+
+#include <spdlog/spdlog.h>
+#include <spdlog/sinks/basic_file_sink.h>
+#include <spdlog/fmt/ostr.h>
+
 #include <string_view>
 #include <shared_mutex>
 #include <sstream>
@@ -13,6 +18,7 @@
 //#ifdef _MSC_VER
 //	#include "server/EtwSink.h"
 //#endif
+
 namespace Jde
 {
 #pragma region MessageBase

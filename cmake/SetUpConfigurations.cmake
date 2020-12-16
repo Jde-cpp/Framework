@@ -28,7 +28,7 @@ if(NOT SET_UP_CONFIGURATIONS_DONE)
 	endif()
 endif()
 #######################################################
-string(APPEND RELEASE " -O3 -march=native -Wno-empty-body -Wno-return-type-c-linkage")
+string(APPEND RELEASE " -O3 -march=native -Wno-empty-body -Wno-return-type-c-linkage -Wno-implicitly-unsigned-literal")
 if(MSVC)
 	string(APPEND DEBUG " /W4 /wd\"4068\" /wd\"4251\" /wd\"4275\" /wd\"4297\"")
 	add_definitions( -DBOOST_ALL_DYN_LINK )

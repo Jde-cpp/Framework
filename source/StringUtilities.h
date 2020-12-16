@@ -39,7 +39,8 @@ namespace Jde
 		static optional<T> TryTo( string_view value );
 
 		template<typename T>
-		static float TryToFloat( const std::basic_string<T>& s );
+		static float TryToFloat( const std::basic_string<T>& s )noexcept;
+		optional<double> TryToDouble( const std::string& s )noexcept;
 
 		template<typename Enum, typename Collection>
 		string_view FromEnum( const Collection& s, Enum value )noexcept;
@@ -124,7 +125,7 @@ namespace Jde
 	}
 
 	template<typename T>
-	float StringUtilities::TryToFloat( const std::basic_string<T>& token )
+	float StringUtilities::TryToFloat( const std::basic_string<T>& token )noexcept
 	{
 		try
 		{
@@ -136,7 +137,19 @@ namespace Jde
 			return std::nanf("");
 		}
 	}
-
+	inline optional<double> StringUtilities::TryToDouble( const std::string& s )noexcept
+	{
+		optional<double> v;
+		try
+		{
+			v = std::stod( s );
+		}
+		catch(std::invalid_argument e)
+		{
+			TRACE( "Can't convert:  {}.  to float.  {}"sv, s, e.what() );
+		}
+		return v;
+	}
 	template<typename T>
 	static optional<T> StringUtilities::TryTo( string_view value )
 	{
