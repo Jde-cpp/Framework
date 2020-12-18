@@ -30,7 +30,7 @@ namespace Jde::Threading
 	struct JDE_NATIVE_VISIBILITY Alarm final: Threading::Worker
 	{
 		Alarm():Worker{"Alarm"}{};
-		~Alarm(){ DBG0("Alarm::~Alarm"sv); }
+		~Alarm(){ if( GetDefaultLogger() ) DBG0("Alarm::~Alarm"sv); }
 		static auto Wait( TimePoint t, Coroutine::Handle& handle )noexcept{return AlarmAwaitable{t, handle};}
 		static void Cancel( Coroutine::Handle handle )noexcept;
 	private:

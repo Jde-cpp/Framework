@@ -153,7 +153,7 @@ namespace Jde
 
    using namespace std::literals;
 	JDE_NATIVE_VISIBILITY void InitializeLogger( string_view fileName )noexcept;
-	JDE_NATIVE_VISIBILITY void InitializeLogger( ELogLevel level2=ELogLevel::Debug, path path=fs::path{}, uint16 serverPort=0, bool memory=false )noexcept;
+	JDE_NATIVE_VISIBILITY void InitializeLogger( ELogLevel level2=ELogLevel::Debug, path path=fs::path{}, uint16 serverPort=0, bool memory=false, ELogLevel flushOn=ELogLevel::Information )noexcept;
 	JDE_NATIVE_VISIBILITY bool HaveLogger()noexcept;
 	JDE_NATIVE_VISIBILITY void ClearMemoryLog()noexcept;
 	JDE_NATIVE_VISIBILITY vector<Logging::Messages::Message> FindMemoryLog( uint32 messageId )noexcept;

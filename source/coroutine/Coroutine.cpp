@@ -14,13 +14,14 @@ namespace Jde::Coroutine
 
 	std::shared_mutex CoroutinePool::_mtx;
 	sp<CoroutinePool> CoroutinePool::_pInstance;
-
+	std::atomic<uint> INDEX=0;
 	ResumeThread::ResumeThread( const string& name, Duration idleLimit, CoroutineParam&& param )noexcept:
 		IdleLimit{idleLimit},
 		ThreadParam{ name, Threading::BumpThreadHandle() },
 		_param{ move(param) },
 		_thread{ [this]( stop_token stoken )
 		{
+			var index = INDEX++;
 			//DBG( "({})ResumeThread::ResumeThread"sv, std::this_thread::get_id() );
 			auto timeout = Clock::now()+IdleLimit;
 			while( !stoken.stop_requested() )
@@ -34,27 +35,28 @@ namespace Jde::Coroutine
 							std::this_thread::yield();
 						else
 						{
-							DBG( "{}>{}"sv, ToIsoString(timeout), ToIsoString(now) );
-							DBG( "timeout={}"sv, ToIsoString(timeout) );
-							DBG( "diff={} vs {}"sv, duration_cast<milliseconds>(now-(timeout-IdleLimit)).count(), duration_cast<milliseconds>(IdleLimit).count() );
-							DBG0( "request_stop"sv );
+							//DBG( "{}>{}"sv, ToIsoString(timeout), ToIsoString(now) );
+							//DBG( "timeout={}"sv, ToIsoString(timeout) );
+							//DBG( "diff={} vs {}"sv, duration_cast<milliseconds>(now-(timeout-IdleLimit)).count(), duration_cast<milliseconds>(IdleLimit).count() );
+							DBG( "({})CoroutineThread Stopping"sv, index );
 							_thread.request_stop();
 						}
 						continue;
 					}
 				}
 				//SetThreadInfo( *_param ); let awaitable do this.
-				DBG0( "ResumeThread call resume"sv );
+				DBG( "({})CoroutineThread call resume"sv, index );
 				_param->CoHandle.resume();
-				DBG0( "ResumeThread finish resume"sv );
+				DBG( "({})CoroutineThread finish resume"sv, index );
 				SetThreadInfo( ThreadParam );
 				timeout = Clock::now()+IdleLimit;
-				DBG( "timeout={}"sv, ToIsoString(timeout) );
+				DBG( "({})CoroutineThread timeout={}"sv, index, ToIsoString(timeout) );
 				unique_lock l{ _paramMutex };
 				_param = {};
 			}
-			DBG( "({})ResumeThread::Done"sv, std::this_thread::get_id() );
-		}}
+			DBG( "({})CoroutineThread::Done"sv, index );
+		}
+	}
 	{}
 	ResumeThread::~ResumeThread()
 	{
