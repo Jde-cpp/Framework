@@ -21,6 +21,7 @@ namespace Jde::Coroutine
 		_param{ move(param) },
 		_thread{ [this]( stop_token stoken )
 		{
+			Threading::SetThreadDscrptn( format("CoroutingThread - {}", ThreadParam.AppHandle) );
 			var index = INDEX++;
 			//DBG( "({})ResumeThread::ResumeThread"sv, std::this_thread::get_id() );
 			auto timeout = Clock::now()+IdleLimit;

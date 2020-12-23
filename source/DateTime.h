@@ -8,32 +8,7 @@
 
 namespace Jde
 {
-//#ifdef NDEBUG
 	typedef std::chrono::system_clock Clock;
-/*#else
-	struct JDE_NATIVE_VISIBILITY TimePoint final : private std::chrono::system_clock::time_point
-	{
-		typedef std::chrono::system_clock::time_point base;
-		typedef std::chrono::system_clock::duration DurationType;
-		TimePoint()noexcept{};
-		TimePoint( const base& tp )noexcept;
-		base Base()const noexcept{ return base{ time_since_epoch() }; }
-		constexpr TimePoint& operator+=( const DurationType& x )noexcept;
-
-	private:
-		string _text;
-	};
-	TimePoint operator+( const TimePoint& a, const TimePoint::DurationType& b )noexcept{ return TimePoint{ a.Base()+b }; }
-	TimePoint operator-( const TimePoint& a, const TimePoint::DurationType& b )noexcept{ return TimePoint{ a.Base()-b }; }
-	struct JDE_NATIVE_VISIBILITY Clock : std::chrono::system_clock
-	{
-		typedef TimePoint	time_point;
-		typedef std::chrono::system_clock base;
-		static TimePoint now()noexcept{ return TimePoint{base::now()}; }
-		static std::time_t to_time_t( const time_point& t ){ return base::to_time_t(t.Base()); }
-		static TimePoint from_time_t( std::time_t t ){ return TimePoint{base::from_time_t(t)}; }
-	};
-#endif*/
 	typedef Clock::time_point TimePoint;
 	typedef std::optional<TimePoint> TimePoint_;
 	typedef Clock::duration Duration;

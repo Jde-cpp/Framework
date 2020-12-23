@@ -1,10 +1,5 @@
 #include "Alarm.h"
-/*#include <condition_variable>
-#include <functional>
-#include <mutex>
-#include <thread>
-#include "../TypeDefs.h"
-*/
+
 #define IntancePtr if( auto p=Instance(); p ) p
 #define var const auto
 
@@ -44,10 +39,8 @@ namespace Jde::Threading
 		unique_lock l{ _coroutineMutex };
 		if( auto p = std::find_if(_coroutines.begin(), _coroutines.end(), [h](var x){ return get<0>(x.second)==h;}); p!=_coroutines.end() )
 		{
-			//get<1>( p->second ).promise().unhandled_exception();
 			DBG( "Cancel({})"sv, h );
 			get<1>( p->second ).destroy();
-			//get<1>( p->second ).resume();
 			_coroutines.erase( p );
 		}
 		else
@@ -70,7 +63,7 @@ namespace Jde::Threading
 		}
 		unique_lock l{ _coroutineMutex };
 		for( auto p=_coroutines.begin(); p!=_coroutines.end() && p->first<Clock::now(); p = _coroutines.erase(p) )
-			get<1>(p->second).resume();
+			Coroutine::CoroutinePool::Resume( move(get<1>(p->second)) );
 	}
 	void Alarm::Shutdown()noexcept
 	{

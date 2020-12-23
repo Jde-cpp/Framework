@@ -5,11 +5,7 @@
 #include "Awaitable.h"
 #include "Task.h"
 #include <boost/container/flat_map.hpp>
-/*#include <functional>
-#include <mutex>
-#include <thread>
-#include "../TypeDefs.h"
-*/
+
 namespace Jde::Threading
 {
 	using boost::container::flat_multimap;
@@ -18,7 +14,6 @@ namespace Jde::Threading
 
 	struct JDE_NATIVE_VISIBILITY AlarmAwaitable final : Coroutine::CancelAwaitable<Coroutine::TaskVoid>
 	{
-		//typedef coroutine_handle<Coroutine::TaskVoid::promise_type> Handle;
 		AlarmAwaitable( TimePoint& alarm, Coroutine::Handle& handle )noexcept:CancelAwaitable{handle}, _alarm{alarm}{}
 		~AlarmAwaitable(){ /*DBG("({})AlarmAwaitable::~Awaitable"sv, std::this_thread::get_id());*/ }
 		bool await_ready()noexcept{ return _alarm<Clock::now(); }
