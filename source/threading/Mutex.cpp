@@ -7,7 +7,7 @@ namespace Jde::Threading
 	ELogLevel Threading::MyLock::_defaultLogLevel{ ELogLevel::Trace };
 	void Threading::MyLock::SetDefaultLogLevel( ELogLevel logLevel )noexcept{ _defaultLogLevel=logLevel; }
 	ELogLevel Threading::MyLock::GetDefaultLogLevel()noexcept{ return _defaultLogLevel; }
-
+#endif
 	static boost::container::flat_map<string,sp<std::shared_mutex>> _mutexes;
 	std::mutex _mutex;
 	std::unique_lock<std::shared_mutex> UniqueLock( const string& key )noexcept
@@ -25,5 +25,5 @@ namespace Jde::Threading
 	{
 		std::unique_ptr<std::unique_lock<std::shared_mutex>>
 	}*/
-#endif
+
 }
