@@ -87,6 +87,8 @@ namespace Jde
 	BoostCodeException::BoostCodeException( const boost::system::error_code& errorCode ):
 		_errorCode{ make_unique<boost::system::error_code>(errorCode) }
 	{}
+	BoostCodeException::~BoostCodeException()
+	{}
 
 /*	EnvironmentException::EnvironmentException( std::string_view value ):
 		Exception( value, ELogLevel::Critical )

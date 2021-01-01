@@ -1,15 +1,18 @@
 #pragma once
-#include <experimental/coroutine>
-#include <variant>
+#ifndef JDE_TASK
+#define JDE_TASK
 
+#include <variant>
+//#include "Coroutine.h"
 
 namespace Jde::Coroutine
 {
 	typedef uint Handle;
-	extern std::atomic<Handle> TaskHandle;
-	extern std::atomic<Handle> TaskPromiseHandle;
-	using std::experimental::coroutine_handle;
-	using std::experimental::suspend_never;
+	typedef Handle ClientHandle;
+
+	JDE_NATIVE_VISIBILITY ClientHandle NextHandle()noexcept;
+	JDE_NATIVE_VISIBILITY ClientHandle NextTaskHandle()noexcept;
+	JDE_NATIVE_VISIBILITY ClientHandle NextTaskPromiseHandle()noexcept;
 
 	struct TaskVoid final
 	{
@@ -26,10 +29,10 @@ namespace Jde::Coroutine
 	template<typename T>
 	struct Task final
 	{
-		Task():_taskHandle{++TaskHandle}{ /*DBG("Task::Task({})"sv, _taskHandle);*/ }
+		Task():_taskHandle{NextTaskHandle()}{ /*DBG("Task::Task({})"sv, _taskHandle);*/ }
 		struct promise_type
 		{
-			promise_type():_promiseHandle{++TaskPromiseHandle}
+			promise_type():_promiseHandle{ NextTaskPromiseHandle() }
 			{
 				//DBG( "promise_type::promise_type({})"sv, _promiseHandle );
 			}
@@ -50,7 +53,7 @@ namespace Jde::Coroutine
 	template<typename TTask>
 	struct PromiseType /*notfinal*/
 	{
-		PromiseType():_promiseHandle{++TaskPromiseHandle}
+		PromiseType():_promiseHandle{ NextTaskPromiseHandle() }
 		{}
 		TTask& get_return_object()noexcept{ return _returnObject; }
 		suspend_never initial_suspend()noexcept{ return {}; }
@@ -66,11 +69,11 @@ namespace Jde::Coroutine
 	struct TaskError final
 	{
 		typedef std::variant<T,std::exception_ptr> TResult;
-		TaskError():_taskHandle{++TaskHandle}{ /*DBG("Task::Task({})"sv, _taskHandle);*/ }
+		TaskError():_taskHandle{NextTaskHandle()}{ /*DBG("Task::Task({})"sv, _taskHandle);*/ }
 		struct promise_type : PromiseType<TaskError<T>>
 		{};
 		TResult Result;
 		const Handle _taskHandle;
 	};
-
 }
+#endif

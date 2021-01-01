@@ -1,7 +1,9 @@
+/*
 #include "Diagnostics.h"
-#ifdef _WINDOWS
-	#include <Windows.h>
+#ifdef _MSC_VER
+//	#include <Windows.h>
 	#include <Psapi.h>
+	//#include <WinSock2.h>
 #else
 	#include <errno.h>
 #endif
@@ -11,9 +13,9 @@ namespace Jde
 {
 	size_t Diagnostics::GetMemorySize()
 	{
-#ifdef WIN32
+#ifdef _MSC_VER
 		PROCESS_MEMORY_COUNTERS memCounter;
-		/*BOOL result =*/ GetProcessMemoryInfo( ::GetCurrentProcess(), &memCounter, sizeof( memCounter ) );
+		/*BOOL result =* / GetProcessMemoryInfo( ::GetCurrentProcess(), &memCounter, sizeof( memCounter ) );
 		return memCounter.WorkingSetSize;
 #else
 //https://stackoverflow.com/questions/669438/how-to-get-memory-usage-at-runtime-using-c
@@ -36,6 +38,7 @@ namespace Jde
 		::GetModuleFileNameA( NULL, (char*)szExeFileName, MAX_PATH );
 		return fs::path( (char*)szExeFileName );
 #else
+		return std::filesystem::canonical( "/proc/self/exe" ).parent_path(); 
 		return fs::path( program_invocation_name );
 #endif
 	}
@@ -48,7 +51,7 @@ namespace Jde
 		constexpr uint maxHostName = HOST_NAME_MAX;
 #endif
 		char hostname[maxHostName];
-		gethostname( hostname, maxHostName );
+		//gethostname( hostname, maxHostName );
 		return hostname;
 	}
 	
@@ -61,3 +64,4 @@ namespace Jde
 #endif
 	}
 }
+*/

@@ -90,10 +90,10 @@ namespace Jde::Logging
 				DBGX( "Acknowledged - instance id={}"sv, ack.instanceid() );
 				auto pTransmission = make_shared<Proto::ToServer>();
 				auto pInstance = new Proto::Instance();
-				_applicationName = Diagnostics::ApplicationName().stem().string()=="Jde" ? Diagnostics::ApplicationName().extension().string().substr(1) : Diagnostics::ApplicationName().stem().string();
+				_applicationName = IApplication::Path().stem().string()=="Jde" ? IApplication::Path().extension().string().substr(1) : IApplication::Path().stem().string();
 				pInstance->set_applicationname( _applicationName );
-				pInstance->set_hostname( Diagnostics::HostName() );
-				pInstance->set_processid( (int32)Diagnostics::ProcessId() );
+				pInstance->set_hostname( IApplication::HostName() );
+				pInstance->set_processid( (int32)IApplication::ProcessId() );
 				pInstance->set_starttime( (google::protobuf::uint32)Clock::to_time_t(Logging::StartTime()) );
 
 				pTransmission->add_messages()->set_allocated_instance( pInstance );

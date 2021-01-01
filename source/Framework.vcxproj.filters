@@ -10,9 +10,6 @@
     <ClCompile Include="Exception.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Diagnostics.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="DateTime.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -97,6 +94,24 @@
     <ClCompile Include="..\..\Windows\source\dllmain.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="coroutine\Alarm.cpp">
+      <Filter>Source\coroutine</Filter>
+    </ClCompile>
+    <ClCompile Include="coroutine\Coroutine.cpp">
+      <Filter>Source\coroutine</Filter>
+    </ClCompile>
+    <ClCompile Include="coroutine\CoWorker.cpp">
+      <Filter>Source\coroutine</Filter>
+    </ClCompile>
+    <ClCompile Include="threading\Worker.cpp">
+      <Filter>Source\threading</Filter>
+    </ClCompile>
+    <ClCompile Include="coroutine\Task.cpp">
+      <Filter>Source\coroutine</Filter>
+    </ClCompile>
+    <ClCompile Include="threading\Mutex.cpp">
+      <Filter>Source\threading</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="StringUtilities.h">
@@ -106,9 +121,6 @@
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="Exception.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="Diagnostics.h">
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="io\Buffer.h">
@@ -273,6 +285,21 @@
     <ClInclude Include="Settings.h">
       <Filter>Headers</Filter>
     </ClInclude>
+    <ClInclude Include="coroutine\Alarm.h">
+      <Filter>Headers\coroutine</Filter>
+    </ClInclude>
+    <ClInclude Include="coroutine\Awaitable.h">
+      <Filter>Headers\coroutine</Filter>
+    </ClInclude>
+    <ClInclude Include="coroutine\Coroutine.h">
+      <Filter>Headers\coroutine</Filter>
+    </ClInclude>
+    <ClInclude Include="coroutine\CoWorker.h">
+      <Filter>Headers\coroutine</Filter>
+    </ClInclude>
+    <ClInclude Include="coroutine\Task.h">
+      <Filter>Headers\coroutine</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Headers">
@@ -359,6 +386,12 @@
     </Filter>
     <Filter Include="Source\windows">
       <UniqueIdentifier>{ad6d81d5-6b26-4755-ae42-f20bb949ada7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\coroutine">
+      <UniqueIdentifier>{5339725e-686f-4195-bf96-599f36e4724b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\coroutine">
+      <UniqueIdentifier>{c9123a05-6b62-46db-a3a2-6ef60e7da840}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

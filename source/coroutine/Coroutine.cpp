@@ -7,11 +7,6 @@
 using namespace std::chrono;
 namespace Jde::Coroutine
 {
-	typedef uint ClientHandle;
-	std::atomic<ClientHandle> _handleIndex{0};
-	std::atomic<ClientHandle> TaskHandle{0};
-	std::atomic<ClientHandle> TaskPromiseHandle{0};
-
 	std::shared_mutex CoroutinePool::_mtx;
 	sp<CoroutinePool> CoroutinePool::_pInstance;
 	std::atomic<uint> INDEX=0;
@@ -23,7 +18,7 @@ namespace Jde::Coroutine
 		{
 			Threading::SetThreadDscrptn( format("CoroutingThread - {}", ThreadParam.AppHandle) );
 			var index = INDEX++;
-			//DBG( "({})ResumeThread::ResumeThread"sv, std::this_thread::get_id() );
+			//LOG( CoroutinePool::LogLevel(), "({})ResumeThread::ResumeThread"sv, std::this_thread::get_id() );
 			auto timeout = Clock::now()+IdleLimit;
 			while( !stoken.stop_requested() )
 			{
@@ -36,32 +31,32 @@ namespace Jde::Coroutine
 							std::this_thread::yield();
 						else
 						{
-							//DBG( "{}>{}"sv, ToIsoString(timeout), ToIsoString(now) );
-							//DBG( "timeout={}"sv, ToIsoString(timeout) );
-							//DBG( "diff={} vs {}"sv, duration_cast<milliseconds>(now-(timeout-IdleLimit)).count(), duration_cast<milliseconds>(IdleLimit).count() );
-							DBG( "({})CoroutineThread Stopping"sv, index );
+							//LOG( CoroutinePool::LogLevel(), "{}>{}"sv, ToIsoString(timeout), ToIsoString(now) );
+							//LOG( CoroutinePool::LogLevel(), "timeout={}"sv, ToIsoString(timeout) );
+							//LOG( CoroutinePool::LogLevel(), "diff={} vs {}"sv, duration_cast<milliseconds>(now-(timeout-IdleLimit)).count(), duration_cast<milliseconds>(IdleLimit).count() );
+							LOG( CoroutinePool::LogLevel(), "({})CoroutineThread Stopping"sv, index );
 							_thread.request_stop();
 						}
 						continue;
 					}
 				}
 				//SetThreadInfo( *_param ); let awaitable do this.
-				DBG( "({})CoroutineThread call resume"sv, index );
+				LOG( CoroutinePool::LogLevel(), "({})CoroutineThread call resume"sv, index );
 				_param->CoHandle.resume();
-				DBG( "({})CoroutineThread finish resume"sv, index );
+				LOG( CoroutinePool::LogLevel(), "({})CoroutineThread finish resume"sv, index );
 				SetThreadInfo( ThreadParam );
 				timeout = Clock::now()+IdleLimit;
-				DBG( "({})CoroutineThread timeout={}"sv, index, ToIsoString(timeout) );
+				LOG( CoroutinePool::LogLevel(), "({})CoroutineThread timeout={}"sv, index, ToIsoString(timeout) );
 				unique_lock l{ _paramMutex };
 				_param = {};
 			}
-			DBG( "({})CoroutineThread::Done"sv, index );
+			LOG( CoroutinePool::LogLevel(), "({})CoroutineThread::Done"sv, index );
 		}
 	}
 	{}
 	ResumeThread::~ResumeThread()
 	{
-		DBG( "({})ResumeThread::~ResumeThread"sv, std::this_thread::get_id() );
+		LOG( CoroutinePool::LogLevel(), "({})ResumeThread::~ResumeThread"sv, std::this_thread::get_id() );
 		if( _thread.joinable() )
 			_thread.join();
 		//_thread.request_stop(); s/b auto
@@ -98,11 +93,11 @@ namespace Jde::Coroutine
 			unique_lock l{ _mtx };
 			if( !_pSettings )
 			{
-/*				try
+				try
 				{
 					_pSettings = Settings::Global().SubContainer("coroutinePool");
 				}
-				catch( EnvironmentException& )*/
+				catch( EnvironmentException& )
 				{
 					INFO0( "coroutinePool settings not found."sv );
 					nlohmann::json j2 = { {"maxThreadCount", 100}, {"threadDuration", "PT5S"}, {"poolIdleThreshold", "PT60S"} };
@@ -163,7 +158,7 @@ namespace Jde::Coroutine
 	void CoroutinePool::Run()noexcept
 	{
 		Threading::SetThreadInfo( Threading::ThreadParam{ string{Name}, (uint)Threading::EThread::CoroutinePool} );
-		DBG( "{} - Starting"sv, Name );
+		LOG( CoroutinePool::LogLevel(), "{} - Starting"sv, Name );
 		TimePoint quitTime = Clock::now()+ThreadDuration();
 		while( !Threading::GetThreadInterruptFlag().IsSet() ||  !_pQueue->empty() )
 		{
@@ -179,6 +174,6 @@ namespace Jde::Coroutine
 				break;
 			}
 		}
-		DBG( "{} - Ending"sv, Name );
+		LOG( CoroutinePool::LogLevel(), "{} - Ending"sv, Name );
 	}
 }

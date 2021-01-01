@@ -7,6 +7,7 @@
 namespace Jde
 {
 	using namespace std::chrono;
+	const TimePoint& Chrono::Min( const TimePoint& a, const TimePoint& b )noexcept{ return a.time_since_epoch()<b.time_since_epoch() ? a : b; }
 	namespace Chrono
 	{
 		TimePoint _epoch{ DateTime(1970,1,1).GetTimePoint() };
@@ -57,9 +58,30 @@ namespace Jde
 					d%=period;
 				}
 			};*/
+#ifdef _MSC_VER
+			var year = chrono::hours(24 * 365);
+			if( d >= year || d <= -year )
+			{
+				os << duration_cast<hours>(d).count()/year.count() << "Y"; 
+				d %= year; 
+			}
+			var month = chrono::hours(24 * 30);
+			if( d >= month || d <= -month )
+			{
+				os << duration_cast<hours>(d).count() / month.count() << "M";
+				d %= month;
+			}
+			var days = chrono::hours(24);
+			if( d >= days || d <= -days )
+			{
+				os << duration_cast<hours>(d).count() / days.count() << "M";
+				d %= days;
+			}
+#else
 			output( years, "Y" );
 			output( months, "M" );
 			output( days, "D" );
+#endif
 			if( d!=Duration::zero() )
 			{
 				os << "T";

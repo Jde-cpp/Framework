@@ -4,6 +4,7 @@
 #include <memory>
 #include <mutex>
 #include <condition_variable>
+#include "../TypeDefs.h"
 
 #define var const auto
 namespace Jde

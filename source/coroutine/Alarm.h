@@ -1,5 +1,4 @@
 #pragma once
-#include <experimental/coroutine>
 #include "../threading/Worker.h"
 #include "Coroutine.h"
 #include "Awaitable.h"
@@ -9,8 +8,6 @@
 namespace Jde::Threading
 {
 	using boost::container::flat_multimap;
-	using std::experimental::coroutine_handle;
-	using std::experimental::suspend_never;
 
 	struct JDE_NATIVE_VISIBILITY AlarmAwaitable final : Coroutine::CancelAwaitable<Coroutine::TaskVoid>
 	{

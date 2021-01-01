@@ -1,6 +1,5 @@
 #include "Settings.h"
 #include <fstream>
-//#include "../Exception.h"
 
 #define var const auto
 

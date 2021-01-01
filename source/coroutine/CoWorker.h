@@ -22,13 +22,13 @@ namespace Jde::Coroutine
 	};
 
 	template<typename TDerived,typename TAwaitable>
-	struct JDE_NATIVE_VISIBILITY TCoWorker /*abstract*/: CoWorker
+	struct TCoWorker /*abstract*/: CoWorker
 	{
 		TCoWorker( sv name )noexcept:CoWorker{name}{};
 		template<typename TAwaitable2=TAwaitable>
 		struct Handles{ typename TAwaitable2::Handle HCoroutine; Coroutine::ClientHandle HClient; };
 		virtual ~TCoWorker()noexcept{ DBG("TCoWorker::~TCoWorker({})"sv, _name); }
-		static sp<TDerived> Instance()noexcept{ return static_pointer_cast<TDerived>(_pInstance); }
+		static sp<TDerived> Instance()noexcept{ return std::static_pointer_cast<TDerived>(_pInstance); }
 	protected:
 
 

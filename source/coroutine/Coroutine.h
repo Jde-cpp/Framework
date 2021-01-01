@@ -1,5 +1,4 @@
 #pragma once
-#include <experimental/coroutine>
 #include "../threading/Thread.h"
 #include "../Settings.h"
 #include "../application/Application.h"
@@ -10,16 +9,13 @@ namespace Jde::Threading{ struct InterruptibleThread; }
 
 namespace Jde::Coroutine
 {
-	using std::experimental::coroutine_handle;
-	using std::experimental::suspend_never;
-
 	struct CoroutineTests;
 
 	struct CoroutineParam /*: Threading::ThreadParam*/
 	{
 		coroutine_handle<> CoHandle;
 	};
-	struct ResumeThread final
+	struct JDE_NATIVE_VISIBILITY ResumeThread final
 	{
 		ResumeThread( const string& Name, Duration idleLimit, CoroutineParam&& param )noexcept;
 		~ResumeThread();
@@ -32,11 +28,14 @@ namespace Jde::Coroutine
 		jthread _thread;
 	};
 
-	struct CoroutinePool final: IShutdown
+	struct JDE_NATIVE_VISIBILITY CoroutinePool final: IShutdown
 	{
 		//[[deprecated("Awaitable should have threadParam")]]static void Resume( coroutine_handle<>&& h, Threading::ThreadParam&& param )noexcept;
 		static void Resume( coroutine_handle<>&& h )noexcept;
 		void Shutdown()noexcept;
+
+#define SETTINGS(T,n,dflt) optional<T> v; if( _pSettings ) v=_pSettings->Get2<T>(n); return v.value_or(dflt)
+		static ELogLevel LogLevel()noexcept{ SETTINGS(ELogLevel, "LogLevel", ELogLevel::Trace); }
 	private:
 		void InnerResume( CoroutineParam&& param )noexcept;
 		optional<CoroutineParam> StartThread( CoroutineParam&& param )noexcept;
@@ -48,7 +47,6 @@ namespace Jde::Coroutine
 		up<QueueMove<CoroutineParam>> _pQueue;
 		static sp<CoroutinePool> _pInstance;
 
-#define SETTINGS(T,n,dflt) optional<T> v; if( _pSettings ) v=_pSettings->Get2<T>(n); return v.value_or(dflt)
 		static uint MaxThreadCount()noexcept{ SETTINGS(uint, "maxThreadCount", 100); }//max number of threads pool can hold
 		static Duration WakeDuration()noexcept{ return Settings::Global().Get2<Duration>("wakeDuration").value_or(5s); };//wake up to check for shutdown
 		static Duration ThreadDuration()noexcept{ SETTINGS(Duration, "threadDuration", 5s); }//keep alive after buffer queue empties.

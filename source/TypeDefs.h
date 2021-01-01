@@ -1,4 +1,7 @@
 #pragma once
+#ifndef JDE_TYPEDEFS
+#define JDE_TYPEDEFS
+
 #include <map>
 #include <memory>
 #include <mutex>
@@ -18,6 +21,20 @@
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/fmt/ostr.h>
+#endif
+
+#ifdef _MSC_VER
+	#if __cplusplus > 2017
+		#include <coroutine>
+	#else
+		#include <experimental/coroutine>
+	#endif
+#else
+	#include <experimental/coroutine>
+#endif
+
+#ifdef ONE_CORE
+	#pragma comment(lib, "Onecore.lib")
 #endif
 
 namespace Jde
@@ -79,7 +96,9 @@ namespace Jde
 	using std::string;
 	using std::tuple;
 	using std::unique_ptr;
-	using std::set; //https://stackoverflow.com/questions/19480918/is-it-possible-to-know-if-a-header-is-included	//https://stackoverflow.com/questions/36117884/compile-time-typeid-for-every-type -> https://stackoverflow.com/questions/35941045/can-i-obtain-c-type-names-in-a-constexpr-way/35943472#35943472 ->
+	using std::get;
+	using std::set; 
+	using std::static_pointer_cast;
 	using std::unique_lock;
 	using std::shared_lock;
 	using std::shared_mutex;
@@ -106,6 +125,7 @@ namespace Jde
 	template<class K, class V> using UnorderedPtr = std::shared_ptr<std::unordered_map<K,V>>;
 	using std::multimap;
 	template<class T, class Y> using MultiMapPtr = std::shared_ptr<std::multimap<T,Y>>;
+	using std::function;
 
 	typedef unsigned short PortType;
 	typedef uint_fast16_t DayIndex;
@@ -113,10 +133,28 @@ namespace Jde
 	namespace fs=std::filesystem;
 #ifndef NO_FORMAT
 	using fmt::format;
+	#ifdef _MSC_VER
+		#ifdef NDEBUG
+			#pragma comment(lib, "fmt.lib")
+		#else
+			#pragma comment(lib, "fmtd.lib")
+		#endif
+	#endif
 #endif
 	using path = const fs::path&;
 	using str = std::string;
-}
 #ifdef _MSC_VER
 	#define __PRETTY_FUNCTION__ __FUNCSIG__
-#endif
+	#if __cplusplus > 2017
+		using std::coroutine_handle;
+		using std::suspend_never;
+	#else
+		using std::experimental::coroutine_handle;
+		using std::experimental::suspend_never;
+	#endif
+#else
+	using std::experimental::coroutine_handle;
+	using std::experimental::suspend_never;
+#endif	
+}
+#endif // !JDE_TYPEDEFS

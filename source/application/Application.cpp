@@ -1,8 +1,8 @@
+#include "../pc.h"//stdafx.h
 #include "Application.h"
 #include <signal.h>
 #include <sys/types.h>
 #include <stdexcept>
-//#include <experimental/source_location>
 
 #include "../Diagnostics.h"
 #include "../Cache.h"
@@ -19,7 +19,6 @@ namespace Jde
 	mutex IApplication::_threadMutex;
 	bool IApplication::_shuttingDown{false};
 	VectorPtr<sp<Threading::InterruptibleThread>> IApplication::_pBackgroundThreads{ make_shared<std::vector<sp<Threading::InterruptibleThread>>>() };
-//	bool Stop{false};
 	std::function<void()> OnExit;
 
 	auto _pDeletedThreads = make_shared<std::vector<sp<Threading::InterruptibleThread>>>();
@@ -27,14 +26,7 @@ namespace Jde
 	auto _pObjects = make_shared<std::list<sp<void>>>();  mutex ObjectMutex;
 	auto _pShutdowns = make_shared<std::vector<sp<IShutdown>>>();
 }
-
-#ifdef _MSC_VER
-//	#include "ApplicationWindows.cpp"
-#else
-//	#include "ApplicationLinux.cpp"
-#endif
 #define var const auto
-//using namespace std::chrono_literals;
 
 namespace Jde
 {
@@ -103,7 +95,7 @@ namespace Jde
 	void IApplication::Wait()noexcept
 	{
 		_shuttingDown = true;
-		INFO( "Waiting for process to complete. {}"sv, Diagnostics::ProcessId() );
+		INFO( "Waiting for process to complete. {}"sv, ProcessId() );
 		GarbageCollect();
 		{
 			lock_guard l{ObjectMutex};
@@ -111,7 +103,8 @@ namespace Jde
 			{
 				if( pShutdown.use_count()>4 )//1 pShutdown, 1 class, 1 _pShutdowns, 1 _pObjects
 					CRITICAL( "Use Count=={}"sv, pShutdown.use_count() );
-				pShutdown->Shutdown();
+				if( pShutdown )//not sure why it would be null.
+					pShutdown->Shutdown();
 			}
 			_pShutdowns->clear();
 		}
@@ -210,6 +203,9 @@ namespace Jde
 		if( GetServerSink() )
 			GetServerSink()->Destroy();
 		Jde::DestroyLogger();
+		_pApplicationName = nullptr;
+		_pCompanyName = nullptr;
+		_pInstance = nullptr;
 #ifdef _MSC_VER
 		_CrtDumpMemoryLeaks();
 #endif

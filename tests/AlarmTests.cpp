@@ -28,14 +28,24 @@ namespace Jde
 	Coroutine::TaskVoid Call( Duration d, Coroutine::Handle& handle, bool cancel=false )
 	{
 		//DBG( "Call {}"sv, ToString(d) );
-		auto pFoo = cancel ? make_unique<foo>() : up<foo>{};
+		//auto pFoo = cancel ? make_unique<foo>() : up<foo>{};
 
 		var start = Clock::now();
 		co_await Threading::Alarm::Wait( start+d, handle );
 		++Count;
 		var actual = duration_cast<milliseconds>(Clock::now()-start).count();
 		var expected = duration_cast<milliseconds>( std::max(d, Duration::zero()) ).count();
-		ASSERT_DESC( std::abs( actual-expected )<=2, format("{}<=2", actual-expected) );
+#ifdef _MSC_VER
+	#ifdef NDEBUG
+			var threshold = 40;
+	#else
+			var threshold = 5;
+	#endif
+#else
+		var threshold = 2;
+#endif
+		DBG( "actual={}, expected={} diff={}"sv, actual, expected, actual-expected );
+		ASSERT_DESC( std::abs( actual-expected )<=threshold, format("({}-{}<={}ms", actual, expected, threshold) );
 	}
 	TEST_F(AlarmTests, Base)
 	{

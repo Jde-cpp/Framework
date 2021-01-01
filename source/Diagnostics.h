@@ -1,4 +1,5 @@
 #pragma once
+/*
 #include <cstddef>  
 namespace Jde::Diagnostics
 {
@@ -7,3 +8,4 @@ namespace Jde::Diagnostics
 	JDE_NATIVE_VISIBILITY string HostName();
 	JDE_NATIVE_VISIBILITY uint ProcessId();
 }
+*/

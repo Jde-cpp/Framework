@@ -3,6 +3,12 @@
 #include "JdeAssert.h"
 #include "Exports.h"
 
+#pragma warning(push)
+#pragma warning( disable : 4715)
+#include <nlohmann/json.hpp>
+#pragma warning(pop)
+
+
 #define var const auto
 namespace Jde::Settings
 {
@@ -40,7 +46,7 @@ namespace Jde::Settings
 	};
 
 	template<> inline TimePoint Container::Get<TimePoint>( string_view path )const noexcept(false){ return DateTime{ Get<string>(path) }.GetTimePoint(); }
-	template<> inline fs::path Container::Get<fs::path>( string_view path )const noexcept(false){ return fs::path{ Get<string>(path) }; }
+	template<> inline fs::path Container::Get<fs::path>( string_view path )const noexcept(false){ var p = Get2<string>(path); return p.has_value() ? fs::path{*p} : fs::path{}; }
 
 	template<typename T>
 	T Container::Get( string_view path )const noexcept(false)

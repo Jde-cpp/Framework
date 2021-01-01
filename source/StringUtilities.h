@@ -4,7 +4,7 @@
 #include <list>
 #include <functional>
 #include <cctype>
-#include "Exception.h"
+//#include "Exception.h"
 #include "./log/Logging.h"
 
 using namespace std;
@@ -18,7 +18,7 @@ namespace Jde
 		template<typename T>
 		std::vector<std::basic_string<T>> Split( const std::basic_string<T> &s, T delim=T{','} );
 
-		std::vector<std::string> Split( const std::string& s, const string& delim );
+		JDE_NATIVE_VISIBILITY std::vector<std::string> Split( const std::string& s, const string& delim );
 		JDE_NATIVE_VISIBILITY std::vector<std::string> Split( std::string_view s, char delim=',' );
 
 		template<typename T>
@@ -160,7 +160,7 @@ namespace Jde
 		}
 		catch( const std::invalid_argument& e )
 		{
-			ERR( "Can't convert:  {}.  to {}.  {}"sv, value, Jde::GetTypeName<T>(), e.what() );
+			ERR( "Can't convert:  {}.  to {}.  {}"sv, value, "typeName" /*Jde::GetTypeName<T>()*/, e.what() );
 		}
 		return v;
 	}

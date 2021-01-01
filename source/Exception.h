@@ -1,4 +1,7 @@
 #pragma once
+#ifndef JDE_EXCEPTION
+#define JDE_EXCEPTION
+
 #include "./Exports.h"
 
 #ifndef NO_FORMAT
@@ -132,9 +135,10 @@ namespace Jde
 
 	//https://stackoverflow.com/questions/10176471/is-it-possible-to-convert-a-boostsystemerror-code-to-a-stderror-code
 
-	struct JDE_NATIVE_VISIBILITY BoostCodeException : public RuntimeException
+	struct JDE_NATIVE_VISIBILITY BoostCodeException final : public RuntimeException
 	{
 		BoostCodeException( const boost::system::error_code& ec );
+		~BoostCodeException();
 	private:
 		up<boost::system::error_code> _errorCode;
 	};
@@ -247,6 +251,5 @@ namespace Jde
 		{}
 		return result;
 	}
-
-
 }
+#endif

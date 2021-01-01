@@ -173,17 +173,17 @@ namespace Collections
 
 	inline uint32 Crc( const vector<string> values )noexcept
 	{
-		boost::crc_32_type result;
+		//boost::crc_32_type result;
 		std::ostringstream os;
 		for( const auto& value : values )
 		{
-			result.process_bytes( value.c_str(), value.size() );
+//			result.process_bytes( value.c_str(), value.size() );
 			os << value;
 		}
-		uint32 checksum = result.checksum();
+		//uint32 checksum = result.checksum();
 
-		assert( checksum==IO::Crc::Calc32(os.str()) );
-		return checksum;
+		//assert( checksum==IO::Crc::Calc32(os.str()) );
+		return IO::Crc::Calc32( os.str() );
 	}
 	inline std::vector<uint> Indexes( const std::vector<string>& population, const std::vector<string>& subset )noexcept
 	{

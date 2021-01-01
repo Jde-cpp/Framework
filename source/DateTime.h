@@ -1,10 +1,9 @@
 #pragma once
-#include <ctime>
+#ifndef JDE_DATE_TIME
+#define JDE_DATE_TIME
 #include <chrono>
-#include <iostream>
-#include <memory>
-#include "./Exports.h"
 #include "TypeDefs.h"
+#include "./Exports.h"
 
 namespace Jde
 {
@@ -20,13 +19,13 @@ namespace Jde
 		JDE_NATIVE_VISIBILITY TimePoint Epoch()noexcept;
 		inline uint MillisecondsSinceEpoch(const TimePoint& time)noexcept{ return duration_cast<std::chrono::milliseconds>( time-Epoch() ).count(); }
 		inline DayIndex DaysSinceEpoch(const TimePoint& time)noexcept{ return duration_cast<std::chrono::hours>( time-Epoch()).count()/24; }
-		inline const TimePoint& Min( const TimePoint& a, const TimePoint& b )noexcept{ return a.time_since_epoch()<b.time_since_epoch() ? a : b; }
+		JDE_NATIVE_VISIBILITY const TimePoint& Min( const TimePoint& a, const TimePoint& b )noexcept;
 		inline DayIndex ToDay(time_t time)noexcept{ return DaysSinceEpoch(Clock::from_time_t(time)); }
 		inline TimePoint FromDays( DayIndex days )noexcept{ return Epoch()+days*24h; }
 		inline TimePoint Date( const TimePoint& time )noexcept{ return Clock::from_time_t( Clock::to_time_t(time)/(60*60*24)*(60*60*24) ); }
 		inline Duration Time( const TimePoint& time )noexcept{ return time-Date(time); }
 		JDE_NATIVE_VISIBILITY Duration ToDuration( string_view iso )noexcept(false);
-		string ToString( Duration d )noexcept;
+		JDE_NATIVE_VISIBILITY string ToString( Duration d )noexcept;
 
 		namespace TimeSpan
 		{
@@ -132,3 +131,4 @@ namespace Jde
 }
 JDE_NATIVE_VISIBILITY std::ostream& operator<<( std::ostream &os, const std::chrono::system_clock::time_point& obj )noexcept;
 
+#endif

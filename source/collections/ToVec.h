@@ -1,4 +1,7 @@
 #pragma once
+#ifndef JDE_TO_VEC
+#define JDE_TO_VEC
+ 
 #include <sstream>
 #include "../TypeDefs.h"
 
@@ -32,3 +35,4 @@ namespace Jde::ToVec
 		return Append( values, std::forward<Tail>(t)... );
 	}
 }
+#endif

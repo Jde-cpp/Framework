@@ -1,4 +1,6 @@
 #pragma once
+#ifndef JDE_LOGGING
+#define JDE_LOGGING
 #include <array>
 #include <memory>
 
@@ -312,3 +314,4 @@ namespace Jde::Logging
 #pragma endregion
 
 #undef _logMemory
+#endif

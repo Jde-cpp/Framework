@@ -6,15 +6,11 @@ set disable-completion on;
 baseDir=`pwd`;
 jdeRoot=jde;
 if [[ -z "$REPO_DIR" ]]; then
-	#echo export REPO_DIR=`pwd`;
 	export REPO_DIR=`pwd`;
 fi;
 cd $REPO_DIR
 echo REPO_DIR=$REPO_DIR
-#echo `pwd`
-#exit 1;
 
-echo dsfdsaf
 function findExecutable
 {
 	exe=$1;
@@ -23,13 +19,13 @@ function findExecutable
 	exitFailure=${3:-1};
 	echo defaultPath=$2;
 	echo path_to_exe='$(which $exe 2> /dev/null)';
-   path_to_exe=$(which "$exe" 2> /dev/null);
-   if [ ! -x "$path_to_exe" ]; then
+	path_to_exe=$(which "$exe" 2> /dev/null);
+	if [ ! -x "$path_to_exe" ]; then
 		echo 'PATH=$PATH:$defaultPath;'
-      PATH=$PATH:$defaultPath;
-		#echo $PATH
+      	PATH=$PATH:$defaultPath;
 		path_to_exe=$(which "$exe" 2> /dev/null);
-		echo $path_to_exe;
+		echo $path_to_exe;xxx
+		echo 'if [ ! -x "'$path_to_exe'" ]; then echo no; else echo yes; fi;'
 		if [ ! -x "$path_to_exe" ]; then
 			echo can not find $defaultPath/$exe;
 			if [ $exitFailure -eq 1 ]; then
@@ -44,17 +40,6 @@ if [ $windows -eq 1 ]; then
 	findExecutable MSBuild.exe '/c/Program\ Files\ \(X86\)/Microsoft\ Visual\ Studio/2019/Enterprise/MSBuild/Current/Bin' 1
 fi;
 
-# if [ $windows -eq 1 ]; then
-#    path_to_executable=$(which MSBuild.exe);
-#    if [ ! -x "$path_to_executable" ] ; then
-#       PATH=$PATH:;
-#    fi;
-#    path_to_executable=$(which MSBuild.exe);
-#    if [ ! -x "$path_to_executable" ] ; then
-# 		echo 'can not find MSBuild.exe';
-# 		exit 1;
-# 	fi;
-# fi;
 path_to_exe=$(which vcpkg.exe 2> /dev/null);
 if [ ! -x "$path_to_exe" ] ; then
 	if [ ! -d vcpkg ]; then
@@ -88,7 +73,6 @@ function buildConfig
 {
 	config=$1;
 	configClean=${2:-0};
-	#echo configClean=$configClean
 	if [ ! -f .obj/$config/Makefile ]; then
 		echo no `pwd`/.obj/$config/Makefile configClean=1;
 		configClean=1;
@@ -107,11 +91,9 @@ function buildLinux
 	if [ $local -eq 1 ]; then
 	   ./buildc.sh asan $projectClean 0;
 	   ./buildc.sh release $projectClean 0;
-	   #./buildc.sh RelWithDebInfo $projectClean 0;
 	else
 		buildConfig asan $projectClean
 		buildConfig release $projectClean
-		#buildConfig RelWithDebInfo $projectClean
 	fi;
 }
 function buildWindows
@@ -176,13 +158,10 @@ function frameworkProtoc
 		cleanProtoc=1;
 	fi;
 	if [ $cleanProtoc -eq 1 ]; then
-	   #echo frameworkProtoc running;
-	   #echo pwd
-	   #echo protoc --cpp_out dllexport_decl=JDE_NATIVE_VISIBILITY:. -I$protobufInclude -I. messages.proto;
 	   protoc --cpp_out dllexport_decl=JDE_NATIVE_VISIBILITY:. -I$protobufInclude -I. messages.proto;
 		if [ $? -ne 0 ]; then exit 1; fi;
 	fi;
 	cd ../../..;
 }
-echo 'a'
+echo windows=$windows
 build Framework 0 'frameworkProtoc'

@@ -1,11 +1,11 @@
 #include "Alarm.h"
+#include "../TypeDefs.h"
 
 #define IntancePtr if( auto p=Instance(); p ) p
 #define var const auto
 
 namespace Jde::Threading
 {
-	//std::atomic<Coroutine::Handle> AlarmAwaitable::_handleIndex{0};
 	void AlarmAwaitable::await_suspend( AlarmAwaitable::Handle h )noexcept
 	{
 		Alarm::Add( _alarm, h, _hClient );

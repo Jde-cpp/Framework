@@ -1,4 +1,7 @@
 #pragma once
+#ifndef JDE_CRC_H
+#define JDE_CRC_H
+
 #include <vector>
 //https://gist.github.com/oktal/5573082
 // #pragma warning( disable : 4245)
@@ -130,3 +133,4 @@ namespace Jde::IO::Crc
 	static_assert( "Hello"_crc32 == Crc32<'H', 'e', 'l', 'l', 'o'>::value, "CRC32 values don't match" );
 	static_assert( "0"_crc32 == Crc32<'0'>::value, "CRC32 values don't match" );
 }
+#endif // !JDE_CRC_H

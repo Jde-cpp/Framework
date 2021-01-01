@@ -7,7 +7,7 @@
 namespace Jde{ enum class ELogLevel : uint8; }
 namespace Jde::Threading
 {
-	std::unique_lock<std::shared_mutex> UniqueLock( const string& key )noexcept;
+	JDE_NATIVE_VISIBILITY std::unique_lock<std::shared_mutex> UniqueLock( const string& key )noexcept;
 	//std::unique_ptr<std::unique_lock<std::shared_mutex>> UniqueLock( const string& key )noexcept;
 	//std::shared_lock<std::shared_mutex> SharedLock( const string& key )noexcept;
 

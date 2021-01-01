@@ -1,23 +1,20 @@
 #pragma once
-#include <experimental/coroutine>
-
+#include "Coroutine.h"
+#include "Task.h"
 namespace Jde::Coroutine
 {
-	using std::experimental::coroutine_handle;
-	using std::experimental::suspend_never;
-
 	typedef uint ClientHandle;
-	extern std::atomic<ClientHandle> _handleIndex;
+//	extern std::atomic<ClientHandle> _handleIndex;
 
 	template<typename TTask>
-	struct JDE_NATIVE_VISIBILITY CancelAwaitable
+	struct CancelAwaitable
 	{
 		typedef typename TTask::promise_type TPromise;
 		typedef coroutine_handle<TPromise> Handle;
 
-		CancelAwaitable( ClientHandle& handle )noexcept:_hClient{ ++_handleIndex}{ handle = _hClient; }
+		CancelAwaitable( ClientHandle& handle )noexcept:_hClient{ NextHandle() }{ handle = _hClient; }
 		virtual ~CancelAwaitable()=default;//{ /*DBG("({})AlarmAwaitable::~Awaitable"sv, std::this_thread::get_id());*/ }
-		virtual void await_suspend( Handle h )noexcept
+		virtual void await_suspend( Handle /*h*/ )noexcept
 		{
 			OriginalThreadParamPtr = {Threading::GetThreadDescription(), Threading::GetAppThreadHandle()};
 			//_pPromise = &h.promise();

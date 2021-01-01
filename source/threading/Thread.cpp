@@ -1,11 +1,9 @@
-
 #include "Thread.h"
 #include <algorithm>
 #include <atomic>
 #include <sstream>
 
 #define var const auto
-//template<class T> using mup = make_unique<T>::type;
 
 namespace Jde
 {

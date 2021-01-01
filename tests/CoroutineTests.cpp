@@ -58,13 +58,17 @@ namespace Jde::Coroutine
 	struct Awaitable final : CancelAwaitable<Task<string>>
 	{
 		typedef CancelAwaitable<Task<string>> base;
-		Awaitable( vector<sp<ResumeThread>>* pThreads, Duration idleLimit )noexcept:base(_hClient),IdleLimit{idleLimit},_pThreads{pThreads}
+		Awaitable( vector<sp<ResumeThread>>* pThreads, Duration idleLimit )noexcept:
+			base(_hClient),
+			IdleLimit{idleLimit},
+			_pThreads{pThreads}
 		{};
 		~Awaitable()=default;
 		bool await_ready()noexcept{return false;};
 		void await_suspend( Awaitable::Handle h )noexcept override
 		{
 			base::await_suspend( h );
+			_pPromise = &h.promise();
 			optional<CoroutineParam> param{ CoroutineParam{h} };
 			if( _pThreads )
 			{
@@ -84,8 +88,8 @@ namespace Jde::Coroutine
 		string await_resume()noexcept(false)
 		{
 			//DBG( "({})TickManager::Awaitable::await_resume"sv, std::this_thread::get_id() );
-			if( OriginalThreadParam )
-				Threading::SetThreadInfo( *OriginalThreadParam );
+			if( OriginalThreadParamPtr )
+				Threading::SetThreadInfo( *OriginalThreadParamPtr );
 			auto& result = _pPromise->get_return_object();
 			return result.Result;
 		}
@@ -93,6 +97,7 @@ namespace Jde::Coroutine
 	private:
 		uint _hClient;
 		vector<sp<ResumeThread>>* _pThreads;
+		Task<string>::promise_type* _pPromise{nullptr};
 		//void End( Awaitable::Handle h, const Tick* pTick )noexcept; std::once_flag _singleEnd;
 	};
 	static auto Co( vector<sp<ResumeThread>>* pThreads, Duration idle )noexcept{ return Awaitable{pThreads, idle}; }
@@ -111,7 +116,7 @@ namespace Jde::Coroutine
 			std::this_thread::sleep_for( MinTick );
 			DBG0( "End sleep1"sv );
 			co_await Co( &threads, MinTick );//should resume
-			std::this_thread::sleep_for( MinTick );
+			std::this_thread::sleep_for( MinTick*2 );
 			ASSERT_DESC( FindMemoryLog(1).size()==1, format("FindMemoryLog(1).size()=={}", FindMemoryLog(1).size()) );
 			ClearMemoryLog();
 			DBG0( "--------------------------------New Test--------------------------------"sv );
@@ -153,7 +158,8 @@ namespace Jde::Coroutine
 	TEST_F(CoroutineTests, Pool)
 	{
 		auto& global = Settings::Global().Json();
-		global["coroutinePool"]["maxThreadCount"] = 1;
+		auto& value = global["coroutinePool"]["maxThreadCount"];
+		value = 1;
 		CallPool();
 		std::shared_lock l{ mtx };
 		cv.wait( l );
