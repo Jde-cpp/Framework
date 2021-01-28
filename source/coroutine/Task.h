@@ -3,7 +3,7 @@
 #define JDE_TASK
 
 #include <variant>
-//#include "Coroutine.h"
+#include "../log/Logging.h"
 
 namespace Jde::Coroutine
 {
@@ -29,12 +29,20 @@ namespace Jde::Coroutine
 	template<typename T>
 	struct Task final
 	{
-		Task():_taskHandle{NextTaskHandle()}{ /*DBG("Task::Task({})"sv, _taskHandle);*/ }
+		Task():_taskHandle{NextTaskHandle()}{ DBG("Task::Task({})"sv, _taskHandle); }
+		Task( const Task& t2 ):
+			_taskHandle{t2._taskHandle}, 
+			Result{t2.Result}
+		{ 
+			DBG("Task(Task{})"sv, _taskHandle); 
+		}
+		~Task(){ DBG( "Task::~Task({})"sv, _taskHandle); }
+
 		struct promise_type
 		{
 			promise_type():_promiseHandle{ NextTaskPromiseHandle() }
 			{
-				//DBG( "promise_type::promise_type({})"sv, _promiseHandle );
+				DBG( "promise_type::promise_type({})"sv, _promiseHandle );
 			}
 			Task<T>& get_return_object()noexcept{ return _returnObject; }
 			suspend_never initial_suspend()noexcept{ return {}; }

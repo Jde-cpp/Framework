@@ -54,12 +54,16 @@ namespace Jde::Threading
 	}
 	void Alarm::Process()noexcept
 	{
+		static uint i=0;
 		{
 			std::unique_lock<std::mutex> lk( _mtx );
 			var now = Clock::now();
 			var dflt = now+WakeDuration;
 			var next = Next().value_or(dflt);
-			/*var status =*/ _cv.wait_for( lk, now-std::min(dflt, next) );
+			var until = std::min( dflt, next );
+			if( ++i%10==0 )
+				DBG( "Alarm wait until:  {}"sv, ToIsoString(until) );
+			/*var status =*/ _cv.wait_for( lk, until-now );
 		}
 		unique_lock l{ _coroutineMutex };
 		for( auto p=_coroutines.begin(); p!=_coroutines.end() && p->first<Clock::now(); p = _coroutines.erase(p) )

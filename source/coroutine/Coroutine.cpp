@@ -8,6 +8,7 @@ using namespace std::chrono;
 namespace Jde::Coroutine
 {
 	std::shared_mutex CoroutinePool::_mtx;
+	ELogLevel CoroutinePool::_level{ ELogLevel::None };
 	sp<CoroutinePool> CoroutinePool::_pInstance;
 	std::atomic<uint> INDEX=0;
 	ResumeThread::ResumeThread( const string& name, Duration idleLimit, CoroutineParam&& param )noexcept:
@@ -16,7 +17,7 @@ namespace Jde::Coroutine
 		_param{ move(param) },
 		_thread{ [this]( stop_token stoken )
 		{
-			Threading::SetThreadDscrptn( format("CoroutingThread - {}", ThreadParam.AppHandle) );
+			Threading::SetThreadDscrptn( format("CoroutineThread - {}", ThreadParam.AppHandle) );
 			var index = INDEX++;
 			//LOG( CoroutinePool::LogLevel(), "({})ResumeThread::ResumeThread"sv, std::this_thread::get_id() );
 			auto timeout = Clock::now()+IdleLimit;
@@ -56,7 +57,8 @@ namespace Jde::Coroutine
 	{}
 	ResumeThread::~ResumeThread()
 	{
-		LOG( CoroutinePool::LogLevel(), "({})ResumeThread::~ResumeThread"sv, std::this_thread::get_id() );
+		if( !IApplication::ShuttingDown() )
+			LOG( CoroutinePool::LogLevel(), "({})ResumeThread::~ResumeThread"sv, std::this_thread::get_id() );
 		if( _thread.joinable() )
 			_thread.join();
 		//_thread.request_stop(); s/b auto
@@ -93,18 +95,23 @@ namespace Jde::Coroutine
 			unique_lock l{ _mtx };
 			if( !_pSettings )
 			{
-				try
-				{
-					_pSettings = Settings::Global().SubContainer("coroutinePool");
-				}
-				catch( EnvironmentException& )
+				auto addSettings = []()noexcept
 				{
 					INFO0( "coroutinePool settings not found."sv );
 					nlohmann::json j2 = { {"maxThreadCount", 100}, {"threadDuration", "PT5S"}, {"poolIdleThreshold", "PT60S"} };
 					_pSettings = make_shared<Settings::Container>( j2 );
+				};
+				try
+				{
+					if( Settings::Global().Have("coroutinePool") )
+						_pSettings = Settings::Global().SubContainer( "coroutinePool" );
+					else
+						addSettings();
 				}
-
-
+				catch( EnvironmentException& )
+				{
+					addSettings();
+				}
 			}
 			if( !_pInstance )
 			{

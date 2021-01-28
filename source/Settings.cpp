@@ -57,7 +57,7 @@ namespace Jde::Settings
 	{
 		return _pJson->find(path)==_pJson->end() ? dflt : (*_pJson)[string(path)].get<bool>();
 	}
-	bool Container::Have( string_view path )noexcept
+	bool Container::Have( string_view path )noexcept//TODO rename contains
 	{
 		return _pJson->find(path)!=_pJson->end();
 	}
