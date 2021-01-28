@@ -35,7 +35,7 @@ if(MSVC)
 else()
 	add_definitions( -D_GLIBCXX_DEBUG )
 	string(APPEND DEBUG " -O0 -g")
-	string(APPEND DEBUG " -Wall -Wno-unknown-pragmas -Wno-empty-body -Wno-return-type-c-linkage")
+	string(APPEND DEBUG " -Wall -Wno-unknown-pragmas -Wno-empty-body -Wno-return-type-c-linkage -Wno-#pragma-messages")
 endif()
 
 string(APPEND CMAKE_CXX_FLAGS_RELEASE ${RELEASE} )

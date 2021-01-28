@@ -23,6 +23,10 @@
 #include <spdlog/fmt/ostr.h>
 #endif
 
+#ifndef NO_BOOST
+#include <boost/container/flat_map.hpp>
+#endif
+
 #ifdef _MSC_VER
 	#if __cplusplus > 2017
 		#include <coroutine>
@@ -68,16 +72,14 @@ namespace Jde
 
 	typedef uint_fast16_t uint16;
 	typedef int_fast16_t int16;
-	//typedef uint_fast16_t uint16;
-//	typedef int_fast16_t int16;
 
 	typedef uint_fast32_t uint32;
+	typedef uint_fast32_t PK;
+	typedef PK UserPK;
 	typedef int_fast32_t int32;
-//	typedef uint_fast32_t uint32;
-// typedef int_fast32_t int32;
 
-	typedef uint_fast64_t uint; //todo make const
-	typedef int_fast64_t _int; //todo make const
+	typedef uint_fast64_t uint;
+	typedef int_fast64_t _int;
 
 	typedef std::chrono::system_clock Clock;
 	typedef Clock::duration Duration;
@@ -97,7 +99,7 @@ namespace Jde
 	using std::tuple;
 	using std::unique_ptr;
 	using std::get;
-	using std::set; 
+	using std::set;
 	using std::static_pointer_cast;
 	using std::unique_lock;
 	using std::shared_lock;
@@ -131,6 +133,9 @@ namespace Jde
 	typedef uint_fast16_t DayIndex;
 
 	namespace fs=std::filesystem;
+#ifndef NO_BOOST
+	using boost::container::flat_map;
+#endif
 #ifndef NO_FORMAT
 	using fmt::format;
 	#ifdef _MSC_VER
@@ -155,6 +160,6 @@ namespace Jde
 #else
 	using std::experimental::coroutine_handle;
 	using std::experimental::suspend_never;
-#endif	
+#endif
 }
 #endif // !JDE_TYPEDEFS

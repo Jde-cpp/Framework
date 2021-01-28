@@ -1,11 +1,17 @@
 #include "Database.h"
+#include "c_api.h"
+#include "GraphQL.h"
 #include "../application/Application.h"
 #include "../Settings.h"
+#include "../TypeDefs.h"
 #include "../Dll.h"
-#include "c_api.h"
+#include <boost/container/flat_map.hpp>
 
+#define var const auto
 namespace Jde::DB
 {
+	using boost::container::flat_map;
+
 	class DataSourceApi
 	{
 		DllHelper _dll;
@@ -18,61 +24,64 @@ namespace Jde::DB
 
 		sp<IDataSource> Emplace( string_view connectionString )
 		{
-			std::unique_lock l{_connectionsMutex};
-			auto pDataSource =_connections.find( string(connectionString) );
+			std::unique_lock l{ _connectionsMutex };
+			auto pDataSource = _connections.find( string(connectionString) );
 			if( pDataSource == _connections.end() )
 			{
 				auto pNew = shared_ptr<Jde::DB::IDataSource>{ GetDataSourceFunction() };
 				pNew->ConnectionString = connectionString;
-				pDataSource =_connections.emplace( connectionString, pNew ).first;
+				pDataSource = _connections.emplace( connectionString, pNew ).first;
 			}
 			return pDataSource->second;
 		}
-		static map<string,shared_ptr<Jde::DB::IDataSource>> _connections; static mutex _connectionsMutex;
+		static flat_map<string,shared_ptr<Jde::DB::IDataSource>> _connections; static mutex _connectionsMutex;
 	};
-	std::atomic<bool> _addedClean = false;//once_flag?
-	map<string,shared_ptr<Jde::DB::IDataSource>> DataSourceApi::_connections; mutex DataSourceApi::_connectionsMutex;
-	map<string,sp<DataSourceApi>> _dataSources; mutex _dataSourcesMutex;
-	shared_ptr<Jde::DB::IDataSource> _dataSource;
+	flat_map<string,shared_ptr<Jde::DB::IDataSource>> DataSourceApi::_connections; mutex DataSourceApi::_connectionsMutex;
+	flat_map<string,sp<DataSourceApi>> _dataSources; mutex _dataSourcesMutex;
+	shared_ptr<Jde::DB::IDataSource> _pDefault;
 	void CleanDataSources()noexcept
 	{
 		DBG0( "CleanDataSources"sv );
-		_dataSource = nullptr;
-		std::unique_lock l{_dataSourcesMutex};
-		_dataSources.clear();
+		ClearQLDataSource();
+		_pDefault = nullptr;
+		{
+			unique_lock l2{DataSourceApi::_connectionsMutex};
+			DataSourceApi::_connections.clear();
+		}
+		{
+			std::unique_lock l{_dataSourcesMutex};
+			_dataSources.clear();
+		}
+		DBG0( "~CleanDataSources"sv );
 	}
+
+	std::once_flag _singleShutdown;
 	void Initialize( path libraryName )
 	{
 		static DataSourceApi api{ libraryName };
-		_dataSource = shared_ptr<Jde::DB::IDataSource>{ api.GetDataSourceFunction() };
-		if( !_addedClean )
-		{
-			_addedClean = true;
-			IApplication::AddShutdownFunction( CleanDataSources );
-		}
+		_pDefault = shared_ptr<Jde::DB::IDataSource>{ api.GetDataSourceFunction() };
+		std::call_once( _singleShutdown, [](){ IApplication::AddShutdownFunction( CleanDataSources ); } );
 	}
 
-	shared_ptr<IDataSource> DataSource()
+	sp<IDataSource> DataSource()
 	{
-		if( !_dataSource )
+		if( !_pDefault )
 		{
 			Initialize( Settings::Global().Get<string>("dbDriver") );
-			_dataSource->ConnectionString = Settings::Global().Get<string>( "connectionString" );//			Initialize( "Jde.DB.Odbc.dll" );
+			var cs = Settings::Global().Get<string>( "connectionString" );//			Initialize( "Jde.DB.Odbc.dll" );
+			var env = IApplication::Instance().GetEnvironmentVariable( cs );
+			_pDefault->ConnectionString = env.empty() ? cs : env;
 		}
-		ASSERT( _dataSource );
-		return _dataSource;
+		ASSERT( _pDefault );
+		return _pDefault;
 	}
 
-	shared_ptr<IDataSource> DataSource( path libraryName, string_view connectionString )
+	sp<IDataSource> DataSource( path libraryName, string_view connectionString )
 	{
 		shared_ptr<IDataSource> pDataSource;
 		std::unique_lock l{_dataSourcesMutex};
 		string key = libraryName.string();
-		if( !_addedClean )
-		{
-			_addedClean = true;
-			IApplication::AddShutdownFunction( CleanDataSources );
-		}
+		std::call_once( _singleShutdown, [](){ IApplication::AddShutdownFunction( CleanDataSources ); } );
 		auto pApi = _dataSources.emplace( key, sp<DataSourceApi>{new DataSourceApi(libraryName)} ).first;
 		return pApi->second->Emplace( connectionString );
 	}

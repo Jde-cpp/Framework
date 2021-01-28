@@ -137,7 +137,8 @@ namespace Jde
 
 	struct JDE_NATIVE_VISIBILITY BoostCodeException final : public RuntimeException
 	{
-		BoostCodeException( const boost::system::error_code& ec );
+		BoostCodeException( const boost::system::error_code& ec )noexcept;
+		BoostCodeException( const BoostCodeException& e )noexcept;
 		~BoostCodeException();
 	private:
 		up<boost::system::error_code> _errorCode;

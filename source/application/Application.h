@@ -45,11 +45,12 @@ namespace Jde
 #else
 			string_view frmt = ".{}";
 #endif
-			return ProgramDataFolder()/format(frmt, CompanyName())/ApplicationName(); 
+			return ProgramDataFolder()/format(frmt, CompanyName())/ApplicationName();
 		}
 		static bool ShuttingDown()noexcept{ return _shuttingDown; }
 		static sp<IO::IDrive> DriveApi()noexcept;
 		void Wait()noexcept;
+		virtual string GetEnvironmentVariable( string_view variable )noexcept=0;
 	protected:
 
 		static void OnTerminate()noexcept;//implement in OSApp.cpp.
@@ -57,7 +58,6 @@ namespace Jde
 		virtual bool AsService()noexcept=0;
 		virtual void AddSignals()noexcept(false)=0;
 		virtual bool KillInstance( uint processId )noexcept=0;
-		virtual string GetEnvironmentVariable( string_view variable )noexcept=0;
 
 		static mutex _threadMutex;
 		static VectorPtr<sp<Threading::InterruptibleThread>> _pBackgroundThreads;

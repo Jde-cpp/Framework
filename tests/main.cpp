@@ -24,17 +24,20 @@ namespace Jde
 }
 int main( int argc, char **argv )
 {
+#ifdef _MSC_VER
 	_crtBreakAlloc = 163;
 	 _CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
     _CrtSetBreakAlloc( 3879 );
-	 //var x{ new std::vector<uint8_t>( 12, 0xff ) };
+#endif
 	::testing::InitGoogleTest( &argc, argv );
-	 auto x = new char[]{"aaaaaaaaaaaaaaaaaaaaaaaaaa"};
+#ifdef _MSC_VER
+	auto x = new char[]{"aaaaaaaaaaaaaaaaaaaaaaaaaa"};
+#endif
 	Jde::Startup( argc, argv );
 	auto result = EXIT_FAILURE;
 	//if( p )
 	{
-		::testing::GTEST_FLAG(filter) = "CoroutineTests.Pool";
+		::testing::GTEST_FLAG(filter) = "UMTests.Users";
 	   result = RUN_ALL_TESTS();
 		Jde::IApplication::Instance().Wait();
 		Jde::IApplication::CleanUp();

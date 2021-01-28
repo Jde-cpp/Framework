@@ -1,16 +1,1 @@
-{
-	"wakeDuration": "PT5S",
-	"logging":
-	{
-		"level": 1,
-		"path": "..",
-		"serverPort":  0,
-		"serverPortTest":  4321
-	},
-	"coroutinePool":
-	{
-		"maxThreadCount": 100,
-		"threadDuration": "PT5S",
-		"poolIdleThreshold": "PT60S"
-	}
-}
+/home/duffyj/code/jde/bin/Tests.Framework.json

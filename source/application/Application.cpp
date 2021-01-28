@@ -4,7 +4,6 @@
 #include <sys/types.h>
 #include <stdexcept>
 
-#include "../Diagnostics.h"
 #include "../Cache.h"
 #include "../log/server/ServerSink.h"
 #include "../Settings.h"
@@ -196,13 +195,13 @@ namespace Jde
 		_pObjects = nullptr;
 		_pBackgroundThreads = nullptr;
 		_pDeletedThreads = nullptr;
-		//DB::CleanDataSources();  TODO ReAdd when adding a data source.
 		for( var& shutdown : _shutdowns )
 			shutdown();
 		INFO0( "Clearing Logger"sv );
 		if( GetServerSink() )
 			GetServerSink()->Destroy();
 		Jde::DestroyLogger();
+		//can't work obviously INFO0( "~Clearing Logger"sv );
 		_pApplicationName = nullptr;
 		_pCompanyName = nullptr;
 		_pInstance = nullptr;

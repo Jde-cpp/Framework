@@ -45,7 +45,7 @@ namespace Jde::DB
 
 		friend const IRow& operator>>(const IRow& row, DBDateTime& value){ value=row.GetDateTime(row._index++); return row; }
 		friend const IRow& operator>>(const IRow& row, optional<DBDateTime>& value){ value=row.GetDateTimeOpt(row._index++); return row; }
-		
+
 	protected:
 		mutable uint _index{0};
 	};

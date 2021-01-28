@@ -6,7 +6,6 @@
 #include <sstream>
 
 #include "DateTime.h"
-#include "Diagnostics.h"
 #include "Exception.h"
 #include "math/MathUtilities.h"
 #include "application/Application.h"

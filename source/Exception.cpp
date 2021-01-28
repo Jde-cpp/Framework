@@ -84,8 +84,11 @@ namespace Jde
 		_level = level;
 	}
 
-	BoostCodeException::BoostCodeException( const boost::system::error_code& errorCode ):
+	BoostCodeException::BoostCodeException( const boost::system::error_code& errorCode )noexcept:
 		_errorCode{ make_unique<boost::system::error_code>(errorCode) }
+	{}
+	BoostCodeException::BoostCodeException( const BoostCodeException& e )noexcept:
+		_errorCode{ make_unique<boost::system::error_code>(*e._errorCode) }
 	{}
 	BoostCodeException::~BoostCodeException()
 	{}

@@ -1,6 +1,5 @@
 #include "ServerSink.h"
 //#include "ReceivedMessages.h"
-#include "../../Diagnostics.h"
 #include "../../threading/Thread.h"
 #include "../../DateTime.h"
 #define var const auto
@@ -23,7 +22,6 @@ namespace Jde::Logging
 	{
 		return _pInstance;
 	}
-
 
 	sp<ServerSink> ServerSink::Create( string_view host, uint16 port )noexcept(false)
 	{

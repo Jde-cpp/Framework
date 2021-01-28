@@ -31,7 +31,7 @@ namespace Jde::Math
 	{
 		typedef typename TCollection::value_type T;
 		var size = values.size();
-		ASSERT( size>0 );
+		//ASSERT( size>0 );
 		T sum{};
 		T min{ std::numeric_limits<T>::max() };
 		T max{ std::numeric_limits<T>::min() };

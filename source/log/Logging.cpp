@@ -1,5 +1,4 @@
 #include "Logging.h"
-#include "../Diagnostics.h"
 #include <boost/lexical_cast.hpp>
 #include "server/ServerSink.h"
 #include "../Settings.h"
