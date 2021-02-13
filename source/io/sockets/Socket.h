@@ -1,5 +1,6 @@
 #pragma once
 #include <boost/asio.hpp>
+#include <boost/asio/io_context.hpp>
 #include "../../Exports.h"
 #include "../../application/Application.h"
 
@@ -14,7 +15,7 @@ namespace Jde::IO::Sockets
 		virtual ~AsyncSocket();
 	protected:
 		AsyncSocket()noexcept;
-		boost::asio::io_context _asyncHelper;
+		basio::io_context _asyncHelper;
 		void Join();
 		void RunAsyncHelper( string_view clientThreadName )noexcept;
 		void Close()noexcept;
@@ -32,6 +33,6 @@ namespace Jde::IO::Sockets
 		virtual ~PerpetualAsyncSocket()=default;
 	protected:
 		PerpetualAsyncSocket()noexcept;
-		boost::asio::executor_work_guard<boost::asio::io_context::executor_type> _keepAlive;
+		basio::executor_work_guard<boost::asio::io_context::executor_type> _keepAlive;
 	};
 }

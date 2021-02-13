@@ -143,6 +143,15 @@ namespace DB
 		ostringstream sql{ "update ", std::ios::ate }; sql << table.Name << " set deleted=" << syntax.UtcNow() << " where id=?";
 		return _pDataSource->Execute( sql.str(), parameters );
 	}
+	uint Restore( const DB::Table& table, const DB::MutationQL& m )
+	{
+		var pId = m.Args.find( "id" ); THROW_IF( pId==m.Args.end(), Exception("Could not find id argument. {}", m.Args.dump()) );
+		var pColumn = find_if( table.Columns.begin(), table.Columns.end(), []( var& c ){ return c.Name=="deleted"; } ); THROW_IF( pColumn==table.Columns.end(), Exception("Could not find 'deleted' column") );
+		std::vector<DB::DataValue> parameters;
+		parameters.push_back( ToDataValue(DataType::ULong, *pId, "id") );
+		ostringstream sql{ "update ", std::ios::ate }; sql << table.Name << " set deleted=null where id=?";
+		return _pDataSource->Execute( sql.str(), parameters );
+	}
 	uint Purge( sv tableName, const DB::MutationQL& m, const DB::SqlSyntax& syntax )
 	{
 		var pId = m.Args.find( "id" ); THROW_IF( pId==m.Args.end(), Exception("Could not find id argument. {}", m.Args.dump()) );
@@ -196,6 +205,8 @@ namespace DB
 			result = Update( *pSchemaTable, m, *pSyntax );
 		else if( m.Type==DB::EMutationQL::Delete )
 			result = Delete( *pSchemaTable, m, *pSyntax );
+		else if( m.Type==DB::EMutationQL::Restore )
+			result = Restore( *pSchemaTable, m );
 		else if( m.Type==DB::EMutationQL::Purge )
 			result = Purge( pSchemaTable->Name, m, *pSyntax );
 		else
@@ -213,107 +224,425 @@ namespace DB
 		return result;
 	}
 
-	void QueryTable( DB::TableQL table, uint userId, json& jData )noexcept(false)
+	string DB::ColumnQL::QLType( const DB::Column& column )noexcept
 	{
+		string qlTypeName = "ID";
+		if( !column.IsId )
+		{
+			switch( column.Type )
+			{
+			case DataType::Bit:
+				qlTypeName = "Boolean";
+				break;
+			case DataType::Int16:
+			case DataType::Int:
+			case DataType::Int8:
+			case DataType::Long:
+				qlTypeName = "Int";
+				break;
+			case DataType::UInt:
+			case DataType::ULong:
+				qlTypeName = "UInt";
+				break;
+			case DataType::SmallFloat:
+			case DataType::Float:
+			case DataType::Decimal:
+			case DataType::Numeric:
+			case DataType::Money:
+				qlTypeName = "Float";
+				break;
+			case DataType::None:
+			case DataType::Binary:
+			case DataType::VarBinary:
+			case DataType::Guid:
+			case DataType::Cursor:
+			case DataType::RefCursor:
+			case DataType::Image:
+			case DataType::Blob:
+			case DataType::TimeSpan:
+				THROW( Exception("DataType {} is not implemented.", column.Type) );
+			case DataType::VarTChar:
+			case DataType::VarWChar:
+			case DataType::VarChar:
+			case DataType::NText:
+			case DataType::Text:
+			case DataType::Uri:
+				qlTypeName = "String";
+				break;
+			case DataType::TChar:
+			case DataType::WChar:
+			case DataType::UInt8:
+			case DataType::Char:
+				qlTypeName = "Char";
+			case DataType::DateTime:
+			case DataType::SmallDateTime:
+				qlTypeName = "DateTime";
+				break;
+			}
+		}
+		return qlTypeName;
+	}
+	void IntrospectFields( const DB::Table& dbTable, const DB::TableQL& fieldTable, json& jData )noexcept(false)
+	{
+		auto fields = json::array();
+		var pTypeTable = fieldTable.FindTable( "type" );
+		var haveName = fieldTable.ContainsColumn( "name" );
+		var pOfTypeTable = pTypeTable->FindTable( "ofType" );
+		//var ofTypeColumns = pOfTypeTable ? pOfTypeTable->Columns : vector<DB::ColumnQL>{};
+		auto addField = [&]( sv name, sv typeName, DB::QLFieldKind typeKind, sv ofTypeName, optional<DB::QLFieldKind> ofTypeKind )
+		{
+			json field;
+			if( haveName )
+				field["name"] = name;
+			if( pTypeTable )
+			{
+				json type;
+				auto setField = []( const DB::TableQL& t, json& j, const string& key, sv x ){ if( t.ContainsColumn(key) ){ if(x.size()) j[key]=x; else j[key]=nullptr; } };
+				auto setKind = []( const DB::TableQL& t, json& j, optional<DB::QLFieldKind> pKind )
+				{
+					if( t.ContainsColumn("kind") )
+					{
+						if( pKind )
+							j["kind"] = (uint)*pKind;
+						else
+							j["kind"] = nullptr;
+					}
+				};
+				setField( *pTypeTable, type, "name", typeName );
+				setKind( *pTypeTable, type, typeKind );
+				if( pOfTypeTable && (ofTypeName.size() || ofTypeKind) )
+				{
+					json ofType;
+					// if( find_if(ofTypeColumns.begin(),ofTypeColumns.end(), [&](var& x){return x.JsonName=="name";})!=ofTypeColumns.end() )
+					// if( find_if(ofTypeColumns.begin(),ofTypeColumns.end(), [&](var& x){return x.JsonName=="kind";})!=ofTypeColumns.end() )
+					setField( *pOfTypeTable, ofType, "name", ofTypeName );
+					setKind( *pOfTypeTable, ofType, ofTypeKind );
+					type["ofType"] = ofType;
+				}
+				field["type"] = type;
+			}
+			fields.push_back( field );
+		};
+		for( var& column : dbTable.Columns )
+		{
+			var fieldName = DB::Schema::ToJson( column.Name );
+			// json field;
+			// if( haveName )
+			// 	field["name"] = fieldName;
+			// if( pTypeTable )
+			// {
+			// 	json type;
+			// 	if( pTypeTable->ContainsColumn("name") )
+			// 		type["name"] = nullptr;
+			// 	if( pTypeTable->ContainsColumn("kind") && !column.IsNullable )
+			// 		type["kind"] = "NON_NULL";
+			// 	json ofType;
+			// 	auto& scalarField = column.IsNullable ? type : ofType;
+			// 	var& scalarColumns = column.IsNullable ? pTypeTable->Columns : ofTypeColumns;
+			// 	if( find_if(scalarColumns.begin(),scalarColumns.end(), [&](var& x){return x.JsonName=="kind";})!=scalarColumns.end() )
+			// 		scalarField["kind"] = "SCALAR";
+			var qlTypeName = DB::ColumnQL::QLType( column );
+//				if( find_if( scalarColumns.begin(), scalarColumns.end(), [](var& c){return c.JsonName=="name";})!=scalarColumns.end() )
+//					scalarField["name"] = qlTypeName;
+//				if( pOfTypeTable )
+//					type["ofType"] = ofType;
+//				field["type"] = type;
+			var isNullable = column.IsNullable;
+			string typeName = isNullable ? qlTypeName : "";
+			var typeKind = isNullable ? DB::QLFieldKind::Scalar : DB::QLFieldKind::NonNull;
+			string ofTypeName = isNullable ? "" : qlTypeName;
+			var ofTypeKind = isNullable ? optional<DB::QLFieldKind>{} : DB::QLFieldKind::Scalar;
+
+			addField( fieldName, typeName, typeKind, ofTypeName, ofTypeKind );
+		}
+		for( var& [name,pTable] : _schema.Tables )
+		{
+			auto fnctn = [addField,p=pTable,&dbTable]( var& c1Name, var& c2Name )
+			{
+				if( var pColumn1=p->FindColumn(c1Name), pColumn2=p->FindColumn(c2Name) ; pColumn1 && pColumn2 /*&& pColumn->PKTable==n*/ )
+				{
+					if( pColumn1->PKTable==dbTable.Name )
+					{
+						var jsonType = _schema.Tables[pColumn2->PKTable]->JsonTypeName();
+						addField( DB::Schema::ToPlural(DB::Schema::ToJson(jsonType)), {}, DB::QLFieldKind::List, jsonType, DB::QLFieldKind::Object );
+					}
+				}
+			};
+			var child = pTable->ChildId();
+			var parent = pTable->ParentId();
+			fnctn( child, parent );
+			fnctn( parent, child );
+		}
+		json jTable;
+		jTable["name"] = dbTable.JsonTypeName();
+		jTable["fields"] = fields;
+		jData["__type"] = jTable;
+	}
+	void QueryType( const DB::TableQL& typeTable, json& jData )noexcept(false)
+	{
+		//DBG( typeTable.Args.dump() );
+		if( typeTable.Args.find("name")!=typeTable.Args.end() )
+		{
+			var typeName = typeTable.Args["name"].get<string>();
+			//var dbName = DB::Schema::ToPlural( DB: :Schema::FromJson(typeName) );
+			auto p = std::find_if( _schema.Tables.begin(), _schema.Tables.end(), [&](var& t){ return t.second->JsonTypeName()==typeName;} );
+			THROW_IF( p==_schema.Tables.end(), Exception("Could not find table '{}' in schema", typeName) );
+			for( var& pQlTable : typeTable.Tables )
+			{
+				if( pQlTable->JsonName=="fields" )
+					IntrospectFields( *p->second, *pQlTable, jData );
+				else
+					THROW( Exception("__type data for '{}' not supported", pQlTable->JsonName) );
+			}
+		}
+		else
+			THROW( Exception("__type data for all names '{}' not supported") );
+	}
+	void QuerySchema( const DB::TableQL& schemaTable, json& jData )noexcept(false)
+	{
+		THROW_IF( schemaTable.Tables.size()!=1, Exception("Only Expected 1 table type for __schema {}", schemaTable.Tables.size()) );
+		var pMutationTable = schemaTable.Tables[0]; THROW_IF( pMutationTable->JsonName!="mutationType", Exception("Only mutationType implemented for __schema - {}", pMutationTable->JsonName) );
+		auto fields = json::array();
+		for( var& nameTablePtr : _schema.Tables )
+		{
+			var pDBTable = nameTablePtr.second;
+			var childId = pDBTable->ChildId();
+			var jsonType = pDBTable->JsonTypeName();
+
+			json field;
+			field["name"] = format( "create{}", jsonType );
+			auto args = json::array();
+			var addField = [&jsonType, pDBTable, &fields]( sv name, bool allColumns=false, bool idColumn=true )
+			{
+				json field;
+				auto args = json::array();
+				for( var& column : pDBTable->Columns )
+				{
+					if(   (column.Name=="id" && !idColumn) || (column.Name!="id" && !allColumns) )
+						continue;
+					json arg;
+					arg["name"] = DB::Schema::ToJson( column.Name );
+					arg["defaultValue"] = nullptr;
+					json type; type["name"] = DB::ColumnQL::QLType( column );
+					arg["type"]=type;
+					args.push_back( arg );
+				}
+				field["args"] = args;
+				field["name"] = format( "{}{}", name, jsonType );
+				fields.push_back( field );
+			};
+			if( childId.empty() )
+			{
+				addField( "insert", true, false );
+				addField( "update", true );
+
+				addField( "delete" );
+				addField( "restore" );
+				addField( "purge" );
+			}
+			else
+			{
+				addField( "add", true, false );
+				addField( "remove", true, false );
+			}
+		}
+		json jmutationType;
+		jmutationType["fields"] = fields;
+		jmutationType["name"] = "Mutation";
+		json jSchema; jSchema["mutationType"] = jmutationType;
+		jData["__schema"] = jmutationType;
+
+	}
+	void QueryTable( const DB::TableQL& table, uint userId, json& jData )noexcept(false)
+	{
+		TEST_ACCESS( "Read", table.DBName(), userId ); //TODO implement.
+		if( table.JsonName=="__type" )
+			return QueryType( table, jData );
+		else if( table.JsonName=="__schema" )
+			return QuerySchema( table, jData );
 		var isPlural = table.JsonName.ends_with( "s" );
 		var pSyntax = _pSyntax; THROW_IF( !pSyntax, Exception("SqlSyntax not set.") );
-		TEST_ACCESS( "Read", table.DBName(), userId ); //TODO implement.
 		ostringstream sql{ "select ", std::ios::ate };
-		vector<string> jsonMembers; vector<uint> dates;
+		vector<string> jsonMembers;
 		var pSchemaTable = _schema.FindTableSuffix( table.DBName() ); THROW_IF( !pSchemaTable, Exception("Could not find table '{}' in schema", table.DBName()) );
 		for( var& column : table.Columns )
 		{
-			if( jsonMembers.size() )
-				sql << ", ";
 			jsonMembers.emplace_back( column.JsonName );
 			string columnName = DB::Schema::FromJson( column.JsonName );
 			var pSchemaColumn = pSchemaTable->FindColumn( columnName ); THROW_IF( !pSchemaColumn, Exception("Could not find column '{}'", columnName) );
-			if( pSchemaColumn->Type==DataType::DateTime )
-			{
-				sql << pSyntax->DateTimeSelect( columnName );
-				dates.push_back( jsonMembers.size()-1 );
-			}
-			else
-				sql << columnName;
 		}
-		sql << endl << "from\t" << pSchemaTable->Name;
-		// for( var& table : table.Tables )
-		// {
+		auto columnSql = [pSyntax]( const DB::TableQL& table2, vector<uint>& dates, sv prefix={}, bool excludeId=false )
+		{
+			ostringstream os;
+			uint index = 0;
+			var pDBTable = _schema.FindTableSuffix( table2.DBName() ); THROW_IF( !pDBTable, Exception("Could not find table '{}' in schema", table2.DBName()) );
+			for( var& column : table2.Columns )
+			{
+				string columnName = DB::Schema::FromJson( column.JsonName );
+				if( columnName=="id" && excludeId )
+					continue;
+				var pSchemaColumn = pDBTable->FindColumn( columnName ); THROW_IF( !pSchemaColumn, Exception("Could not find column '{}.{}'", pDBTable->Name, columnName) );
+				os << ( index==0 ? "" : ", " );
+				if( prefix.size() )
+					columnName = format( "{}.{}", prefix, columnName );
+				if( pSchemaColumn->Type==DataType::DateTime )
+				{
+					dates.push_back( index );
+					os << pSyntax->DateTimeSelect( columnName );
+				}
+				else
+					os << columnName;
 
-		// }
-		std::vector<DB::DataValue> parameters; parameters.reserve( 8 );
+				++index;
+			}
+			return os.str();
+		};
+		vector<uint> dates;
+		sql << columnSql( table, dates );
+
+		var addId = table.Tables.size() && !table.ContainsColumn("id");
+		if( addId )
+			sql << ", id";
+		var& tableName = pSchemaTable->Name;
+		sql << endl << "from\t" << tableName;
+		std::vector<DB::DataValue> parameters;
+		ostringstream where;
 		if( !table.Args.empty() )
 		{
-			sql << endl << "where\t";
-			var begin = sql.tellp();
 			for( var& [name,value] : table.Args.items() )
 			{
 				var columnName = DB::Schema::FromJson( name );
 				var pColumn = pSchemaTable->FindColumn( columnName ); THROW_IF( !pColumn, Exception("column '{}' not found.", columnName) );
-				if( begin != sql.tellp() )
-					sql << " and ";
-				sql << columnName << "=?";
-				parameters.push_back( ToDataValue(pColumn->Type, value, name) );
+				if( where.tellp()!=std::streampos(0) )
+					where << endl << "\tand ";
+				where << tableName << "." << columnName;
+				if( value.is_null() )
+					where << " is null";
+				else
+				{
+					where << "=?";
+					parameters.push_back( ToDataValue(pColumn->Type, value, name) );
+				}
 			}
+			sql << endl << "where\t" << where.str();
+		}
+		auto rowToJson = [&]( const DB::IRow& row, uint iColumn, json& obj, sv memberName, const vector<uint>& dates )
+		{
+			DB::DataValue value = row[iColumn];
+			var index = (EDataValue)value.index();
+			if( index==EDataValue::Null )
+				return;
+			auto& member = obj[string{memberName}];
+			if( index==EDataValue::String )
+				member = get<string>( value );
+			else if( index==EDataValue::StringView )
+				member = get<string_view>( value );
+			else if( index==EDataValue::Bool )
+				member = get<bool>( value );
+			else if( index==EDataValue::Int )
+				member = get<int>( value );
+			else if( index==EDataValue::Int64 )
+			{
+				var intValue = get<_int>( value );
+				if( find(dates.begin(), dates.end(), iColumn)!=dates.end() )
+					member = DateTime( intValue ).ToIsoString();
+				else
+					member = get<_int>( value );
+			}
+			else if( index==EDataValue::Uint )
+				member = get<uint>( value );
+			else if( index==EDataValue::Decimal2 )
+				member = (float)get<Decimal2>( value );
+			else if( index==EDataValue::Double )
+				member = get<double>( value );
+			else if( index==EDataValue::DoubleOptional )
+				member = get<optional<double>>(value).value();
+			else if( index==EDataValue::DateOptional )
+				member = ToIsoString( get<optional<DB::DBDateTime>>(value).value() );
+			else if( index==EDataValue::StringPtr )
+			{
+				if( get<sp<string>>(value) )
+					member = *get<sp<string>>(value);
+			}
+			else
+				ERR( "{} not implemented"sv, (uint8)index );
+		};
+		flat_map<string,flat_multimap<uint,json>> subTables;
+		for( var& pQLTable : table.Tables )
+		{
+			var pSubTable = _schema.FindTableSuffix( pQLTable->DBName() ); THROW_IF( !pSubTable, Exception("Could not find table '{}' in schema", pQLTable->DBName()) );
+			var pDefTable = _schema.FindDefTable( *pSchemaTable, *pSubTable ); THROW_IF( !pDefTable, Exception("Could not find def table '{}<->'{}' in schema", pSchemaTable->Name, pQLTable->DBName()) );
+			var defTableName = pDefTable->Name;
+			//var& subName = subTable.subName;
+			ostringstream subSql{ format("select {0}.{1} primary_id, {0}.{2} sub_id", defTableName, pSchemaTable->FKName(), pSubTable->FKName()), std::ios::ate };
+			var& subTableName = pSubTable->Name;
+			vector<uint> subDates;
+			var columns = columnSql( *pQLTable, subDates, subTableName, true );
+			if( columns.size() )
+				subSql << ", " << columns;
+			subSql << "\nfrom\t" << tableName
+				<< "\tjoin " << defTableName << " on " << tableName <<".id=" << defTableName << "." << pSchemaTable->FKName();
+			if( columns.size() )
+				subSql << "\tjoin " << subTableName << " on " << subTableName <<".id=" << defTableName << "." << pSubTable->FKName();
+
+			if( where.tellp()!=std::streampos(0) )
+				subSql << endl << "where\t" << where.str();
+			auto& rows = subTables.emplace( pQLTable->JsonName, flat_multimap<uint,json>{} ).first->second;
+			auto forEachRow = [&]( const DB::IRow& row )
+			{
+				json jSubRow;
+				uint index = 0;
+				for( var& column : pQLTable->Columns )
+				{
+					auto i = column.JsonName=="id" ? 1 : (index++)+2;
+					rowToJson( row, i, jSubRow, column.JsonName, subDates );
+				}
+				rows.emplace( get<uint>(row[1]), jSubRow );
+			};
+			_pDataSource->Select( subSql.str(), forEachRow, parameters );
 		}
 
 		var jsonTableName = table.JsonName;// DB::Schema::ToJson( table.DBName() )
 		auto fnctn = [&]( const DB::IRow& row )
 		{
 			json j;
+			uint id;
 			for( uint i=0; i<jsonMembers.size(); ++i )
 			{
-				DBG( jsonMembers[i] );
-				DB::DataValue value = row[i];
-				var index = (EDataValue)value.index();
-				if( index==EDataValue::Null )
-					continue;
-				auto& member = j[jsonMembers[i]];
-				if( index==EDataValue::String )
-					member = get<string>( value );
-				else if( index==EDataValue::StringView )
-					member = get<string_view>( value );
-				else if( index==EDataValue::Bool )
-					member = get<bool>( value );
-				else if( index==EDataValue::Int )
-					member = get<int>( value );
-				else if( index==EDataValue::Int64 )
+				rowToJson( row, i, j, jsonMembers[i], dates );
+				if( jsonMembers[i]=="id" )
+					id = j[jsonMembers[i]].get<uint>();
+			}
+			if( subTables.size() )
+			{
+				if( addId )
+					id = get<uint>( row[jsonMembers.size()] );
+				for( var& pQLTable : table.Tables )
 				{
-					var intValue = get<_int>( value );
-					if( find(dates.begin(), dates.end(), i)!=dates.end() )
-						member = DateTime( intValue ).ToIsoString();
-					else
-						member = get<_int>( value );
+					//var pSubTable = _schema.FindTableSuffix( subTable.DBName() );
+					var subPlural = pQLTable->JsonName.ends_with( "s" );
+					if( subPlural )
+						j[pQLTable->JsonName] = json::array();
+					var& subResults = subTables.find( pQLTable->JsonName )->second;
+					auto range = subResults.equal_range( id );
+					for( auto pRow = range.first; pRow!=range.second; ++pRow )
+					{
+						if( subPlural )
+							j[pQLTable->JsonName].push_back( pRow->second );
+						else
+							j[pQLTable->JsonName] = pRow->second;
+					}
 				}
-				else if( index==EDataValue::Uint )
-					member = get<uint>( value );
-				else if( index==EDataValue::Decimal2 )
-					member = (float)get<Decimal2>( value );
-				else if( index==EDataValue::Double )
-					member = get<double>( value );
-				else if( index==EDataValue::DoubleOptional )
-					member = get<optional<double>>(value).value();
-				else if( index==EDataValue::DateOptional )
-					member = ToIsoString( get<optional<DB::DBDateTime>>(value).value() );
-				else if( index==EDataValue::StringPtr )
-				{
-					if( get<sp<string>>(value) )
-						member = *get<sp<string>>(value);
-				}
-				else
-					ERR( "{} not implemented"sv, (uint8)index );
 			}
 			if( isPlural )
-			{
-				if( !jData.contains(jsonTableName) )
-					jData[jsonTableName] = json::array();
-				json item;
-				item[DB::Schema::ToSingular(jsonTableName)] = j;
 				jData[jsonTableName].push_back( j );
-			}
 			else
 				jData[jsonTableName] = j;
 		};
+		if( isPlural )
+			jData[jsonTableName] = json::array();
+
+		DBG( sql.str() );
 		_pDataSource->Select( sql.str(), fnctn, parameters );
 	}
 
@@ -395,10 +724,89 @@ namespace DB
 		vector<char> Delimiters;
 		sv _peekValue;
 	};
+	string StringifyKeys( sv json )
+	{
+		ostringstream os;
+		bool inValue = false;
+		uint i=0;
+		for( char ch = json[i]; i<json.size(); ch = json[++i] )
+		{
+			if( ch=='{' || ch=='}' || std::isspace(ch) )
+				os << ch;
+			else if( inValue )
+			{
+				if( ch=='{' )
+				{
+					for( uint i2=i+1, openCount=1; i2<json.size(); ++i2 )
+					{
+						if( json[i2]=='{' )
+							++openCount;
+						else if( json[i2]=='}' && --openCount==0 )
+						{
+							os << StringifyKeys( json.substr(i,i2-i) );
+							i = i2+1;
+							break;
+						}
+					}
+				}
+				else
+				{
+					for( ; i<json.size() && ch!=',' && ch!='}'; ch = json[++i] )
+						os << ch;
+					if( i<json.size() )
+						os << ch;
+				}
+				inValue = false;
+			}
+			else
+			{
+				var quoted = ch=='"';
+				if( !quoted ) --i;
+				for( char ch = '"'; i<json.size() && ch!=':'; ch=json[++i] )
+					os << ch;
+				if( !quoted )
+					os << '"';
+				os << ":";
+				inValue = true;
+			}
+		}
+		DBG( os.str() );
+		return os.str();
+		// auto paramStringA = string{ q.Next(')') }; THROW_IF( paramStringA.front()!='(', Exception("Expected '(' vs {} @ '{}' to start function - '{}'.",  paramStringA.front(), q.Index()-1, q.Text()) );
+		// var lastIndex = paramStringA.find_last_of( ')' ); THROW_IF( lastIndex==string::npos, Exception("Expected ')' - '{}'.",  paramStringA, q.Text()) );
+		// var paramString = paramStringA.substr( 1, lastIndex-1 );
+		// var params = StringUtilities::Split( paramString );
+		// json j;
+		// for( var& param : params )
+		// {
+		// 	auto keyValue = StringUtilities::Split( param, ':' ); THROW_IF( keyValue.size()!=2, Exception("Could not parse {} keyValue.size()!=2", paramString) );
+		// 	auto key = keyValue[0]; StringUtilities::Trim(key);
+		// 	auto value  = keyValue[1]; StringUtilities::Trim(value); THROW_IF( key.empty() || value.empty(), Exception("Could not parse {} key.empty() || value.empty()", paramString) );
+		// 	if( value.starts_with("\"") && value.ends_with("\"") )
+		// 	{
+		// 		THROW_IF( value.size()==1, Exception("Could not parse {}.  value.size()==1", paramString) );
+		// 		j[key] = value.size()==2 ? "" : value.substr( 1, value.size()-2 );
+		// 	}
+		// 	else if( value=="null" )
+		// 		j[key] = nullptr;
+		// 	else if( value=="true" )
+		// 		j[key] = true;
+		// 	else if( value=="false" )
+		// 		j[key] = false;
+		// 	else
+		// 	{
+		// 		istringstream is{ value };
+		// 		double v2; is >> v2;
+		// 		j[key] = v2;
+		// 	}
+		// }
+		// return j;
+	}
 	json ParseJson( Parser& q )
 	{
-		auto params = string{ q.Next(')') }; THROW_IF( params.front()!='(', Exception("Expected '(' vs {} @ '{}' to start function - '{}'.",  params.front(), q.Index()-1, q.Text()) );
+		string params{ q.Next(')') }; THROW_IF( params.front()!='(', Exception("Expected '(' vs {} @ '{}' to start function - '{}'.",  params.front(), q.Index()-1, q.Text()) );
 		params.front()='{'; params.back() = '}';
+		params = StringifyKeys( params );
 		return json::parse( params );
 	}
 	DB::TableQL LoadTable( Parser& q, sv jsonName )noexcept(false)
@@ -409,7 +817,7 @@ namespace DB
 		for( auto token = q.Next(); token!="}"; token = q.Next() )
 		{
 			if( q.Peek()=="{" )
-				table.Tables.push_back( LoadTable(q, token) );
+				table.Tables.push_back( make_shared<DB::TableQL>(LoadTable(q, token)) );
 			else
 				table.Columns.emplace_back( DB::ColumnQL{string{token}} );
 		}

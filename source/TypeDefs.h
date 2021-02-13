@@ -135,6 +135,7 @@ namespace Jde
 	namespace fs=std::filesystem;
 #ifndef NO_BOOST
 	using boost::container::flat_map;
+	using boost::container::flat_multimap;
 #endif
 #ifndef NO_FORMAT
 	using fmt::format;

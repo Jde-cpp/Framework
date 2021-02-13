@@ -13,21 +13,18 @@ list( APPEND sources DateTime.cpp Exception.cpp Stopwatch.cpp StringUtilities.cp
 	io/File.cpp io/DiskWatcher.cpp
 	threading/Interrupt.cpp threading/InterruptibleThread.cpp threading/Pool.cpp threading/Worker.cpp threading/Mutex.cpp
 	coroutine/Alarm.cpp coroutine/Coroutine.cpp coroutine/CoWorker.cpp coroutine/Task.cpp
-	db/DBException.cpp db/DataType.cpp db/Database.cpp db/DBQueue.cpp db/SchemaProc.cpp db/GraphQL.cpp db/types/Table.cpp)
+	db/DBException.cpp db/DataType.cpp db/Database.cpp db/DBQueue.cpp db/SchemaProc.cpp db/GraphQL.cpp db/types/Table.cpp
+	um/UM.cpp)
 if(NOT MSVC)
     list(APPEND sources ../../Linux/source/LinuxApp.cpp ../../Linux/source/LinuxDrive.cpp ../../Linux/source/LinuxTimezone.cpp  ../../Linux/source/LinuxThread.cpp)
 endif()
 add_library( Jde SHARED ${sources} )
-add_library( Jde.UM SHARED um/UM.cpp )
+#add_library( Jde.UM SHARED um/UM.cpp )
 
 #######################################################
 include_directories( "$ENV{REPO_DIR}/eigen" )
 target_link_libraries(Jde Threads::Threads)
 #######################################################
-target_precompile_headers(Jde.UM
-  PRIVATE
-	"StringUtilities.h"
-)
 #######################################################
 target_precompile_headers(Jde
   PRIVATE

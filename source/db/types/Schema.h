@@ -11,6 +11,8 @@ namespace Jde::DB
 		static string ToSingular( sv plural )noexcept;
 		static string ToPlural( sv singular )noexcept;
 		sp<const Table> FindTableSuffix( sv suffix )const noexcept;
+		sp<const Table> FindDefTable( const Table& t1, const Table& t2 )const noexcept;
+		//FindJsonType( sv jsonType )const noexcept;
 		flat_map<string, Column> Types;
 		flat_map<string, sp<const Table>> Tables;
 	};
@@ -72,5 +74,24 @@ namespace Jde::DB
 		}
 		return result;
 	}
+	inline sp<const Table> Schema::FindDefTable( const Table& t1, const Table& t2 )const noexcept
+	{
+		sp<const Table> result;
+		var singularT1 = t1.FKName();
+		var singularT2 = t2.FKName();
+		for( var& [name,pTable] : Tables )
+		{
+			var childId = pTable->ChildId(); if( childId.empty() ) continue;
+			var parentId = pTable->ParentId(); if( parentId.empty() ) continue;
+
+			if( (singularT1==childId || singularT1==parentId) && (singularT2==childId || singularT2==parentId) )
+			{
+				result = pTable;
+				break;
+			}
+		}
+		return result;
+	}
+
 #undef var
 }

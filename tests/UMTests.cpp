@@ -65,27 +65,36 @@ namespace Jde::UM
 		DBG( j.dump() );
 		var data = j["data"];
 		var obj = j["data"][string{service}];
-		THROW_IF( obj.is_null(), Exception("Could not find '{}' - '{}'- {}", service, name, j.dump()) );
-		return obj["id"].get<uint>();
+		//THROW_IF( obj.is_null(), Exception("Could not find '{}' - '{}'- {}", service, name, j.dump()) );
+		return obj.is_null() ? 0 : obj["id"].get<uint>();
 	}
 	TEST_F(UMTests, Users)
 	{
 		Configure();
 
-		bool create = true;
-		var userId = create ? Crud( "User", "JohnSmith@google.com", "jsmith", "Unit Test User", ",\"authenticatorId\": 1" ) : Query( "user", "JohnSmith@google.com" );
-		//DBG( "{}"sv, userId );
-//		json j = DB::Query( "{query users{ id name target description authenticatorId attributes created updated deleted } }", 0 );
+		//bool create = true;
+		auto adminUserId = Query( "user", "JohnSmith@google.com" ); if( !adminUserId ) adminUserId = Crud( "User", "JohnSmith@google.com", "jsmith", "Unit Test User", ",\"authenticatorId\": 1" );
+		auto authenticatedUserId = Query( "user", "low-user@google.com" ); if( !authenticatedUserId ) authenticatedUserId = Crud( "User", "low-user@google.com", "low-user", "Unit Test User2", ",\"authenticatorId\": 1" );
+
 		json j = DB::Query( "query{ authenticators{ id name }, users{ id name target description authenticatorId attributes created updated deleted } }", 0 );
 		DBG( j.dump() );
 
+		auto administersId = Query( "group", "UnitTestAdminGroup" ); if( !administersId ) administersId = Crud( "Group", "UnitTestAdminGroup", "UnitTestAdminGroup", "UnitTestAdminGroup desc" );
+		auto readUMRoleId = Query( "role", "UnitTestRole" ); if( !readUMRoleId ) readUMRoleId = Crud( "Role", "UnitTestRole", "unittest_role_1", "unittest1 role desc" );
+		//Give administrator UM rights.
+		//Revoke low's write UM Rights.
+		//Try to edit.
+		//Revoke anonymous' read rights.
+		//Try to read.
+		//Test administer.
+		//Test account.
+		
 
-		var groupId = create ? Crud( "Group", "UnitTest1Group", "unittest1", "unittest1 desc" ) : Query( "group", "UnitTest1Group" );
-		var roleId = create ? Crud( "Role", "UnitTestRole", "unittest_role_1", "unittest1 role desc" ) : Query( "role", "UnitTestRole" );
+
+
 		var twsApiId = Query( "api", "Tws" );
-		//var twsApiId = Query( "rights", "Tws" );
 		sv permissionName = "Act1234"sv;
-		auto permissionId = create ? 0 : Query( "permission", permissionName );
+		auto permissionId = Query( "permission", permissionName );
 		if( !permissionId )
 		{
 			var frmt = "{{ mutation {{ create{}(\"input\":{{ \"name\": \"{}\", \"apiId\": {}}}){{ id }} }} }}";
@@ -93,20 +102,19 @@ namespace Jde::UM
 			var items = DB::Query( query, 0 );
 			permissionId = items["data"]["permission"]["id"].get<uint>();
 		}
-		//var permissionId = Crud( "Permission", "UnitTestRole", "unittest_role_1", "unittest1 role desc" );
-		//create ? Crud( "Permission", "UnitTestRole", "unittest_role_1", "unittest1 role desc" ) : Query( "permission", "Read" );
 
-		AddRemove( "addGroupRole", groupId, roleId );
-		AddRemove( "addUserGroup", userId, groupId );
-		AddRemove( "addRolePermission", roleId, permissionId, format(", \"rightId\": 7") );
+		AddRemove( "addGroupRole", administersId, readUMRoleId );
+		AddRemove( "addUserGroup", authenticatedUserId, administersId );
+		AddRemove( "addRolePermission", readUMRoleId, permissionId, format(", \"rightId\": 7") );
 
-		AddRemove( "removeGroupRole", groupId, roleId );
-		AddRemove( "removeUserGroup", userId, groupId );
-		AddRemove( "removeRolePermission", roleId, permissionId );
+		AddRemove( "removeGroupRole", administersId, readUMRoleId );
+		AddRemove( "removeUserGroup", authenticatedUserId, administersId );
+		AddRemove( "removeRolePermission", readUMRoleId, permissionId );
 
-		Purge( "Group", groupId );
-		Purge( "User", userId );
-		Purge( "Role", roleId );
+		Purge( "Group", administersId );
+		Purge( "User", adminUserId );
+		Purge( "User", authenticatedUserId );
+		Purge( "Role", readUMRoleId );
 		Purge( "Permission", permissionId );
 
 /*		var updateFormat = "{{ mutation {{ updateUser(\"id\":{}, \"input\":{{ \"description\": \"{}\"}}) }} }}";

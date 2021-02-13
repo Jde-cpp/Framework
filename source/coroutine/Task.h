@@ -31,10 +31,10 @@ namespace Jde::Coroutine
 	{
 		Task():_taskHandle{NextTaskHandle()}{ DBG("Task::Task({})"sv, _taskHandle); }
 		Task( const Task& t2 ):
-			_taskHandle{t2._taskHandle}, 
-			Result{t2.Result}
-		{ 
-			DBG("Task(Task{})"sv, _taskHandle); 
+			Result{t2.Result},
+			_taskHandle{t2._taskHandle}
+		{
+			DBG("Task(Task{})"sv, _taskHandle);
 		}
 		~Task(){ DBG( "Task::~Task({})"sv, _taskHandle); }
 

@@ -120,7 +120,34 @@ namespace Jde::DB
 				// else
 				{
 					vector<DB::DataValue> params;
+
 					ostringstream osSelect{ "select count(*) from ", std::ios::ate }; osSelect << tableName << " where ";
+					vector<DB::DataValue> selectParams;
+					ostringstream osWhere;
+					var set = [&,&table=*pTable]( const vector<string>& keys )
+					{
+						osWhere.str("");
+						for( var& keyColumn : table.SurrogateKey )
+						{
+							if( osWhere.tellp() != std::streampos(0) )
+								osWhere << " and ";
+							osWhere << keyColumn << "=?";
+							if( var pData = jData.find( Schema::ToJson(keyColumn) ); pData!=jData.end() )
+								selectParams.push_back( ToDataValue(table.FindColumn(keyColumn)->Type, *pData, keyColumn) );
+							else
+							{
+								selectParams.clear();
+								break;
+							}
+						}
+						return selectParams.size();
+					};
+					if( !set(pTable->SurrogateKey) )
+						for( auto p = pTable->NaturalKeys.begin(); p!=pTable->NaturalKeys.end() && !set(*p); ++p );
+					THROW_IF( selectParams.empty(), Exception("Could not find keys in data for '{}'", tableName) );
+					osSelect << osWhere.str();
+
+
 					//ostringstream osInsert{ "insert into ", std::ios::ate }; osInsert << tableName << "(";
 					ostringstream osInsertValues;
 					ostringstream osInsertColumns;
@@ -135,15 +162,15 @@ namespace Jde::DB
 
 						if( params.size() )
 						{
-							if( haveData )
-								osSelect << " and ";
+/*							if( haveData )
+								osSelect << " and ";*/
 							osInsertValues << ",";
 							osInsertColumns << ",";
 						}
 						osInsertColumns << column.Name;
 						if( haveData )
 						{
-							osSelect << column.Name << "=?";
+							//osSelect << column.Name << "=?";
 							osInsertValues << "?";
 							if( column.Name=="id" && pData->is_number() )
 								id = pData->get<uint>();
@@ -152,7 +179,7 @@ namespace Jde::DB
 						else
 							osInsertValues << (column.Default=="$now" ? syntax.UtcNow() : column.Default);
 					}
-					if( _pDataSource->Scaler( osSelect.str(), params)==0 )
+					if( _pDataSource->Scaler( osSelect.str(), selectParams)==0 )
 					{
 						var sql = format( "insert into {}({})values({})", tableName, osInsertColumns.str(), osInsertValues.str() );
 						/*if( pTable->HaveSequence() && id==0 && syntax.ZeroSequenceMode().size()  )

@@ -58,6 +58,9 @@ namespace Jde::DB
 		string InsertProcText( const SqlSyntax& syntax )const noexcept;
 		const Column* FindColumn( sv name )const noexcept;
 
+		string NameWithoutType()const noexcept;
+		string JsonTypeName()const noexcept;
+		string FKName()const noexcept;
 		string ChildId()const noexcept(false);
 		string ParentId()const noexcept(false);
 

@@ -1,6 +1,7 @@
 #include "gtest/gtest.h"
 #include "../source/coroutine/Alarm.h"
 #include "../source/coroutine/Coroutine.h"
+//#include "../source/log/Logging.h"
 #include "../source/log/server/ServerSink.h"
 
 #define var const auto

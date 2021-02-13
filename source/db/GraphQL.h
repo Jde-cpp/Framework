@@ -1,26 +1,43 @@
 #include <variant>
 #include "../um/UM.h"
-
+#define var const auto
 namespace Jde::DB
 {
-	struct Schema; struct IDataSource; struct SqlSyntax;
+	struct Schema; struct IDataSource; struct SqlSyntax; struct Column;
 	void AppendQLSchema( const DB::Schema& schema )noexcept;
 	void SetQLDataSource( sp<DB::IDataSource> p, sp<DB::SqlSyntax> pSyntax )noexcept;
 	void ClearQLDataSource()noexcept;
+	enum class QLFieldKind : uint8
+	{
+		Scalar=0,
+		Object=1,
+		Interface=2,
+		Union=3,
+		Enum=4,
+		InputObject=5,
+		List=6,
+		NonNull=7
+	};
+	constexpr array<sv,8> QLFieldKindStrings = { "SCALAR", "OBJECT", "INTERFACE", "UNION", "ENUM", "INPUT_OBJECT", "LIST", "NON_NULL" };
 
 	nlohmann::json Query( sv query, UserPK userId )noexcept(false);
 	struct ColumnQL final
 	{
 		string JsonName;
+		Column* SchemaColumnPtr{nullptr};
+		static string QLType( const DB::Column& db )noexcept;
 	};
 
 	struct TableQL final
 	{
 		string DBName()const noexcept;
+		bool ContainsColumn( sv jsonName )const noexcept{ return find_if( Columns.begin(), Columns.end(), [&](var& c){return c.JsonName==jsonName;})!=Columns.end(); }
+		sp<const TableQL> FindTable( sv jsonTableName )const noexcept{ auto p = find_if( Tables.begin(), Tables.end(), [&](var t){return t->JsonName==jsonTableName;}); return p==Tables.end() ? sp<const TableQL>{} : *p; }
 		string JsonName;
 		nlohmann::json Args;
 		vector<ColumnQL> Columns;
-		vector<TableQL> Tables;
+		vector<sp<const TableQL>> Tables;
+
 	};
 	enum class EMutationQL : uint8
 	{
@@ -53,3 +70,4 @@ namespace Jde::DB
 
 	RequestQL ParseQL( sv query )noexcept(false);
 }
+#undef var

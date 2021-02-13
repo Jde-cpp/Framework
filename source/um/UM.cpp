@@ -1,5 +1,6 @@
 #include "UM.h"
 #include "../Settings.h"
+#include "../StringUtilities.h"
 #include "../TypeDefs.h"
 #include "../application/Application.h"
 #include "../db/DataSource.h"
@@ -27,8 +28,7 @@ namespace Jde
 	};
 	using nlohmann::json;
 	void from_json( const json& j, UMSettings& settings );
-	static sp<UMSettings> _pSettings;
-	//sp<UMSettings> Settings()noexcept{ return _pSettings; }
+	sp<UMSettings> _pSettings;
 	flat_map<string,uint> _apis;
 	flat_map<string,UM::PermissionPK> _tablePermissions;
 	flat_map<UserPK,vector<UM::GroupPK>> _userGroups; shared_mutex _userGroupMutex;
@@ -54,11 +54,11 @@ namespace Jde
 	}
 	void AssignUserGroups( UserPK userId=0 )noexcept(false)
 	{
-		ostringstream sql{ "select user_id, group_id from um_user_groups g join um_users u on g.user_id=u.id and u.deleted is null" };
+		ostringstream sql{ "select user_id, group_id from um_user_groups g join um_users u on g.user_id=u.id and u.deleted is null", std::ios::ate };
 		vector<DB::DataValue> params;
 		if( userId )
 		{
-			sql << " where userId=?";
+			sql << " where user_id=?";
 			params.push_back( DB::DataValue{userId} );
 		}
 		QUERY.Select( sql.str(), [&](var& r){ unique_lock l{_userGroupMutex}; _userGroups.try_emplace(r.GetUInt(0)).first->second.push_back( r.GetUInt(2) );}, params );

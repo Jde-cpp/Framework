@@ -49,7 +49,7 @@ namespace Jde::DB
 				if( Type==DataType::None )
 				{
 					Type = DataType::UInt;
-					PKTable = typeName;
+					PKTable = Schema::FromJson( typeName );
 				}
 			}
 		};
@@ -292,19 +292,35 @@ namespace Jde::DB
 
 	string TableNamePart( const Table& table, uint8 index )noexcept(false)
 	{
-		var nameParts = StringUtilities::Split( table.Name, '_' ); THROW_IF( nameParts.size()!=3, Exception("Child/Parent expected 3 parts to table name {}", table.Name) );
-		var part = DB::Schema::ToSingular( nameParts[index] );
-		auto pColumn = find_if( table.Columns.begin(), table.Columns.end(), [&part](var& c){return c.Name.starts_with(part);} ); THROW_IF( pColumn==table.Columns.end(), Exception("Could not find column beginning with '{}'", part) );
-		return pColumn->Name;
+		var nameParts = StringUtilities::Split( table.NameWithoutType(), '_' ); //THROW_IF( nameParts.size()!=3, Exception("Child/Parent expected 3 parts to table name {}", table.Name) );
+		string name;
+		if( nameParts.size()>index )
+		{
+			var part = DB::Schema::ToSingular( nameParts[index] );
+			auto pColumn = find_if( table.Columns.begin(), table.Columns.end(), [&part](var& c){return c.Name.starts_with(part);} );
+			//THROW_IF( pColumn==table.Columns.end(), Exception("Could not find column beginning with '{}'", part) );
+			if( pColumn!=table.Columns.end() )
+				name = pColumn->Name;
+		}
+		return name;
+	}
+	string Table::NameWithoutType()const noexcept{ var underscore = Name.find_first_of('_'); return Name.substr(underscore==string::npos ? 0 : underscore+1); }
+
+	string Table::FKName()const noexcept{ return Schema::ToSingular(NameWithoutType())+"_id"; }
+	string Table::JsonTypeName()const noexcept
+	{
+		auto name = Schema::ToJson( Schema::ToSingular(NameWithoutType()) );
+		if( name.size() )
+			name[0] = std::toupper( name[0] );
+		return name;
 	}
 	string Table::ChildId()const noexcept(false)
 	{
-		return TableNamePart( *this, 1 );
-
+		return TableNamePart( *this, 0 );
 	}
 	string Table::ParentId()const noexcept(false)
 	{
-		return TableNamePart( *this, 2 );
+		return TableNamePart( *this, 1 );
 	}
 
 }

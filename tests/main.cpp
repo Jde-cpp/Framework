@@ -37,7 +37,7 @@ int main( int argc, char **argv )
 	auto result = EXIT_FAILURE;
 	//if( p )
 	{
-		::testing::GTEST_FLAG(filter) = "UMTests.Users";
+		::testing::GTEST_FLAG(filter) = "QLTests.IntrospectionSchema";
 	   result = RUN_ALL_TESTS();
 		Jde::IApplication::Instance().Wait();
 		Jde::IApplication::CleanUp();
