@@ -170,19 +170,19 @@ namespace Jde
 			switch( type )
 			{
 			case DataType::Bit:
-				THROW_IF( !j.is_boolean(), Exception("{} could not conver to boolean {}", memberName) );
+				THROW_IF( !j.is_boolean(), Exception("{} could not conver to boolean", memberName) );
 				value = DB::DataValue{ j.get<bool>() };
 				break;
 			case DataType::Int16:
 			case DataType::Int:
 			case DataType::Int8:
 			case DataType::Long:
-				THROW_IF( !j.is_number(), Exception("{} could not conver to numeric {}", memberName) );
+				THROW_IF( !j.is_number(), Exception("{} could not conver to numeric", memberName) );
 				value = DB::DataValue{ j.get<_int>() };
 				break;
 			case DataType::UInt:
 			case DataType::ULong:
-				THROW_IF( !j.is_number(), Exception("{} could not conver to numeric {}", memberName) );
+				THROW_IF( !j.is_number(), Exception("{} could not conver to numeric", memberName) );
 				value = DB::DataValue{ j.get<uint>() };
 				break;
 			case DataType::SmallFloat:
@@ -190,7 +190,7 @@ namespace Jde
 			case DataType::Decimal:
 			case DataType::Numeric:
 			case DataType::Money:
-				THROW_IF( !j.is_number(), Exception("{} could not conver to numeric {}", memberName) );
+				THROW_IF( !j.is_number(), Exception("{} could not conver to numeric", memberName) );
 				value = DB::DataValue{ j.get<double>() };
 				break;
 			case DataType::None:
@@ -209,7 +209,7 @@ namespace Jde
 			case DataType::NText:
 			case DataType::Text:
 			case DataType::Uri:
-				THROW_IF( !j.is_string(), Exception("{} could not conver to string {}", memberName) );
+				THROW_IF( !j.is_string(), Exception("{} could not conver to string", memberName) );
 				value = DB::DataValue{ j.get<string>() };
 				break;
 			case DataType::TChar:

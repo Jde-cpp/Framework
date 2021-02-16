@@ -4,6 +4,7 @@
 namespace Jde::DB
 {
 	struct SqlSyntax;
+	struct Schema;
 	//struct SurrogateKey
 	//{};
 	struct Column
@@ -58,11 +59,15 @@ namespace Jde::DB
 		string InsertProcText( const SqlSyntax& syntax )const noexcept;
 		const Column* FindColumn( sv name )const noexcept;
 
+		bool IsEnum()const noexcept{ return Columns.size()==2 && Columns[0].Name=="id" && Columns[1].Name=="name"; }
 		string NameWithoutType()const noexcept;
 		string JsonTypeName()const noexcept;
 		string FKName()const noexcept;
+		bool IsMap()const noexcept{ return ChildId().size() && ParentId().size(); }
 		string ChildId()const noexcept(false);
 		string ParentId()const noexcept(false);
+		sp<const Table> ChildTable( const DB::Schema& schema )const noexcept(false);
+		sp<const Table> ParentTable( const DB::Schema& schema )const noexcept(false);
 
 		bool HaveSequence()const noexcept{ return std::find_if( Columns.begin(), Columns.end(), [](const auto& c){return c.IsIdentity;} )!=Columns.end(); }
 		string Schema;

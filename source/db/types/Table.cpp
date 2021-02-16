@@ -290,20 +290,18 @@ namespace Jde::DB
 		return pColumn==Columns.end() ? nullptr : &(*pColumn);
 	}
 
+	string ColumnStartingWith( const Table& table, sv part )
+	{
+		auto pColumn = find_if( table.Columns.begin(), table.Columns.end(), [&part](var& c){return c.Name.starts_with(part);} );
+		return pColumn==table.Columns.end() ? string{} : pColumn->Name;
+	}
+
 	string TableNamePart( const Table& table, uint8 index )noexcept(false)
 	{
 		var nameParts = StringUtilities::Split( table.NameWithoutType(), '_' ); //THROW_IF( nameParts.size()!=3, Exception("Child/Parent expected 3 parts to table name {}", table.Name) );
-		string name;
-		if( nameParts.size()>index )
-		{
-			var part = DB::Schema::ToSingular( nameParts[index] );
-			auto pColumn = find_if( table.Columns.begin(), table.Columns.end(), [&part](var& c){return c.Name.starts_with(part);} );
-			//THROW_IF( pColumn==table.Columns.end(), Exception("Could not find column beginning with '{}'", part) );
-			if( pColumn!=table.Columns.end() )
-				name = pColumn->Name;
-		}
-		return name;
+		return nameParts.size()>index ? DB::Schema::ToSingular( nameParts[index] ) : string{};
 	}
+
 	string Table::NameWithoutType()const noexcept{ var underscore = Name.find_first_of('_'); return Name.substr(underscore==string::npos ? 0 : underscore+1); }
 
 	string Table::FKName()const noexcept{ return Schema::ToSingular(NameWithoutType())+"_id"; }
@@ -316,11 +314,26 @@ namespace Jde::DB
 	}
 	string Table::ChildId()const noexcept(false)
 	{
-		return TableNamePart( *this, 0 );
+		var part = TableNamePart( *this, 0 );
+		return part.empty() ? part : ColumnStartingWith( *this, part );
 	}
+
+	sp<const Table> Table::ChildTable( const DB::Schema& schema )const noexcept(false)
+	{
+		var part = TableNamePart( *this, 0 );
+		return part.empty() ? sp<const Table>{} : schema.FindTableSuffix( Schema::ToPlural(part) );
+	}
+
 	string Table::ParentId()const noexcept(false)
 	{
-		return TableNamePart( *this, 1 );
+		var part = TableNamePart( *this, 1 );
+		return part.empty() ? part : ColumnStartingWith( *this, part );
+	}
+
+	sp<const Table> Table::ParentTable( const DB::Schema& schema )const noexcept(false)
+	{
+		var part = TableNamePart( *this, 1 );
+		return part.empty() ? sp<const Table>{} : schema.FindTableSuffix( Schema::ToPlural(part) );
 	}
 
 }

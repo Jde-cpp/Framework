@@ -1,5 +1,6 @@
 #include "gtest/gtest.h"
 #include "../source/um/UM.h"
+#include "../source/db/Database.h"
 #include "../source/db/GraphQL.h"
 #include "../source/db/types/Schema.h"
 #include "../source/log/Logging.h"
@@ -51,10 +52,10 @@ namespace Jde::UM
 
 		//DBG( purgeResult.dump() );
 	}
-	void AddRemove( sv service, uint childId, uint parentId, sv suffix={} )
+	void AddRemove( sv service, sv childMember, sv parentMember, uint childId, uint parentId, sv suffix={} )
 	{
-		var frmt = "{{ mutation {{ {}(\"input\":{{ \"childId\": {}, \"parentId\": {}{}}} ) }} }}";
-		var query = format( frmt, service, childId, parentId, suffix );
+		var frmt = "{{ mutation {{ {}(\"input\":{{ \"{}\": {}, \"{}\": {}{}}} ) }} }}";
+		var query = format( frmt, service, childMember, childId, parentMember, parentId, suffix );
 		DB::Query( query, 0 );
 	}
 	uint Query( sv service, sv name )
@@ -88,9 +89,6 @@ namespace Jde::UM
 		//Try to read.
 		//Test administer.
 		//Test account.
-		
-
-
 
 		var twsApiId = Query( "api", "Tws" );
 		sv permissionName = "Act1234"sv;
@@ -103,13 +101,17 @@ namespace Jde::UM
 			permissionId = items["data"]["permission"]["id"].get<uint>();
 		}
 
-		AddRemove( "addGroupRole", administersId, readUMRoleId );
-		AddRemove( "addUserGroup", authenticatedUserId, administersId );
-		AddRemove( "addRolePermission", readUMRoleId, permissionId, format(", \"rightId\": 7") );
+		auto pDataSource = Jde::DB::DataSource();
+		if( !pDataSource->Scaler( format("select count(*) from um_group_roles where group_id={} and role_id={}", administersId, readUMRoleId), {}) )
+			AddRemove( "addGroupRole", "groupId", "roleId", administersId, readUMRoleId );
+		if( !pDataSource->Scaler( format("select count(*) from um_user_groups where user_id={} and group_id={}", authenticatedUserId, administersId), {}) )
+			AddRemove( "addUserGroup", "userId", "groupId", authenticatedUserId, administersId );
+		if( !pDataSource->Scaler( format("select count(*) from um_role_permissions where role_id={} and permission_id={}", readUMRoleId, permissionId), {}) )
+			AddRemove( "addRolePermission", "roleId", "permissionId", readUMRoleId, permissionId, format(", \"rightId\": 7") );
 
-		AddRemove( "removeGroupRole", administersId, readUMRoleId );
-		AddRemove( "removeUserGroup", authenticatedUserId, administersId );
-		AddRemove( "removeRolePermission", readUMRoleId, permissionId );
+		AddRemove( "removeGroupRole", "groupId", "roleId", administersId, readUMRoleId );
+		AddRemove( "removeUserGroup", "userId", "groupId", authenticatedUserId, administersId );
+		AddRemove( "removeRolePermission", "roleId", "permissionId", readUMRoleId, permissionId );
 
 		Purge( "Group", administersId );
 		Purge( "User", adminUserId );

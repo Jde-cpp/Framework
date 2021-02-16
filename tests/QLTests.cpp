@@ -18,14 +18,37 @@ namespace Jde::DB
 		void TearDown()noexcept override {}
 	};
 
-	TEST_F(QLTests, Introspection)
+	TEST_F(QLTests, IntrospectionDefTests)
 	{
-		var ql = format("{{ __type(name: \"{}\") {{ fields {{ name type {{ name kind ofType{{name kind}} }} }} }} }}", "Role" );
-		//var ql = "query{ roles(deleted:null){name target} }";
-		//var ql = "query{ role(target:\"unittestrole1\"){ id name attributes created deleted updated description target groups{id name attributes created deleted updated description target} permissions{apiId id name} } }";
-		//var ql = "{ mutation { updateRole( \"id\":1, \"input\": {\"target\":\"user_management2\"} ) } }";
+		var defTest = format("{{ __type(name: \"{}\") {{ fields {{ name type {{ name kind ofType{{name kind}} }} }} }} }}", "RolePermission" );
+		var defTestItems = DB::Query( defTest, 0 );
+		DBG( defTestItems.dump() );
+		ASSERT_EQ( defTestItems.dump(), "{\"data\":{\"__type\":{\"fields\":[{\"name\":\"api\",\"type\":{\"kind\":7,\"name\":null,\"ofType\":{\"kind\":1,\"name\":\"Api\"}}},{\"name\":\"id\",\"type\":{\"kind\":7,\"name\":null,\"ofType\":{\"kind\":0,\"name\":\"ID\"}}},{\"name\":\"name\",\"type\":{\"kind\":0,\"name\":\"String\"}},{\"name\":\"right\",\"type\":{\"kind\":7,\"name\":null,\"ofType\":{\"kind\":1,\"name\":\"Right\"}}}],\"name\":\"RolePermission\"}}}" );
+	}
+
+	TEST_F(QLTests, DefTestsFetch)
+	{
+		var ql = "query{ role(target:\"user_management\"){ id name attributes created deleted updated description target  groups{id name attributes created deleted updated description target } rolePermissions{api{ id name } id name right{ id name } } } }"sv;
 		var items = DB::Query( ql, 0 );
 		DBG( items.dump() );
+		ASSERT_EQ( items.dump(), "{\"data\":{\"role\":{\"attributes\":4,\"created\":\"2021-02-13T07:00:33Z\",\"groups\":[{\"attributes\":5,\"created\":\"2021-02-13T07:00:33Z\",\"id\":1,\"name\":\"Everyone\",\"target\":\"everyone\"},{\"attributes\":6,\"created\":\"2021-02-13T07:00:33Z\",\"id\":2,\"name\":\"Users\",\"target\":\"users\"}],\"id\":1,\"name\":\"User Management\",\"rolePermissions\":[{\"api\":1,\"id\":1,\"right\":7}],\"target\":\"user_management\"}}}" );
+	}
+
+/*	TEST_F(QLTests, EnumFetch)
+	{
+		var ql = "query{ __type(name: \"Api\") { enumValues { name description } } }"sv;
+		var items = DB::Query( ql, 0 );
+		DBG( items.dump() );
+		ASSERT_EQ( items.dump(), "{\"data\":{\"__type\":{\"enumValues\":[{\"name\":\"None\"},{\"name\":\"UM\"},{\"name\":\"Web\"},{\"name\":\"Tws\"},{\"name\":\"Blockly\"}]}}}" );
+	}
+*/
+	TEST_F(QLTests, Introspection)
+	{
+		var ql = "query{ role(id:1){ groups{id name attributes created deleted updated description target} } }";
+		//var ql = " { mutation{ removeGroupRole(\"input\":{ \"roleId\": 1, \"groupId\": 1} ) } }";
+		//var ql = "query{ role(target:\"user_management\"){ id name attributes created deleted updated description target  groups{id name attributes created deleted updated description target } permissions{api{ id name } id name } } }";
+		var items = DB::Query( ql, 0 );
+//		DBG( items.dump() );
 	}
 	TEST_F(QLTests, IntrospectionSchema)
 	{
