@@ -26,7 +26,7 @@ namespace Jde::UM
 		bool IsTarget( sv url )noexcept;
 		void TestAccess( EAccess access, UserPK userId, sv tableName )noexcept(false);
 		void TestAccess( EAccess access, UserPK userId, ApiPK apiId )noexcept(false);
-		void ApplyMutation( const DB::MutationQL& m, PK id )noexcept;
+		void ApplyMutation( const DB::MutationQL& m, PK id )noexcept(false);
 		// string Get( sv url, UserPK userId )noexcept(false);
 		// UserPK Post( sv url, UserPK userId, sv item )noexcept(false);
 		// void Patch( sv url, UserPK userId, sv item )noexcept(false);

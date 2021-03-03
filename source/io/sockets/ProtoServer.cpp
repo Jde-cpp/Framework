@@ -40,7 +40,7 @@ namespace Jde::IO::Sockets
 		auto onDone = [&]( std::error_code ec, std::size_t length )
 		{
 			if( ec )
-				ERR0( CodeException::ToString(ec) );
+				ERR( CodeException::ToString(ec) );
 			else
 				DBG("length={}"sv, length);
 		};

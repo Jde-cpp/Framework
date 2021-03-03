@@ -3,7 +3,7 @@
 
 namespace Jde::DB
 {
-	struct SqlSyntax;
+	struct Syntax;
 	struct Schema;
 	//struct SurrogateKey
 	//{};
@@ -14,12 +14,13 @@ namespace Jde::DB
 		Column( sv name )noexcept;
 		Column( sv name, const nlohmann::json& j, const flat_map<string,Column>& commonColumns )noexcept(false);
 
-		string Create( const SqlSyntax& syntax )const noexcept;
+		string Create( const Syntax& syntax )const noexcept;
 		string DataTypeString()const noexcept;
 		string Name;
 		uint OrdinalPosition;
 		string Default;
 		bool IsNullable{false};
+		mutable bool IsFlags{false};
 		DataType Type{ DataType::UInt };
 		optional<uint> MaxLength;
 		bool IsIdentity{false};
@@ -38,7 +39,7 @@ namespace Jde::DB
 		Index( sv indexName, sv tableName, bool primaryKey, vector<string>* pColumns=nullptr, bool unique=true, optional<bool> clustered=optional<bool>{} )noexcept;//, bool clustered=false
 		Index( sv indexName, sv tableName, const Index& other )noexcept;
 
-		string Create( sv name, sv tableName, const SqlSyntax& syntax )const noexcept;
+		string Create( sv name, sv tableName, const Syntax& syntax )const noexcept;
 		string Name;
 		string TableName;
 		vector<string> Columns;
@@ -54,13 +55,14 @@ namespace Jde::DB
 		{}
 		Table( sv name, const nlohmann::json& j, const flat_map<string,Table>& parents, const flat_map<string,Column>& commonColumns )noexcept(false);
 
-		string Create( const SqlSyntax& syntax )const noexcept;
+		string Create( const Syntax& syntax )const noexcept;
 		string InsertProcName()const noexcept;
-		string InsertProcText( const SqlSyntax& syntax )const noexcept;
+		string InsertProcText( const Syntax& syntax )const noexcept;
 		const Column* FindColumn( sv name )const noexcept;
 
-		bool IsEnum()const noexcept{ return Columns.size()==2 && Columns[0].Name=="id" && Columns[1].Name=="name"; }
-		string NameWithoutType()const noexcept;
+		bool IsFlags()const noexcept{ return /*Columns.size()==2 && Columns[0].Name=="id" && Columns[1].Name=="name" &&*/ FlagsData.size(); }
+		string NameWithoutType()const noexcept;//users in um_users.
+		string Prefix()const noexcept;//um in um_users.
 		string JsonTypeName()const noexcept;
 		string FKName()const noexcept;
 		bool IsMap()const noexcept{ return ChildId().size() && ParentId().size(); }

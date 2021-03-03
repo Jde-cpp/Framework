@@ -110,9 +110,9 @@ namespace Jde
 
 #define CRITICAL(message,...) Jde::Logging::LogCritical( Jde::Logging::MessageBase(Jde:: ELogLevel::Critical, message, MY_FILE, __func__, __LINE__), __VA_ARGS__ )
 #define CRITICAL0( message ) Jde::Logging::LogCritical( Jde::Logging::MessageBase(Jde::ELogLevel::Critical, message, MY_FILE, __func__, __LINE__) )
-#define ERR0(message) Logging::Log( Logging::MessageBase(ELogLevel::Error, message, MY_FILE, __func__, __LINE__) )
+//#define ERR0(message) Logging::Log( Logging::MessageBase(ELogLevel::Error, message, MY_FILE, __func__, __LINE__) )
 #define ERR0_ONCE(message) Logging::LogOnce( Logging::MessageBase(ELogLevel::Error, message, MY_FILE, __func__, __LINE__) )
-#define ERR(message,...) Logging::LogError( Logging::MessageBase(ELogLevel::Error, message, MY_FILE, __func__, __LINE__), __VA_ARGS__ )
+#define ERR(message,...) Logging::LogError( Logging::MessageBase(ELogLevel::Error, message, MY_FILE, __func__, __LINE__) __VA_OPT__(,) __VA_ARGS__ )
 #define ERRX(message,...) Logging::LogNoServer( Logging::MessageBase(ELogLevel::Error, message, MY_FILE, __func__, __LINE__), __VA_ARGS__ )
 #define ERRN( message, ... ) Logging::Log( Logging::MessageBase(ELogLevel::Error, message, MY_FILE, __func__, __LINE__, IO::Crc::Calc32RunTime(message), IO::Crc::Calc32RunTime(MY_FILE), IO::Crc::Calc32RunTime(__func__)), __VA_ARGS__ )
 #define ERR_ONCE(message,...) Logging::LogOnce( Logging::MessageBase(ELogLevel::Error, message, MY_FILE, __func__, __LINE__), __VA_ARGS__ )

@@ -69,11 +69,17 @@ namespace Jde::UM
 		//THROW_IF( obj.is_null(), Exception("Could not find '{}' - '{}'- {}", service, name, j.dump()) );
 		return obj.is_null() ? 0 : obj["id"].get<uint>();
 	}
+
 	TEST_F(UMTests, Users)
 	{
 		Configure();
 
 		//bool create = true;
+
+		json j1 = DB::Query( "query{ role(filter:{id:{eq:8}}){ rolePermissions{api{ id name } id name rights } } }", 0 );
+		DBG( j1.dump() );
+		json jx = DB::Query( "query{ authenticators{ id name }, users{ id name target description authenticatorId attributes created updated deleted } }", 0 );
+		DBG( jx.dump() );
 		auto adminUserId = Query( "user", "JohnSmith@google.com" ); if( !adminUserId ) adminUserId = Crud( "User", "JohnSmith@google.com", "jsmith", "Unit Test User", ",\"authenticatorId\": 1" );
 		auto authenticatedUserId = Query( "user", "low-user@google.com" ); if( !authenticatedUserId ) authenticatedUserId = Crud( "User", "low-user@google.com", "low-user", "Unit Test User2", ",\"authenticatorId\": 1" );
 
@@ -101,6 +107,9 @@ namespace Jde::UM
 			permissionId = items["data"]["permission"]["id"].get<uint>();
 		}
 
+		var updateDef = format( "{{ mutation {{ updateRolePermission(\"roleId\":{}, \"permissionId\":{}, \"input\":{{ \"rights\": [\"Administer\", \"Write\"]}}) }} }}", readUMRoleId, permissionId );
+		DB::Query( updateDef, 0 );
+
 		auto pDataSource = Jde::DB::DataSource();
 		if( !pDataSource->Scaler( format("select count(*) from um_group_roles where group_id={} and role_id={}", administersId, readUMRoleId), {}) )
 			AddRemove( "addGroupRole", "groupId", "roleId", administersId, readUMRoleId );
@@ -108,6 +117,13 @@ namespace Jde::UM
 			AddRemove( "addUserGroup", "userId", "groupId", authenticatedUserId, administersId );
 		if( !pDataSource->Scaler( format("select count(*) from um_role_permissions where role_id={} and permission_id={}", readUMRoleId, permissionId), {}) )
 			AddRemove( "addRolePermission", "roleId", "permissionId", readUMRoleId, permissionId, format(", \"rightId\": 7") );
+
+		var updateDef2 = format( "{{ mutation {{ updateRolePermission(\"roleId\":{}, \"permissionId\":{}, \"input\":{{ \"rights\": [\"Administer\"]}}) }} }}", 3, 3 );
+		DB::Query( updateDef2, 0 );
+
+		var updateDef3 = format( "{{ mutation {{ updateRolePermission(\"roleId\":{}, \"permissionId\":{}, \"input\":{{ \"rights\": null}}) }} }}", 3, 3 );
+		DB::Query( updateDef3, 0 );
+
 
 		AddRemove( "removeGroupRole", "groupId", "roleId", administersId, readUMRoleId );
 		AddRemove( "removeUserGroup", "userId", "groupId", authenticatedUserId, administersId );

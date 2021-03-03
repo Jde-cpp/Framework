@@ -3,9 +3,9 @@
 #define var const auto
 namespace Jde::DB
 {
-	struct Schema; struct IDataSource; struct SqlSyntax; struct Column;
-	void AppendQLSchema( const DB::Schema& schema )noexcept;
-	void SetQLDataSource( sp<DB::IDataSource> p, sp<DB::SqlSyntax> pSyntax )noexcept;
+	struct Schema; struct IDataSource; struct Syntax; struct Column;
+	void AppendQLSchema( const Schema& schema )noexcept;
+	void SetQLDataSource( sp<IDataSource> p )noexcept;
 	void ClearQLDataSource()noexcept;
 	enum class QLFieldKind : uint8
 	{
@@ -37,7 +37,6 @@ namespace Jde::DB
 		nlohmann::json Args;
 		vector<ColumnQL> Columns;
 		vector<sp<const TableQL>> Tables;
-
 	};
 	enum class EMutationQL : uint8
 	{
@@ -69,5 +68,7 @@ namespace Jde::DB
 	typedef std::variant<vector<TableQL>,MutationQL> RequestQL;
 
 	RequestQL ParseQL( sv query )noexcept(false);
+
+	void AddMutationListener( sv tablePrefix, function<void(const DB::MutationQL& m, PK id)> listener )noexcept;
 }
 #undef var

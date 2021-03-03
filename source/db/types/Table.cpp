@@ -1,8 +1,9 @@
 #include "Table.h"
-#include "Schema.h"
-#include "../DataType.h"
-#include "../SqlSyntax.h"
 #include "../../StringUtilities.h"
+#include "../DataType.h"
+#include "../Syntax.h"
+#include "Schema.h"
+
 
 #define var const auto
 
@@ -85,7 +86,7 @@ namespace Jde::DB
 	{
 		return MaxLength ? format( "{}({})", ToString(Type), *MaxLength ) : ToString( Type );
 	}
-	string Column::Create( const SqlSyntax& syntax )const noexcept
+	string Column::Create( const Syntax& syntax )const noexcept
 	{
 		var null = IsNullable ? "null"sv : "not null"sv;
 		const string sequence = IsIdentity ?  " "+string{syntax.IdentityColumnSyntax()} : string{};
@@ -101,7 +102,7 @@ namespace Jde::DB
 	Table::Table( sv name, const nlohmann::json& j, const flat_map<string,Table>& parents, const flat_map<string,Column>& commonColumns ):
 		Name{ name }
 	{
-		if( name=="um_permissions" )
+		if( name=="um_role_permissions" )
 			DBG( name );
 		for( var& [columnName,value] : j.items() )
 		{
@@ -162,10 +163,14 @@ namespace Jde::DB
 			}
 			else
 			{
-				Columns.push_back( Column{ Schema::FromJson(columnName), value, commonColumns} );
+				var dbName = Schema::FromJson( columnName );
+				Columns.push_back( Column{dbName, value, commonColumns} );
 				//DBG( "{}.{}, dt={}"sv, name, columnName, Columns.back().DataTypeString() );
-				if( auto p=find(SurrogateKey.begin(), SurrogateKey.end(), columnName); p!=SurrogateKey.end() )
+				if( auto p=find(SurrogateKey.begin(), SurrogateKey.end(), dbName); p!=SurrogateKey.end() )
+				{
 					Columns.back().IsId = true;
+					Columns.back().Updateable = false;
+				}
 			}
 		}
 	}
@@ -176,7 +181,7 @@ namespace Jde::DB
 		return !haveSequence /*|| FlagsData.size() || Data.size()*/ ? string{} : format( "{}_insert", DB::Schema::ToSingular(Name) );
 	}
 
-	string Table::InsertProcText( const SqlSyntax& syntax )const noexcept
+	string Table::InsertProcText( const Syntax& syntax )const noexcept
 	{
 		ostringstream osCreate, osInsert, osValues;
 		//if( syntax.AltDelimiter().size() )
@@ -216,7 +221,7 @@ namespace Jde::DB
 		return osCreate.str();
 	}
 
-	string Table::Create( const SqlSyntax& syntax )const noexcept
+	string Table::Create( const Syntax& syntax )const noexcept
 	{
 		ostringstream createStatement;
 		createStatement << "Create table " << Name << "(" << endl;
@@ -261,7 +266,7 @@ namespace Jde::DB
 		PrimaryKey{ y.PrimaryKey }
 	{}
 
-	string Index::Create( sv name, sv tableName, const SqlSyntax& syntax )const noexcept
+	string Index::Create( sv name, sv tableName, const Syntax& syntax )const noexcept
 	{
 		string unique = Unique ? "unique" : "";
 		ostringstream os;
@@ -301,7 +306,7 @@ namespace Jde::DB
 		var nameParts = StringUtilities::Split( table.NameWithoutType(), '_' ); //THROW_IF( nameParts.size()!=3, Exception("Child/Parent expected 3 parts to table name {}", table.Name) );
 		return nameParts.size()>index ? DB::Schema::ToSingular( nameParts[index] ) : string{};
 	}
-
+	string Table::Prefix()const noexcept{ return TableNamePart(*this, 0); }
 	string Table::NameWithoutType()const noexcept{ var underscore = Name.find_first_of('_'); return Name.substr(underscore==string::npos ? 0 : underscore+1); }
 
 	string Table::FKName()const noexcept{ return Schema::ToSingular(NameWithoutType())+"_id"; }

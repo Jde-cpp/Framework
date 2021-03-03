@@ -1,8 +1,9 @@
 #include "SchemaProc.h"
 #include <nlohmann/json.hpp>
 #include <boost/container/flat_map.hpp>
+#include "Database.h"
 #include "DataSource.h"
-#include "SqlSyntax.h"
+#include "Syntax.h"
 #include "types/Table.h"
 #include "../StringUtilities.h"
 
@@ -39,7 +40,7 @@ namespace Jde::DB
 	}
 	Schema ISchemaProc::CreateSchema( const json& j )noexcept(false)
 	{
-		SqlSyntax syntax;
+		var pSyntax = DB::DefaultSyntax();
 		var pDBTables = LoadTables();
 
 		auto dbIndexes = LoadIndexes();
@@ -76,10 +77,21 @@ namespace Jde::DB
 		//json.exception.
 		for( var& [tableName, pTable] : schema.Tables )
 		{
-			bool exists = pDBTables->find(tableName)!=pDBTables->end();
-			if( !exists )
+			if( var pNameDBTable=pDBTables->find(tableName); pNameDBTable!=pDBTables->end() )
 			{
-				_pDataSource->Execute( pTable->Create(syntax) );
+				if( tableName=="um_role_permissions" )
+					DBG( "{}"sv, pTable->FindColumn("right_id")->Default );
+				for( auto& column : pTable->Columns )
+				{
+					var& dbTable = pNameDBTable->second;
+					var pDBColumn = dbTable.FindColumn( column.Name ); CONTINUE_IF( !pDBColumn, "Could not find db column {}"sv, column.Name );
+					if( pDBColumn->Default.empty() && column.Default.size() && column.Default!="$now" )
+						_pDataSource->TryExecute( format("ALTER TABLE {} ALTER COLUMN {} SET DEFAULT {}", tableName, column.Name, column.Default) );
+				}
+			}
+			else
+			{
+				_pDataSource->Execute( pTable->Create(*pSyntax) );
 				DBG( "Created table '{}'."sv, tableName );
 				if( pTable->HaveSequence() )
 				{
@@ -87,21 +99,22 @@ namespace Jde::DB
 						dbIndexes.push_back( pTableIndex );
 				}
 			}
+
 			for( var& index : pTable->Indexes )
 			{
 				//if( index.TableName=="role_permissions" )
 				//	DBG( index.TableName );
 				if( find_if(dbIndexes.begin(), dbIndexes.end(), [&](var& db){ return db.TableName==index.TableName && db.Columns==index.Columns;} )!=dbIndexes.end() )
 					continue;
-				var name = UniqueIndexName( index, *this, syntax.UniqueIndexNames(), dbIndexes );
-				var indexCreate = index.Create( name, tableName, syntax );
+				var name = UniqueIndexName( index, *this, pSyntax->UniqueIndexNames(), dbIndexes );
+				var indexCreate = index.Create( name, tableName, *pSyntax );
 				_pDataSource->Execute( indexCreate );
 				dbIndexes.push_back( Index{name, tableName, index} );
 				DBG( "Created index '{}.{}'."sv, tableName, name );
 			}
 			if( var procName = pTable->InsertProcName(); procName.size() && procedures.find(procName)==procedures.end() )
 			{
-				var procCreate = pTable->InsertProcText( syntax );
+				var procCreate = pTable->InsertProcText( *pSyntax );
 				_pDataSource->Execute( procCreate );
 				DBG( "Created proc '{}'."sv, pTable->InsertProcName() );
 			}
@@ -177,7 +190,7 @@ namespace Jde::DB
 							params.push_back( ToDataValue(column.Type, *pData, column.Name) );
 						}
 						else
-							osInsertValues << (column.Default=="$now" ? syntax.UtcNow() : column.Default);
+							osInsertValues << (column.Default=="$now" ? pSyntax->UtcNow() : column.Default);
 					}
 					if( _pDataSource->Scaler( osSelect.str(), selectParams)==0 )
 					{
@@ -192,9 +205,9 @@ namespace Jde::DB
 				}
 			}
 		}
-		for( var& [tableName, pTable] : schema.Tables )
+		for( auto& [tableName, pTable] : schema.Tables )
 		{
-			for( var& column : pTable->Columns )
+			for( auto& column : pTable->Columns )
 			{
 				if( column.PKTable.empty() )
 					continue;
@@ -202,16 +215,19 @@ namespace Jde::DB
 					continue;
 				var pPKTable = schema.Tables.find( Schema::FromJson(column.PKTable) ); CONTINUE_IF( pPKTable == schema.Tables.end(), "Could not find primary key table '{}' for {}.{}"sv, Schema::FromJson(column.PKTable), tableName, column.Name );
 				if( pPKTable->second->FlagsData.size() )
-					continue;
-				auto i = 0;
-				auto getName = [&,t=tableName](auto i){ return format( "{}_{}{}_fk", AbbrevName(t), AbbrevName(pPKTable->first), i==0 ? "" : to_string(i)); };
-				auto name = getName( i++ );
-				for( ; fks.find(name)!=fks.end(); name = getName(i++) );
+					column.IsFlags = true;
+				else
+				{
+					auto i = 0;
+					auto getName = [&,t=tableName](auto i){ return format( "{}_{}{}_fk", AbbrevName(t), AbbrevName(pPKTable->first), i==0 ? "" : to_string(i)); };
+					auto name = getName( i++ );
+					for( ; fks.find(name)!=fks.end(); name = getName(i++) );
 
-				var createStatement = ForeignKey::Create( name, column.Name, *pPKTable->second, tableName );
-				//DBG( createStatement );
-				_pDataSource->Execute( createStatement );
-				DBG( "Created fk '{}'."sv, name );
+					var createStatement = ForeignKey::Create( name, column.Name, *pPKTable->second, tableName );
+					//DBG( createStatement );
+					_pDataSource->Execute( createStatement );
+					DBG( "Created fk '{}'."sv, name );
+				}
 			}
 		}
 		return schema;

@@ -156,7 +156,7 @@ namespace Jde
 		optional<T> v;
 		try
 		{
-			v = static_cast<T>( std::stoull(string(value)) );
+			v = static_cast<T>( std::stoull(string(value)) );//TODO from_chars
 		}
 		catch( const std::invalid_argument& e )
 		{

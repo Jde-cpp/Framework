@@ -22,6 +22,8 @@ namespace Jde::DB
 		virtual uint32_t GetUInt32(uint position )const{ return static_cast<uint32_t>(GetUInt(position)); }
 		virtual uint16_t GetUInt16(uint position )const{ return static_cast<uint16_t>(GetUInt(position)); }
 		virtual std::optional<uint> GetUIntOpt( uint position )const=0;
+		template<typename T>
+		T Get( uint position )const;
 
 		friend const IRow& operator>>(const IRow& row, string& str){ str=row.GetString(row._index++); return row; }
 		friend const IRow& operator>>(const IRow& row, uint8_t& value){ value=static_cast<uint8_t>(row.GetUInt(row._index++)); return row; }
@@ -49,4 +51,11 @@ namespace Jde::DB
 	protected:
 		mutable uint _index{0};
 	};
+
+	template<>
+	inline string IRow::Get<string>( uint position )const{ return GetString(position); }
+
+	template<>
+	inline uint IRow::Get<uint>( uint position )const{ return GetUInt(position); }
+
 }

@@ -240,16 +240,17 @@ namespace Jde
 		return result;
 	}
 	template<typename T>
-	bool Try( std::function<T()> func )
+	optional<T> Try( std::function<T()> func )
 	{
-		bool result = false;
+		optional<T> result;
 		try
 		{
-			func();
-			result = true;
+			result = func();
 		}
-		catch( const Exception&)
-		{}
+		catch( const Exception& e)
+		{
+			e.Log();
+		}
 		return result;
 	}
 }

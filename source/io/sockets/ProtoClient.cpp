@@ -58,7 +58,7 @@ namespace Jde::IO::Sockets
 				Disconnect();
 			}
 			else if( !headerLength )
-				ERR0( "Failed no length"sv );
+				ERR( "Failed no length"sv );
 			else
 			{
 				var messageLength = MessageLength( _readMessageSize );

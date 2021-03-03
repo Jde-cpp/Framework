@@ -1,8 +1,9 @@
 #include "GraphQL.h"
 #include "SchemaProc.h"
 #include "Row.h"
+#include "Database.h"
 #include "DataSource.h"
-#include "SqlSyntax.h"
+#include "Syntax.h"
 #include "../DateTime.h"
 #include "../StringUtilities.h"
 #include "../TypeDefs.h"
@@ -14,9 +15,15 @@ namespace Jde
 	using DB::EDataValue;
 	using DB::DataType;
 	sp<DB::IDataSource> _pDataSource;
-	sp<DB::SqlSyntax> _pSyntax;
-	void DB::SetQLDataSource( sp<DB::IDataSource> p, sp<DB::SqlSyntax> pSyntax )noexcept{ _pDataSource = p; _pSyntax = pSyntax; }
-	void DB::ClearQLDataSource()noexcept{ _pDataSource = nullptr; _pSyntax = nullptr; }
+	void DB::SetQLDataSource( sp<DB::IDataSource> p )noexcept{ _pDataSource = p; }
+	void DB::ClearQLDataSource()noexcept{ _pDataSource = nullptr; }
+	flat_map<string,vector<function<void(const DB::MutationQL& m, PK id)>>> _applyMutationListeners;  shared_mutex _applyMutationListenerMutex;
+	void DB::AddMutationListener( sv tablePrefix, function<void(const DB::MutationQL& m, PK id)> listener )noexcept
+	{
+		unique_lock l{_applyMutationListenerMutex};
+		auto& listeners = _applyMutationListeners.try_emplace( string{tablePrefix} ).first->second;
+		listeners.push_back( listener );
+	}
 	DB::Schema _schema;
 	void DB::AppendQLSchema( const DB::Schema& schema )noexcept
 	{
@@ -101,46 +108,78 @@ namespace DB
 		_pDataSource->ExecuteProc( sql.str(), parameters, result );
 		return id;
 	}
-	uint Update( const DB::Table& table, const DB::MutationQL& m, const DB::SqlSyntax& syntax )
+	uint Update( const DB::Table& table, const DB::MutationQL& m, const DB::Syntax& syntax )
 	{
 		ostringstream sql{ "update ", std::ios::ate }; sql << table.Name << " set ";
 		std::vector<DB::DataValue> parameters; parameters.reserve( table.Columns.size() );
-		var pId = m.Args.find( "id" ); THROW_IF( pId==m.Args.end(), Exception("Could not find id argument. {}", m.Args.dump()) );
-		var pInput = m.Args.find("input"); THROW_IF( pInput==m.Args.end(), Exception("Could not find input argument. {}", m.Args.dump()) );
+		var pInput = m.Args.find( "input" ); THROW_IF( pInput==m.Args.end(), Exception("Could not find input argument. {}", m.Args.dump()) );
 		string sqlUpdate;
+		vector<string> where; where.reserve(2);
+		vector<DB::DataValue> whereParams; whereParams.reserve( 2 );
 		for( var& column : table.Columns )
 		{
-			if( column.IsIdentity )
-				continue;
 			if( !column.Updateable )
 			{
-				if( column.Name=="updated" )
-					sqlUpdate = format( ",{}={}", column.Name, syntax.UtcNow() );//TODO use sqlsyntax
-				continue;
+				if( var p=find(table.SurrogateKey.begin(), table.SurrogateKey.end(), column.Name); p!=table.SurrogateKey.end() )
+				{
+					var pId = m.Args.find( DB::Schema::ToJson(column.Name) ); THROW_IF( pId==m.Args.end(), Exception("Could not find '{}' argument. {}", DB::Schema::ToJson(column.Name), m.Args.dump()) );
+					whereParams.push_back( ToDataValue(DataType::ULong, *pId, column.Name) );
+					where.push_back( column.Name+"=?" );
+				}
+				else if( column.Name=="updated" )
+					sqlUpdate = format( ",{}={}", column.Name, syntax.UtcNow() );
 			}
-			var memberName = DB::Schema::ToJson( column.Name );
-			var pValue = pInput->find( memberName );
-			if( pValue==pInput->end() )
-				continue;
-			if( parameters.size() )
-				sql << ", ";
-			sql << column.Name << "=?";
-			parameters.push_back( ToDataValue(column.Type, *pValue, memberName) );
+			else
+			{
+				string memberName = DB::Schema::ToJson( column.Name );
+				string tableName;
+				if( column.IsFlags )
+				{
+					var pPKTable = _schema.Tables.find( column.PKTable ); THROW_IF( pPKTable==_schema.Tables.end(), Exception("can not find column {}'s pk table {}.", column.Name, column.PKTable) );
+					tableName = pPKTable->second->Name;
+					memberName = DB::Schema::ToJson( pPKTable->second->NameWithoutType() );
+				}
+				var pValue = pInput->find( memberName );
+				if( pValue==pInput->end() )
+					continue;
+				if( parameters.size() )
+					sql << ", ";
+				sql << column.Name << "=?";
+				if( column.IsFlags )
+				{
+					uint value = 0;
+					if( pValue->is_array() && pValue->size() )
+					{
+						var values = _pDataSource->SelectMap<string,uint>( format("select name, id from {}", tableName) );
+						for( var& flag : *pValue )
+						{
+							if( var pFlag = values.find(flag); pFlag != values.end() )
+								value |= pFlag->second;
+						}
+					}
+					parameters.push_back( value );
+				}
+				else
+					parameters.push_back( ToDataValue(column.Type, *pValue, memberName) );
+			}
 		}
 		THROW_IF( parameters.size()==0, Exception("There is nothing to update.") );
+		for( var& param : whereParams ) parameters.push_back( param );
 		if( sqlUpdate.size() )
 			sql << sqlUpdate;
-		sql << " where id=?";
-		parameters.push_back( ToDataValue(DataType::ULong, *pId, "id") );
-		return _pDataSource->Execute( sql.str(), parameters );
+		sql << " where " << StringUtilities::AddSeparators( where, " and " );
+
+		var result = _pDataSource->Execute( sql.str(), parameters );
+//		DBG( "result={}"sv, result );
+		return result;
 	}
-	uint Delete( const DB::Table& table, const DB::MutationQL& m, const DB::SqlSyntax& syntax )
+	uint Delete( const DB::Table& table, const DB::MutationQL& m )
 	{
 		var pId = m.Args.find( "id" ); THROW_IF( pId==m.Args.end(), Exception("Could not find id argument. {}", m.Args.dump()) );
 		var pColumn = find_if( table.Columns.begin(), table.Columns.end(), []( var& c ){ return c.Name=="deleted"; } ); THROW_IF( pColumn==table.Columns.end(), Exception("Could not find 'deleted' column") );
 		std::vector<DB::DataValue> parameters;
 		parameters.push_back( ToDataValue(DataType::ULong, *pId, "id") );
-		ostringstream sql{ "update ", std::ios::ate }; sql << table.Name << " set deleted=" << syntax.UtcNow() << " where id=?";
+		ostringstream sql{ "update ", std::ios::ate }; sql << table.Name << " set deleted=" << DB::DefaultSyntax()->UtcNow() << " where id=?";
 		return _pDataSource->Execute( sql.str(), parameters );
 	}
 	uint Restore( const DB::Table& table, const DB::MutationQL& m )
@@ -152,7 +191,7 @@ namespace DB
 		ostringstream sql{ "update ", std::ios::ate }; sql << table.Name << " set deleted=null where id=?";
 		return _pDataSource->Execute( sql.str(), parameters );
 	}
-	uint Purge( sv tableName, const DB::MutationQL& m, const DB::SqlSyntax& syntax )
+	uint Purge( sv tableName, const DB::MutationQL& m )
 	{
 		var pId = m.Args.find( "id" ); THROW_IF( pId==m.Args.end(), Exception("Could not find id argument. {}", m.Args.dump()) );
 		std::vector<DB::DataValue> parameters;
@@ -168,7 +207,7 @@ namespace DB
 		parameters.push_back( ToDataValue(DataType::ULong, InputParam2(parentId, input), parentId) );
 		return parameters;
 	};
-	uint Add( const DB::Table& table, const json& input, const DB::SqlSyntax& syntax )
+	uint Add( const DB::Table& table, const json& input )
 	{
 		ostringstream sql{ "insert into ", std::ios::ate }; sql << table.Name << "(" << table.ChildId() << "," << table.ParentId();
 		var childId = DB::Schema::ToJson( table.ChildId() );
@@ -189,7 +228,7 @@ namespace DB
 		sql << ")values( " << values.str() << ")";
 		return _pDataSource->Execute( sql.str(), parameters );
 	}
-	uint Remove( const DB::Table& table, const json& input, const DB::SqlSyntax& syntax )
+	uint Remove( const DB::Table& table, const json& input )
 	{
 		ostringstream sql{ "delete from ", std::ios::ate }; sql << table.Name << " where " << table.ChildId() << "=? and " << table.ParentId() << "=?";
 
@@ -198,7 +237,7 @@ namespace DB
 
 	uint Mutation( const DB::MutationQL& m, UserPK userId )noexcept(false)
 	{
-		var pSyntax = _pSyntax; THROW_IF( !pSyntax, Exception("SqlSyntax not set.") );
+		var pSyntax = DB::DefaultSyntax();
 		var pSchemaTable = _schema.FindTableSuffix( m.TableSuffix() ); THROW_IF( !pSchemaTable, Exception("Could not find table suffixed with '{}' in schema", m.TableSuffix()) );
 		TEST_ACCESS( "Write", pSchemaTable->Name, userId ); //TODO implement.
 		uint result;
@@ -207,22 +246,25 @@ namespace DB
 		else if( m.Type==DB::EMutationQL::Update )
 			result = Update( *pSchemaTable, m, *pSyntax );
 		else if( m.Type==DB::EMutationQL::Delete )
-			result = Delete( *pSchemaTable, m, *pSyntax );
+			result = Delete( *pSchemaTable, m );
 		else if( m.Type==DB::EMutationQL::Restore )
 			result = Restore( *pSchemaTable, m );
 		else if( m.Type==DB::EMutationQL::Purge )
-			result = Purge( pSchemaTable->Name, m, *pSyntax );
+			result = Purge( pSchemaTable->Name, m );
 		else
 		{
 			if( m.Type==DB::EMutationQL::Add )
-				result = Add( *pSchemaTable, m.Input(), *pSyntax );
+				result = Add( *pSchemaTable, m.Input() );
 			else if( m.Type==DB::EMutationQL::Remove )
-				result = Remove( *pSchemaTable, m.Input(), *pSyntax );
+				result = Remove( *pSchemaTable, m.Input() );
 			else
 				throw "unknown type";
 		}
 		if( pSchemaTable->Name.starts_with("um_") )
-			UM::ApplyMutation( m, result );
+			Try( [&]{UM::ApplyMutation( m, result );} );
+		shared_lock l{ _applyMutationListenerMutex };
+		if( var p = _applyMutationListeners.find(pSchemaTable->Prefix()); p!=_applyMutationListeners.end() )
+			std::for_each( p->second.begin(), p->second.end(), [&](var& f){f(m, result);} );
 
 		return result;
 	}
@@ -291,7 +333,6 @@ namespace DB
 		var pTypeTable = fieldTable.FindTable( "type" );
 		var haveName = fieldTable.ContainsColumn( "name" );
 		var pOfTypeTable = pTypeTable->FindTable( "ofType" );
-		var isMap = dbTable.IsMap();
 		//var ofTypeColumns = pOfTypeTable ? pOfTypeTable->Columns : vector<DB::ColumnQL>{};
 		auto addField = [&]( sv name, sv typeName, DB::QLFieldKind typeKind, sv ofTypeName, optional<DB::QLFieldKind> ofTypeKind )
 		{
@@ -328,36 +369,40 @@ namespace DB
 			fields.push_back( field );
 		};
 		function<void(const DB::Table&, bool)> addColumns;
-		addColumns = [&addColumns,&addField, typeName]( const DB::Table& dbTable2, bool isMap2 )
+		addColumns = [&addColumns,&addField, typeName]( const DB::Table& dbTable2, bool isMap )
 		{
 			for( var& column : dbTable2.Columns )
 			{
 				string fieldName;
 				string qlTypeName;
 				DB::QLFieldKind rootType = DB::QLFieldKind::Scalar;
+				DBG( column.Name );
 				if( column.PKTable.empty() )
 				{
-					DBG( column.Name );
 					fieldName = DB::Schema::ToJson( column.Name );
 					qlTypeName = DB::ColumnQL::QLType( column );//column.PKTable.empty() ? DB::ColumnQL::QLType( column ) : dbTable.JsonTypeName();
 				}
 				else if( var pPKTable=_schema.Tables.find(column.PKTable); pPKTable!=_schema.Tables.end() )
 				{
-					if( pPKTable->second->IsEnum() )
+					if( !isMap || pPKTable->second->IsFlags() ) //!RolePermission || right_id
 					{
-						rootType = DB::QLFieldKind::Object;
+						rootType = pPKTable->second->IsFlags() ? DB::QLFieldKind::List : DB::QLFieldKind::Object;
 						qlTypeName = pPKTable->second->JsonTypeName();
 						fieldName = DB::Schema::ToJson( qlTypeName );
+						if( pPKTable->second->IsFlags() )
+							fieldName = DB::Schema::ToPlural( fieldName );
 					}
-					else if( isMap2 )
+					else //if( isMap2 )
 					{
 //						DBG( "{}, {}, {}"sv, pPKTable->first, typeName, pPKTable->second->JsonTypeName() );
 						if( !typeName.starts_with(pPKTable->second->JsonTypeName()) )//typeName==RolePositions, don't want role columns, just permissions.
 							addColumns( *pPKTable->second, false );
 						continue;
 					}
-					else
+/*					else
+					{
 						rootType = DB::QLFieldKind::Object;
+					}*/
 				}
 				else
 					THROW( Exception("Could not find table '{}'", column.PKTable) );
@@ -371,7 +416,7 @@ namespace DB
 				addField( fieldName, typeName, typeKind, ofTypeName, ofTypeKind );
 			}
 		};
-		addColumns( dbTable, isMap );
+		addColumns( dbTable, dbTable.IsMap() );
 		for( var& [name,pTable] : _schema.Tables )
 		{
 			auto fnctn = [addField,p=pTable,&dbTable]( var& c1Name, var& c2Name )
@@ -494,13 +539,13 @@ namespace DB
 		else if( table.JsonName=="__schema" )
 			return QuerySchema( table, jData );
 		var isPlural = table.JsonName.ends_with( "s" );
-		var pSyntax = _pSyntax; THROW_IF( !pSyntax, Exception("SqlSyntax not set.") );
-		vector<string> jsonMembers;
+		var pSyntax = DB::DefaultSyntax();// _pSyntax; THROW_IF( !pSyntax, Exception("SqlSyntax not set.") );
 		var pSchemaTable = _schema.FindTableSuffix( table.DBName() ); THROW_IF( !pSchemaTable, Exception("Could not find table '{}' in schema", table.DBName()) );
-		for( var& column : table.Columns )
-			jsonMembers.emplace_back( column.JsonName );
-		function<string(const DB::TableQL&, const DB::Table& dbTable, const sp<const DB::Table> pDefTable, vector<uint>&, sv, bool, uint*, string* pSubsequentJoin )> columnSql;
-		columnSql = [pSyntax, &columnSql]( const DB::TableQL& table2, const DB::Table& dbTable, const sp<const DB::Table> pDefTable, vector<uint>& dates, sv prefix, bool excludeId, uint* pIndex, string* pSubsequentJoin )
+		vector<tuple<string,string>> jsonMembers;
+		//for( var& column : table.Columns )
+		//	jsonMembers.emplace_back( make_tuple("",column.JsonName) );
+		function<string(const DB::TableQL&, const DB::Table& dbTable, const sp<const DB::Table> pDefTable, vector<uint>&, map<uint,sp<const DB::Table>>&, sv, bool, uint*, string*, vector<tuple<string,string>>* )> columnSql;
+		columnSql = [pSyntax, &columnSql]( const DB::TableQL& table2, const DB::Table& dbTable, const sp<const DB::Table> pDefTable, vector<uint>& dates, map<uint,sp<const DB::Table>>& flags, sv defaultPrefix, bool excludeId, uint* pIndex, string* pSubsequentJoin, vector<tuple<string,string>>* pJsonMembers )
 		{
 			uint index2=0;
 			if( !pIndex )
@@ -510,14 +555,26 @@ namespace DB
 			for( var& column : table2.Columns )
 			{
 				string columnName = DB::Schema::FromJson( column.JsonName );
-				if( columnName=="id" && excludeId )
+				if( columnName=="id" && excludeId )//~~~
 					continue;
 				auto findColumn = []( const DB::Table& t, const string& c ){ auto p = t.FindColumn( c ); if( !p ) p = t.FindColumn( c+"_id" ); return p; }; //+_id for enums
 				auto pSchemaColumn = findColumn( dbTable, columnName );
+				auto prefix = defaultPrefix;
 				if( !pSchemaColumn && pDefTable )
 				{
 					prefix = pDefTable->Name;
 					pSchemaColumn = findColumn( *pDefTable, columnName );
+					if( !pSchemaColumn )
+					{
+						pSchemaColumn = findColumn( *pDefTable, DB::Schema::ToSingular(columnName) );
+						if( pSchemaColumn )
+						{
+							if( var p = _schema.Tables.find(pSchemaColumn->PKTable); p!=_schema.Tables.end() )
+								flags.emplace( *pIndex, p->second );
+							else
+								THROW( Exception("Could not find flags pk table for {}.{}", prefix, columnName) );
+						}
+					}
 				}
 				THROW_IF( !pSchemaColumn, Exception("Could not find column '{}.{}'", dbTable.Name, columnName) );//Could not find column 'um_role_permissions.api'" thrown in the test body
 
@@ -525,25 +582,48 @@ namespace DB
 				bool dateTime = pSchemaColumn->Type==DataType::DateTime;
 				if( dateTime )
 					dates.push_back( *pIndex );
-
 				columns.push_back( dateTime ? pSyntax->DateTimeSelect(columnName) : columnName );
+				if( pJsonMembers )
+					pJsonMembers->push_back( make_tuple(table2.JsonName, DB::Schema::ToJson(pSchemaColumn->Name)) );
+
 				++(*pIndex);
 			}
 			for( var& childTable : table2.Tables )
 			{
 				var childDbName = childTable->DBName();
+				if( childDbName=="apis" )
+					DBG( childDbName );
 				var pPKTable = _schema.FindTableSuffix( childDbName ); THROW_IF( !pPKTable, Exception("Could not find table '{}' in schema", childDbName) );
-				var pColumn = find_if( dbTable.Columns.begin(), dbTable.Columns.end(), [pPKTable](var& x){ return x.PKTable==pPKTable->Name; } );
-				if( pSubsequentJoin && pColumn!=dbTable.Columns.end() )
+				if( pSubsequentJoin )
 				{
-					columns.push_back( columnSql(*childTable, *pPKTable, nullptr, dates, pPKTable->Name, false, pIndex, nullptr) );
-					*pSubsequentJoin = format( "\tleft join {0} on {0}.id={1}.{2}", pPKTable->Name, prefix, pColumn->Name );
+					const DB::Column* pColumn = nullptr;
+					auto findFK = [pPKTable](var& x){ return x.PKTable==pPKTable->Name; };
+					var pDBColumn = find_if( dbTable.Columns.begin(), dbTable.Columns.end(), findFK );
+					string childPrefix{ defaultPrefix };
+					if( pDBColumn!=dbTable.Columns.end() )
+					{
+						pColumn = &*pDBColumn;
+						childPrefix = dbTable.Name;
+					}
+					else if( pDefTable )
+					{
+						childPrefix = pDefTable->Name;
+						auto pDefColumn = find_if( pDefTable->Columns.begin(), pDefTable->Columns.end(), findFK );
+						if( pDefColumn!=pDefTable->Columns.end() )
+							pColumn = &*pDefColumn;
+					}
+					if( pColumn )
+					{
+						columns.push_back( columnSql(*childTable, *pPKTable, nullptr, dates, flags, pPKTable->Name, false, pIndex, nullptr, pJsonMembers) );
+						*pSubsequentJoin += format( "\tleft join {0} on {0}.id={1}.{2}", pPKTable->Name, childPrefix, pColumn->Name );
+					}
 				}
 			}
 			return StringUtilities::AddCommas( columns );
 		};
-		vector<uint> dates;
-		var columnSqlValue = columnSql( table, *pSchemaTable, nullptr, dates, {}, false, nullptr, nullptr );
+		vector<uint> dates; map<uint,sp<const DB::Table>> flags;
+		string joins;
+		var columnSqlValue = columnSql( table, *pSchemaTable, nullptr, dates, flags, pSchemaTable->Name, false, nullptr, &joins, &jsonMembers );
 		ostringstream sql;
 		if( columnSqlValue.size() )
 			sql << "select " << columnSqlValue;
@@ -553,36 +633,47 @@ namespace DB
 			sql << ", id";
 		var& tableName = pSchemaTable->Name;
 		if( sql.tellp()!=std::streampos(0) )
+		{
 			sql << endl << "from\t" << tableName;
+			if( joins.size() )
+				sql << endl << joins;
+		}
 		std::vector<DB::DataValue> parameters;
 		ostringstream where;
-		if( !table.Args.empty() )
+		var pWhere = table.Args.find( "filter" );
+		if( pWhere!=table.Args.end() )
 		{
-			for( var& [name,value] : table.Args.items() )
+			for( var& [name,value] : pWhere->items() )
 			{
 				var columnName = DB::Schema::FromJson( name );
 				var pColumn = pSchemaTable->FindColumn( columnName ); THROW_IF( !pColumn, Exception("column '{}' not found.", columnName) );
 				if( where.tellp()!=std::streampos(0) )
 					where << endl << "\tand ";
 				where << tableName << "." << columnName;
-				if( value.is_null() )
-					where << " is null";
+				if( !value.is_object() || value.items().begin()==value.items().end() )
+					continue;
+				var first = value.items().begin();
+				if( first.value().is_null() )
+					where << " is " << (first.key()=="eq" ? "" : "not ") << "null";
 				else
 				{
-					where << "=?";
-					parameters.push_back( ToDataValue(pColumn->Type, value, name) );
+					sv op;
+					if( first.key()=="eq" )
+						op = "=";
+					else if( first.key()=="ne" )
+						op = "!=";
+					where << op << "?";
+					parameters.push_back( ToDataValue(pColumn->Type, first.value(), name) );
 				}
 			}
-			if( sql.tellp()!=std::streampos(0) )
-				sql << endl << "where\t" << where.str();
 		}
-		auto rowToJson = [&]( const DB::IRow& row, uint iColumn, json& obj, sv memberName, const vector<uint>& dates )
+		auto rowToJson = [&]( const DB::IRow& row, uint iColumn, json& obj, sv objectName, sv memberName, const vector<uint>& dates, const flat_map<uint,flat_map<uint,string>>& flagValues )
 		{
 			DB::DataValue value = row[iColumn];
 			var index = (EDataValue)value.index();
 			if( index==EDataValue::Null )
 				return;
-			auto& member = obj[string{memberName}];
+			auto& member = objectName.empty() ? obj[string{memberName}] : obj[string{objectName}][string{memberName}];
 			if( index==EDataValue::String )
 				member = get<string>( value );
 			else if( index==EDataValue::StringView )
@@ -600,7 +691,25 @@ namespace DB
 					member = get<_int>( value );
 			}
 			else if( index==EDataValue::Uint )
-				member = get<uint>( value );
+			{
+				if( var pFlagValues = flagValues.find(iColumn); pFlagValues!=flagValues.end() )
+				{
+					member = json::array();
+					uint remainingFlags = get<uint>( value );
+					for( uint iFlag=0x1; remainingFlags!=0; iFlag <<= 1 )
+					{
+						if( (remainingFlags & iFlag)==0 )
+							continue;
+						if( var pValue = pFlagValues->second.find(iFlag); pValue!=pFlagValues->second.end() )
+							member.push_back( pValue->second );
+						else
+							member.push_back( std::to_string(iFlag) );
+						remainingFlags -= iFlag;
+					}
+				}
+				else
+					member = get<uint>( value );
+			}
 			else if( index==EDataValue::Decimal2 )
 				member = (float)get<Decimal2>( value );
 			else if( index==EDataValue::Double )
@@ -618,73 +727,80 @@ namespace DB
 				ERR( "{} not implemented"sv, (uint8)index );
 		};
 		flat_map<string,flat_multimap<uint,json>> subTables;
-		for( var& pQLTable : table.Tables )
+		auto selectSubTables = [&subTables, &columnSql, &rowToJson, &parameters]( const vector<sp<const DB::TableQL>>& tables, const DB::Table& parentTable, sv where2 )
 		{
-			auto pSubTable = _schema.FindTableSuffix( pQLTable->DBName() ); THROW_IF( !pSubTable, Exception("Could not find table '{}' in schema", pQLTable->DBName()) );
-			sp<const DB::Table> pDefTable;
-			if( pSubTable->IsMap() )//for RolePermissions, subTable=Permissions, defTable=RolePermissions
+			for( var& pQLTable : tables )
 			{
-				pDefTable = pSubTable;
-				var subIsParent = pDefTable->ChildId()==pSchemaTable->FKName();
-				pSubTable = subIsParent ? pDefTable->ParentTable( _schema ) : pDefTable->ChildTable( _schema );
-				THROW_IF( !pSubTable, Exception("Could not find {} table for '{}' in schema", (subIsParent ? "parent" : "child"), pDefTable->Name) );
-			}
-			else
-				pDefTable = _schema.FindDefTable( *pSchemaTable, *pSubTable );
-			THROW_IF( !pDefTable, Exception("Could not find def table '{}<->'{}' in schema", pSchemaTable->Name, pQLTable->DBName()) );
-
-			var defTableName = pDefTable->Name;
-			//var& subName = subTable.subName;
-			ostringstream subSql{ format("select {0}.{1} primary_id, {0}.{2} sub_id", defTableName, pSchemaTable->FKName(), pSubTable->FKName()), std::ios::ate };
-			var& subTableName = pSubTable->Name;
-			vector<uint> subDates;
-			string subsequentJoin;
-			var columns = columnSql( *pQLTable, *pSubTable, pDefTable, subDates, subTableName, true, nullptr, &subsequentJoin );
-			if( columns.size() )
-				subSql << ", " << columns;
-			subSql << "\nfrom\t" << tableName
-				<< "\tjoin " << defTableName << " on " << tableName <<".id=" << defTableName << "." << pSchemaTable->FKName();
-			if( columns.size() )
-			{
-				subSql << "\tjoin " << subTableName << " on " << subTableName <<".id=" << defTableName << "." << pSubTable->FKName();
-				if( subsequentJoin.size() )
-					subSql << endl << subsequentJoin;
-			}
-
-			if( where.tellp()!=std::streampos(0) )
-				subSql << endl << "where\t" << where.str();
-			auto& rows = subTables.emplace( pQLTable->JsonName, flat_multimap<uint,json>{} ).first->second;
-			auto forEachRow = [&]( const DB::IRow& row )
-			{
-				json jSubRow;
-				uint index = 0;
-				var rowToJson2 = [&row, &subDates, &rowToJson]( const vector<DB::ColumnQL>& columns, bool checkId, json& jRow, uint& index2 )
+				DBG( pQLTable->DBName() );
+				auto pSubTable = _schema.FindTableSuffix( pQLTable->DBName() ); THROW_IF( !pSubTable, Exception("Could not find table '{}' in schema", pQLTable->DBName()) );
+				sp<const DB::Table> pDefTable;
+				if( pSubTable->IsMap() )//for RolePermissions, subTable=Permissions, defTable=RolePermissions
 				{
-					for( var& column : columns )
-					{
-						auto i = checkId && column.JsonName=="id" ? 1 : (index2++)+2;
-						rowToJson( row, i, jRow, column.JsonName, subDates );
-					}
-				};
-				rowToJson2( pQLTable->Columns, true, jSubRow, index );
-				for( var& childTable : pQLTable->Tables )
-				{
-					var childDbName = childTable->DBName();
-					var pPKTable = _schema.FindTableSuffix( childDbName ); THROW_IF( !pPKTable, Exception("Could not find table '{}' in schema", childDbName) );
-					var pColumn = find_if( pSubTable->Columns.begin(), pSubTable->Columns.end(), [pPKTable](var& x){ return x.PKTable==pPKTable->Name; } );
-					if( pColumn!=pSubTable->Columns.end() )
-					{
-						json jChildTable;
-						rowToJson2( childTable->Columns, false, jChildTable, index );
-						jSubRow[childTable->JsonName] = jChildTable;
-					}
+					pDefTable = pSubTable;
+					var subIsParent = pDefTable->ChildId()==parentTable.FKName();
+					pSubTable = subIsParent ? pDefTable->ParentTable( _schema ) : pDefTable->ChildTable( _schema ); THROW_IF( !pSubTable, Exception("Could not find {} table for '{}' in schema", (subIsParent ? "parent" : "child"), pDefTable->Name) );
 				}
-				rows.emplace( get<uint>(row[0]), jSubRow );
-			};
-			DBG( subSql.str() );
-			_pDataSource->Select( subSql.str(), forEachRow, parameters );
-		}
+				else
+					pDefTable = _schema.FindDefTable( parentTable, *pSubTable );
+				if( !pDefTable )
+					continue;  //'um_permissions<->'apis' //THROW_IF( !pDefTable, Exception("Could not find def table '{}<->'{}' in schema", parentTable.Name, pQLTable->DBName()) );
 
+				var defTableName = pDefTable->Name;
+				//var& subName = subTable.subName;
+				ostringstream subSql{ format("select {0}.{1} primary_id, {0}.{2} sub_id", defTableName, parentTable.FKName(), pSubTable->FKName()), std::ios::ate };
+				var& subTableName = pSubTable->Name;
+				vector<uint> subDates; map<uint,sp<const DB::Table>> subFlags;
+				string subsequentJoin;
+				var columns = columnSql( *pQLTable, *pSubTable, pDefTable, subDates, subFlags, subTableName, true, nullptr, &subsequentJoin, nullptr );
+				if( columns.size() )
+					subSql << ", " << columns;
+				subSql << "\nfrom\t" << parentTable.Name << endl
+					<< "\tjoin " << defTableName << " on " << parentTable.Name <<".id=" << defTableName << "." << parentTable.FKName();
+				if( columns.size() )
+				{
+					subSql << "\tjoin " << subTableName << " on " << subTableName <<".id=" << defTableName << "." << pSubTable->FKName();
+					if( subsequentJoin.size() )
+						subSql << endl << subsequentJoin;
+				}
+
+				if( where2.size() )
+					subSql << endl << "where\t" << where2;
+				flat_map<uint,flat_map<uint,string>> subFlagValues;
+				for( var& [index,pTable] : subFlags )
+					subFlagValues[index+2] = _pDataSource->SelectMap<uint,string>( format("select id, name from {}", pTable->Name) );
+				auto& rows = subTables.emplace( pQLTable->JsonName, flat_multimap<uint,json>{} ).first->second;
+				auto forEachRow = [&]( const DB::IRow& row )
+				{
+					json jSubRow;
+					uint index = 0;
+					var rowToJson2 = [&row, &subDates, &rowToJson, &subFlagValues]( const vector<DB::ColumnQL>& columns, bool checkId, json& jRow, uint& index2 )
+					{
+						for( var& column : columns )
+						{
+							auto i = checkId && column.JsonName=="id" ? 1 : (index2++)+2;
+							rowToJson( row, i, jRow, "", column.JsonName, subDates, subFlagValues );
+						}
+					};
+					rowToJson2( pQLTable->Columns, true, jSubRow, index );
+					for( var& childTable : pQLTable->Tables )
+					{
+						var childDbName = childTable->DBName();
+						var pPKTable = _schema.FindTableSuffix( childDbName ); THROW_IF( !pPKTable, Exception("Could not find table '{}' in schema", childDbName) );
+						var pColumn = find_if( pSubTable->Columns.begin(), pSubTable->Columns.end(), [pPKTable](var& x){ return x.PKTable==pPKTable->Name; } );
+						if( pColumn!=pSubTable->Columns.end() )
+						{
+							json jChildTable;
+							rowToJson2( childTable->Columns, false, jChildTable, index );
+							jSubRow[childTable->JsonName] = jChildTable;
+						}
+					}
+					rows.emplace( get<uint>(row[0]), jSubRow );
+				};
+				DBG( subSql.str() );
+				_pDataSource->Select( subSql.str(), forEachRow, parameters );
+			}
+		};
+		selectSubTables( table.Tables, *pSchemaTable, where.str() );
 		var jsonTableName = table.JsonName;
 		auto addSubTables = [&]( json& jParent, uint id=0 )
 		{
@@ -693,7 +809,10 @@ namespace DB
 				var subPlural = pQLTable->JsonName.ends_with( "s" );
 				if( subPlural )
 					jParent[pQLTable->JsonName] = json::array();
-				var& subResults = subTables.find( pQLTable->JsonName )->second;
+				var pResultTable = subTables.find( pQLTable->JsonName );
+				if( pResultTable==subTables.end() )
+					continue;
+				var& subResults = pResultTable->second;
 				if( !id && subResults.size() )
 					id = subResults.begin()->first;
 				auto range = subResults.equal_range( id );
@@ -706,33 +825,29 @@ namespace DB
 				}
 			}
 		};
-		auto fnctn = [&]( const DB::IRow& row )
-		{
-			json j;
-			uint id;
-			for( uint i=0; i<jsonMembers.size(); ++i )
-			{
-				rowToJson( row, i, j, jsonMembers[i], dates );
-				if( jsonMembers[i]=="id" )
-					id = j[jsonMembers[i]].get<uint>();
-			}
-			if( subTables.size() )
-			{
-				if( addId )
-					id = get<uint>( row[jsonMembers.size()] );
-				addSubTables( j );
-			}
-			if( isPlural )
-				jData[jsonTableName].push_back( j );
-			else
-				jData[jsonTableName] = j;
-		};
-		if( isPlural )
-			jData[jsonTableName] = json::array();
-
-		DBG( sql.str() );
 		if( sql.tellp()!=std::streampos(0) )
-			_pDataSource->Select( sql.str(), fnctn, parameters );
+		{
+			if( where.tellp()!=std::streampos(0) )
+				sql << endl << "where\t" << where.str();
+			if( isPlural )
+				jData[jsonTableName] = json::array();
+			auto primaryRow = [&]( const DB::IRow& row )
+			{
+				json jRow;
+				for( uint i=0; i<jsonMembers.size(); ++i )
+				{
+					var parent = get<0>(jsonMembers[i]);
+					rowToJson( row, i, jRow, parent==jsonTableName ? sv{} : parent, get<1>(jsonMembers[i]), dates, {} );
+				}
+				if( subTables.size() )
+					addSubTables( jRow );
+				if( isPlural )
+					jData[jsonTableName].push_back( jRow );
+				else
+					jData[jsonTableName] = jRow;
+			};
+			_pDataSource->Select( sql.str(), primaryRow, parameters );
+		}
 		else
 		{
 			json jRow;
@@ -826,8 +941,13 @@ namespace DB
 		uint i=0;
 		for( char ch = json[i]; i<json.size(); ch = json[++i] )
 		{
-			if( ch=='{' || ch=='}' || std::isspace(ch) )
+			if( std::isspace(ch) )
 				os << ch;
+			else if( ch=='{' || ch=='}' )
+			{
+				os << ch;
+				inValue = false;
+			}
 			else if( inValue )
 			{
 				if( ch=='{' )
@@ -843,6 +963,12 @@ namespace DB
 							break;
 						}
 					}
+				}
+				else if( ch=='[' )
+				{
+					for( ; i<json.size() && ch!=']'; ch = json[++i] )
+						os << ch;
+					os << ']';
 				}
 				else
 				{
@@ -909,7 +1035,7 @@ namespace DB
 		var j = q.Peek()=="(" ? ParseJson( q ) : json{};
 		THROW_IF( q.Next()!="{", Exception("Expected '{' after table name.") );
 		DB::TableQL table{ string{jsonName}, j };
-		for( auto token = q.Next(); token!="}"; token = q.Next() )
+		for( auto token = q.Next(); token!="}" && token.size(); token = q.Next() )
 		{
 			if( q.Peek()=="{" )
 				table.Tables.push_back( make_shared<DB::TableQL>(LoadTable(q, token)) );
