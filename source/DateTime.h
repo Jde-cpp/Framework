@@ -1,39 +1,13 @@
 #pragma once
-#include <ctime>
+#ifndef JDE_DATE_TIME
+#define JDE_DATE_TIME
 #include <chrono>
-#include <iostream>
-#include <memory>
-#include "./Exports.h"
 #include "TypeDefs.h"
+#include "./Exports.h"
 
 namespace Jde
 {
-//#ifdef NDEBUG
 	typedef std::chrono::system_clock Clock;
-/*#else
-	struct JDE_NATIVE_VISIBILITY TimePoint final : private std::chrono::system_clock::time_point
-	{
-		typedef std::chrono::system_clock::time_point base;
-		typedef std::chrono::system_clock::duration DurationType;
-		TimePoint()noexcept{};
-		TimePoint( const base& tp )noexcept;
-		base Base()const noexcept{ return base{ time_since_epoch() }; }
-		constexpr TimePoint& operator+=( const DurationType& x )noexcept;
-
-	private:
-		string _text;
-	};
-	TimePoint operator+( const TimePoint& a, const TimePoint::DurationType& b )noexcept{ return TimePoint{ a.Base()+b }; }
-	TimePoint operator-( const TimePoint& a, const TimePoint::DurationType& b )noexcept{ return TimePoint{ a.Base()-b }; }
-	struct JDE_NATIVE_VISIBILITY Clock : std::chrono::system_clock
-	{
-		typedef TimePoint	time_point;
-		typedef std::chrono::system_clock base;
-		static TimePoint now()noexcept{ return TimePoint{base::now()}; }
-		static std::time_t to_time_t( const time_point& t ){ return base::to_time_t(t.Base()); }
-		static TimePoint from_time_t( std::time_t t ){ return TimePoint{base::from_time_t(t)}; }
-	};
-#endif*/
 	typedef Clock::time_point TimePoint;
 	typedef std::optional<TimePoint> TimePoint_;
 	typedef Clock::duration Duration;
@@ -45,13 +19,13 @@ namespace Jde
 		JDE_NATIVE_VISIBILITY TimePoint Epoch()noexcept;
 		inline uint MillisecondsSinceEpoch(const TimePoint& time)noexcept{ return duration_cast<std::chrono::milliseconds>( time-Epoch() ).count(); }
 		inline DayIndex DaysSinceEpoch(const TimePoint& time)noexcept{ return duration_cast<std::chrono::hours>( time-Epoch()).count()/24; }
-		inline const TimePoint& Min( const TimePoint& a, const TimePoint& b )noexcept{ return a.time_since_epoch()<b.time_since_epoch() ? a : b; }
+		JDE_NATIVE_VISIBILITY const TimePoint& Min( const TimePoint& a, const TimePoint& b )noexcept;
 		inline DayIndex ToDay(time_t time)noexcept{ return DaysSinceEpoch(Clock::from_time_t(time)); }
 		inline TimePoint FromDays( DayIndex days )noexcept{ return Epoch()+days*24h; }
 		inline TimePoint Date( const TimePoint& time )noexcept{ return Clock::from_time_t( Clock::to_time_t(time)/(60*60*24)*(60*60*24) ); }
 		inline Duration Time( const TimePoint& time )noexcept{ return time-Date(time); }
 		JDE_NATIVE_VISIBILITY Duration ToDuration( string_view iso )noexcept(false);
-		string ToString( Duration d )noexcept;
+		JDE_NATIVE_VISIBILITY string ToString( Duration d )noexcept;
 
 		namespace TimeSpan
 		{
@@ -157,3 +131,4 @@ namespace Jde
 }
 JDE_NATIVE_VISIBILITY std::ostream& operator<<( std::ostream &os, const std::chrono::system_clock::time_point& obj )noexcept;
 
+#endif

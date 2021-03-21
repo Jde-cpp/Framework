@@ -1,8 +1,20 @@
 #pragma once
-//#include <boost/system/error_code.hpp>
+#ifndef JDE_EXCEPTION
+#define JDE_EXCEPTION
 
-//#include <string>
-#include "log/Logging.h"
+#include "./Exports.h"
+
+#ifndef NO_FORMAT
+#include <spdlog/spdlog.h>
+#include <spdlog/sinks/basic_file_sink.h>
+#include <spdlog/fmt/ostr.h>
+#endif
+
+#include "collections/ToVec.h"
+
+namespace boost::system{ class error_code; }
+
+//#include "log/Logging.h"
 #ifndef  THROW
 # define THROW(x) Jde::throw_exception(x, __func__,__FILE__,__LINE__)
 #endif
@@ -49,7 +61,6 @@ namespace Jde
 		const char* what() const noexcept override;
 		ELogLevel GetLevel()const{return _level;}
 
-		//shared_ptr<spdlog::logger> GetLogger()const{return _pLogger;}
 		void SetFunction( const char* pszFunction ){ _functionName = pszFunction; }
 		void SetFile( const char* pszFile ){ _fileName = pszFile; }
 		void SetLine( long line ){ _line = line; }
@@ -124,11 +135,13 @@ namespace Jde
 
 	//https://stackoverflow.com/questions/10176471/is-it-possible-to-convert-a-boostsystemerror-code-to-a-stderror-code
 
-	struct JDE_NATIVE_VISIBILITY BoostCodeException : public RuntimeException
+	struct JDE_NATIVE_VISIBILITY BoostCodeException final : public RuntimeException
 	{
-		BoostCodeException( const boost::system::error_code& ec );
+		BoostCodeException( const boost::system::error_code& ec )noexcept;
+		BoostCodeException( const BoostCodeException& e )noexcept;
+		~BoostCodeException();
 	private:
-		boost::system::error_code _errorCode;
+		up<boost::system::error_code> _errorCode;
 	};
 
 
@@ -213,7 +226,7 @@ namespace Jde
 		}
 //		return "";
 	}
-
+#define TRY(x) Try( [&]{x;} )
 	inline bool Try( std::function<void()> func )
 	{
 		bool result = false;
@@ -227,18 +240,18 @@ namespace Jde
 		return result;
 	}
 	template<typename T>
-	bool Try( std::function<T()> func )
+	optional<T> Try( std::function<T()> func )
 	{
-		bool result = false;
+		optional<T> result;
 		try
 		{
-			func();
-			result = true;
+			result = func();
 		}
-		catch( const Exception&)
-		{}
+		catch( const Exception& e)
+		{
+			e.Log();
+		}
 		return result;
 	}
-
-
 }
+#endif

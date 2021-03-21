@@ -1,12 +1,15 @@
 #include "../DateTime.h"
 #include "DataType.h"
+#include "../DateTime.h"
+#include "../StringUtilities.h"
 
 #define var const auto
 
-namespace Jde::DB
+namespace Jde
 {
 	using std::get;
-	string to_string( const DataValue& parameter )
+	using nlohmann::json;
+	string DB::to_string( const DataValue& parameter )
 	{
 		ostringstream os;
 		constexpr string_view nullString = "null"sv;
@@ -65,5 +68,165 @@ namespace Jde::DB
 			throw Exception( "{} not implemented", parameter.index() );
 		}
 		return os.str();
+	}
+
+	DB::DataType DB::ToDataType( string_view t )noexcept
+	{
+		CIString typeName{ t };
+		DataType type{ DataType::None };
+		if( typeName=="dateTime" )
+			type=DataType::DateTime;
+		else if( typeName=="smallDateTime" )
+			type=DataType::SmallDateTime;
+		else if( typeName=="float" )
+			type=DataType::Float;
+		else if( typeName=="real" )
+			type=DataType::SmallFloat;
+		else if( typeName=="int" )
+			type = DataType::Int;
+		else if( typeName=="uint" )
+			type = DataType::UInt;
+		else if( typeName=="ULong" )
+			type = DataType::ULong;
+		else if( typeName=="Long" )
+			type = DataType::Long;
+		else if( typeName=="nvarchar" )
+			type = DataType::VarWChar;
+		else if(typeName=="nchar")
+			type = DataType::WChar;
+		else if( typeName=="smallint" )
+			type = DataType::Int16;
+		else if( typeName=="int8" )
+			type = DataType::Int8;
+		else if( typeName=="uint8" )
+			type = DataType::UInt8;
+		else if( typeName=="guid" )
+			type = DataType::Guid;
+		else if(typeName=="varbinary")
+			type = DataType::VarBinary;
+		else if( typeName=="varchar" )
+			type = DataType::VarChar;
+		else if( typeName=="ntext" )
+			type = DataType::NText;
+		else if( typeName=="text" )
+			type=DataType::Text;
+		else if( typeName=="char" )
+			type=DataType::Char;
+		else if( typeName=="image" )
+			type=DataType::Image;
+		else if( typeName=="bit" )
+			type=DataType::Bit;
+		else if( typeName=="binary" )
+			type=DataType::Binary;
+		else if( typeName=="decimal" )
+			type=DataType::Decimal;
+		else if( typeName=="numeric" )
+			type=DataType::Numeric;
+		else if( typeName=="money" )
+			type=DataType::Money;
+		else
+			TRACE( "Unknown datatype({})."sv, typeName.c_str() );
+		return type;
+	}
+
+	string DB::ToString( DataType type )noexcept
+	{
+		string typeName;
+		if( type == DataType::Int ) typeName = "int";
+		else if( type == DataType::UInt ) typeName = "int unsigned";
+		else if( type == DataType::ULong ) typeName = "bigint(20) unsigned";
+		else if( type == DataType::Long ) typeName="bigint";
+		else if( type == DataType::DateTime ) typeName = "datetime";
+		else if( type == DataType::SmallDateTime )typeName = "smalldatetime";
+		else if( type == DataType::Float ) typeName = "float";
+		else if( type == DataType::SmallFloat )typeName = "real";
+		else if( type == DataType::VarWChar ) typeName = "nvarchar";
+		else if( type == DataType::WChar ) typeName = "nchar";
+		else if( type == DataType::Int16 ) typeName="smallint";
+		else if( type == DataType::Int8 ) typeName = "tinyint";
+		else if( type == DataType::UInt8 ) typeName =  "tinyint unsigned";
+		else if( type == DataType::Guid ) typeName = "uniqueidentifier";
+		else if( type == DataType::VarBinary ) typeName = "varbinary";
+		else if( type == DataType::VarChar ) typeName = "varchar";
+		else if( type == DataType::VarTChar ) typeName = "varchar";
+		else if( type == DataType::NText ) typeName = "ntext";
+		else if( type == DataType::Text ) typeName = "text";
+		else if( type == DataType::Char ) typeName = "char";
+		else if( type == DataType::Image ) typeName = "image";
+		else if( type == DataType::Bit ) typeName="bit";
+		else if( type == DataType::Binary ) typeName = "binary";
+		else if( type == DataType::Decimal ) typeName = "decimal";
+		else if( type == DataType::Numeric ) typeName = "numeric";
+		else if( type == DataType::Money ) typeName = "money";
+		else ERR( "Unknown datatype({})."sv, type );
+		return typeName;
+	}
+
+	DB::DataValue DB::ToDataValue( DataType type, const json& j, sv memberName )
+	{
+		DB::DataValue value{ nullptr };
+		if( !j.is_null() )
+		{
+			switch( type )
+			{
+			case DataType::Bit:
+				THROW_IF( !j.is_boolean(), Exception("{} could not conver to boolean", memberName) );
+				value = DB::DataValue{ j.get<bool>() };
+				break;
+			case DataType::Int16:
+			case DataType::Int:
+			case DataType::Int8:
+			case DataType::Long:
+				THROW_IF( !j.is_number(), Exception("{} could not conver to numeric", memberName) );
+				value = DB::DataValue{ j.get<_int>() };
+				break;
+			case DataType::UInt:
+			case DataType::ULong:
+				THROW_IF( !j.is_number(), Exception("{} could not conver to numeric", memberName) );
+				value = DB::DataValue{ j.get<uint>() };
+				break;
+			case DataType::SmallFloat:
+			case DataType::Float:
+			case DataType::Decimal:
+			case DataType::Numeric:
+			case DataType::Money:
+				THROW_IF( !j.is_number(), Exception("{} could not conver to numeric", memberName) );
+				value = DB::DataValue{ j.get<double>() };
+				break;
+			case DataType::None:
+			case DataType::Binary:
+			case DataType::VarBinary:
+			case DataType::Guid:
+			case DataType::Cursor:
+			case DataType::RefCursor:
+			case DataType::Image:
+			case DataType::Blob:
+			case DataType::TimeSpan:
+				THROW( Exception("DataType {} is not implemented.", type) );
+			case DataType::VarTChar:
+			case DataType::VarWChar:
+			case DataType::VarChar:
+			case DataType::NText:
+			case DataType::Text:
+			case DataType::Uri:
+				THROW_IF( !j.is_string(), Exception("{} could not conver to string", memberName) );
+				value = DB::DataValue{ j.get<string>() };
+				break;
+			case DataType::TChar:
+			case DataType::WChar:
+			case DataType::UInt8:
+			case DataType::Char:
+				THROW( Exception("char DataType {} is not implemented.") );
+			case DataType::DateTime:
+			case DataType::SmallDateTime:
+				THROW_IF( !j.is_string(), Exception("{} could not conver to string for datetime", memberName) );
+				const string time{ j.get<string>() };
+				const Jde::DateTime dateTime{ time };
+				const TimePoint t = dateTime.GetTimePoint();
+				value = DB::DataValue{ t };
+				break;
+			}
+		}
+		return value;
 	}
 }

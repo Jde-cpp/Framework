@@ -1,4 +1,7 @@
 #pragma once
+#ifndef JDE_TYPEDEFS
+#define JDE_TYPEDEFS
+
 #include <map>
 #include <memory>
 #include <mutex>
@@ -12,37 +15,77 @@
 #include <unordered_map>
 #include <string_view>
 #include <vector>
-#include <boost/container/flat_map.hpp>
 
+
+#ifndef NO_FORMAT
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/fmt/ostr.h>
+#endif
 
+#ifndef NO_BOOST
+#include <boost/container/flat_map.hpp>
+#endif
 
+#ifdef _MSC_VER
+	#if __cplusplus > 2017
+		#include <coroutine>
+	#else
+		#include <experimental/coroutine>
+	#endif
+#else
+	#include <experimental/coroutine>
+#endif
+
+#ifdef ONE_CORE
+	#pragma comment(lib, "Onecore.lib")
+#endif
 
 namespace Jde
 {
+	typedef uint_fast8_t uint8;
+	typedef int_fast8_t int8;
+
+	using namespace std::literals::string_view_literals;
+	using std::string_view;//TODO get rid of
+	using sv = std::string_view;
+
+#pragma region ELogLevel
+	enum class ELogLevel : uint8
+	{
+		Trace = 0,
+		Debug = 1,
+		Information = 2,
+		Warning = 3,
+		Error = 4,
+		Critical = 5,
+		None = 6
+	};
+	constexpr std::array<string_view,7> ELogLevelStrings = { "Trace"sv, "Debug"sv, "Information"sv, "Warning"sv, "Error"sv, "Critical"sv, "None"sv };
+#pragma endregion
+
 	template<typename T>
 	constexpr auto ms = std::make_shared<T>;
 
 	template<typename T>
 	constexpr auto mu = std::make_unique<T>;
 
-	typedef uint_fast8_t uint8;//todo make const
-	typedef int_fast8_t int8;
-
 	typedef uint_fast16_t uint16;
 	typedef int_fast16_t int16;
-	//typedef uint_fast16_t uint16;
-//	typedef int_fast16_t int16;
 
 	typedef uint_fast32_t uint32;
+	typedef uint_fast32_t PK;
+	typedef PK UserPK;
 	typedef int_fast32_t int32;
-//	typedef uint_fast32_t uint32;
-// typedef int_fast32_t int32;
 
-	typedef uint_fast64_t uint; //todo make const
-	typedef int_fast64_t _int; //todo make const
+	typedef uint_fast64_t uint;
+	typedef int_fast64_t _int;
+	typedef uint Handle;
+
+	typedef std::chrono::system_clock Clock;
+	typedef Clock::duration Duration;
+	typedef Clock::time_point TimePoint;
+
 	typedef std::chrono::steady_clock SClock;
 	typedef SClock::duration SDuration;
 	typedef SClock::time_point STimePoint;
@@ -54,10 +97,11 @@ namespace Jde
 	using std::mutex;
 	using std::shared_ptr;
 	using std::string;
-	using std::string_view;
 	using std::tuple;
 	using std::unique_ptr;
-	using std::set; //https://stackoverflow.com/questions/19480918/is-it-possible-to-know-if-a-header-is-included	//https://stackoverflow.com/questions/36117884/compile-time-typeid-for-every-type -> https://stackoverflow.com/questions/35941045/can-i-obtain-c-type-names-in-a-constexpr-way/35943472#35943472 ->
+	using std::get;
+	using std::set;
+	using std::static_pointer_cast;
 	using std::unique_lock;
 	using std::shared_lock;
 	using std::shared_mutex;
@@ -70,7 +114,7 @@ namespace Jde
 	using std::make_tuple;
 	using std::list;
 	using std::atomic;
-	using boost::container::flat_multimap;
+	//using boost::container::flat_multimap;
 
 	template<class T> using sp = std::shared_ptr<T>;
 	template<class T> using up = std::unique_ptr<T>;
@@ -84,18 +128,40 @@ namespace Jde
 	template<class K, class V> using UnorderedPtr = std::shared_ptr<std::unordered_map<K,V>>;
 	using std::multimap;
 	template<class T, class Y> using MultiMapPtr = std::shared_ptr<std::multimap<T,Y>>;
+	using std::function;
 
 	typedef unsigned short PortType;
-/*	using std::function;
+	typedef uint_fast16_t DayIndex;
 
-	using std::vector;
-*/
 	namespace fs=std::filesystem;
+#ifndef NO_BOOST
+	using boost::container::flat_map;
+	using boost::container::flat_multimap;
+#endif
+#ifndef NO_FORMAT
 	using fmt::format;
+	#ifdef _MSC_VER
+		#ifdef NDEBUG
+			#pragma comment(lib, "fmt.lib")
+		#else
+			#pragma comment(lib, "fmtd.lib")
+		#endif
+	#endif
+#endif
 	using path = const fs::path&;
-	using sv = std::string_view;
 	using str = std::string;
-}
 #ifdef _MSC_VER
 	#define __PRETTY_FUNCTION__ __FUNCSIG__
+	#if __cplusplus > 2017
+		using std::coroutine_handle;
+		using std::suspend_never;
+	#else
+		using std::experimental::coroutine_handle;
+		using std::experimental::suspend_never;
+	#endif
+#else
+	using std::experimental::coroutine_handle;
+	using std::experimental::suspend_never;
 #endif
+}
+#endif // !JDE_TYPEDEFS

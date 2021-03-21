@@ -4,7 +4,8 @@
 #include <list>
 #include <functional>
 #include <cctype>
-#include "Exception.h"
+//#include "Exception.h"
+#include "./log/Logging.h"
 
 using namespace std;
 namespace Jde
@@ -17,7 +18,7 @@ namespace Jde
 		template<typename T>
 		std::vector<std::basic_string<T>> Split( const std::basic_string<T> &s, T delim=T{','} );
 
-		std::vector<std::string> Split( const std::string& s, const string& delim );
+		JDE_NATIVE_VISIBILITY std::vector<std::string> Split( const std::string& s, const string& delim );
 		JDE_NATIVE_VISIBILITY std::vector<std::string> Split( std::string_view s, char delim=',' );
 
 		template<typename T>
@@ -35,10 +36,11 @@ namespace Jde
 		JDE_NATIVE_VISIBILITY string ToUpper( const string& source )noexcept;
 
 		template<typename T>
-		static T TryTo( string_view value, T errorValue );
+		static optional<T> TryTo( string_view value );
 
 		template<typename T>
-		static float TryToFloat( const std::basic_string<T>& s );
+		static float TryToFloat( const std::basic_string<T>& s )noexcept;
+		optional<double> TryToDouble( const std::string& s )noexcept;
 
 		template<typename Enum, typename Collection>
 		string_view FromEnum( const Collection& s, Enum value )noexcept;
@@ -68,10 +70,10 @@ namespace Jde
 		CIString( string_view sv )noexcept:base{sv.data(), sv.size()}{}
 		CIString( const string& s )noexcept:base{s.data(), s.size()}{}
 		inline bool operator ==( string_view s )const noexcept{ return size()==s.size() && base::compare( 0, s.size(), s.data(), s.size() )==0; }
+		inline bool operator ==( const char* psz )const noexcept{ return size()==strlen(psz) && base::compare( 0, size(), psz, size() )==0; }
 		inline bool operator !=( string_view s )const noexcept{ return size() == s.size() && base::compare(0, s.size(), s.data(), s.size())!=0; }
 		inline bool operator !=( const string& s )const noexcept{ return *this!=string_view{s}; }
 		operator string()const noexcept{ return string{data(), size()}; }
-
 	};
 
 	template<typename T>
@@ -123,7 +125,7 @@ namespace Jde
 	}
 
 	template<typename T>
-	float StringUtilities::TryToFloat( const std::basic_string<T>& token )
+	float StringUtilities::TryToFloat( const std::basic_string<T>& token )noexcept
 	{
 		try
 		{
@@ -135,19 +137,32 @@ namespace Jde
 			return std::nanf("");
 		}
 	}
-
-	template<typename T>
-	static T StringUtilities::TryTo( string_view value, T errorValue )
+	inline optional<double> StringUtilities::TryToDouble( const std::string& s )noexcept
 	{
+		optional<double> v;
 		try
 		{
-			return static_cast<T>( std::stoull( string(value) ) );
+			v = std::stod( s );
+		}
+		catch(std::invalid_argument e)
+		{
+			TRACE( "Can't convert:  {}.  to float.  {}"sv, s, e.what() );
+		}
+		return v;
+	}
+	template<typename T>
+	static optional<T> StringUtilities::TryTo( string_view value )
+	{
+		optional<T> v;
+		try
+		{
+			v = static_cast<T>( std::stoull(string(value)) );//TODO from_chars
 		}
 		catch( const std::invalid_argument& e )
 		{
-			ERR( "Can't convert:  {}.  to {}.  {}"sv, value, Jde::GetTypeName<T>(), e.what() );
-			return errorValue;
+			ERR( "Can't convert:  {}.  to {}.  {}"sv, value, "typeName" /*Jde::GetTypeName<T>()*/, e.what() );
 		}
+		return v;
 	}
 	inline bool StringUtilities::StartsWithInsensitive( const std::string_view value, const std::string_view& starting )
 	{

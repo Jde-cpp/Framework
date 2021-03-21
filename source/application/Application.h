@@ -5,6 +5,7 @@ namespace Jde::Threading{ struct InterruptibleThread; }
 
 namespace Jde
 {
+	namespace IO{ struct IDrive; }
 	struct IShutdown
 	{
 		virtual void Shutdown()noexcept=0;
@@ -13,8 +14,13 @@ namespace Jde
 	struct JDE_NATIVE_VISIBILITY IApplication
 	{
 		virtual ~IApplication();
-		static IApplication& Instance()noexcept{ ASSERT_DESC(_pInstance, "No Application Instance"sv); return *_pInstance; }
+		static IApplication& Instance()noexcept{ assert(_pInstance); return *_pInstance; }
 		set<string> BaseStartup( int argc, char** argv, string_view appName, string_view companyName="jde-cpp" )noexcept(false);
+
+		static size_t MemorySize()noexcept;
+		static fs::path Path()noexcept;
+		static string HostName()noexcept;
+		static uint ProcessId()noexcept;
 
 		static void AddThread( sp<Threading::InterruptibleThread> pThread )noexcept;
 		static void RemoveThread( sp<Threading::InterruptibleThread> pThread )noexcept;
@@ -32,9 +38,19 @@ namespace Jde
 		static string_view CompanyName()noexcept{ return _pCompanyName ? *_pCompanyName : ""sv;}
 		static string_view ApplicationName()noexcept{ return _pApplicationName ? *_pApplicationName : ""sv;}
 		virtual fs::path ProgramDataFolder()noexcept=0;
-		virtual fs::path ApplicationDataFolder()noexcept{ return ProgramDataFolder()/format(".{}", CompanyName())/ApplicationName(); }
+		virtual fs::path ApplicationDataFolder()noexcept
+		{
+#ifdef _MSC_VER
+			string_view frmt = "{}";
+#else
+			string_view frmt = ".{}";
+#endif
+			return ProgramDataFolder()/format(frmt, CompanyName())/ApplicationName();
+		}
 		static bool ShuttingDown()noexcept{ return _shuttingDown; }
+		static sp<IO::IDrive> DriveApi()noexcept;
 		void Wait()noexcept;
+		virtual string GetEnvironmentVariable( string_view variable )noexcept=0;
 	protected:
 
 		static void OnTerminate()noexcept;//implement in OSApp.cpp.
@@ -42,7 +58,6 @@ namespace Jde
 		virtual bool AsService()noexcept=0;
 		virtual void AddSignals()noexcept(false)=0;
 		virtual bool KillInstance( uint processId )noexcept=0;
-		virtual string GetEnvironmentVariable( string_view variable )noexcept=0;
 
 		static mutex _threadMutex;
 		static VectorPtr<sp<Threading::InterruptibleThread>> _pBackgroundThreads;

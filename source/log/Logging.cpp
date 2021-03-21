@@ -1,5 +1,4 @@
 #include "Logging.h"
-#include "../Diagnostics.h"
 #include <boost/lexical_cast.hpp>
 #include "server/ServerSink.h"
 #include "../Settings.h"
@@ -19,7 +18,7 @@ namespace Jde
 {
 	Logging::IServerSink* _pServerSink{nullptr};
 	bool _logMemory{false};
-	std::unique_ptr<std::vector<Logging::Messages::Message>> _pMemoryLog; shared_mutex MemoryLogMutex;
+	std::shared_ptr<std::vector<Logging::Messages::Message>> _pMemoryLog; shared_mutex MemoryLogMutex;
 	std::shared_ptr<spdlog::logger> spLogger{nullptr};
 	spdlog::logger* pLogger{nullptr};
 	namespace Logging
@@ -67,7 +66,8 @@ namespace Jde
 		}
 		var serverPort =  pSettings->Get<uint16>( "serverPort", 0 );
 		var memory =  pSettings->Get<uint16>( "memory", false );
-		InitializeLogger( level, path, serverPort, memory );
+		var flushOn = (ELogLevel)pSettings->Get2<int>( "flushOn" ).value_or( (int)ELogLevel::Information );
+		InitializeLogger( level, path, serverPort, memory, flushOn );
 	}
 	TimePoint _startTime = Clock::now(); Logging::Proto::Status _status; mutex _statusMutex; TimePoint _lastStatusUpdate;
 	void SecretDelFunc( spdlog::logger* p )
@@ -75,7 +75,7 @@ namespace Jde
 		delete p;
 		pLogger = nullptr;
 	}
-	void InitializeLogger( ELogLevel level2, path path, uint16 serverPort, bool memory )noexcept
+	void InitializeLogger( ELogLevel level, path path, uint16 serverPort, bool memory, ELogLevel flushOn )noexcept
 	{
 		_status.set_starttime( (google::protobuf::uint32)Clock::to_time_t(_startTime) );
 
@@ -89,11 +89,11 @@ namespace Jde
 		else
 			spLogger = make_shared<spdlog::logger>( "my_logger", pConsole );
 		pLogger = spLogger.get();
-		pLogger->set_level( (spdlog::level::level_enum)level2 );
-		pLogger->flush_on( spdlog::level::level_enum::info );
+		pLogger->set_level( (spdlog::level::level_enum)level );
+		pLogger->flush_on( (spdlog::level::level_enum)flushOn );
 		if( serverPort )
 		{
-			_pServerSink = Logging::ServerSink::Create( Diagnostics::HostName(), (uint16)serverPort ).get();
+			_pServerSink = Logging::ServerSink::Create( IApplication::HostName(), (uint16)serverPort ).get();
 #if _MSC_VER
 			//_spEtwSink =  Logging::EtwSink::Create( boost::lexical_cast<boost::uuids::uuid>("1D6E1834-B684-4CA1-A5AC-ADA270FF8F24") );
 			//_pEtwSink = _spEtwSink.get();
@@ -104,7 +104,7 @@ namespace Jde
 		}
 		if( memory )
 			ClearMemoryLog();
-		INFO( "Created log level:  {},  flush on:  {}"sv, ELogLevelStrings[(uint)level2], ELogLevelStrings[(uint)ELogLevel::Information] );
+		INFO( "Created log level:  {},  flush on:  {}"sv, ELogLevelStrings[(uint)level], ELogLevelStrings[(uint)flushOn] );
 		//DBG0( ""sv );
 	}
 
@@ -136,13 +136,14 @@ namespace Jde
 
 		void LogMemory( const Logging::MessageBase& messageBase, const vector<string>* pValues )noexcept
 		{
-			if( _pMemoryLog )
+			auto p = _pMemoryLog;
+			unique_lock l{ MemoryLogMutex };
+			if( p )
 			{
-				unique_lock l{ MemoryLogMutex };
 				if( pValues )
-					_pMemoryLog->push_back( Logging::Messages::Message{messageBase, *pValues} );
+					p->push_back( Logging::Messages::Message{messageBase, *pValues} );
 				else
-					_pMemoryLog->push_back( Logging::Messages::Message{messageBase} );
+					p->push_back( Logging::Messages::Message{messageBase} );
 			}
 		}
 
@@ -169,7 +170,7 @@ namespace Jde
 		{
 			lock_guard l{_statusMutex};
 			vector<string> variables; variables.reserve( _status.details_size()+1 );
-			_status.set_memory( Diagnostics::GetMemorySize() );
+			_status.set_memory( IApplication::MemorySize() );
 			ostringstream os;
 			os << "Memory=" << _status.memory();
 			for( int i=0; i<_status.details_size(); ++i )
@@ -248,6 +249,7 @@ namespace Jde
 	void ClearMemoryLog()noexcept
 	{
 		_logMemory = true;
+		DBG0( "ClearMemoryLog"sv );
 		unique_lock l{ MemoryLogMutex };
 		_pMemoryLog = std::make_unique<std::vector<Logging::Messages::Message>>();
 	}

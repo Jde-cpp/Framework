@@ -1,8 +1,10 @@
 #pragma once
 #include "Socket.h"
 #include "../../collections/Queue.h"
+#include "../../log/Logging.h"
+#pragma warning(disable:4244)
 #include <google/protobuf/message_lite.h>
-
+#pragma warning(default:4244)
 namespace Jde::IO::Sockets
 {
 	namespace basio = boost::asio;
@@ -28,7 +30,8 @@ namespace Jde::IO::Sockets
 		char _readMessageSize[4];
 		vector<google::protobuf::uint8> _message;
 	};
-
+#pragma warning(push)
+#pragma warning( disable : 4459 )
 	struct ProtoClient : public PerpetualAsyncSocket, public ProtoClientSession
 	{
 		ProtoClient( string_view host, uint16 port, string_view name )noexcept;
@@ -43,6 +46,7 @@ namespace Jde::IO::Sockets
 		string _host;
 		uint16 _port;
 	};
+#pragma warning(pop)
 
 	template<typename TOut, typename TIn>
 	struct TProtoClient : ProtoClient

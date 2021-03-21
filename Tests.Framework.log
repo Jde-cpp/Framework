@@ -1,0 +1,17 @@
+[2020-12-30 12:08:24.539] [my_logger] [info] Created log level:  Debug,  flush on:  Information
+[2020-12-30 12:08:24.541] [my_logger] [info] C:\Users\duffyj\source\repos\jde\TwsWebSocket\source\.bin\Debug\Jde.Tests.Framework.exe, settings='"Tests.Framework.json"' Running as console='true'
+[2020-12-30 12:08:24.543] [my_logger] [debug] ClearMemoryLog
+[2020-12-30 12:08:24.546] [my_logger] [debug] (0)CoroutineThread call resume
+[2020-12-30 12:08:24.548] [my_logger] [debug] CoroutinePool - Starting
+[2020-12-30 12:08:24.550] [my_logger] [debug] (0)CoroutineThread finish resume
+[2020-12-30 12:08:24.551] [my_logger] [debug] (0)CoroutineThread timeout=2020-12-30T17:09:24Z
+[2020-12-30 12:08:24.553] [my_logger] [debug] (0)CoroutineThread call resume
+[2020-12-30 12:08:24.553] [my_logger] [debug] (0)CoroutineThread finish resume
+[2020-12-30 12:08:24.554] [my_logger] [debug] (0)CoroutineThread timeout=2020-12-30T17:09:24Z
+[2020-12-30 12:08:24.560] [my_logger] [info] Waiting for process to complete. 11704
+[2020-12-30 12:08:24.560] [my_logger] [debug] Cache::Shutdown
+[2020-12-30 12:08:24.560] [my_logger] [debug] CoroutinePool - Interrupt _pFlag=true
+[2020-12-30 12:08:29.553] [my_logger] [debug] CoroutinePool - Ending
+[2020-12-30 12:08:29.555] [my_logger] [debug] Leaving Application::Wait
+[2020-12-30 12:08:29.555] [my_logger] [debug] ~Cache
+[2020-12-30 12:08:29.555] [my_logger] [info] Clearing Logger

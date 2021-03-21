@@ -2,7 +2,13 @@
 <Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup />
   <PropertyGroup Label="Globals">
-    <IncludePath>$(REPO_DIR)/vcpkg/installed/x64-windows/include;$(IncludePath)</IncludePath>
+    <IncludePath>$(REPO_DIR)\protobuf\src;$(REPO_DIR)/vcpkg/installed/x64-windows/include;$(IncludePath)</IncludePath>
     <LibraryPath>$(REPO_DIR)/vcpkg/installed/x64-windows/lib;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <LibraryPath>$(REPO_DIR)\protobuf\cmake\build\debug;$(REPO_DIR)\vcpkg\installed\x64-windows\debug\lib;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <LibraryPath>$(REPO_DIR)\protobuf\cmake\build\release;$(REPO_DIR)\vcpkg\installed\x64-windows\release\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
 </Project>

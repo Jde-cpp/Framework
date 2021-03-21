@@ -1,33 +1,28 @@
 #pragma once
+#ifndef JDE_LOGGING
+#define JDE_LOGGING
 #include <array>
 #include <memory>
+
+#include <spdlog/spdlog.h>
+#include <spdlog/sinks/basic_file_sink.h>
+#include <spdlog/fmt/ostr.h>
+
 #include <string_view>
 #include <shared_mutex>
 #include <sstream>
 #include "../Exports.h"
+#include "../collections/ToVec.h"
 #include "../io/Crc.h"
 #include "../TypeDefs.h"
-#include "../DateTime.h"
+//#include "../DateTime.h"
 
 //#ifdef _MSC_VER
 //	#include "server/EtwSink.h"
 //#endif
+
 namespace Jde
 {
-	using namespace std::literals::string_view_literals;
-#pragma region ELogLevel
-	enum class ELogLevel
-	{
-		Trace = 0,
-		Debug = 1,
-		Information = 2,
-		Warning = 3,
-		Error = 4,
-		Critical = 5,
-		None = 6
-	};
-	constexpr std::array<string_view,7> ELogLevelStrings = { "Trace"sv, "Debug"sv, "Information"sv, "Warning"sv, "Error"sv, "Critical"sv, "None"sv };
-#pragma endregion
 #pragma region MessageBase
 	namespace IO{ class IncomingMessage; }
 	namespace Logging
@@ -115,9 +110,9 @@ namespace Jde
 
 #define CRITICAL(message,...) Jde::Logging::LogCritical( Jde::Logging::MessageBase(Jde:: ELogLevel::Critical, message, MY_FILE, __func__, __LINE__), __VA_ARGS__ )
 #define CRITICAL0( message ) Jde::Logging::LogCritical( Jde::Logging::MessageBase(Jde::ELogLevel::Critical, message, MY_FILE, __func__, __LINE__) )
-#define ERR0(message) Logging::Log( Logging::MessageBase(ELogLevel::Error, message, MY_FILE, __func__, __LINE__) )
+//#define ERR0(message) Logging::Log( Logging::MessageBase(ELogLevel::Error, message, MY_FILE, __func__, __LINE__) )
 #define ERR0_ONCE(message) Logging::LogOnce( Logging::MessageBase(ELogLevel::Error, message, MY_FILE, __func__, __LINE__) )
-#define ERR(message,...) Logging::LogError( Logging::MessageBase(ELogLevel::Error, message, MY_FILE, __func__, __LINE__), __VA_ARGS__ )
+#define ERR(message,...) Logging::LogError( Logging::MessageBase(ELogLevel::Error, message, MY_FILE, __func__, __LINE__) __VA_OPT__(,) __VA_ARGS__ )
 #define ERRX(message,...) Logging::LogNoServer( Logging::MessageBase(ELogLevel::Error, message, MY_FILE, __func__, __LINE__), __VA_ARGS__ )
 #define ERRN( message, ... ) Logging::Log( Logging::MessageBase(ELogLevel::Error, message, MY_FILE, __func__, __LINE__, IO::Crc::Calc32RunTime(message), IO::Crc::Calc32RunTime(MY_FILE), IO::Crc::Calc32RunTime(__func__)), __VA_ARGS__ )
 #define ERR_ONCE(message,...) Logging::LogOnce( Logging::MessageBase(ELogLevel::Error, message, MY_FILE, __func__, __LINE__), __VA_ARGS__ )
@@ -131,7 +126,10 @@ namespace Jde
 #define INFO_ONCE(message,...) Logging::LogOnce( Logging::MessageBase(ELogLevel::Information, message, MY_FILE, __func__, __LINE__), __VA_ARGS__ )
 #define INFON( message, ... ) Logging::Log( Logging::MessageBase(ELogLevel::Information, message, MY_FILE, __func__, __LINE__, IO::Crc::Calc32RunTime(message), IO::Crc::Calc32RunTime(MY_FILE), IO::Crc::Calc32RunTime(__func__)), __VA_ARGS__ )
 #define INFO0_ONCE(message) Logging::LogOnce( Logging::MessageBase(ELogLevel::Information, message, MY_FILE, __func__, __LINE__) )
-#define DBG(message,...) Jde::Logging::Log( Jde::Logging::MessageBase(Jde::ELogLevel::Debug, message, MY_FILE, __func__, __LINE__), __VA_ARGS__ )
+#define DBG(message,...) Jde::Logging::Log( Jde::Logging::MessageBase(Jde::ELogLevel::Debug, message, MY_FILE, __func__, __LINE__) __VA_OPT__(,) __VA_ARGS__ )
+#define CONTINUE_IF( predicate, message, ...) if( predicate ){ DBG(message, __VA_ARGS__); continue; }
+#define RETURN_IF( predicate, message, ...) if( predicate ){ DBG(message, __VA_ARGS__); return; }
+//#define ELSE_BREAK( message, ...) else{ DBG(message, __VA_ARGS__); break; }
 #define DBG0( message ) Jde::Logging::Log( Logging::MessageBase(ELogLevel::Debug, message, MY_FILE, __func__, __LINE__) )
 #define DBGN( message, ... ) Logging::Log( Logging::MessageBase(ELogLevel::Debug, message, MY_FILE, __func__, __LINE__, IO::Crc::Calc32RunTime(message), IO::Crc::Calc32RunTime(MY_FILE), IO::Crc::Calc32RunTime(__func__)), __VA_ARGS__ )
 #define DBGX(message,...) Logging::LogNoServer( Logging::MessageBase(ELogLevel::Debug, message, MY_FILE, __func__, __LINE__), __VA_ARGS__ )
@@ -141,10 +139,10 @@ namespace Jde
 #define TRACE0(message) Logging::Log( Logging::MessageBase(ELogLevel::Trace, message, MY_FILE, __func__, __LINE__) )
 #define TRACEX(message,...) Logging::LogNoServer( Logging::MessageBase(ELogLevel::Trace, message, MY_FILE, __func__, __LINE__), __VA_ARGS__ )
 #define TRACE0X(message) Logging::LogNoServer( Logging::MessageBase(ELogLevel::Trace, message, MY_FILE, __func__, __LINE__) )
-#define LOG(severity,message,...) Logging::Log( Logging::MessageBase(severity, message, MY_FILE, __func__, __LINE__), __VA_ARGS__ )
-#define LOGN(severity,message,messageId,...) Logging::Log( Logging::MessageBase(severity, message, MY_FILE, __func__, __LINE__, messageId), __VA_ARGS__ )
-#define LOGN0(severity,message,messageId) Logging::Log( Logging::MessageBase(severity, message, MY_FILE, __func__, __LINE__, messageId) )
-#define LOG0(severity,message) Logging::Log( Logging::MessageBase(severity, message, MY_FILE, __func__, __LINE__) )
+#define LOG(severity,message,...) Logging::Log( Logging::MessageBase(severity, message, MY_FILE, __func__, __LINE__) __VA_OPT__(,) __VA_ARGS__ )
+#define LOGN(severity,message,messageId,...) Logging::Log( Logging::MessageBase(severity, message, MY_FILE, __func__, __LINE__, messageId) __VA_OPT__(,) __VA_ARGS__ )
+//#define LOGN0(severity,message,messageId) Logging::Log( Logging::MessageBase(severity, message, MY_FILE, __func__, __LINE__, messageId) )
+//#define LOG0(severity,message) Logging::Log( Logging::MessageBase(severity, message, MY_FILE, __func__, __LINE__) )
 //#define LOG_SQL(sql,pParams)
 
 namespace spdlog
@@ -160,7 +158,7 @@ namespace Jde
 
    using namespace std::literals;
 	JDE_NATIVE_VISIBILITY void InitializeLogger( string_view fileName )noexcept;
-	JDE_NATIVE_VISIBILITY void InitializeLogger( ELogLevel level2=ELogLevel::Debug, path path=fs::path{}, uint16 serverPort=0, bool memory=false )noexcept;
+	JDE_NATIVE_VISIBILITY void InitializeLogger( ELogLevel level2=ELogLevel::Debug, path path=fs::path{}, uint16 serverPort=0, bool memory=false, ELogLevel flushOn=ELogLevel::Information )noexcept;
 	JDE_NATIVE_VISIBILITY bool HaveLogger()noexcept;
 	JDE_NATIVE_VISIBILITY void ClearMemoryLog()noexcept;
 	JDE_NATIVE_VISIBILITY vector<Logging::Messages::Message> FindMemoryLog( uint32 messageId )noexcept;
@@ -187,39 +185,7 @@ namespace Jde
 	extern bool _logMemory;
 //	JDE_NATIVE_VISIBILITY Logging::Lttng* GetEtwSink();
 #endif
-	//spd::stdout_color_mt
-//	using std::string;
 	JDE_NATIVE_VISIBILITY std::ostream& operator<<( std::ostream& os, const ELogLevel& value );
-//https://stackoverflow.com/questions/21806561/concatenating-strings-and-numbers-in-variadic-template-function
-	namespace ToVec
-	{
-		inline void Append( vector<string>& /*values*/ ){}
-
-    	template<typename Head, typename... Tail>
-    	void Append( vector<string>& values, Head&& h, Tail&&... t );
-
-		template<typename... Tail>
-		void Append( vector<string>& values, std::string&& h, Tail&&... t )
-		{
-			values.push_back( h );
-			return Apend( values, std::forward<Tail>(t)... );
-		}
-
-    	template<typename T>
-    	std::string ToStringT( const T& x )
-    	{
-			std::ostringstream os;
-			os << x;
-      	return os.str();
-    	}
-
-    	template<typename Head, typename... Tail>
-    	void Append( vector<string>& values, Head&& h, Tail&&... t )
-    	{
-			values.push_back( ToStringT(std::forward<Head>(h)) );
-      	return Append( values, std::forward<Tail>(t)... );
-    	}
-	}
 	namespace Logging
 	{
 		namespace Proto{class Status;}
@@ -251,7 +217,6 @@ namespace Jde
 				if( _logMemory )
 					LogMemory( messageBase, &values );
 			}
-
 			// if( GetEtwSink() )
 			// {
 			// 	vector<string> values; values.reserve( sizeof...(args) );
@@ -351,3 +316,4 @@ namespace Jde::Logging
 #pragma endregion
 
 #undef _logMemory
+#endif

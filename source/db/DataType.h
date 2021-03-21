@@ -9,35 +9,22 @@ namespace Jde::DB
 	enum class EDataValue: uint8 {Null,String,StringView,StringPtr,Bool,Int,Int64,Uint,Decimal2,Double,DoubleOptional,DateOptional };
 	typedef std::variant<std::nullptr_t,string,string_view,sp<string>,bool,int,_int,uint,Decimal2,double,std::optional<double>,std::optional<DBDateTime>> DataValue;
 	string to_string( const DataValue& parameter );
+
 	enum DataType
 	{
-		//[XmlEnum("none")]
 		None,
-		//[XmlEnum("int16")]
 		Int16,
-		//[XmlEnum("int")]
 		Int,
-		//[XmlEnum( "uint" )]
 		UInt,
-		//[XmlEnum( "float4" )]
 		SmallFloat,
-		//[XmlEnum("float")]
 		Float,
-		//[XmlEnum("bit")]
 		Bit,
-		//[XmlEnum("decimal")]
 		Decimal,
-		//[XmlEnum("int8")]
 		Int8,
-		//[XmlEnum("long")]
 		Long,
-		//[XmlEnum( "ulong" )]
 		ULong,
-		//[XmlEnum("guid")]
 		Guid,
-		//[XmlEnum("binary")]
 		Binary,
-		//[XmlEnum("vbinary")]
 		VarBinary,
 		//[XmlEnum("vtchar")]
 		VarTChar,
@@ -74,6 +61,12 @@ namespace Jde::DB
 		//[XmlEnum( "time_span" )]
 		TimeSpan,
 		//[XmlEnum( "uri" )]
-		Uri
+		Uri,
+		UInt8
 	};
+	DataType ToDataType( string_view typeName )noexcept;
+	string ToString( DataType type )noexcept;
+
+	DataValue ToDataValue( DataType type, const nlohmann::json& j, sv memberName )noexcept(false);
+
 }

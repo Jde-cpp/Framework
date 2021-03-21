@@ -6,9 +6,9 @@
 #include <sstream>
 
 #include "DateTime.h"
-#include "Diagnostics.h"
 #include "Exception.h"
 #include "math/MathUtilities.h"
+#include "application/Application.h"
 #define var const auto
 
 namespace Jde
@@ -94,7 +94,7 @@ namespace Jde
 	void Stopwatch::Output( string_view what, const SDuration& elapsed, bool logMemory )
 	{
 		if( logMemory )
-			DBG( "{{}) time:  {} - {} Gigs"sv, what, FormatSeconds(elapsed), Diagnostics::GetMemorySize()/std::pow(2,30) );
+			DBG( "{{}) time:  {} - {} Gigs"sv, what, FormatSeconds(elapsed), IApplication::MemorySize()/std::pow(2,30) );
 		else
 			DBG( "({}) time:  {}"sv, what, FormatSeconds(elapsed) );
 	}

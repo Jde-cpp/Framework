@@ -1,20 +1,16 @@
 #pragma once
-#include <experimental/coroutine>
-#include "Worker.h"
+#include "../threading/Worker.h"
 #include "Coroutine.h"
-/*#include <functional>
-#include <mutex>
-#include <thread>
-#include "../TypeDefs.h"
-*/
+#include "Awaitable.h"
+#include "Task.h"
+#include <boost/container/flat_map.hpp>
+
 namespace Jde::Threading
 {
-	using std::experimental::coroutine_handle;
-	using std::experimental::suspend_never;
+	using boost::container::flat_multimap;
 
 	struct JDE_NATIVE_VISIBILITY AlarmAwaitable final : Coroutine::CancelAwaitable<Coroutine::TaskVoid>
 	{
-		//typedef coroutine_handle<Coroutine::TaskVoid::promise_type> Handle;
 		AlarmAwaitable( TimePoint& alarm, Coroutine::Handle& handle )noexcept:CancelAwaitable{handle}, _alarm{alarm}{}
 		~AlarmAwaitable(){ /*DBG("({})AlarmAwaitable::~Awaitable"sv, std::this_thread::get_id());*/ }
 		bool await_ready()noexcept{ return _alarm<Clock::now(); }
@@ -23,10 +19,10 @@ namespace Jde::Threading
 	private:
 		TimePoint _alarm;
 	};
-	struct JDE_NATIVE_VISIBILITY Alarm final: Worker
+	struct JDE_NATIVE_VISIBILITY Alarm final: Threading::Worker
 	{
 		Alarm():Worker{"Alarm"}{};
-		~Alarm(){ DBG0("Alarm::~Alarm"sv); }
+		~Alarm(){ if( GetDefaultLogger() ) DBG0("Alarm::~Alarm"sv); }
 		static auto Wait( TimePoint t, Coroutine::Handle& handle )noexcept{return AlarmAwaitable{t, handle};}
 		static void Cancel( Coroutine::Handle handle )noexcept;
 	private:

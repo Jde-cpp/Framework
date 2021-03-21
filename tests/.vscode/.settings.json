@@ -83,6 +83,12 @@
 		"bit": "cpp",
 		"ios": "cpp",
 		"locale": "cpp",
-		"queue": "cpp"
+		"queue": "cpp",
+		"*.inc": "cpp",
+		"__memory": "cpp",
+		"__tree": "cpp",
+		"stack": "cpp",
+		"__errc": "cpp",
+		"codecvt": "cpp"
 	}
 }

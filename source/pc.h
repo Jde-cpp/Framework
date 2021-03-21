@@ -1,3 +1,4 @@
+/*
 #ifdef _WINDLL
 #ifndef WINVER
 	#define WINVER 0x0A00
@@ -8,7 +9,13 @@
 	#include <stdlib.h>
 	#include <crtdbg.h>
 #endif
-//libmatio.lib;
+*/
+#ifdef _MSC_VER
+#define WIN32_LEAN_AND_MEAN
+	#include <Windows.h>
+	//#include <winsock2.h>
+#endif
+
 #include <functional>
 #include <list>
 #include <map>
@@ -20,11 +27,7 @@
 #include <vector>
 #include <iostream>
 #include <filesystem>
-/*
-#include <Eigen/Dense>
-#include <Eigen/Sparse>
-#include <Eigen/SVD>
-*/
+
 #pragma warning(push)
 #pragma warning( disable : 4245) 
 #pragma warning( disable : 4701)
@@ -32,8 +35,8 @@
 #pragma warning(pop)
 
 #include <boost/exception/diagnostic_information.hpp> 
-#include <boost/asio.hpp>
-#include <boost/asio/ts/io_context.hpp>
+//#include <boost/asio.hpp>
+//#include <boost/asio/ts/io_context.hpp>
 #include <boost/core/noncopyable.hpp>
 
 
@@ -41,10 +44,11 @@
 //#include <boost/uuid/uuid_generators.hpp>
 //#include <boost/uuid/uuid_io.hpp>
 
-#include <nlohmann/json.hpp>
+//#include <nlohmann/json.hpp>
 
 #ifndef __INTELLISENSE__
 #ifdef _WINDLL
+//	#include <format>
 	#include <fmt/core.h>
 #endif
 	#include <spdlog/spdlog.h>
@@ -55,6 +59,7 @@
 #include "log/Logging.h"
 #include "Exception.h"
 #include "JdeAssert.h"
+#include "Exports.h"
 #include "TypeDefs.h"
 
 #pragma warning(push)
@@ -62,14 +67,7 @@
 #pragma warning( disable : 4127 )
 #pragma warning( disable : 4244 )
 #pragma warning( disable : 4267 )
+#pragma warning( disable : 5054 )
 #include "google/protobuf/message.h"
 #include "log/server/proto/messages.pb.h"
 #pragma warning(pop)
-
-/*
-#ifdef _WINDOWS
-	#ifndef __INTELLISENSE__
-		#include <windows.h>
-	#endif
-#endif
-*/

@@ -1,11 +1,9 @@
-
 #include "Thread.h"
 #include <algorithm>
 #include <atomic>
 #include <sstream>
 
 #define var const auto
-//template<class T> using mup = make_unique<T>::type;
 
 namespace Jde
 {
@@ -40,8 +38,4 @@ namespace Jde
 		for( auto& thread : threads )
 			thread.join();
 	}
-
-	ELogLevel Threading::MyLock::_defaultLogLevel{ ELogLevel::Trace };
-	void Threading::MyLock::SetDefaultLogLevel( ELogLevel logLevel )noexcept{ _defaultLogLevel=logLevel; }
-	ELogLevel Threading::MyLock::GetDefaultLogLevel()noexcept{ return _defaultLogLevel; }
 }

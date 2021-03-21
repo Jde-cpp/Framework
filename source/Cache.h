@@ -1,12 +1,14 @@
 #pragma once
 #include "application/Application.h"
+#include "log/Logging.h"
+#include "Exports.h"
 
 namespace Jde
 {
 	struct Cache final : public Jde::IShutdown
 	{
 		~Cache(){ if( HaveLogger() ) DBG0("~Cache"sv); }
-		static void CreateInstance()noexcept;
+		JDE_NATIVE_VISIBILITY static void CreateInstance()noexcept;
 		void Shutdown()noexcept;// override;
 		static bool Has( const string& name )noexcept;
 		template<class T>

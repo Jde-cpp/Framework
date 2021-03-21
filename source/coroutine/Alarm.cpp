@@ -1,16 +1,11 @@
 #include "Alarm.h"
-/*#include <condition_variable>
-#include <functional>
-#include <mutex>
-#include <thread>
 #include "../TypeDefs.h"
-*/
+
 #define IntancePtr if( auto p=Instance(); p ) p
 #define var const auto
 
 namespace Jde::Threading
 {
-	//std::atomic<Coroutine::Handle> AlarmAwaitable::_handleIndex{0};
 	void AlarmAwaitable::await_suspend( AlarmAwaitable::Handle h )noexcept
 	{
 		Alarm::Add( _alarm, h, _hClient );
@@ -44,10 +39,8 @@ namespace Jde::Threading
 		unique_lock l{ _coroutineMutex };
 		if( auto p = std::find_if(_coroutines.begin(), _coroutines.end(), [h](var x){ return get<0>(x.second)==h;}); p!=_coroutines.end() )
 		{
-			//get<1>( p->second ).promise().unhandled_exception();
 			DBG( "Cancel({})"sv, h );
 			get<1>( p->second ).destroy();
-			//get<1>( p->second ).resume();
 			_coroutines.erase( p );
 		}
 		else
@@ -61,16 +54,20 @@ namespace Jde::Threading
 	}
 	void Alarm::Process()noexcept
 	{
+		static uint i=0;
 		{
 			std::unique_lock<std::mutex> lk( _mtx );
 			var now = Clock::now();
 			var dflt = now+WakeDuration;
 			var next = Next().value_or(dflt);
-			/*var status =*/ _cv.wait_for( lk, now-std::min(dflt, next) );
+			var until = std::min( dflt, next );
+			if( ++i%10==0 )
+				DBG( "Alarm wait until:  {}"sv, ToIsoString(until) );
+			/*var status =*/ _cv.wait_for( lk, until-now );
 		}
 		unique_lock l{ _coroutineMutex };
 		for( auto p=_coroutines.begin(); p!=_coroutines.end() && p->first<Clock::now(); p = _coroutines.erase(p) )
-			get<1>(p->second).resume();
+			Coroutine::CoroutinePool::Resume( move(get<1>(p->second)) );
 	}
 	void Alarm::Shutdown()noexcept
 	{

@@ -21,10 +21,11 @@ namespace Jde
 		size_t EraseIf( function<bool(const TKey&)> func )noexcept;
 		bool IfEmpty( function<void()> func )noexcept;
 		uint size()const noexcept;
+		bool contains( const TKey& x )const noexcept{ std::unique_lock<std::shared_mutex> l(_mutex);  return base::contains( x ); }
 		void clear()noexcept{ std::unique_lock<std::shared_mutex> l(_mutex);  return base::clear(); }
 		template<class... Args >
 		bool emplace( Args&&... args )noexcept;
-		uint ForEach( std::function<void(const TKey& key)> func )const;
+		uint ForEach( std::function<void(const TKey& key)> func )const noexcept(false);
 	private:
 		mutable std::shared_mutex _mutex;
 	};
@@ -93,7 +94,7 @@ namespace Jde
 		return result.second;
 	}
 	template<typename TKey>
-	uint UnorderedSet<TKey>::ForEach( std::function<void(const TKey& key)> func )const
+	uint UnorderedSet<TKey>::ForEach( std::function<void(const TKey& key)> func )const noexcept(false)
 	{
 		std::shared_lock<std::shared_mutex> l(_mutex);
 		uint count = size();

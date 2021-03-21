@@ -6,6 +6,7 @@
 #include <memory>
 #include <set>
 #include <vector>
+#include <boost/container/flat_map.hpp>
 #include "../Exception.h"
 
 namespace Jde
@@ -13,12 +14,13 @@ namespace Jde
 	namespace fs=std::filesystem;
 	struct Stopwatch;
 	class String;
-	//using std::list;
+	using boost::container::flat_map;
 namespace IO
 {
 	namespace FileUtilities
 	{
 		JDE_NATIVE_VISIBILITY std::unique_ptr<std::vector<char>> LoadBinary( path path )noexcept(false);
+		JDE_NATIVE_VISIBILITY string Load( path path )noexcept(false);
 		JDE_NATIVE_VISIBILITY void SaveBinary( path path, const std::vector<char>& values )noexcept(false);
 		JDE_NATIVE_VISIBILITY void Save( path path, const std::string& value, std::ios_base::openmode openMode = std::ios_base::out )noexcept(false);
 		inline void SaveBinary( path path, const std::string& value )noexcept(false){ return Save(path, value, std::ios::binary); }
@@ -33,12 +35,14 @@ namespace IO
 		JDE_NATIVE_VISIBILITY std::string DateFileName( uint16 year, uint8 month=0, uint8 day=0 )noexcept;
 		JDE_NATIVE_VISIBILITY tuple<uint16,uint8,uint8> ExtractDate( path path )noexcept;
 
+		JDE_NATIVE_VISIBILITY void Replace( path source, path destination, const flat_map<string,string>& replacements )noexcept(false);
+
 		JDE_NATIVE_VISIBILITY void CombineFiles( path csvFileName );
 
 		template<typename TCollection>
 		void SaveColumnNames( path path, const TCollection& columns );
 
-		struct JDE_NATIVE_VISIBILITY Compression
+		struct JDE_NATIVE_VISIBILITY Compression //TODO See if this is used.
 		{
 			void Save( path path, const std::vector<char>& data )noexcept(false);
 			virtual fs::path Compress( path path, bool deleteAfter=true )noexcept(false);
