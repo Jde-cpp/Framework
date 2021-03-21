@@ -79,8 +79,8 @@ namespace Jde::DB
 		{
 			if( var pNameDBTable=pDBTables->find(tableName); pNameDBTable!=pDBTables->end() )
 			{
-				if( tableName=="um_role_permissions" )
-					DBG( "{}"sv, pTable->FindColumn("right_id")->Default );
+				//if( tableName=="um_role_permissions" )
+				//	TRACE( "{}"sv, pTable->FindColumn("right_id")->Default );
 				for( auto& column : pTable->Columns )
 				{
 					var& dbTable = pNameDBTable->second;

@@ -139,10 +139,10 @@ namespace Jde
 #define TRACE0(message) Logging::Log( Logging::MessageBase(ELogLevel::Trace, message, MY_FILE, __func__, __LINE__) )
 #define TRACEX(message,...) Logging::LogNoServer( Logging::MessageBase(ELogLevel::Trace, message, MY_FILE, __func__, __LINE__), __VA_ARGS__ )
 #define TRACE0X(message) Logging::LogNoServer( Logging::MessageBase(ELogLevel::Trace, message, MY_FILE, __func__, __LINE__) )
-#define LOG(severity,message,...) Logging::Log( Logging::MessageBase(severity, message, MY_FILE, __func__, __LINE__), __VA_ARGS__ )
-#define LOGN(severity,message,messageId,...) Logging::Log( Logging::MessageBase(severity, message, MY_FILE, __func__, __LINE__, messageId), __VA_ARGS__ )
-#define LOGN0(severity,message,messageId) Logging::Log( Logging::MessageBase(severity, message, MY_FILE, __func__, __LINE__, messageId) )
-#define LOG0(severity,message) Logging::Log( Logging::MessageBase(severity, message, MY_FILE, __func__, __LINE__) )
+#define LOG(severity,message,...) Logging::Log( Logging::MessageBase(severity, message, MY_FILE, __func__, __LINE__) __VA_OPT__(,) __VA_ARGS__ )
+#define LOGN(severity,message,messageId,...) Logging::Log( Logging::MessageBase(severity, message, MY_FILE, __func__, __LINE__, messageId) __VA_OPT__(,) __VA_ARGS__ )
+//#define LOGN0(severity,message,messageId) Logging::Log( Logging::MessageBase(severity, message, MY_FILE, __func__, __LINE__, messageId) )
+//#define LOG0(severity,message) Logging::Log( Logging::MessageBase(severity, message, MY_FILE, __func__, __LINE__) )
 //#define LOG_SQL(sql,pParams)
 
 namespace spdlog
@@ -217,7 +217,6 @@ namespace Jde
 				if( _logMemory )
 					LogMemory( messageBase, &values );
 			}
-
 			// if( GetEtwSink() )
 			// {
 			// 	vector<string> values; values.reserve( sizeof...(args) );

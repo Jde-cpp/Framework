@@ -376,7 +376,7 @@ namespace DB
 				string fieldName;
 				string qlTypeName;
 				DB::QLFieldKind rootType = DB::QLFieldKind::Scalar;
-				DBG( column.Name );
+//				DBG( column.Name );
 				if( column.PKTable.empty() )
 				{
 					fieldName = DB::Schema::ToJson( column.Name );

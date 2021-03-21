@@ -88,7 +88,7 @@ namespace Jde::Logging
 				DBGX( "Acknowledged - instance id={}"sv, ack.instanceid() );
 				auto pTransmission = make_shared<Proto::ToServer>();
 				auto pInstance = new Proto::Instance();
-				_applicationName = IApplication::Path().stem().string()=="Jde" ? IApplication::Path().extension().string().substr(1) : IApplication::Path().stem().string();
+				_applicationName = IApplication::ApplicationName();//Path().stem().string()=="Jde" ? IApplication::Path().extension().string().substr(1) : IApplication::Path().stem().string();
 				pInstance->set_applicationname( _applicationName );
 				pInstance->set_hostname( IApplication::HostName() );
 				pInstance->set_processid( (int32)IApplication::ProcessId() );

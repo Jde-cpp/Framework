@@ -80,6 +80,7 @@ namespace Jde
 
 	typedef uint_fast64_t uint;
 	typedef int_fast64_t _int;
+	typedef uint Handle;
 
 	typedef std::chrono::system_clock Clock;
 	typedef Clock::duration Duration;

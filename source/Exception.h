@@ -226,7 +226,7 @@ namespace Jde
 		}
 //		return "";
 	}
-
+#define TRY(x) Try( [&]{x;} )
 	inline bool Try( std::function<void()> func )
 	{
 		bool result = false;
