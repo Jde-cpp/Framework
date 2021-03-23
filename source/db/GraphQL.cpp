@@ -369,7 +369,7 @@ namespace DB
 			fields.push_back( field );
 		};
 		function<void(const DB::Table&, bool)> addColumns;
-		addColumns = [&addColumns,&addField, typeName]( const DB::Table& dbTable2, bool isMap )
+		addColumns = [&addColumns,&addField,&typeName]( const DB::Table& dbTable2, bool isMap )
 		{
 			for( var& column : dbTable2.Columns )
 			{
@@ -408,12 +408,12 @@ namespace DB
 					THROW( Exception("Could not find table '{}'", column.PKTable) );
 
 				var isNullable = column.IsNullable;
-				string typeName = isNullable ? qlTypeName : "";
+				string typeName2 = isNullable ? qlTypeName : "";
 				var typeKind = isNullable ? rootType : DB::QLFieldKind::NonNull;
 				string ofTypeName = isNullable ? "" : qlTypeName;
 				var ofTypeKind = isNullable ? optional<DB::QLFieldKind>{} : rootType;
 
-				addField( fieldName, typeName, typeKind, ofTypeName, ofTypeKind );
+				addField( fieldName, typeName2, typeKind, ofTypeName, ofTypeKind );
 			}
 		};
 		addColumns( dbTable, dbTable.IsMap() );
@@ -443,7 +443,7 @@ namespace DB
 		jTable["name"] = dbTable.JsonTypeName();
 		jData["__type"] = jTable;
 	}
-	void IntrospectEnum( sv typeName, const DB::Table& dbTable, const DB::TableQL& fieldTable, json& jData )noexcept(false)
+	void IntrospectEnum( sv /*typeName*/, const DB::Table& dbTable, const DB::TableQL& fieldTable, json& jData )noexcept(false)
 	{
 		auto fields = json::array();
 		ostringstream sql{ "select id,", std::ios::ate };
@@ -983,7 +983,7 @@ namespace DB
 			{
 				var quoted = ch=='"';
 				if( !quoted ) --i;
-				for( char ch = '"'; i<json.size() && ch!=':'; ch=json[++i] )
+				for( ch = '"'; i<json.size() && ch!=':'; ch=json[++i] )
 					os << ch;
 				if( !quoted )
 					os << '"';
@@ -1069,7 +1069,7 @@ namespace DB
 		for( ;iType<DB::MutationQLStrings.size() && !command.starts_with(DB::MutationQLStrings[iType]); ++iType ); THROW_IF( iType==DB::MutationQLStrings.size(), Exception("Could not find mutation {}", command) );
 
 		auto tableJsonName = string{ command.substr(DB::MutationQLStrings[iType].size()) };
-		tableJsonName[0] = tolower( tableJsonName[0] );
+		tableJsonName[0] = (char)tolower( tableJsonName[0] );
 		var type = (DB::EMutationQL)iType;
 /*		string parentJsonName;
 		if( type>DB::EMutationQL::Purge )

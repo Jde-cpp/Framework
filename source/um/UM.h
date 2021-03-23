@@ -4,7 +4,6 @@
 namespace Jde
 {
 	namespace DB{ struct MutationQL; }
-	typedef uint32 UserPK;
 }
 
 namespace Jde::UM

@@ -1,5 +1,6 @@
 #pragma once
 #include <variant>
+#include <nlohmann/json.hpp>
 #include "../math/Decimal.h"
 
 namespace Jde::DB

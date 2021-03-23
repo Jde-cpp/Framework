@@ -112,6 +112,15 @@
     <ClCompile Include="threading\Mutex.cpp">
       <Filter>Source\threading</Filter>
     </ClCompile>
+    <ClCompile Include="db\GraphQL.cpp">
+      <Filter>Source\db</Filter>
+    </ClCompile>
+    <ClCompile Include="um\UM.cpp">
+      <Filter>Source\um</Filter>
+    </ClCompile>
+    <ClCompile Include="db\SchemaProc.cpp">
+      <Filter>Source\db</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="StringUtilities.h">
@@ -392,6 +401,9 @@
     </Filter>
     <Filter Include="Headers\coroutine">
       <UniqueIdentifier>{c9123a05-6b62-46db-a3a2-6ef60e7da840}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\um">
+      <UniqueIdentifier>{24127924-143c-414a-951e-ad6ebad003b1}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

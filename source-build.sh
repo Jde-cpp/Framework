@@ -1,4 +1,3 @@
-
 baseDir=`pwd`;
 jdeRoot=jde;
 if [[ -z "$REPO_DIR" ]]; then

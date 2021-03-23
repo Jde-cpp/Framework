@@ -44,7 +44,7 @@
 //#include <boost/uuid/uuid_generators.hpp>
 //#include <boost/uuid/uuid_io.hpp>
 
-//#include <nlohmann/json.hpp>
+//#include <nlohmann/json.hpp>  //writer.cpp:5695: sorry: not yet implemented
 
 #ifndef __INTELLISENSE__
 #ifdef _WINDLL
@@ -61,7 +61,7 @@
 #include "JdeAssert.h"
 #include "Exports.h"
 #include "TypeDefs.h"
-
+/*
 #pragma warning(push)
 #pragma warning( disable : 4100 )
 #pragma warning( disable : 4127 )
@@ -71,3 +71,4 @@
 #include "google/protobuf/message.h"
 #include "log/server/proto/messages.pb.h"
 #pragma warning(pop)
+*/

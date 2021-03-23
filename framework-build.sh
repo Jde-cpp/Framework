@@ -1,5 +1,5 @@
 clean=${1:-0};
-fetch=${3:-1};
+fetch=${2:-1};
 set disable-completion on;
 windows() { [[ -n "$WINDIR" ]]; }
 

@@ -135,8 +135,8 @@ namespace Jde::DB
 				vector<string> columns;
 				for( var& it : value )
 					columns.push_back( DB::Schema::FromJson(it.get<string>()) );
-				var name = NaturalKeys.empty() ? "nk" : format( "nk{}", NaturalKeys.size() );
-				Indexes.push_back( Index{name, Name, false, &columns} );
+				var name2 = NaturalKeys.empty() ? "nk" : format( "nk{}", NaturalKeys.size() );
+				Indexes.push_back( Index{name2, Name, false, &columns} );
 				NaturalKeys.push_back( columns );
 			}
 			else if( columnName=="$flagsData" )
@@ -314,7 +314,7 @@ namespace Jde::DB
 	{
 		auto name = Schema::ToJson( Schema::ToSingular(NameWithoutType()) );
 		if( name.size() )
-			name[0] = std::toupper( name[0] );
+			name[0] = (char)std::toupper( name[0] );
 		return name;
 	}
 	string Table::ChildId()const noexcept(false)

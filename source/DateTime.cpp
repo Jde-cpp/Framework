@@ -45,28 +45,6 @@ namespace Jde
 			}
 			return duration;
 		}
-#ifdef _MSC_VER
-		string ToString( Duration d )noexcept
-		{
-			ostringstream os;
-			os << 'P';
-			#define output(period,suffix) if( d>=period{1} || d<=period{-1} ){ os << duration_cast<period>(d).count() << suffix; d%=period{1}; }
-			output( years, "Y" );
-			output( months, "M" );
-			output( days, "D" );
-			if( d!=Duration::zero() )
-			{
-				os << "T";
-				output( hours, "H" );
-				output( minutes, "M" );
-				output( seconds, "S" );
-				if( d!=Duration::zero() )
-					os << duration_cast<milliseconds>(d).count();
-			}
-			return os.str();
-		}
-	}
-#else
 		string ToString( Duration d )noexcept
 		{
 			ostringstream os;
@@ -116,7 +94,7 @@ namespace Jde
 			return os.str();
 		}
 	}
-#endif
+
 #ifndef __cplusplus
 	TimePoint::TimePoint( const TimePoint& tp )noexcept:
 		base{ tp },
