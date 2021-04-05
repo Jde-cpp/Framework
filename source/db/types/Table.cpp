@@ -82,9 +82,9 @@ namespace Jde::DB
 		else if( j.is_string() )
 			getType( j.get<string>() );
 	}
-	string Column::DataTypeString()const noexcept
+	string Column::DataTypeString(const Syntax& syntax)const noexcept
 	{
-		return MaxLength ? format( "{}({})", ToString(Type), *MaxLength ) : ToString( Type );
+		return MaxLength ? format( "{}({})", ToString(Type, syntax), *MaxLength ) : ToString( Type, syntax );
 	}
 	string Column::Create( const Syntax& syntax )const noexcept
 	{
@@ -96,7 +96,7 @@ namespace Jde::DB
 			auto value = format( "'{}'", Default );
 			dflt = format( " default {}", value );
 		}
-		return format( "{} {} {}{}{}", Name, DataTypeString(), null, sequence, dflt );
+		return format( "{} {} {}{}{}", Name, DataTypeString(syntax), null, sequence, dflt );
 	}
 
 	Table::Table( sv name, const nlohmann::json& j, const flat_map<string,Table>& parents, const flat_map<string,Column>& commonColumns ):
@@ -194,11 +194,9 @@ namespace Jde::DB
 		//string sequenceType;
 		for( var& column : Columns )
 		{
-			//if( column.IsIdentity )
-			//	sequenceType = column.DataTypeString();
 			string value = format( "{}{}", prefix, column.Name );
 			if( column.Insertable )
-				osCreate << delimiter << prefix << column.Name  << " " << column.DataTypeString();
+				osCreate << delimiter << prefix << column.Name  << " " << column.DataTypeString( syntax );
 			else
 			{
 				 if( column.IsNullable || column.Default.empty() )
@@ -212,10 +210,10 @@ namespace Jde::DB
 		}
 		osInsert << " )" << endl;
 		osValues << " );" << endl;
-		osCreate << " )" << endl << "begin" << endl;
+		osCreate << " )" << endl << syntax.ProcStart() << endl;
 		//osCreate << "declare _id " << sequenceType << ";" << endl;
 		osCreate << osInsert.str() << osValues.str();
-		osCreate << "\tselect LAST_INSERT_ID();" << endl << "end" << endl;// into _id
+		osCreate << "\tselect " << syntax.IdentitySelect() <<";" << endl << syntax.ProcEnd() << endl;// into _id
 		//if( syntax.AltDelimiter().size() )
 		//	osCreate << "delimiter ;";
 		return osCreate.str();

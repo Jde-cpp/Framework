@@ -145,5 +145,4 @@ namespace Jde::IO::Sockets
 			THROW( Exception( "Could not connect {}", e.what()) );
 		}
 	}
-
 }

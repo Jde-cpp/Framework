@@ -10,6 +10,7 @@ namespace Jde::DB
 	JDE_NATIVE_VISIBILITY sp<IDataSource> DataSource()noexcept(false);
 	JDE_NATIVE_VISIBILITY sp<IDataSource> DataSource( path libraryName, string_view connectionString );
 	JDE_NATIVE_VISIBILITY void CleanDataSources()noexcept;
+	JDE_NATIVE_VISIBILITY void ShutdownClean( function<void()>& shutdown )noexcept;
 
 	template<typename T>
 	optional<T> TryScaler( sv sql, const vector<DataValue>& parameters )noexcept;

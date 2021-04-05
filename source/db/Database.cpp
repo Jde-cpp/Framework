@@ -27,34 +27,42 @@ namespace Jde::DB
 		sp<IDataSource> Emplace( string_view connectionString )
 		{
 			std::unique_lock l{ _connectionsMutex };
-			auto pDataSource = _connections.find( string(connectionString) );
-			if( pDataSource == _connections.end() )
+			auto pDataSource = _pConnections->find( string(connectionString) );
+			if( pDataSource == _pConnections->end() )
 			{
 				auto pNew = shared_ptr<Jde::DB::IDataSource>{ GetDataSourceFunction() };
 				pNew->ConnectionString = connectionString;
-				pDataSource = _connections.emplace( connectionString, pNew ).first;
+				pDataSource = _pConnections->emplace( connectionString, pNew ).first;
 			}
 			return pDataSource->second;
 		}
-		static flat_map<string,shared_ptr<Jde::DB::IDataSource>> _connections; static mutex _connectionsMutex;
+		static sp<flat_map<string,shared_ptr<Jde::DB::IDataSource>>> _pConnections; static mutex _connectionsMutex;
 	};
-	flat_map<string,shared_ptr<Jde::DB::IDataSource>> DataSourceApi::_connections; mutex DataSourceApi::_connectionsMutex;
-	flat_map<string,sp<DataSourceApi>> _dataSources; mutex _dataSourcesMutex;
+	sp<flat_map<string,sp<IDataSource>>> DataSourceApi::_pConnections = make_shared<flat_map<string,sp<IDataSource>>>(); mutex DataSourceApi::_connectionsMutex;
+	up<flat_map<string,sp<DataSourceApi>>> _pDataSources = make_unique<flat_map<string,sp<DataSourceApi>>>(); mutex _dataSourcesMutex;
 	sp<Syntax> _pSyntax;
 	sp<IDataSource> _pDefault;
+	up<vector<function<void()>>> _pShutdowns = make_unique<vector<function<void()>>>();
+	void ShutdownClean( function<void()>& shutdown )noexcept
+	{
+		_pShutdowns->push_back( shutdown );
+	}
 	void CleanDataSources()noexcept
 	{
 		DBG0( "CleanDataSources"sv );
 		ClearQLDataSource();
 		_pDefault = nullptr;
+		for( auto p=_pShutdowns->begin(); p!=_pShutdowns->end(); p=_pShutdowns->erase(p) )
+			(*p)();
+		_pShutdowns = nullptr;
 		_pSyntax = nullptr;
 		{
 			unique_lock l2{DataSourceApi::_connectionsMutex};
-			DataSourceApi::_connections.clear();
+			DataSourceApi::_pConnections = nullptr;
 		}
 		{
 			std::unique_lock l{_dataSourcesMutex};
-			_dataSources.clear();
+			_pDataSources = nullptr;
 		}
 		DBG0( "~CleanDataSources"sv );
 	}
@@ -97,8 +105,10 @@ namespace Jde::DB
 		std::unique_lock l{_dataSourcesMutex};
 		string key = libraryName.string();
 		std::call_once( _singleShutdown, [](){ IApplication::AddShutdownFunction( CleanDataSources ); } );
-		auto pApi = _dataSources.emplace( key, sp<DataSourceApi>{new DataSourceApi(libraryName)} ).first;
-		return pApi->second->Emplace( connectionString );
+		auto pSource = _pDataSources->find( key ); 
+		if( pSource==_pDataSources->end() )
+			pSource = _pDataSources->emplace( key, make_shared<DataSourceApi>(libraryName) ).first;
+		return pSource->second->Emplace( connectionString );
 	}
 
 	typedef IDataSource* (*pDataSourceFactory)();

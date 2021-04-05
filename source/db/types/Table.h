@@ -1,5 +1,6 @@
 #pragma once
 #include "../DataType.h"
+#include "../../Exports.h"
 
 namespace Jde::DB
 {
@@ -7,7 +8,7 @@ namespace Jde::DB
 	struct Schema;
 	//struct SurrogateKey
 	//{};
-	struct Column
+	struct JDE_NATIVE_VISIBILITY Column
 	{
 		Column()=default;
 		Column( sv name, uint ordinalPosition, sv dflt, bool isNullable, DataType type, optional<uint> maxLength, bool isIdentity, bool isId, optional<uint> numericPrecision, optional<uint> numericScale )noexcept;
@@ -15,7 +16,7 @@ namespace Jde::DB
 		Column( sv name, const nlohmann::json& j, const flat_map<string,Column>& commonColumns )noexcept(false);
 
 		string Create( const Syntax& syntax )const noexcept;
-		string DataTypeString()const noexcept;
+		string DataTypeString(const Syntax& syntax)const noexcept;
 		string Name;
 		uint OrdinalPosition;
 		string Default;
@@ -33,7 +34,7 @@ namespace Jde::DB
 	};
 	//void from_json( const nlohmann::json& j, Column& column );
 	struct Table;
-	struct Index
+	struct  JDE_NATIVE_VISIBILITY Index
 	{
 		//Index( sv indexName, sv tableName, bool primaryKey, bool unique=true, bool clustered=false )noexcept;
 		Index( sv indexName, sv tableName, bool primaryKey, vector<string>* pColumns=nullptr, bool unique=true, optional<bool> clustered=optional<bool>{} )noexcept;//, bool clustered=false
@@ -47,7 +48,7 @@ namespace Jde::DB
 		bool Unique;
 		bool PrimaryKey;
 	};
-	struct Table
+	struct JDE_NATIVE_VISIBILITY Table
 	{
 		Table( sv schema, sv name ):
 			Schema{schema},

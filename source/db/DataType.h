@@ -1,10 +1,14 @@
 #pragma once
 #include <variant>
+#pragma warning(push)
+#pragma warning( disable : 4715) 
 #include <nlohmann/json.hpp>
+#pragma warning(pop)
 #include "../math/Decimal.h"
 
 namespace Jde::DB
 {
+	struct Syntax;
 	typedef std::chrono::system_clock DBClock;
 	typedef DBClock::time_point DBDateTime;
 	enum class EDataValue: uint8 {Null,String,StringView,StringPtr,Bool,Int,Int64,Uint,Decimal2,Double,DoubleOptional,DateOptional };
@@ -63,10 +67,11 @@ namespace Jde::DB
 		TimeSpan,
 		//[XmlEnum( "uri" )]
 		Uri,
-		UInt8
+		UInt8,
+		UInt16
 	};
 	DataType ToDataType( string_view typeName )noexcept;
-	string ToString( DataType type )noexcept;
+	string ToString( DataType type, const Syntax& syntax )noexcept;
 
 	DataValue ToDataValue( DataType type, const nlohmann::json& j, sv memberName )noexcept(false);
 

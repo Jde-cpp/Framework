@@ -58,4 +58,6 @@ namespace Jde::DB
 	template<>
 	inline uint IRow::Get<uint>( uint position )const{ return GetUInt(position); }
 
+	template<>
+	inline unsigned int IRow::Get<unsigned int>( uint position )const{ return (unsigned int)GetUInt(position); }
 }

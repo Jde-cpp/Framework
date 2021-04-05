@@ -22,7 +22,7 @@ namespace Jde::DB
 	};
 	constexpr array<sv,8> QLFieldKindStrings = { "SCALAR", "OBJECT", "INTERFACE", "UNION", "ENUM", "INPUT_OBJECT", "LIST", "NON_NULL" };
 
-	nlohmann::json Query( sv query, UserPK userId )noexcept(false);
+	JDE_NATIVE_VISIBILITY nlohmann::json Query( sv query, UserPK userId )noexcept(false);
 	struct ColumnQL final
 	{
 		string JsonName;
@@ -71,6 +71,6 @@ namespace Jde::DB
 
 	RequestQL ParseQL( sv query )noexcept(false);
 
-	void AddMutationListener( sv tablePrefix, function<void(const DB::MutationQL& m, PK id)> listener )noexcept;
+	JDE_NATIVE_VISIBILITY void AddMutationListener( sv tablePrefix, function<void(const DB::MutationQL& m, PK id)> listener )noexcept;
 }
 #undef var

@@ -1,6 +1,7 @@
 #pragma once
 #include "../Exports.h"
 #include "DataType.h"
+#include "../log/Logging.h"
 
 #define DB_TRY(x) try{x;}catch( const DB::DBException&){}
 namespace Jde::DB
