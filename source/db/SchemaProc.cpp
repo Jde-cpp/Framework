@@ -213,7 +213,12 @@ namespace Jde::DB
 					continue;
 				if( std::find_if(fks.begin(), fks.end(), [&,t=tableName](var& fk){return fk.second.Table==t && fk.second.Columns==vector<string>{column.Name};})!=fks.end() )
 					continue;
-				var pPKTable = schema.Tables.find( Schema::FromJson(column.PKTable) ); CONTINUE_IF( pPKTable == schema.Tables.end(), "Could not find primary key table '{}' for {}.{}"sv, Schema::FromJson(column.PKTable), tableName, column.Name );
+				var pPKTable = schema.Tables.find( Schema::FromJson(column.PKTable) );
+				if( pPKTable == schema.Tables.end() )
+				{
+					DBG( "Could not find primary key table '{}' for {}.{}"sv, Schema::FromJson(column.PKTable), tableName, column.Name );
+					continue;
+				}
 				if( pPKTable->second->FlagsData.size() )
 					column.IsFlags = true;
 				else

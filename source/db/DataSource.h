@@ -2,6 +2,7 @@
 #include "Row.h"
 //#include "../../types/Schema.h"
 #include "SchemaProc.h"
+#include "../log/Logging.h"
 
 #define DBLOG(message,params) Jde::DB::IDataSource::Log2( message, params, MY_FILE, __func__, __LINE__ )
 namespace Jde::DB
@@ -45,8 +46,8 @@ namespace Jde::DB
 			if( prevIndex<sql.size() )
 				os << sql.substr( prevIndex );
 
-			if( os.str()=="{{error}}" )
-				DBG("HERE"sv);
+			//if( os.str()=="{{error}}" )
+				//DBG("HERE"sv);
 			Logging::Log( Logging::MessageBase(ELogLevel::Debug, os.str(), file, fnctn, line) );
 			//DBG( os.str() );
 		};

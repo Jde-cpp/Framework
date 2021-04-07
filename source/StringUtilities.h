@@ -4,6 +4,7 @@
 #include <list>
 #include <functional>
 #include <cctype>
+#include <charconv>
 //#include "Exception.h"
 #include "./log/Logging.h"
 
@@ -36,7 +37,9 @@ namespace Jde
 		JDE_NATIVE_VISIBILITY string ToUpper( const string& source )noexcept;
 
 		template<typename T>
-		static optional<T> TryTo( string_view value );
+		static optional<T> TryTo( string_view value )noexcept;
+		template<typename T>
+		static T To( sv value )noexcept(false);
 
 		template<typename T>
 		static float TryToFloat( const std::basic_string<T>& s )noexcept;
@@ -75,7 +78,7 @@ namespace Jde
 		inline bool operator !=( const string& s )const noexcept{ return *this!=string_view{s}; }
 		operator string()const noexcept{ return string{data(), size()}; }
 	};
-
+#define var const auto
 	template<typename T>
 	std::basic_string<T> StringUtilities::RTrim(std::basic_string<T> &s)
 	{
@@ -151,17 +154,18 @@ namespace Jde
 		return v;
 	}
 	template<typename T>
-	static optional<T> StringUtilities::TryTo( string_view value )
+	static optional<T> StringUtilities::TryTo( sv value )noexcept
 	{
 		optional<T> v;
-		try
-		{
-			v = static_cast<T>( std::stoull(string(value)) );//TODO from_chars
-		}
-		catch( const std::invalid_argument& e )
-		{
-			ERR( "Can't convert:  {}.  to {}.  {}"sv, value, "typeName" /*Jde::GetTypeName<T>()*/, e.what() );
-		}
+		Try( v=To<T>( value ) );
+		return v;
+	}
+	template<typename T>
+	static T StringUtilities::To( sv value )
+	{
+		T v;
+		var e=std::from_chars( value.data(), value.data()+value.size(), v );
+		THROW_IF( e.ec!=std::errc(), Exception("Can't convert:  {}.  to {}.  {}"sv, value, Jde::GetTypeName<T>(), (uint)e.ec) );
 		return v;
 	}
 	inline bool StringUtilities::StartsWithInsensitive( const std::string_view value, const std::string_view& starting )
@@ -190,4 +194,5 @@ namespace Jde
 	{
 		return static_cast<uint>(value)<stringValues.size() ? stringValues[value] : string_view{};
 	}
+#undef var
 }

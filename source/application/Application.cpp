@@ -37,7 +37,7 @@ namespace Jde
 		if( HaveLogger() )
 			DBG0( "IApplication::~IApplication"sv );
 	}
-	set<string> IApplication::BaseStartup( int argc, char** argv, string_view appName, string_view companyName )noexcept(false)//no config file
+	set<string> IApplication::BaseStartup( int argc, char** argv, sv appName, sv companyName )noexcept(false)//no config file
 	{
 		_pApplicationName = std::make_unique<string>( appName );
 		_pCompanyName = std::make_unique<string>(companyName);
@@ -68,9 +68,9 @@ namespace Jde
 		std::filesystem::path settingsPath{ fileName };
 		if( !fs::exists(settingsPath) )
 		{
-			settingsPath = std::filesystem::path{".."}/fileName;
-			if( !fs::exists(settingsPath) )
-				settingsPath = ApplicationDataFolder()/fileName;
+			var settingsPathB = std::filesystem::path{".."}/fileName;
+			std::cout << "'" << std::filesystem::current_path().string() << "/" << settingsPath.string() << "' not found look:  '" << settingsPathB.string() << "'" << endl;
+			settingsPath = fs::exists(settingsPathB) ? settingsPathB : ApplicationDataFolder()/fileName;
 		}
 		Settings::SetGlobal( std::make_shared<Jde::Settings::Container>(settingsPath) );
 		InitializeLogger( appName );

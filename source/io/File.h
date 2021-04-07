@@ -92,6 +92,7 @@ namespace IO
 		static void ForEachLine( path file, const std::function<void(const std::basic_string<T>&)>& function )noexcept;
 		template<typename T>
 		static void ForEachLine( const std::basic_string<T>& file, const std::function<void(const std::basic_string<T>&)>& function, const size_t lineCount );
+		
 		static void ForEachLine( string_view file, const std::function<void(string_view)>& function, const size_t lineCount );
 		static size_t ForEachLine( string_view pszFileName, const std::function<void(const std::vector<std::string>&, size_t lineIndex)>& function, const std::set<size_t>& columnIndexes, const size_t maxLines=std::numeric_limits<size_t>::max(), const size_t startLine=0, const size_t chunkSize=1073741824, size_t maxColumnCount=1500 );
 
