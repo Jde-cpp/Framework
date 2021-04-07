@@ -12,6 +12,7 @@ namespace Jde::DB
 	JDE_NATIVE_VISIBILITY sp<IDataSource> DataSource( path libraryName, string_view connectionString )noexcept(false);
 	JDE_NATIVE_VISIBILITY void CreateSchema()noexcept(false);
 	JDE_NATIVE_VISIBILITY void CleanDataSources()noexcept;
+	JDE_NATIVE_VISIBILITY void ShutdownClean( function<void()>& shutdown )noexcept;
 
 	JDE_NATIVE_VISIBILITY uint ExecuteProc( sv sql, std::vector<DataValue>&& parameters )noexcept(false);
 

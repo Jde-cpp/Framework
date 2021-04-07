@@ -4,7 +4,6 @@
 namespace Jde
 {
 	namespace DB{ struct MutationQL; }
-	typedef uint32 UserPK;
 }
 
 namespace Jde::UM
@@ -22,7 +21,7 @@ namespace Jde::UM
 	//struct Service //: IService
 	//{
 		//static sp<Service> Instance()noexcept{ return _pInstance.get(); }
-		void Configure()noexcept(false);
+		JDE_NATIVE_VISIBILITY void Configure()noexcept(false);
 		bool IsTarget( sv url )noexcept;
 		void TestAccess( EAccess access, UserPK userId, sv tableName )noexcept(false);
 		void TestAccess( EAccess access, UserPK userId, ApiPK apiId )noexcept(false);

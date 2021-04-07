@@ -46,7 +46,7 @@ namespace Jde
 	std::shared_ptr<T> Queue<T>::WaitAndPop()
 	{
 		std::unique_lock<std::mutex> lk( _mtx );
-		_cv.wait( lk, [this]{return !_queue.empty();} );
+		_cv.wait_for( lk, [this]{return !_queue.empty();} );
 		auto pItem = _queue.front();
 		_queue.pop();
 		return pItem;

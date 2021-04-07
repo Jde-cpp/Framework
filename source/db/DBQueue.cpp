@@ -20,11 +20,13 @@ namespace Jde::DB
 
 	void DBQueue::Shutdown()noexcept
 	{
-		_queue.Push( sp<Statement>{} );
+		_pThread->Interrupt();
+		//_queue.Push( sp<Statement>{} );
 	}
 
 	void DBQueue::Push( string_view sql, const VectorPtr<DB::DataValue>& parameters, bool isStoredProc )noexcept
 	{
+		RETURN_IF( _stopped, "pushing '{}' when stopped"sv, sql );
 		// if( !_stopped )
 		// 	_queue.Push( make_shared<Statement>(sql, parameters, isStoredProc) );
 		// else
@@ -61,7 +63,7 @@ namespace Jde::DB
 	//	Threading::SetThreadDescription( "DBQueue" );
 		while( !Threading::GetThreadInterruptFlag().IsSet() || !_queue.Empty() )
 		{
-			var pStatement = _queue.WaitAndPop();
+			var pStatement = _queue.WaitAndPop( 1s );
 			if( !pStatement )
 				continue;
 			try
@@ -89,6 +91,7 @@ namespace Jde::DB
 			}
 		}
 		_stopped = true;
+		_spDataSource = nullptr;
 		DBG0( "DBQueue::Run - Ending"sv );
 	}
 }

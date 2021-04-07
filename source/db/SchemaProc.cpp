@@ -86,7 +86,7 @@ namespace Jde::DB
 					var& dbTable = pNameDBTable->second;
 					var pDBColumn = dbTable.FindColumn( column.Name ); CONTINUE_IF( !pDBColumn, "Could not find db column {}"sv, column.Name );
 					if( pDBColumn->Default.empty() && column.Default.size() && column.Default!="$now" )
-						_pDataSource->TryExecute( format("ALTER TABLE {} ALTER COLUMN {} SET DEFAULT {}", tableName, column.Name, column.Default) );
+						_pDataSource->TryExecute( pSyntax->AddDefault(tableName, column.Name, column.Default) );
 				}
 			}
 			else
@@ -137,7 +137,7 @@ namespace Jde::DB
 					ostringstream osSelect{ "select count(*) from ", std::ios::ate }; osSelect << tableName << " where ";
 					vector<DB::DataValue> selectParams;
 					ostringstream osWhere;
-					var set = [&,&table=*pTable]( const vector<string>& keys )
+					var set = [&,&table=*pTable]( /*const vector<string>& keys*/ )
 					{
 						osWhere.str("");
 						for( var& keyColumn : table.SurrogateKey )
@@ -155,8 +155,8 @@ namespace Jde::DB
 						}
 						return selectParams.size();
 					};
-					if( !set(pTable->SurrogateKey) )
-						for( auto p = pTable->NaturalKeys.begin(); p!=pTable->NaturalKeys.end() && !set(*p); ++p );
+					if( !set( /*pTable->SurrogateKey*/) )
+						for( auto p = pTable->NaturalKeys.begin(); p!=pTable->NaturalKeys.end() && !set(/**p*/); ++p );
 					THROW_IF( selectParams.empty(), Exception("Could not find keys in data for '{}'", tableName) );
 					osSelect << osWhere.str();
 
@@ -194,13 +194,19 @@ namespace Jde::DB
 					}
 					if( _pDataSource->Scaler( osSelect.str(), selectParams)==0 )
 					{
-						var sql = format( "insert into {}({})values({})", tableName, osInsertColumns.str(), osInsertValues.str() );
+						ostringstream sql;
+						var haveSequence = pTable->HaveSequence();
+						if( haveSequence )
+							sql << "SET IDENTITY_INSERT " << tableName << " ON;" << endl;
+						sql << format( "insert into {}({})values({})", tableName, osInsertColumns.str(), osInsertValues.str() );
+						if( haveSequence )
+							sql << endl << "SET IDENTITY_INSERT " << tableName << " OFF;";
 						/*if( pTable->HaveSequence() && id==0 && syntax.ZeroSequenceMode().size()  )
 						{
 							_pDataSource->Execute( sql, params );
 						}
 						else*/
-						_pDataSource->Execute( sql, params );
+						_pDataSource->Execute( sql.str(), params );
 					}
 				}
 			}
@@ -216,7 +222,7 @@ namespace Jde::DB
 				var pPKTable = schema.Tables.find( Schema::FromJson(column.PKTable) );
 				if( pPKTable == schema.Tables.end() )
 				{
-					DBG( "Could not find primary key table '{}' for {}.{}"sv, Schema::FromJson(column.PKTable), tableName, column.Name );
+					ERR( "Could not find primary key table '{}' for {}.{}"sv, Schema::FromJson(column.PKTable), tableName, column.Name );
 					continue;
 				}
 				if( pPKTable->second->FlagsData.size() )
@@ -292,7 +298,7 @@ namespace Jde::DB
 			// createParent( tableDef );
 			// addColumns( tableDef );
 
-	string UniqueIndexName( const DB::Index& index, ISchemaProc& dbSchema, bool uniqueName, const vector<Index>& indexes )noexcept(false)
+	string UniqueIndexName( const DB::Index& index, ISchemaProc& /*dbSchema*/, bool uniqueName, const vector<Index>& indexes )noexcept(false)
 	{
 		auto indexName=index.Name;
 		bool checkOnlyTable = !index.PrimaryKey && !uniqueName;

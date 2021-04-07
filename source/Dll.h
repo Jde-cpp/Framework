@@ -56,8 +56,8 @@ namespace Jde
 #else
 			::dlclose( _module );
 #endif
-//			if( GetDefaultLogger() )
-//				DBGN( "Freed '{}'."sv, _path.string() );
+			if( GetDefaultLogger() )
+				DBGN( "Freed '{}'."sv, _path.string() );
 		}
 
 

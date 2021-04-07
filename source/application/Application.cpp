@@ -100,12 +100,13 @@ namespace Jde
 			lock_guard l{ObjectMutex};
 			for( auto pShutdown : *_pShutdowns )
 			{
-				if( pShutdown.use_count()>4 )//1 pShutdown, 1 class, 1 _pShutdowns, 1 _pObjects
-					CRITICAL( "Use Count=={}"sv, pShutdown.use_count() );
+		//		if( pShutdown.use_count()>4 )//1 pShutdown, 1 class, 1 _pShutdowns, 1 _pObjects
+		//			CRITICAL( "Use Count=={}"sv, pShutdown.use_count() );
 				if( pShutdown )//not sure why it would be null.
 					pShutdown->Shutdown();
 			}
 			_pShutdowns->clear();
+			_pShutdowns = nullptr;
 		}
 		for(;;)
 		{
@@ -127,6 +128,7 @@ namespace Jde
 			}
 			std::this_thread::sleep_for( 2s );
 		}
+		Settings::SetGlobal( nullptr );
 		DBG0( "Leaving Application::Wait"sv );
 	}
 
@@ -185,17 +187,17 @@ namespace Jde
 			}
 		}
 	}
-	vector<function<void()>> _shutdowns;
+	up<vector<function<void()>>> _pShutdownFunctions = make_unique<vector<function<void()>>>();
 	void IApplication::AddShutdownFunction( function<void()>&& shutdown )noexcept
 	{
-		_shutdowns.push_back( shutdown );
+		_pShutdownFunctions->push_back( shutdown );
 	}
 	void IApplication::CleanUp()noexcept
 	{
 		_pObjects = nullptr;
 		_pBackgroundThreads = nullptr;
 		_pDeletedThreads = nullptr;
-		for( var& shutdown : _shutdowns )
+		for( var& shutdown : *_pShutdownFunctions )
 			shutdown();
 		INFO0( "Clearing Logger"sv );
 		if( GetServerSink() )
@@ -205,6 +207,7 @@ namespace Jde
 		_pApplicationName = nullptr;
 		_pCompanyName = nullptr;
 		_pInstance = nullptr;
+		_pShutdownFunctions = nullptr;
 #ifdef _MSC_VER
 		_CrtDumpMemoryLeaks();
 #endif

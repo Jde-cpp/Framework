@@ -94,6 +94,7 @@ namespace Jde
 			return os.str();
 		}
 	}
+
 #ifndef __cplusplus
 	TimePoint::TimePoint( const TimePoint& tp )noexcept:
 		base{ tp },

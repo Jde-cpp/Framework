@@ -74,7 +74,7 @@ namespace Jde
 	typedef int_fast16_t int16;
 
 	typedef uint_fast32_t uint32;
-	typedef uint_fast32_t PK;
+	typedef uint_fast64_t PK;
 	typedef PK UserPK;
 	typedef int_fast32_t int32;
 

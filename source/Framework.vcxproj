@@ -66,7 +66,7 @@
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>false</SDLCheck>
-      <PreprocessorDefinitions>Jde_EXPORTS;BOOST_ALL_DYN_LINK;_SCL_SECURE_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;_SILENCE_CXX17_ALLOCATOR_VOID_DEPRECATION_WARNING;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;NOMINMAX;_WINDOWS;_USRDLL;PROTOBUF_USE_DLLS;_WIN32_WINNT=0x0A00;PROTOBUF_USE_EXCEPTIONS=0;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>Jde_EXPORTS;PROTOBUF_USE_DLLS;BOOST_ALL_DYN_LINK;_SCL_SECURE_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;_SILENCE_CXX17_ALLOCATOR_VOID_DEPRECATION_WARNING;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;NOMINMAX;_WINDOWS;_USRDLL;_WIN32_WINNT=0x0A00;PROTOBUF_USE_EXCEPTIONS=0;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <DisableSpecificWarnings>4068;4251;4275;4297;4706;5104;5105;4996;4025</DisableSpecificWarnings>
@@ -94,7 +94,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>false</SDLCheck>
-      <PreprocessorDefinitions>Jde_EXPORTS;BOOST_ALL_DYN_LINK;_SCL_SECURE_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;_SILENCE_CXX17_ALLOCATOR_VOID_DEPRECATION_WARNING;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;NOMINMAX;_WINDOWS;_USRDLL;PROTOBUF_USE_DLLS;_WIN32_WINNT=0x0A00;PROTOBUF_USE_EXCEPTIONS=0;NDEBUG;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>Jde_EXPORTS;PROTOBUF_USE_DLLS;BOOST_ALL_DYN_LINK;_SCL_SECURE_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;_SILENCE_CXX17_ALLOCATOR_VOID_DEPRECATION_WARNING;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;NOMINMAX;_WINDOWS;_USRDLL;_WIN32_WINNT=0x0A00;PROTOBUF_USE_EXCEPTIONS=0;PROTOBUF_USE_DLLS;NDEBUG;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <DisableSpecificWarnings>4068;4251;4275;4297;4706;5104;5105;4996;4025</DisableSpecificWarnings>
@@ -117,8 +117,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="coroutine\Task.cpp" />
+    <ClCompile Include="db\DataSource.cpp" />
+    <ClCompile Include="db\GraphQL.cpp" />
+    <ClCompile Include="db\SchemaProc.cpp" />
     <ClCompile Include="threading\Mutex.cpp" />
     <ClCompile Include="threading\Worker.cpp" />
+    <ClCompile Include="um\UM.cpp" />
     <ClInclude Include="application\Application.h" />
     <ClInclude Include="collections\UnorderedMapValue.h" />
     <ClInclude Include="coroutine\Alarm.h" />
@@ -132,6 +136,7 @@
     <ClInclude Include="db\DataType.h" />
     <ClInclude Include="db\DBException.h" />
     <ClInclude Include="db\DBQueue.h" />
+    <ClInclude Include="db\GraphQL.h" />
     <ClInclude Include="db\Row.h" />
     <ClInclude Include="db\SchemaProc.h" />
     <ClInclude Include="db\types\Schema.h" />
@@ -161,7 +166,6 @@
     <ClInclude Include="log\Logging.h" />
     <ClInclude Include="log\server\EtwSink.h" />
     <ClInclude Include="log\server\proto\messages.pb.h" />
-    <ClInclude Include="log\server\ReceivedMessages.h" />
     <ClInclude Include="log\server\SentMessages.h" />
     <ClInclude Include="log\server\ServerSink.h" />
     <ClInclude Include="math\Decimal.h" />
@@ -232,6 +236,7 @@
     <ClInclude Include="threading\ReusableThread.h" />
     <ClInclude Include="threading\Thread.h" />
     <ClInclude Include="TypeDefs.h" />
+    <ClInclude Include="um\UM.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DateTime.cpp" />

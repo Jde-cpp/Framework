@@ -1,7 +1,10 @@
 #pragma once
+#include <set>
 #include <unordered_map>
 #include <forward_list>
 #include <shared_mutex>
+#include <functional>
+#include "../TypeDefs.h"
 //#include "../SmartPointer.h"
 
 namespace Jde

@@ -8,29 +8,33 @@
 namespace Jde::DB
 {
 	namespace Types{ struct IRow; }
-	struct IDataSource : std::enable_shared_from_this<IDataSource>
+	struct JDE_NATIVE_VISIBILITY IDataSource : std::enable_shared_from_this<IDataSource>
 	{
 		virtual ~IDataSource() = default;
 
 		virtual sp<ISchemaProc> SchemaProc()noexcept=0;
-		virtual uint Scaler( sv sql, const std::vector<DataValue>& parameters )noexcept(false)=0;
+		uint Scaler( sv sql, const std::vector<DataValue>& parameters )noexcept(false);
 
 		template<typename T>
 		optional<T> TryScaler( sv sql, const vector<DataValue>& parameters )noexcept;
 
-		virtual optional<uint> ScalerOptional( sv sql, const std::vector<DataValue>& parameters )noexcept(false)=0;
+		optional<uint> ScalerOptional( sv sql, const std::vector<DataValue>& parameters )noexcept(false);
+
+		optional<uint> TryExecute( sv sql )noexcept;
+		optional<uint> TryExecute( sv sql, const std::vector<DataValue>& parameters, bool log=true )noexcept;
+		optional<uint> TryExecuteProc( sv sql, const std::vector<DataValue>& parameters, bool log=true )noexcept;
+
+		//virtual uint Execute( sv sql, const std::vector<DataValue>& parameters, std::function<void(const IRow&)> f, bool log=true )noexcept(false)=0;
 		virtual uint Execute( sv sql )noexcept(false)=0;
-		virtual optional<uint> TryExecute( sv sql )noexcept(false)=0;
 		virtual uint Execute( sv sql, const std::vector<DataValue>& parameters, bool log=true )noexcept(false)=0;
-		virtual optional<uint> TryExecute( sv sql, const std::vector<DataValue>& parameters, bool log=true )noexcept=0;
-		virtual uint Execute( sv sql, const std::vector<DataValue>& parameters, std::function<void(const IRow&)> f, bool log=true )noexcept(false)=0;
-		virtual optional<uint> TryExecuteProc( sv sql, const std::vector<DataValue>& parameters, bool log=true )noexcept=0;
+		virtual uint Execute( sv sql, const std::vector<DataValue>* pParameters, std::function<void(const IRow&)>* f, bool isStoredProc=false, bool log=true )noexcept(false)=0;
 		virtual uint ExecuteProc( sv sql, const std::vector<DataValue>& parameters, bool log=true )noexcept(false)=0;
 		virtual uint ExecuteProc( sv sql, const std::vector<DataValue>& parameters, std::function<void(const IRow&)> f, bool log=true )noexcept(false)=0;
 
-		virtual void Select( sv sql, std::function<void(const IRow&)> f, const std::vector<DataValue>& parameters, bool log=true )noexcept(false)=0;
-		virtual void Select( sv sql, std::function<void(const IRow&)> f )noexcept(false)=0;
-		virtual bool TrySelect( sv sql, std::function<void(const IRow&)> f )noexcept=0;
+		void Select( sv sql, std::function<void(const IRow&)> f, const std::vector<DataValue>& parameters, bool log=true )noexcept(false);
+		void Select( sv sql, std::function<void(const IRow&)> f )noexcept(false);
+		virtual uint Select( sv sql, std::function<void(const IRow&)> f, const vector<DataValue>* pValues, bool log )noexcept(false)=0;
+		bool TrySelect( sv sql, std::function<void(const IRow&)> f )noexcept;
 		template<typename K,typename V>
 		flat_map<K,V> SelectMap( sv sql )noexcept(false);
 		void Log2( sv sql, const std::vector<DataValue>* pParameters, sv file, sv fnctn, uint line )noexcept
@@ -51,7 +55,8 @@ namespace Jde::DB
 			Logging::Log( Logging::MessageBase(ELogLevel::Debug, os.str(), file, fnctn, line) );
 			//DBG( os.str() );
 		};
-		virtual string Catalog()noexcept=0;
+		string Catalog( sv sql )noexcept(false);
+	//protected:
 		string ConnectionString;
 	};
 

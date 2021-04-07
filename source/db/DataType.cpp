@@ -1,7 +1,7 @@
-#include "../DateTime.h"
 #include "DataType.h"
 #include "../DateTime.h"
 #include "../StringUtilities.h"
+#include "Syntax.h"
 
 #define var const auto
 
@@ -84,9 +84,9 @@ namespace Jde
 			type=DataType::SmallFloat;
 		else if( typeName=="int" )
 			type = DataType::Int;
-		else if( typeName=="uint" )
+		else if( typeName=="uint32" )
 			type = DataType::UInt;
-		else if( typeName=="ULong" )
+		else if( typeName=="uint64" )
 			type = DataType::ULong;
 		else if( typeName=="Long" )
 			type = DataType::Long;
@@ -96,6 +96,8 @@ namespace Jde
 			type = DataType::WChar;
 		else if( typeName=="smallint" )
 			type = DataType::Int16;
+		else if( typeName=="uint16" )
+			type = DataType::UInt16;
 		else if( typeName=="int8" )
 			type = DataType::Int8;
 		else if( typeName=="uint8" )
@@ -129,22 +131,23 @@ namespace Jde
 		return type;
 	}
 
-	string DB::ToString( DataType type )noexcept
+	string DB::ToString( DataType type, const Syntax& syntax )noexcept
 	{
 		string typeName;
-		if( type == DataType::Int ) typeName = "int";
-		else if( type == DataType::UInt ) typeName = "int unsigned";
-		else if( type == DataType::ULong ) typeName = "bigint(20) unsigned";
-		else if( type == DataType::Long ) typeName="bigint";
+		if( syntax.HasUnsigned() && type == DataType::UInt ) typeName = "int unsigned";
+		else if( type == DataType::Int || type == DataType::UInt ) typeName = "int";
+		else if( syntax.HasUnsigned() && type == DataType::ULong ) typeName = "bigint(20) unsigned";
+		else if( type == DataType::Long || type == DataType::ULong ) typeName="bigint";
 		else if( type == DataType::DateTime ) typeName = "datetime";
 		else if( type == DataType::SmallDateTime )typeName = "smalldatetime";
 		else if( type == DataType::Float ) typeName = "float";
 		else if( type == DataType::SmallFloat )typeName = "real";
 		else if( type == DataType::VarWChar ) typeName = "nvarchar";
 		else if( type == DataType::WChar ) typeName = "nchar";
-		else if( type == DataType::Int16 ) typeName="smallint";
-		else if( type == DataType::Int8 ) typeName = "tinyint";
-		else if( type == DataType::UInt8 ) typeName =  "tinyint unsigned";
+		else if( syntax.HasUnsigned() && type == DataType::UInt16 ) typeName="smallint";
+		else if( type == DataType::Int16 || type == DataType::UInt16 ) typeName="smallint";
+		else if( syntax.HasUnsigned() && type == DataType::UInt8 ) typeName =  "tinyint unsigned";
+		else if( type == DataType::Int8 || type == DataType::UInt8 ) typeName = "tinyint";
 		else if( type == DataType::Guid ) typeName = "uniqueidentifier";
 		else if( type == DataType::VarBinary ) typeName = "varbinary";
 		else if( type == DataType::VarChar ) typeName = "varchar";

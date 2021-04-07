@@ -112,6 +112,18 @@
     <ClCompile Include="threading\Mutex.cpp">
       <Filter>Source\threading</Filter>
     </ClCompile>
+    <ClCompile Include="db\GraphQL.cpp">
+      <Filter>Source\db</Filter>
+    </ClCompile>
+    <ClCompile Include="um\UM.cpp">
+      <Filter>Source\um</Filter>
+    </ClCompile>
+    <ClCompile Include="db\SchemaProc.cpp">
+      <Filter>Source\db</Filter>
+    </ClCompile>
+    <ClCompile Include="db\DataSource.cpp">
+      <Filter>Headers\db</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="StringUtilities.h">
@@ -200,9 +212,6 @@
     </ClInclude>
     <ClInclude Include="collections\Map.h">
       <Filter>Headers\collections</Filter>
-    </ClInclude>
-    <ClInclude Include="log\server\ReceivedMessages.h">
-      <Filter>Headers\log\server</Filter>
     </ClInclude>
     <ClInclude Include="log\server\SentMessages.h">
       <Filter>Headers\log\server</Filter>
@@ -300,6 +309,12 @@
     <ClInclude Include="coroutine\Task.h">
       <Filter>Headers\coroutine</Filter>
     </ClInclude>
+    <ClInclude Include="db\GraphQL.h">
+      <Filter>Headers\db</Filter>
+    </ClInclude>
+    <ClInclude Include="um\UM.h">
+      <Filter>Headers\um</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Headers">
@@ -392,6 +407,12 @@
     </Filter>
     <Filter Include="Headers\coroutine">
       <UniqueIdentifier>{c9123a05-6b62-46db-a3a2-6ef60e7da840}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\um">
+      <UniqueIdentifier>{24127924-143c-414a-951e-ad6ebad003b1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\um">
+      <UniqueIdentifier>{e14239c7-ea18-4d53-95c5-022730f37ded}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

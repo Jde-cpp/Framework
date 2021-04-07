@@ -44,3 +44,5 @@ tests/.vscode/settings.json
 tests/.vscode/tasks.json
 tests/my.natvis
 tests/.vscode/.settings.json
+source/.clang-format
+*.i
