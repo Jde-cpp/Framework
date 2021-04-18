@@ -11,12 +11,12 @@
 
 namespace Jde
 {
-	void catch_exception( std::string_view pszFunction, std::string_view pszFile, long line, std::string_view pszAdditional, const std::exception* pException )
+	void catch_exception( sv pszFunction, sv pszFile, long line, sv pszAdditional, const std::exception* pException )
 	{
 		GetDefaultLogger()->warn( "{} - ({}){}({}) - {}", pException ? pException->what() : "Unknown", pszFunction, pszFile, line, pszAdditional );
 	}
 
-	Exception::Exception( ELogLevel level, string_view value, string_view function, string_view file, long line ):
+	Exception::Exception( ELogLevel level, sv value, sv function, sv file, long line ):
 		std::exception(),
 		_functionName{function},
 		_fileName{file},
@@ -26,13 +26,13 @@ namespace Jde
 		_format{ value }
 	{}
 
-	Exception::Exception( ELogLevel level, std::string_view value ):
+	Exception::Exception( ELogLevel level, sv value ):
 		std::exception(),
 		_level{ level },
 		_what{ value },
 		_format{ value }
 	{}
-	Exception::Exception( std::string_view value ):
+	Exception::Exception( sv value ):
 		_what{ value },
 		_format{ value }
 	{}
@@ -47,7 +47,7 @@ namespace Jde
 		//std::cerr << "here";
 	}
 
-	void Exception::Log( std::string_view pszAdditionalInformation, ELogLevel level )const
+	void Exception::Log( sv pszAdditionalInformation, ELogLevel level )const noexcept
 	{
 		std::ostringstream os; std::ostringstream os2;
 		if( pszAdditionalInformation.size() )
@@ -77,7 +77,7 @@ namespace Jde
 		return _what.c_str();
 	}
 
-	CodeException::CodeException( std::string_view value, const std::error_code& code, ELogLevel level ):
+	CodeException::CodeException( sv value, const std::error_code& code, ELogLevel level ):
 		RuntimeException{ value },
 		_pErrorCode{ std::make_shared<std::error_code>(code) }
 	{
@@ -93,7 +93,7 @@ namespace Jde
 	BoostCodeException::~BoostCodeException()
 	{}
 
-/*	EnvironmentException::EnvironmentException( std::string_view value ):
+/*	EnvironmentException::EnvironmentException( sv value ):
 		Exception( value, ELogLevel::Critical )
 	{}
 */
@@ -103,7 +103,7 @@ namespace Jde
 		const std::error_category& category = errorCode.category();
 		//const std::error_condition condition = errorCode.default_error_condition();  //category().default_error_condition(value()).
 		const std::string message = errorCode.message(); //category().message(value())
-		return fmt::format( "({}){} - {})", value, category.name(), message );
+		return format( "({}){} - {})", value, category.name(), message );
 	}
 	string CodeException::ToString( const std::error_category& errorCategory )noexcept
 	{
@@ -114,7 +114,7 @@ namespace Jde
 		const int value = errorCondition.value();
 		const std::error_category& category = errorCondition.category();
 		const std::string message = errorCondition.message();
-		return fmt::format( "({}){} - {})", value, category.name(), message );
+		return format( "({}){} - {})", value, category.name(), message );
 	}
 
 	RuntimeException::RuntimeException( const std::runtime_error& inner ):
@@ -134,7 +134,7 @@ namespace Jde
 
 	const char* IOException::what()const noexcept
 	{
-		_what = _pUnderLying ? _pUnderLying->what() : fmt::format( "{} - ErrorCode='{}', path='{}'", RuntimeException::what(), ErrorCode(), Path().string() );
+		_what = _pUnderLying ? _pUnderLying->what() : format( "({}) {} - {} path='{}'", ErrorCode(), std::strerror(errno), RuntimeException::what(), Path().string() );
 		return _what.c_str();
 	}
 /*	ostream& operator<<(ostream& os, const Exception& dt)

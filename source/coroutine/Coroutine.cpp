@@ -1,7 +1,9 @@
 #include "Coroutine.h"
 #include "../threading/InterruptibleThread.h"
 //#include "../threading/Thread.h"
-//#include <chrono>
+#ifndef _MSC_VER
+	using Jde::stop_token;
+#endif
 #define var const auto
 
 using namespace std::chrono;
@@ -11,11 +13,11 @@ namespace Jde::Coroutine
 	ELogLevel CoroutinePool::_level{ ELogLevel::None };
 	sp<CoroutinePool> CoroutinePool::_pInstance;
 	std::atomic<uint> INDEX=0;
-	ResumeThread::ResumeThread( const string& name, Duration idleLimit, CoroutineParam&& param )noexcept:
+	ResumeThread::ResumeThread( str name, Duration idleLimit, CoroutineParam&& param )noexcept:
 		IdleLimit{idleLimit},
 		ThreadParam{ name, Threading::BumpThreadHandle() },
 		_param{ move(param) },
-		_thread{ [this]( std::stop_token stoken )
+		_thread{ [this]( stop_token stoken )
 		{
 			Threading::SetThreadDscrptn( format("CoroutineThread - {}", ThreadParam.AppHandle) );
 			var index = INDEX++;

@@ -12,7 +12,7 @@ namespace Jde::Threading
 {
 	struct JDE_NATIVE_VISIBILITY Pool
 	{
-		Pool( uint threadCount=0, string_view name="Pool" );
+		Pool( uint threadCount=0, sv name="Pool" );
 		~Pool();
 
     	template<typename FunctionType>
@@ -36,7 +36,7 @@ namespace Jde::Threading
 	template<typename T>
 	struct TypePool : IShutdown
 	{
-		TypePool( uint8 threadCount, string_view name )noexcept;
+		TypePool( uint8 threadCount, sv name )noexcept;
 		virtual ~TypePool(){ DBG0("~TypePool"sv); }
 
 		virtual void Execute( sp<T> pValue )noexcept=0;
@@ -55,7 +55,7 @@ namespace Jde::Threading
 	};
 #define var const auto
 	template<typename T>
-	TypePool<T>::TypePool( uint8 threadCount, string_view name )noexcept:
+	TypePool<T>::TypePool( uint8 threadCount, sv name )noexcept:
 		MaxThreads{ threadCount },
 		Name{name}
 	{

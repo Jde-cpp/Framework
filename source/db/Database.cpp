@@ -15,6 +15,26 @@ namespace Jde
 {
 	using boost::container::flat_map;
 	using nlohmann::json;
+	using nlohmann::ordered_json;
+
+	void DB::Log( sv sql, const std::vector<DataValue>* pParameters, sv file, sv fnctn, uint line, ELogLevel level )noexcept
+	{
+		const auto size = pParameters ? pParameters->size() : 0;
+		ostringstream os;
+		uint prevIndex=0;
+		for( uint sqlIndex=0, paramIndex=0; (sqlIndex=sql.find_first_of('?', prevIndex))!=string::npos && paramIndex<size; ++paramIndex, prevIndex=sqlIndex+1 )
+		{
+			os << sql.substr( prevIndex, sqlIndex-prevIndex );
+			os << DB::to_string( (*pParameters)[paramIndex] );
+		}
+		if( prevIndex<sql.size() )
+			os << sql.substr( prevIndex );
+
+		//if( os.str()=="{{error}}" )
+			//DBG("HERE"sv);
+		Logging::Log( Logging::MessageBase(level, os.str(), file, fnctn, line) );
+		//DBG( os.str() );
+	};
 
 	class DataSourceApi
 	{
@@ -26,7 +46,7 @@ namespace Jde
 		{}
 		decltype(GetDataSource) *GetDataSourceFunction;
 
-		sp<DB::IDataSource> Emplace( string_view connectionString )
+		sp<DB::IDataSource> Emplace( sv connectionString )
 		{
 			std::unique_lock l{ _connectionsMutex };
 			auto pDataSource = _pConnections->find( string(connectionString) );
@@ -40,23 +60,23 @@ namespace Jde
 		}
 		static sp<flat_map<string,shared_ptr<Jde::DB::IDataSource>>> _pConnections; static mutex _connectionsMutex;
 	};
-	sp<flat_map<string,sp<IDataSource>>> DataSourceApi::_pConnections = make_shared<flat_map<string,sp<IDataSource>>>(); mutex DataSourceApi::_connectionsMutex;
+	sp<flat_map<string,sp<DB::IDataSource>>> DataSourceApi::_pConnections = make_shared<flat_map<string,sp<DB::IDataSource>>>(); mutex DataSourceApi::_connectionsMutex;
 	up<flat_map<string,sp<DataSourceApi>>> _pDataSources = make_unique<flat_map<string,sp<DataSourceApi>>>(); mutex _dataSourcesMutex;
 	sp<DB::Syntax> _pSyntax;
 	sp<DB::IDataSource> _pDefault;
-	up<vector<function<void()>>> _pShutdowns = make_unique<vector<function<void()>>>();
+	up<vector<function<void()>>> _pDBShutdowns = make_unique<vector<function<void()>>>();
 	void ShutdownClean( function<void()>& shutdown )noexcept
 	{
-		_pShutdowns->push_back( shutdown );
+		_pDBShutdowns->push_back( shutdown );
 	}
-	void CleanDataSources()noexcept
+	void DB::CleanDataSources()noexcept
 	{
 		DBG( "CleanDataSources"sv );
-		ClearQLDataSource();
+		DB::ClearQLDataSource();
 		_pDefault = nullptr;
-		for( auto p=_pShutdowns->begin(); p!=_pShutdowns->end(); p=_pShutdowns->erase(p) )
+		for( auto p=_pDBShutdowns->begin(); p!=_pDBShutdowns->end(); p=_pDBShutdowns->erase(p) )
 			(*p)();
-		_pShutdowns = nullptr;
+		_pDBShutdowns = nullptr;
 		_pSyntax = nullptr;
 		{
 			unique_lock l2{DataSourceApi::_connectionsMutex};
@@ -73,7 +93,7 @@ namespace Jde
 		auto pDataSource = DB::DataSource();
 		var path = Settings::Global().Get<fs::path>( "metaDataPath" );
 		INFO( "db meta='{}'"sv, path.string() );
-		var j = json::parse( IO::FileUtilities::Load(path) );
+		ordered_json j = json::parse( IO::FileUtilities::Load(path) );
 		/*var schema =*/ pDataSource->SchemaProc()->CreateSchema( j );
 	}
 	sp<DB::Syntax> DB::DefaultSyntax()noexcept
@@ -108,7 +128,7 @@ namespace Jde
 		return _pDefault;
 	}
 
-	sp<DB::IDataSource> DB::DataSource( path libraryName, string_view connectionString )
+	sp<DB::IDataSource> DB::DataSource( path libraryName, sv connectionString )
 	{
 		shared_ptr<IDataSource> pDataSource;
 		std::unique_lock l{_dataSourcesMutex};
@@ -122,13 +142,15 @@ namespace Jde
 
 #define DS if( auto p = DataSource(); p ) p
 #define DS_RET(x) auto p = DataSource(); return !p ? x : p
-	void DB::Select( sv sql, std::function<void(const IRow&)> f )noexcept(false)
-	{
-		DS->Select( sql, f );
-	}
-	uint DB::ExecuteProc( sv sql, std::vector<DataValue>&& parameters )noexcept(false)
+	void DB::Select( sv sql, std::function<void(const IRow&)> f )noexcept(false){ DS->Select(sql, f); }
+	void DB::Select( sv sql, std::function<void(const IRow&)> f, const vector<DataValue>& values )noexcept(false){ DS->Select(sql, f, values); }
+	uint DB::ExecuteProc( sv sql, vector<DataValue>&& parameters )noexcept(false)
 	{
 		DS_RET(0)->ExecuteProc( sql, parameters );
+	}
+	uint DB::Execute( sv sql, std::vector<DataValue>&& parameters )noexcept(false)
+	{
+		DS_RET(0)->Execute( sql, parameters );
 	}
 	//typedef DB::IDataSource* (*pDataSourceFactory)();
 	//typedef shared_ptr<DB::IDataSource> IDataSourcePtr;

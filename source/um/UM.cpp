@@ -143,7 +143,7 @@ namespace Jde
 			if( m.Type==DB::EMutationQL::Add )
 				_groupRoles.try_emplace(groupId).first->second.emplace( roleId );
 			else if( var p = _groupRoles.find(groupId); m.Type==DB::EMutationQL::Remove && p != _groupRoles.end() )
-				p->second.erase( remove_if(p->second.begin(), p->second.end(), [&](PK roleId2){return roleId2==roleId;}), p->second.end() );
+				p->second.erase( std::remove_if(p->second.begin(), p->second.end(), [&](PK roleId2){return roleId2==roleId;}), p->second.end() );
 		}
 		else if( m.JsonName=="rolePermission" )
 		{

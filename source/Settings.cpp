@@ -5,9 +5,10 @@
 
 namespace Jde::Settings
 {
-	shared_ptr<Container> _pGlobal;
-	Container& Global(){ ASSERT(_pGlobal); return *_pGlobal;}
-	void SetGlobal( shared_ptr<Container> settings ){ _pGlobal = settings; }
+	sp<Container> _pGlobal;
+	Container& Global()noexcept{ ASSERT(_pGlobal); return *_pGlobal;}
+	sp<Container> GlobalPtr()noexcept{return _pGlobal;}
+	void SetGlobal( sp<Container> settings )noexcept{ _pGlobal = settings; }
 
 	Container::Container( path jsonFile )noexcept(false):
 		_pJson{ make_unique<nlohmann::json>() }
@@ -24,7 +25,12 @@ namespace Jde::Settings
 		_pJson{ make_unique<nlohmann::json>(json) }
 	{}
 
-	shared_ptr<Container> Container::SubContainer( string_view entry )const noexcept(false)
+	optional<Container> Container::TrySubContainer( sv entry )const noexcept
+	{
+		auto p = _pJson->find( entry );
+		return p==_pJson->end() ? optional<Container>{} : Container( *p );
+	}
+	sp<Container> Container::SubContainer( sv entry )const noexcept(false)
 	{
 		auto item = _pJson->find( entry );
 		if( item==_pJson->end() )
@@ -32,14 +38,14 @@ namespace Jde::Settings
 		return make_shared<Container>( *item );
 	}
 
-/*	void Container::Set( const string& path, uint size )noexcept
+/*	void Container::Set( str path, uint size )noexcept
 	{
 		//nlohmann::json j;
 		//j[string{path}] = 23;
 		(*_pJson)[path] = size;
 	}
 
-	Jde::Duration Container::Duration( string_view / *path* /, const Jde::Duration& dflt )noexcept
+	Jde::Duration Container::Duration( sv / *path* /, const Jde::Duration& dflt )noexcept
 	{
 		//var string = String( path );
 		//return string.size() ? TimeSpan::Parse(string) : ;
@@ -47,27 +53,27 @@ namespace Jde::Settings
 		return dflt;//TODO implement
 	}*/
 
-	// fs::path Container::Path( string_view path, path dflt )const noexcept
+	// fs::path Container::Path( sv path, path dflt )const noexcept
 	// {
 	// 	auto pEntry = _pJson->find( path );
 	// 	return pEntry==_pJson->end() ? dflt : fs::path( pEntry->get<string>() );
 	// }
 
-	bool Container::Bool( string_view path, bool dflt )noexcept
+	bool Container::Bool( sv path, bool dflt )noexcept
 	{
 		return _pJson->find(path)==_pJson->end() ? dflt : (*_pJson)[string(path)].get<bool>();
 	}
-	bool Container::Have( string_view path )noexcept//TODO rename contains
+	bool Container::Have( sv path )noexcept//TODO rename contains
 	{
 		return _pJson->find(path)!=_pJson->end();
 	}
 
-	string Container::String( string_view path )noexcept
+	string Container::String( sv path )noexcept
 	{
 		return _pJson->find(path)==_pJson->end() ? string() : (*_pJson)[string(path)].get<string>();
 	}
 
-	uint16 Container::Uint16( string_view path )noexcept
+	uint16 Container::Uint16( sv path )noexcept
 	{
 		return _pJson->find(path)==_pJson->end() ? 0 : (*_pJson)[string(path)].get<uint16>();
 	}

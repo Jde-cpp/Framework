@@ -24,9 +24,9 @@ namespace Jde
 		return s;
 	}
 
-	std::vector<std::string> StringUtilities::Split( const string& s, const string& delim )
+	std::vector<sv> StringUtilities::Split( sv s, sv delim )
 	{
-		vector<string> tokens;
+		vector<sv> tokens;
 		uint i=0;
 		for( uint next = s.find(delim); next!=string::npos; i=next+delim.size(), next = s.find(delim, i) )
 			tokens.push_back( s.substr(i, next) );
@@ -34,12 +34,20 @@ namespace Jde
 			tokens.push_back( s.substr(i) );
 		return tokens;
 	}
-	std::vector<std::string> StringUtilities::Split( std::string_view s, char delim )
+	std::vector<sv> StringUtilities::Split( sv s, char delim, uint estCnt )
 	{
-		return Split<char>(string(s), delim);
+		std::vector<sv> results;
+		if( estCnt )
+			results.reserve( estCnt );
+		for( uint16 fieldStart=0, iField=0, fieldEnd;fieldStart<s.size();++iField, fieldStart = fieldEnd+1 )
+		{
+			fieldEnd = std::min( s.find_first_of(delim, fieldStart), s.size() );
+			results.push_back( sv{s.data()+fieldStart, fieldEnd-fieldStart} );
+		};
+		return results;
 	}
 
-	string StringUtilities::Replace( string_view source, string_view find, string_view replace )noexcept
+	string StringUtilities::Replace( sv source, sv find, sv replace )noexcept
 	{
 		string::size_type i=0, iLast=0;
 		ostringstream os;
@@ -55,7 +63,7 @@ namespace Jde
 
 		return os.str();
 	}
-	string StringUtilities::Replace( string_view source, char find, char replace )noexcept
+	string StringUtilities::Replace( sv source, char find, char replace )noexcept
 	{
 		string result{ source };
 		for( char* pFrom=(char*)source.data(), *pTo=(char*)result.data(); pFrom<source.data()+source.size(); ++pFrom, ++pTo )
@@ -64,19 +72,28 @@ namespace Jde
 		return result;
 	}
 #pragma warning( disable: 4244 )
-	string Transform( const string& source, function<int(int)> fnctn )noexcept
+	string Transform( sv source, function<int(int)> fnctn )noexcept
 	{
 		string result{ source };
 		std::transform( result.begin(), result.end(), result.begin(), fnctn );
 		return result;
 	}
-	string StringUtilities::ToLower( const string& source )noexcept
+	string StringUtilities::ToLower( sv source )noexcept
 	{
 		return Transform( source, ::tolower );
 	}
 
-	string StringUtilities::ToUpper( const string& source )noexcept
+	string StringUtilities::ToUpper( sv source )noexcept
 	{
 		return Transform( source, ::toupper );
+	}
+
+	sv StringUtilities::NextWord( sv x )noexcept
+	{
+		uint iStart = 0;
+		for( ;iStart<x.size() && ::isspace(x[iStart]); ++iStart );
+		uint iEnd=iStart;
+		for( ;iEnd<x.size() && !::isspace(x[iEnd]); ++iEnd );
+		return x.substr( iStart, iEnd>iStart ? iEnd-iStart : 0 );
 	}
 }

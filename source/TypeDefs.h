@@ -47,8 +47,6 @@ namespace Jde
 	typedef int_fast8_t int8;
 
 	using namespace std::literals::string_view_literals;
-	using std::string_view;//TODO get rid of
-	using sv = std::string_view;
 
 #pragma region ELogLevel
 	enum class ELogLevel : uint8
@@ -61,7 +59,7 @@ namespace Jde
 		Critical = 5,
 		None = 6
 	};
-	constexpr std::array<string_view,7> ELogLevelStrings = { "Trace"sv, "Debug"sv, "Information"sv, "Warning"sv, "Error"sv, "Critical"sv, "None"sv };
+	constexpr std::array<std::string_view,7> ELogLevelStrings = { "Trace"sv, "Debug"sv, "Information"sv, "Warning"sv, "Error"sv, "Critical"sv, "None"sv };
 #pragma endregion
 
 	template<typename T>
@@ -105,7 +103,8 @@ namespace Jde
 	using std::unique_lock;
 	using std::shared_lock;
 	using std::shared_mutex;
-	//using std::cout;
+	using std::find;
+	using std::find_if;
 	using std::move;
 	using std::endl;
 	using std::optional;
@@ -149,7 +148,9 @@ namespace Jde
 	#endif
 #endif
 	using path = const fs::path&;
-	using str = std::string;
+	using sv = std::string_view;
+	using str = const std::string&;
+
 #ifdef _MSC_VER
 	#define __PRETTY_FUNCTION__ __FUNCSIG__
 	#if __cplusplus > 2017

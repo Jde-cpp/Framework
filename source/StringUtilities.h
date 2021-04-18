@@ -8,58 +8,64 @@
 //#include "Exception.h"
 #include "./log/Logging.h"
 
-using namespace std;
+
 namespace Jde
 {
+	//using std::sv;
+	//using std::string;
+	using std::basic_string;
 	namespace StringUtilities
 	{
 		template<typename T>
-		std::basic_string<T> RTrim(std::basic_string<T> &s);
+		basic_string<T> RTrim(basic_string<T> &s);
 
 		template<typename T>
-		std::vector<std::basic_string<T>> Split( const std::basic_string<T> &s, T delim=T{','} );
+		std::vector<basic_string<T>> Split( const basic_string<T> &s, T delim=T{','} );
 
-		JDE_NATIVE_VISIBILITY std::vector<std::string> Split( const std::string& s, const string& delim );
-		JDE_NATIVE_VISIBILITY std::vector<std::string> Split( std::string_view s, char delim=',' );
+		JDE_NATIVE_VISIBILITY std::vector<sv> Split( sv s, sv delim );
+		JDE_NATIVE_VISIBILITY std::vector<sv> Split( sv s, char delim=',', uint estCnt=0 );
 
 		template<typename T>
-		std::string AddSeparators( T collection, string_view separator, bool quote=false );
+		std::string AddSeparators( T collection, sv separator, bool quote=false );
 
 		template<typename T>
 		std::string AddCommas( T value, bool quote=false ){ return AddSeparators( value, ",", quote ); }
 
+		JDE_NATIVE_VISIBILITY sv NextWord( sv x )noexcept;
+
 		std::wstring PorterStemmer(const std::wstring &s);
 
-		JDE_NATIVE_VISIBILITY string Replace( string_view source, string_view find, string_view replace )noexcept;
-		JDE_NATIVE_VISIBILITY string Replace( string_view source, char find, char replace )noexcept;
-		JDE_NATIVE_VISIBILITY string ToLower( const string& source )noexcept;
-		[[nodiscard]]inline string ToLower( const string_view source )noexcept{ return ToLower( string{source}); }
-		JDE_NATIVE_VISIBILITY string ToUpper( const string& source )noexcept;
+		JDE_NATIVE_VISIBILITY string Replace( sv source, sv find, sv replace )noexcept;
+		JDE_NATIVE_VISIBILITY string Replace( sv source, char find, char replace )noexcept;
+		[[nodiscard]] JDE_NATIVE_VISIBILITY string ToLower( sv source )noexcept;
+		//inline string ToLower( sv source )noexcept{ return ToLower( string{source}); }
+		JDE_NATIVE_VISIBILITY string ToUpper( sv source )noexcept;
 
 		template<typename T>
-		static optional<T> TryTo( string_view value )noexcept;
+		static optional<T> TryTo( sv value )noexcept;
 		template<typename T>
 		static T To( sv value )noexcept(false);
 
 		template<typename T>
-		static float TryToFloat( const std::basic_string<T>& s )noexcept;
+		static float TryToFloat( const basic_string<T>& s )noexcept;
 		optional<double> TryToDouble( const std::string& s )noexcept;
 
 		template<typename Enum, typename Collection>
-		string_view FromEnum( const Collection& s, Enum value )noexcept;
+		sv FromEnum( const Collection& s, Enum value )noexcept;
 		template<typename Enum, typename Collection>
-		Enum ToEnum( const Collection& s, string_view text, Enum dflt )noexcept;
+		Enum ToEnum( const Collection& s, sv text, Enum dflt )noexcept;
 
-		[[nodiscard]]inline bool EndsWith( const std::string_view value, const std::string_view& ending ){ return ending.size() > value.size() ? false : std::equal( ending.rbegin(), ending.rend(), value.rbegin() ); }
-		[[nodiscard]]inline bool StartsWith( const std::string_view value, const std::string_view& starting ){ return starting.size() > value.size() ? false : std::equal( starting.begin(), starting.end(), value.begin() ); }
-		[[nodiscard]]inline bool StartsWithInsensitive( const std::string_view value, const std::string_view& starting );
+		[[nodiscard]]inline bool EndsWith( sv value, sv ending ){ return ending.size() > value.size() ? false : std::equal( ending.rbegin(), ending.rend(), value.rbegin() ); }
+		[[nodiscard]]inline bool StartsWith( sv value, sv starting ){ return starting.size() > value.size() ? false : std::equal( starting.begin(), starting.end(), value.begin() ); }
+		[[nodiscard]]inline bool StartsWithInsensitive( sv value, sv starting );
 
 		inline void LTrim( std::string &s ){ s.erase( s.begin(), std::find_if(s.begin(), s.end(), [](int ch) {return !std::isspace(ch); }) ); }
 		inline void RTrim( std::string &s ){ s.erase( std::find_if(s.rbegin(), s.rend(), [](int ch) {return !std::isspace(ch);}).base(), s.end() ); }
 		inline void Trim( std::string &s ){ LTrim(s); RTrim(s); }
+		inline std::string Trim( const std::string &s ){ auto y{s}; LTrim(y); RTrim(y); return y; }
 	};
 
-	struct ci_char_traits : public char_traits<char>
+	struct ci_char_traits : public std::char_traits<char>
 	{
 		JDE_NATIVE_VISIBILITY static bool eq(char c1, char c2) { return toupper(c1) == toupper(c2); }
 		JDE_NATIVE_VISIBILITY static bool ne(char c1, char c2) { return toupper(c1) != toupper(c2); }
@@ -67,20 +73,21 @@ namespace Jde
 		JDE_NATIVE_VISIBILITY static int compare( const char* s1, const char* s2, size_t n );
 		JDE_NATIVE_VISIBILITY static const char* find( const char* s, int n, char a );
 	};
-	struct CIString : public std::basic_string<char, ci_char_traits>
+	struct CIString : public basic_string<char, ci_char_traits>
 	{
-		typedef std::basic_string<char, ci_char_traits> base;
-		CIString( string_view sv )noexcept:base{sv.data(), sv.size()}{}
-		CIString( const string& s )noexcept:base{s.data(), s.size()}{}
-		inline bool operator ==( string_view s )const noexcept{ return size()==s.size() && base::compare( 0, s.size(), s.data(), s.size() )==0; }
+		typedef basic_string<char, ci_char_traits> base;
+		CIString()noexcept{};
+		CIString( sv sv )noexcept:base{sv.data(), sv.size()}{}
+		CIString( str s )noexcept:base{s.data(), s.size()}{}
+		inline bool operator ==( sv s )const noexcept{ return size()==s.size() && base::compare( 0, s.size(), s.data(), s.size() )==0; }
 		inline bool operator ==( const char* psz )const noexcept{ return size()==strlen(psz) && base::compare( 0, size(), psz, size() )==0; }
-		inline bool operator !=( string_view s )const noexcept{ return size() == s.size() && base::compare(0, s.size(), s.data(), s.size())!=0; }
-		inline bool operator !=( const string& s )const noexcept{ return *this!=string_view{s}; }
+		inline bool operator !=( sv s )const noexcept{ return size() == s.size() && base::compare(0, s.size(), s.data(), s.size())!=0; }
+		inline bool operator !=( str s )const noexcept{ return *this!=sv{s}; }
 		operator string()const noexcept{ return string{data(), size()}; }
 	};
 #define var const auto
 	template<typename T>
-	std::basic_string<T> StringUtilities::RTrim(std::basic_string<T> &s)
+	basic_string<T> StringUtilities::RTrim(basic_string<T> &s)
 	{
 #ifdef _MSC_VER
 		for( uint i=s.size()-1; i>=0; --i )
@@ -97,7 +104,7 @@ namespace Jde
 	}
 
 	template<typename T>
-	std::string StringUtilities::AddSeparators( T collection, string_view separator, bool quote )
+	std::string StringUtilities::AddSeparators( T collection, sv separator, bool quote )
 	{
 		ostringstream os;
 		auto first = true;
@@ -116,7 +123,7 @@ namespace Jde
 	}
 
 	template<typename T>
-	std::vector<std::basic_string<T>> StringUtilities::Split( const std::basic_string<T> &s, T delim/*=T{','}*/ )
+	std::vector<basic_string<T>> StringUtilities::Split( const basic_string<T> &s, T delim/*=T{','}*/ )
 	{
 		vector<basic_string<T>> tokens;
 		basic_string<T> token;
@@ -128,7 +135,7 @@ namespace Jde
 	}
 
 	template<typename T>
-	float StringUtilities::TryToFloat( const std::basic_string<T>& token )noexcept
+	float StringUtilities::TryToFloat( const basic_string<T>& token )noexcept
 	{
 		try
 		{
@@ -157,7 +164,7 @@ namespace Jde
 	static optional<T> StringUtilities::TryTo( sv value )noexcept
 	{
 		optional<T> v;
-		Try( v=To<T>( value ) );
+		Try( [&v, value]{v=To<T>( value );} );
 		return v;
 	}
 	template<typename T>
@@ -165,10 +172,10 @@ namespace Jde
 	{
 		T v;
 		var e=std::from_chars( value.data(), value.data()+value.size(), v );
-		THROW_IF( e.ec!=std::errc(), Exception("Can't convert:  {}.  to {}.  {}"sv, value, Jde::GetTypeName<T>(), (uint)e.ec) );
+		THROW_IF( e.ec!=std::errc(), "Can't convert:  '{}'.  to '{}'.  ec='{}'"sv, value, Jde::GetTypeName<T>(), (uint)e.ec );
 		return v;
 	}
-	inline bool StringUtilities::StartsWithInsensitive( const std::string_view value, const std::string_view& starting )
+	inline bool StringUtilities::StartsWithInsensitive( sv value, sv starting )
 	{
 		bool equal = starting.size() <= value.size();
 		if( equal )
@@ -184,15 +191,15 @@ namespace Jde
 	}
 
 	template<typename Enum, typename Collection>
-	Enum StringUtilities::ToEnum( const Collection& stringValues, string_view text, Enum dflt )noexcept
+	Enum StringUtilities::ToEnum( const Collection& stringValues, sv text, Enum dflt )noexcept
 	{
 		auto value = static_cast<Enum>( std::distance(std::find(std::begin(stringValues), std::end(stringValues), text), std::begin(stringValues)) );
 		return static_cast<uint>(value)<stringValues.size() ? value : dflt;
 	}
 	template<typename Enum, typename Collection>
-	string_view StringUtilities::FromEnum( const Collection& stringValues, Enum value )noexcept
+	sv StringUtilities::FromEnum( const Collection& stringValues, Enum value )noexcept
 	{
-		return static_cast<uint>(value)<stringValues.size() ? stringValues[value] : string_view{};
+		return static_cast<uint>(value)<stringValues.size() ? stringValues[value] : sv{};
 	}
 #undef var
 }

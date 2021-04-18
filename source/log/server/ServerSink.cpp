@@ -23,7 +23,7 @@ namespace Jde::Logging
 		return _pInstance;
 	}
 
-	sp<ServerSink> ServerSink::Create( string_view host, uint16 port )noexcept(false)
+	sp<ServerSink> ServerSink::Create( sv host, uint16 port )noexcept(false)
 	{
 		ASSERT( !_pInstance );
 		auto pInstance = sp<ServerSink>( new ServerSink{host, port} );
@@ -32,7 +32,7 @@ namespace Jde::Logging
 		return pInstance;
 	}
 
-	ServerSink::ServerSink( string_view host, uint16 port )noexcept:
+	ServerSink::ServerSink( sv host, uint16 port )noexcept:
 		Interrupt{ "AppServerSend", 1s, true },
 		ProtoBase{ host, port, "ServerSocket" },
 		_messages{}
@@ -135,7 +135,7 @@ namespace Jde::Logging
 		_messages.Push( Messages::Message(message, values) );
 	}
 
-	Proto::RequestString* ToRequestString( Proto::EFields field, uint32 id, string_view text )
+	Proto::RequestString* ToRequestString( Proto::EFields field, uint32 id, sv text )
 	{
 		auto pResult = new Proto::RequestString();
 		pResult->set_field( field );
@@ -218,14 +218,14 @@ namespace Jde::Logging
 			ThreadId = Threading::GetThreadId();
 			Fields |= EFields::Timestamp | EFields::ThreadId | EFields::Thread;
 		}
-		Message::Message( ELogLevel level, std::string_view message, std::string_view file, std::string_view function, uint line, const vector<string>& values )noexcept:
+		Message::Message( ELogLevel level, sv message, sv file, sv function, uint line, const vector<string>& values )noexcept:
 			MessageBase{ level, make_shared<string>(message), file, function, line },
 			Timestamp{ Clock::now() },
 			Variables{ values }
 		{
 			Fields |= EFields::Timestamp | EFields::ThreadId | EFields::Thread;
 		}
-		Message::Message( ELogLevel level, std::string_view message, const std::string& file, const std::string& function, uint line, const vector<string>& values )noexcept:
+		Message::Message( ELogLevel level, sv message, const std::string& file, const std::string& function, uint line, const vector<string>& values )noexcept:
 			MessageBase{ level, make_shared<string>(message), file, function, line },
 			Timestamp{ Clock::now() },
 			Variables{ values },

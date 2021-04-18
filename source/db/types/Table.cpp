@@ -102,8 +102,6 @@ namespace Jde::DB
 	Table::Table( sv name, const nlohmann::json& j, const flat_map<string,Table>& parents, const flat_map<string,Column>& commonColumns ):
 		Name{ name }
 	{
-		//if( name=="um_role_permissions" )
-		//	DBG( name );
 		for( var& [columnName,value] : j.items() )
 		{
 			if( columnName=="$parent" )

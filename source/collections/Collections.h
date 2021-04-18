@@ -14,10 +14,37 @@ namespace Jde
 		return pItem==collection.end() ? TValue{} : pItem->second;
 	}
 
+	template <typename T>
+	struct SPCompare
+	{
+		//using is_transparent = void;
+		bool operator()( const sp<T>& a, const sp<T>& b )const{
+			return *a < *b;
+		}
+
+		bool operator() (const sp<T>& a, const T& b) const
+		{
+			return *a < b;
+		}
+
+		bool operator()( const T& a, const sp<T>& b) const
+		{
+			return a < *b;
+		}
+	};
+
 namespace Collections
 {
 	uint32 Crc( const vector<string> values )noexcept;
 	std::vector<uint> Indexes( const std::vector<string>& population, const std::vector<string>& subset )noexcept;
+
+	template<typename TKey, typename TValue>
+	flat_map<TValue,TKey> Invert( const flat_map<TKey,TValue>& map )noexcept
+	{
+		flat_map<TValue,TKey> results;
+		for_each( map.begin(), map.end(), [&results](var& x){results.emplace(x.second,x.first); } );
+		return results;
+	}
 
 	template<typename TKey, typename TValue>
 	unique_ptr<std::set<TKey>> Keys( const map<TKey,TValue>& map )noexcept

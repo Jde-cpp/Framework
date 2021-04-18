@@ -212,4 +212,14 @@ namespace Jde
 		_CrtDumpMemoryLeaks();
 #endif
 	}
+	fs::path IApplication::ApplicationDataFolder()noexcept
+	{
+#ifdef _MSC_VER
+		sv frmt = "{}"sv;
+#else
+		sv frmt = ".{}"sv;
+#endif
+		auto p=_pInstance;
+		return p ? p->ProgramDataFolder()/format(frmt, CompanyName())/ApplicationName() : ".app";
+	}
 }

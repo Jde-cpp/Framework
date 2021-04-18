@@ -1,7 +1,7 @@
 #pragma once
 #include "File.h"
 
-namespace Jde::IO::ProtoUtilities
+namespace Jde::IO::Proto
 {
 	template<typename T>
 	up<T> Load( path path )noexcept(false);
@@ -14,12 +14,20 @@ namespace Jde::IO::ProtoUtilities
 	vector<T> ToVector( const google::protobuf::RepeatedPtrField<T>& x )noexcept;
 
 	void Save( const google::protobuf::MessageLite& msg, path path )noexcept(false);
+	string ToString( const google::protobuf::MessageLite& msg )noexcept(false);
 }
 
 
 namespace Jde::IO
 {
-	inline void ProtoUtilities::Save( const google::protobuf::MessageLite& msg, path path )noexcept(false)
+	inline string Proto::ToString( const google::protobuf::MessageLite& msg )noexcept(false)
+	{
+		string output;
+		msg.SerializeToString( &output );
+		return output;
+	}
+
+	inline void Proto::Save( const google::protobuf::MessageLite& msg, path path )noexcept(false)
 	{
 		string output;
 		msg.SerializeToString( &output );
@@ -27,7 +35,7 @@ namespace Jde::IO
 	}
 
 	template<typename T>
-	void ProtoUtilities::Load( path path, T& proto )noexcept(false)
+	void Proto::Load( path path, T& proto )noexcept(false)
 	{
 		up<vector<char>> pBytes;
 		try
@@ -50,14 +58,14 @@ namespace Jde::IO
 	}
 
 	template<typename T>
-	up<T> ProtoUtilities::Load( path path )noexcept(false)
+	up<T> Proto::Load( path path )noexcept(false)
 	{
 		auto p = make_unique<T>();
 		Load( path, *p );
 		return p;
 	}
 	template<typename T>
-	up<T> ProtoUtilities::TryLoad( path path )noexcept
+	up<T> Proto::TryLoad( path path )noexcept
 	{
 		up<T> pValue{};
 		try
@@ -71,7 +79,7 @@ namespace Jde::IO
 		return pValue;
 	}
 	template<typename T>
-	vector<T> ProtoUtilities::ToVector( const google::protobuf::RepeatedPtrField<T>& x )noexcept
+	vector<T> Proto::ToVector( const google::protobuf::RepeatedPtrField<T>& x )noexcept
 	{
 		vector<T> y;
 		for_each( x.begin(), x.end(), [&y]( auto item ){ y.push_back(item); } );

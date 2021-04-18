@@ -30,7 +30,7 @@ namespace Jde::Threading  //TODO Reflection remove Threading from public items.
 	struct InterruptibleThread : public IShutdown
 	{
 		template<typename FunctionType>
-		InterruptibleThread( string_view name, FunctionType f )noexcept;
+		InterruptibleThread( sv name, FunctionType f )noexcept;
 		virtual JDE_NATIVE_VISIBILITY ~InterruptibleThread();
 		JDE_NATIVE_VISIBILITY void Interrupt()noexcept;
 		JDE_NATIVE_VISIBILITY void Join();
@@ -43,7 +43,7 @@ namespace Jde::Threading  //TODO Reflection remove Threading from public items.
 	};
 
 	template<typename FunctionType>
-	InterruptibleThread::InterruptibleThread( string_view name, FunctionType f )noexcept:
+	InterruptibleThread::InterruptibleThread( sv name, FunctionType f )noexcept:
 		Name{name}
 	{
 		std::promise<InterruptFlag*> promise;

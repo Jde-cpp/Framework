@@ -10,7 +10,7 @@ namespace Jde::Threading
 #endif
 	static boost::container::flat_map<string,sp<std::shared_mutex>> _mutexes;
 	std::mutex _mutex;
-	std::unique_lock<std::shared_mutex> UniqueLock( const string& key )noexcept
+	std::unique_lock<std::shared_mutex> UniqueLock( str key )noexcept
 	{
 		unique_lock l{_mutex};
 
@@ -21,7 +21,7 @@ namespace Jde::Threading
 		l.unlock();
 		return unique_lock{ *pKeyMutex };
 	}
-/*	std::shared_lock<std::shared_mutex> SharedLock( const string& key )noexcept
+/*	std::shared_lock<std::shared_mutex> SharedLock( str key )noexcept
 	{
 		std::unique_ptr<std::unique_lock<std::shared_mutex>>
 	}*/

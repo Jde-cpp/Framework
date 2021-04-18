@@ -61,7 +61,7 @@ namespace Jde
 		}
 
 
-		ProcPtr operator[](string_view proc_name) const
+		ProcPtr operator[](sv proc_name) const
 		{
 #if _MSC_VER
 			auto procAddress = ::GetProcAddress( _module, string(proc_name).c_str() );

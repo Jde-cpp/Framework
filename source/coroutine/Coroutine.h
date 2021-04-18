@@ -17,7 +17,7 @@ namespace Jde::Coroutine
 	};
 	struct JDE_NATIVE_VISIBILITY ResumeThread final
 	{
-		ResumeThread( const string& Name, Duration idleLimit, CoroutineParam&& param )noexcept;
+		ResumeThread( str Name, Duration idleLimit, CoroutineParam&& param )noexcept;
 		~ResumeThread();
 		optional<CoroutineParam> Resume( CoroutineParam&& param )noexcept;
 		bool Done()const noexcept{ return _thread.get_stop_token().stop_requested(); }
@@ -36,7 +36,7 @@ namespace Jde::Coroutine
 
 #define SETTINGS(T,n,dflt) optional<T> v; if( _pSettings ) v=_pSettings->Get2<T>(n); return v.value_or(dflt)
 		static ELogLevel LogLevel()noexcept
-		{ 
+		{
 			if( _level==ELogLevel::None && _pSettings )
 				_level = _pSettings->Get2<ELogLevel>( "LogLevel" ).value_or( ELogLevel::Trace );
 			return _level;

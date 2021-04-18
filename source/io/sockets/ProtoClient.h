@@ -34,15 +34,15 @@ namespace Jde::IO::Sockets
 #pragma warning( disable : 4459 )
 	struct ProtoClient : public PerpetualAsyncSocket, public ProtoClientSession
 	{
-		ProtoClient( string_view host, uint16 port, string_view name )noexcept;
+		ProtoClient( sv host, uint16 port, sv name )noexcept;
 		virtual ~ProtoClient()=default;
 		void Connect()noexcept;
 		const string Name;
 	protected:
-		void Startup( string_view clientThreadName )noexcept;
+		void Startup( sv clientThreadName )noexcept;
 	private:
 		void Connect( const basio::ip::tcp::resolver::results_type& endpoints )noexcept(false);
-		void Run( string_view name )noexcept;
+		void Run( sv name )noexcept;
 		string _host;
 		uint16 _port;
 	};
@@ -51,7 +51,7 @@ namespace Jde::IO::Sockets
 	template<typename TOut, typename TIn>
 	struct TProtoClient : ProtoClient
 	{
-		TProtoClient( string_view host, uint16 port, string_view socketThreadName )noexcept:
+		TProtoClient( sv host, uint16 port, sv socketThreadName )noexcept:
 			ProtoClient{host, port, socketThreadName}
 		{}
    	virtual ~TProtoClient()=default;

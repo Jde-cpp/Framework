@@ -4,7 +4,7 @@
 #include "SchemaProc.h"
 #include "../log/Logging.h"
 
-#define DBLOG(message,params) Jde::DB::IDataSource::Log2( message, params, MY_FILE, __func__, __LINE__ )
+#define DBLOG(message,params) Jde::DB::Log( message, params, MY_FILE, __func__, __LINE__ )
 namespace Jde::DB
 {
 	namespace Types{ struct IRow; }
@@ -37,24 +37,6 @@ namespace Jde::DB
 		bool TrySelect( sv sql, std::function<void(const IRow&)> f )noexcept;
 		template<typename K,typename V>
 		flat_map<K,V> SelectMap( sv sql )noexcept(false);
-		void Log2( sv sql, const std::vector<DataValue>* pParameters, sv file, sv fnctn, uint line )noexcept
-		{
-			const auto size = pParameters ? pParameters->size() : 0;
-			ostringstream os;
-			uint prevIndex=0;
-			for( uint sqlIndex=0, paramIndex=0; (sqlIndex=sql.find_first_of('?', prevIndex))!=string::npos && paramIndex<size; ++paramIndex, prevIndex=sqlIndex+1 )
-			{
-				os << sql.substr( prevIndex, sqlIndex-prevIndex );
-				os << DB::to_string( (*pParameters)[paramIndex] );
-			}
-			if( prevIndex<sql.size() )
-				os << sql.substr( prevIndex );
-
-			//if( os.str()=="{{error}}" )
-				//DBG("HERE"sv);
-			Logging::Log( Logging::MessageBase(ELogLevel::Debug, os.str(), file, fnctn, line) );
-			//DBG( os.str() );
-		};
 		string Catalog( sv sql )noexcept(false);
 	//protected:
 		string ConnectionString;

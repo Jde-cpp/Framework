@@ -7,14 +7,14 @@
 namespace Jde{ enum class ELogLevel : uint8; }
 namespace Jde::Threading
 {
-	JDE_NATIVE_VISIBILITY std::unique_lock<std::shared_mutex> UniqueLock( const string& key )noexcept;
-	//std::unique_ptr<std::unique_lock<std::shared_mutex>> UniqueLock( const string& key )noexcept;
-	//std::shared_lock<std::shared_mutex> SharedLock( const string& key )noexcept;
+	JDE_NATIVE_VISIBILITY std::unique_lock<std::shared_mutex> UniqueLock( str key )noexcept;
+	//std::unique_ptr<std::unique_lock<std::shared_mutex>> UniqueLock( str key )noexcept;
+	//std::shared_lock<std::shared_mutex> SharedLock( str key )noexcept;
 
 #ifndef NDEBUG //TODORefactor move somewhere else
 	struct MyLock
 	{
-		MyLock( std::mutex& mutex, std::string_view instance, std::string_view name, size_t lineNumber ):
+		MyLock( std::mutex& mutex, sv instance, sv name, size_t lineNumber ):
 			_pUniqueLock{ nullptr },
 			_pUniqueSharedLock{nullptr},
 			_pSharedLock{nullptr},
@@ -23,7 +23,7 @@ namespace Jde::Threading
 			LOG( _logLevel, "unique lock - {}"sv, _description );
 			_pUniqueLock = make_unique<std::unique_lock<std::mutex>>( mutex );
 		}
-		MyLock( std::shared_mutex& mutex, std::string_view instance, std::string_view name, size_t lineNumber, bool shared = false ):
+		MyLock( std::shared_mutex& mutex, sv instance, sv name, size_t lineNumber, bool shared = false ):
 			_pUniqueLock{ nullptr },
 			_pUniqueSharedLock{ nullptr },
 			_pSharedLock{  nullptr },

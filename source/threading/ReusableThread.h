@@ -11,7 +11,7 @@ namespace Jde::Threading
 	class ReusableThread /*: public std::enable_shared_from_this<ReusableThread<TArgs>>*/
 	{
 	public:
-		ReusableThread( std::string_view name, std::function<void(std::shared_ptr<TArgs>)> method );
+		ReusableThread( sv name, std::function<void(std::shared_ptr<TArgs>)> method );
 		//void NextArgs( std::shared_ptr<TArgs*>& pArgs ){ AddQueue( pArgs ); }
 		void Join( std::shared_ptr<TArgs>& pArgs );
 		void Join();
@@ -34,7 +34,7 @@ namespace Jde::Threading
 	};
 
 	template<class TArgs>
-	ReusableThread<TArgs>::ReusableThread( std::string_view name, std::function<void(std::shared_ptr<TArgs>)> method ):
+	ReusableThread<TArgs>::ReusableThread( sv name, std::function<void(std::shared_ptr<TArgs>)> method ):
 		_method( method ),
 		_name( name )
 	{}

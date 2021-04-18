@@ -40,7 +40,7 @@ namespace Jde::IO::Sockets
 	{
 		_asyncHelper.stop();
 	}
-	void AsyncSocket::RunAsyncHelper( string_view clientThreadName )noexcept
+	void AsyncSocket::RunAsyncHelper( sv clientThreadName )noexcept
 	{
 		ASSERT( !_pThread );
 		_threadName = clientThreadName;

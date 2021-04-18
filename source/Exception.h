@@ -18,8 +18,14 @@ namespace boost::system{ class error_code; }
 #ifndef  THROW
 # define THROW(x) Jde::throw_exception(x, __func__,__FILE__,__LINE__)
 #endif
+#ifndef  THROW_IFX
+# define THROW_IFX(condition, x) if( condition ) THROW(x)
+#endif
 #ifndef  THROW_IF
-# define THROW_IF(condition,x) if(condition) Jde::throw_exception(x, __func__,__FILE__,__LINE__)
+# define THROW_IF(condition, x, ...) if( condition ) Jde::throw_exception( Jde::Exception(x __VA_OPT__(,) __VA_ARGS__), __func__, __FILE__, __LINE__ )
+#endif
+#ifndef  CHECK
+# define CHECK(condition) THROW_IF( !condition, #condition )
 #endif
 
 //mysql undefs THROW :(
@@ -46,18 +52,18 @@ namespace Jde
 		Exception()=default;
 		Exception( const Exception& )=default;
 		Exception( Exception&& )=default;
-		Exception( ELogLevel level, string_view value );
-		Exception( ELogLevel level, string_view value, string_view function, string_view file, long line );
-		Exception( std::string_view value );
+		Exception( ELogLevel level, sv value );
+		Exception( ELogLevel level, sv value, sv function, sv file, long line );
+		Exception( sv value );
 		template<class... Args>
-		Exception( std::string_view value, Args&&... args );
+		Exception( sv value, Args&&... args );
 
 		Exception( const std::exception& exp );
 
 		virtual ~Exception();
 
 		//Exception& operator=( const Exception& copyFrom );
-		virtual void Log( std::string_view pszAdditionalInformation="", ELogLevel level=ELogLevel::Debug )const;
+		virtual void Log( sv pszAdditionalInformation="", ELogLevel level=ELogLevel::Error )const noexcept;
 		const char* what() const noexcept override;
 		ELogLevel GetLevel()const{return _level;}
 
@@ -80,7 +86,7 @@ namespace Jde
 
 
 	template<class... Args>
-	Exception::Exception( std::string_view value, Args&&... args ):
+	Exception::Exception( sv value, Args&&... args ):
 		_what{ fmt::format(value,args...) },
 		_format{ value }
 	{
@@ -92,7 +98,7 @@ namespace Jde
 	struct JDE_NATIVE_VISIBILITY LogicException : public Exception
 	{
 		template<class... Args>
-		LogicException( std::string_view value, Args&&... args ):
+		LogicException( sv value, Args&&... args ):
 			Exception( value, args... )
 		{
 			_level=ELogLevel::Critical;
@@ -102,7 +108,7 @@ namespace Jde
 	struct JDE_NATIVE_VISIBILITY EnvironmentException : public Exception
 	{
 		template<class... Args>
-		EnvironmentException( std::string_view value, Args&&... args ):
+		EnvironmentException( sv value, Args&&... args ):
 			Exception( value, args... )
 		{
 			_level = ELogLevel::Error;
@@ -117,14 +123,14 @@ namespace Jde
 		RuntimeException()=default;
 		RuntimeException( const std::runtime_error& inner );
 		template<class... Args>
-		RuntimeException( std::string_view value, Args&&... args ):
+		RuntimeException( sv value, Args&&... args ):
 			Exception( value, args... )
 		{}
 	};
 
 	struct JDE_NATIVE_VISIBILITY CodeException : public RuntimeException
 	{
-		CodeException( std::string_view value, const std::error_code& code, ELogLevel level=ELogLevel::Error );
+		CodeException( sv value, const std::error_code& code, ELogLevel level=ELogLevel::Error );
 
 		static std::string ToString( const std::error_code& pErrorCode )noexcept;
 		static std::string ToString( const std::error_category& errorCategory )noexcept;
@@ -148,7 +154,7 @@ namespace Jde
 	struct JDE_NATIVE_VISIBILITY ArgumentException : public RuntimeException
 	{
 		template<class... Args>
-		ArgumentException( std::string_view value, Args&&... args ):
+		ArgumentException( sv value, Args&&... args ):
 			RuntimeException( value, args... )
 		{}
 	};
@@ -156,17 +162,23 @@ namespace Jde
 	struct JDE_NATIVE_VISIBILITY IOException : public RuntimeException
 	{
 		template<class... Args>
-		IOException( std::string_view value, Args&&... args ):
+		IOException( sv value, Args&&... args ):
 			RuntimeException( value, args... )
 		{}
 		template<class... Args>
-		IOException( path path, std::string_view value, Args&&... args ):
+		IOException( path path, sv value, Args&&... args ):
 			RuntimeException( value, args... ),
+			_path{path}
+		{}
+		template<class... Args>
+		IOException( path path, uint errorCode, sv value, Args&&... args ):
+			RuntimeException( value, args... ),
+			_errorCode{errorCode},
 			_path{path}
 		{}
 
 		template<class... Args>
-		IOException( uint errorCode, std::string_view value, Args&&... args ):
+		IOException( uint errorCode, sv value, Args&&... args ):
 			RuntimeException( value, args... ),
 			_errorCode{errorCode}
 		{}
@@ -187,8 +199,8 @@ namespace Jde
 		fs::path _path;
 	};
 
-	template<class TException>
-	[[noreturn]] void throw_exception( TException exp, const char* pszFunction, const char* pszFile, long line )
+	template<class T,std::enable_if_t<std::is_base_of<Exception,T>::value>* = nullptr>
+	[[noreturn]] void throw_exception( T exp, const char* pszFunction, const char* pszFile, long line )
 	{
 		exp.SetFunction( pszFunction );
 		exp.SetFile( pszFile );
@@ -197,7 +209,13 @@ namespace Jde
 		throw exp;
 	}
 
-	JDE_NATIVE_VISIBILITY void catch_exception( std::string_view pszFunction, std::string_view pszFile, long line, std::string_view pszAdditional, const std::exception* pException=nullptr );
+	[[noreturn]] inline void throw_exception( sv what, const char* pszFunction, const char* pszFile, long line )
+	{
+		throw_exception<Exception>( Exception{what}, pszFunction, pszFile, line );
+	}
+
+
+	JDE_NATIVE_VISIBILITY void catch_exception( sv pszFunction, sv pszFile, long line, sv pszAdditional, const std::exception* pException=nullptr );
 	//https://stackoverflow.com/questions/35941045/can-i-obtain-c-type-names-in-a-constexpr-way/35943472#35943472
 	template<class T>
 	constexpr std::basic_string_view<char> GetTypeName()
@@ -235,7 +253,7 @@ namespace Jde
 			func();
 			result = true;
 		}
-		catch( const Exception&)
+		catch( const Exception& )
 		{}
 		return result;
 	}

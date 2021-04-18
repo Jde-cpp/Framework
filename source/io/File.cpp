@@ -65,12 +65,12 @@ namespace Jde::IO
 			IOException::TestExists( path );
 			auto size = GetFileSize( path );
 			TRACE( "Opening {} - {} bytes "sv, path.string(), size );
-			ifstream f( path, std::ios::binary );
+			std::ifstream f( path, std::ios::binary );
 			if( f.fail() )
 				THROW( IOException("Could not open file '{}'", path.string()) );
 
 			//auto pResult = make_unique<vector<char>>(); pResult->reserve( size );
-			return make_unique<vector<char>>( (istreambuf_iterator<char>(f)), istreambuf_iterator<char>() );  //vexing parse
+			return make_unique<vector<char>>( (std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>() );  //vexing parse
 			//return move(pResult);
 		}
 		string Load( path path )noexcept(false)
@@ -78,17 +78,17 @@ namespace Jde::IO
 			IOException::TestExists( path );
 			auto size = GetFileSize( path );
 			TRACE( "Opening {} - {} bytes "sv, path.string(), size );
-			ifstream f( path, std::ios::binary );
+			std::ifstream f( path, std::ios::binary );
 			if( f.fail() )
 				THROW( IOException("Could not open file '{}'", path.string()) );
-			str result;
+			string result;
 			result.reserve( size );
-			result.assign( (istreambuf_iterator<char>(f)), istreambuf_iterator<char>() );  //vexing parse
+			result.assign( (std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>() );  //vexing parse
 			return result;
 		}
 		void SaveBinary( path path, const std::vector<char>& data )noexcept(false)
 		{
-			ofstream f( path, std::ios::binary );
+			std::ofstream f( path, std::ios::binary );
 			if( f.fail() )
 				THROW( Exception(format("Could not open file '{}'", path.string())) );
 
@@ -96,7 +96,7 @@ namespace Jde::IO
 		}
 		void Save( path path, const std::string& value, std::ios_base::openmode openMode )noexcept(false)
 		{
-			ofstream f( path, openMode );
+			std::ofstream f( path, openMode );
 			if( f.fail() )
 				THROW( IOException(path, "Could not open file") );
 
@@ -156,25 +156,54 @@ namespace Jde::IO
 		}
 	}
 
-	/*
-	std::wstring File::ToString( std::wstring file )
+	uint File::Merge( path file, const vector<char>& original, const vector<char>& newData )noexcept(false)
 	{
-		wifstream t( boo st::locale::conv::utf_to_utf<char,wchar_t>(file) );
-		t.seekg( 0, ios::end );
-		wstring str;
-		str.reserve( t.tellg() );
-		t.seekg( 0, ios::beg );
+		DBG( file.string() );
+		std::fstream os{ file, std::ios::binary }; //CHECK( os );
+		uint size = 0;
+		for( uint i=0; i<std::min(original.size(), newData.size()); ++i )
+		{
+			if( original[i]==newData[i] ) continue;
+			auto start = i;
+			for( ; i<std::min(original.size(), newData.size()) && original[i]!=newData[i]; ++i );
+			os.seekp( start );
+			os.write( newData.data()+start, i-start ); //CHECK( os.good() );
+			//memcpy( original.data()+start, newData.data()+start, i-start );
+			size+=i-start;
+			//--i;
+		}
+		if( newData.size()>original.size() )
+		{
+			os.seekp( std::ios_base::end );
+			os.write( newData.data()+original.size(), newData.size()-original.size() );
+			size+=newData.size()-original.size();
+			os.close();
+		}
+		else if( newData.size()<original.size() )
+		{
+			os.close();
+			fs::resize_file( file, newData.size() );
+			size+=original.size()-newData.size();
+		}
+		auto p = FileUtilities::LoadBinary( file );
+		if( p->size()!=newData.size() )
+			THROW( "error"sv );
+		for( uint i=0; i<p->size(); ++i )
+		{
+			if( p->at(i)!=newData[i] )
+				DBG( "{}"sv, i );
+		}
+		//ASSERT( original==newData );
+		return size;
+	}
 
-		str.assign( (istreambuf_iterator<wchar_t>(t)), istreambuf_iterator<wchar_t>() );
-		return str;
-	}*/
 	std::string FileUtilities::ToString( path filePath )
 	{
 		auto fileSize = GetFileSize( filePath );
-		ifstream t( filePath );
+		std::ifstream t( filePath );
 		string str;
 		str.reserve( fileSize );
-		str.assign( (istreambuf_iterator<char>(t)), istreambuf_iterator<char>() );
+		str.assign( (std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>() );
 		return str;
 	}
 
@@ -186,7 +215,7 @@ namespace Jde::IO
 		return columnNames;
 	}
 
-	void File::ForEachLine( string_view filePath, const std::function<void(string_view)>& function, const size_t lineCount )
+	void File::ForEachLine( sv filePath, const std::function<void(sv)>& function, const size_t lineCount )
 	{
 		std::ifstream file( string(filePath).c_str() );
 		if( file.fail() )
@@ -197,9 +226,9 @@ namespace Jde::IO
 		for( size_t index = 0; index<lineCount && getline<char>(file, line); ++index )
 			function( line );
 	}
-	size_t File::ForEachLine( string_view pszFileName, const std::function<void(const std::vector<string>&, size_t lineIndex)>& function, const std::set<size_t>& columnIndexes, const size_t maxLines/*=std::numeric_limits<size_t>::max()*/, const size_t startLine/*=0*/, const size_t /*chunkSize=1073741824*/, size_t maxColumnCount/*=1500*/ )
+	size_t File::ForEachLine( sv pszFileName, const std::function<void(const std::vector<string>&, size_t lineIndex)>& function, const std::set<size_t>& columnIndexes, const size_t maxLines/*=std::numeric_limits<size_t>::max()*/, const size_t startLine/*=0*/, const size_t /*chunkSize=1073741824*/, size_t maxColumnCount/*=1500*/ )
 	{
-		ifstream file2( string(pszFileName).c_str(), ios::binary | ios::ate );
+		std::ifstream file2( string(pszFileName).c_str(), std::ios::binary | std::ios::ate );
 		const size_t fileSize = file2.tellg();
 		file2.close();
 		std::ifstream file( string(pszFileName).c_str() );
@@ -374,7 +403,7 @@ namespace Jde::IO
 		return lineIndex;
 	}
 
-	size_t File::ForEachLine3( string_view pszFileName, const std::function<void(const std::vector<double>&, size_t lineIndex)>& function, const std::set<size_t>& columnIndexes, const size_t maxLines, const size_t startLine, const size_t chunkSize, size_t maxColumnCount, Stopwatch* /*sw*/ )
+	size_t File::ForEachLine3( sv pszFileName, const std::function<void(const std::vector<double>&, size_t lineIndex)>& function, const std::set<size_t>& columnIndexes, const size_t maxLines, const size_t startLine, const size_t chunkSize, size_t maxColumnCount, Stopwatch* /*sw*/ )
 	{
 		std::ifstream file( string(pszFileName).c_str() );
 		if( file.fail() )
@@ -484,9 +513,9 @@ namespace Jde::IO
 		return lineIndex-startLine;
 	}
 
-	size_t File::ForEachLine4( string_view pszFileName, const std::function<void(const std::vector<double>&, size_t lineIndex)>& function, const std::set<size_t>& columnIndexes, const size_t maxLines/*=std::numeric_limits<size_t>::max()*/, const size_t startLine/*=0*/, const size_t /*chunkSize=1073741824*/, size_t maxColumnCount/*=1500*/, Stopwatch* /*sw=nullptr*/, double emptyValue/*=0.0*/ )
+	size_t File::ForEachLine4( sv pszFileName, const std::function<void(const std::vector<double>&, size_t lineIndex)>& function, const std::set<size_t>& columnIndexes, const size_t maxLines/*=std::numeric_limits<size_t>::max()*/, const size_t startLine/*=0*/, const size_t /*chunkSize=1073741824*/, size_t maxColumnCount/*=1500*/, Stopwatch* /*sw=nullptr*/, double emptyValue/*=0.0*/ )
 	{
-		ifstream file2( string(pszFileName).c_str(), ios::binary | ios::ate);
+		std::ifstream file2( string(pszFileName).c_str(), std::ios::binary | std::ios::ate);
 		const size_t fileSize = file2.tellg();
 		file2.close();
 		std::ifstream file( string(pszFileName).c_str() );
@@ -594,11 +623,11 @@ namespace Jde::IO
 		return lineIndex-startLine;
 	}
 
-	std::pair<std::vector<string>,std::set<size_t>> File::LoadColumnNames( string_view csvFileName, std::vector<string>& columnNamesToFetch, bool notColumns )
+	std::pair<std::vector<string>,std::set<size_t>> File::LoadColumnNames( sv csvFileName, std::vector<string>& columnNamesToFetch, bool notColumns )
 	{
 		std::vector<string> columnNames;
 		std::set<size_t> columnIndexes;
-		auto columnNameFunction = [&columnNamesToFetch,&columnIndexes,&columnNames,&notColumns](string_view line)
+		auto columnNameFunction = [&columnNamesToFetch,&columnIndexes,&columnNames,&notColumns](sv line)
 		{
 			auto tokens = StringUtilities::Split( string(line) );
 			int iToken=0;

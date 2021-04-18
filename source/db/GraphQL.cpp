@@ -285,6 +285,7 @@ namespace DB
 			case DataType::Long:
 				qlTypeName = "Int";
 				break;
+			case DataType::UInt16:
 			case DataType::UInt:
 			case DataType::ULong:
 				qlTypeName = "UInt";
@@ -342,7 +343,7 @@ namespace DB
 			if( pTypeTable )
 			{
 				json type;
-				auto setField = []( const DB::TableQL& t, json& j, const string& key, sv x ){ if( t.ContainsColumn(key) ){ if(x.size()) j[key]=x; else j[key]=nullptr; } };
+				auto setField = []( const DB::TableQL& t, json& j, str key, sv x ){ if( t.ContainsColumn(key) ){ if(x.size()) j[key]=x; else j[key]=nullptr; } };
 				auto setKind = []( const DB::TableQL& t, json& j, optional<DB::QLFieldKind> pKind )
 				{
 					if( t.ContainsColumn("kind") )
@@ -557,7 +558,7 @@ namespace DB
 				string columnName = DB::Schema::FromJson( column.JsonName );
 				if( columnName=="id" && excludeId )//~~~
 					continue;
-				auto findColumn = []( const DB::Table& t, const string& c ){ auto p = t.FindColumn( c ); if( !p ) p = t.FindColumn( c+"_id" ); return p; }; //+_id for enums
+				auto findColumn = []( const DB::Table& t, str c ){ auto p = t.FindColumn( c ); if( !p ) p = t.FindColumn( c+"_id" ); return p; }; //+_id for enums
 				auto pSchemaColumn = findColumn( dbTable, columnName );
 				auto prefix = defaultPrefix;
 				if( !pSchemaColumn && pDefTable )
@@ -677,7 +678,7 @@ namespace DB
 			if( index==EDataValue::String )
 				member = get<string>( value );
 			else if( index==EDataValue::StringView )
-				member = get<string_view>( value );
+				member = get<sv>( value );
 			else if( index==EDataValue::Bool )
 				member = get<bool>( value );
 			else if( index==EDataValue::Int )

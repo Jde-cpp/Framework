@@ -10,7 +10,7 @@ namespace Jde::DB
 {
 	struct Statement
 	{
-		Statement( string_view sql, const VectorPtr<DB::DataValue>& parameters, bool isStoredProc );//TODO remove this.
+		Statement( sv sql, const VectorPtr<DB::DataValue>& parameters, bool isStoredProc );//TODO remove this.
 		string Sql;//const?
 		const VectorPtr<DB::DataValue> Parameters;
 		bool IsStoredProc;//const?
@@ -21,7 +21,7 @@ namespace Jde::DB
 	struct JDE_NATIVE_VISIBILITY DBQueue : public IShutdown//, std::enable_shared_from_this<DBQueue>
 	{
 		DBQueue( sp<IDataSource> spDataSource )noexcept;
-		void Push( string_view statement, const VectorPtr<DB::DataValue>& parameters, bool isStoredProc=true )noexcept;
+		void Push( sv statement, const VectorPtr<DB::DataValue>& parameters, bool isStoredProc=true )noexcept;
 		void Shutdown()noexcept override;
 		//void Stop()noexcept{ DBG0("DBQueue::Stopping"); _stopped=true;}
 	private:

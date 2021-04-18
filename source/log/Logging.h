@@ -59,21 +59,21 @@ namespace Jde
 
 		struct MessageBase
 		{
-			constexpr MessageBase( ELogLevel level, std::string_view message, std::string_view file, std::string_view function, uint line )noexcept;
-			constexpr MessageBase( ELogLevel level, std::string_view message, std::string_view file, std::string_view function, uint line, uint32 messageId )noexcept;
+			constexpr MessageBase( ELogLevel level, sv message, sv file, sv function, uint line )noexcept;
+			constexpr MessageBase( ELogLevel level, sv message, sv file, sv function, uint line, uint32 messageId )noexcept;
 			//Causes ambiguous issue TODO refactor
-			JDE_NATIVE_VISIBILITY MessageBase( ELogLevel level, const std::string& message, std::string_view file, std::string_view function, uint line )noexcept;
-			JDE_NATIVE_VISIBILITY MessageBase( ELogLevel level, sp<std::string> pMessage, std::string_view file, std::string_view function, uint line )noexcept;
-			constexpr MessageBase( ELogLevel level, std::string_view message, std::string_view file, std::string_view function, uint line, uint messageId, uint fileId, uint functionId )noexcept;
+			JDE_NATIVE_VISIBILITY MessageBase( ELogLevel level, const std::string& message, sv file, sv function, uint line )noexcept;
+			JDE_NATIVE_VISIBILITY MessageBase( ELogLevel level, sp<std::string> pMessage, sv file, sv function, uint line )noexcept;
+			constexpr MessageBase( ELogLevel level, sv message, sv file, sv function, uint line, uint messageId, uint fileId, uint functionId )noexcept;
 			MessageBase( IO::IncomingMessage& message, EFields fields )noexcept(false);
 			EFields Fields{EFields::None};
 			ELogLevel Level;
 			uint MessageId{0};
-			string_view MessageView;
+			sv MessageView;
 			uint FileId{0};
-			string_view File;
+			sv File;
 			uint FunctionId{0};
-			string_view Function;
+			sv Function;
 			uint LineNumber;
 			uint UserId{0};
 			uint ThreadId{0};
@@ -158,7 +158,7 @@ namespace Jde
 	JDE_NATIVE_VISIBILITY void DestroyLogger();
 
    using namespace std::literals;
-	JDE_NATIVE_VISIBILITY void InitializeLogger( string_view fileName )noexcept;
+	JDE_NATIVE_VISIBILITY void InitializeLogger( sv fileName )noexcept;
 	JDE_NATIVE_VISIBILITY void InitializeLogger( ELogLevel level2=ELogLevel::Debug, path path=fs::path{}, uint16 serverPort=0, bool memory=false, ELogLevel flushOn=ELogLevel::Information )noexcept;
 	JDE_NATIVE_VISIBILITY bool HaveLogger()noexcept;
 	JDE_NATIVE_VISIBILITY void ClearMemoryLog()noexcept;
@@ -285,7 +285,7 @@ JDE_NATIVE_VISIBILITY std::ostream& operator<<( std::ostream& os, const std::opt
 #pragma region MessageBase
 namespace Jde::Logging
 {
-	constexpr MessageBase::MessageBase( ELogLevel level, std::string_view message, std::string_view file, std::string_view function, uint line, uint messageId, uint fileId, uint functionId )noexcept:
+	constexpr MessageBase::MessageBase( ELogLevel level, sv message, sv file, sv function, uint line, uint messageId, uint fileId, uint functionId )noexcept:
 		Level{level},
 		MessageId{messageId},//{IO::Crc::Calc32(message)},
 		MessageView{message},
@@ -306,11 +306,11 @@ namespace Jde::Logging
 		if( LineNumber )
 			Fields |= EFields::LineNumber;
 	}
-	constexpr MessageBase::MessageBase( ELogLevel level, std::string_view message, std::string_view file, std::string_view function, uint line )noexcept:
+	constexpr MessageBase::MessageBase( ELogLevel level, sv message, sv file, sv function, uint line )noexcept:
 		MessageBase( level, message, file, function, line, IO::Crc::Calc32(message) )
 	{}
 
-	constexpr MessageBase::MessageBase( ELogLevel level, std::string_view message, std::string_view file, std::string_view function, uint line, uint32 messageId )noexcept:
+	constexpr MessageBase::MessageBase( ELogLevel level, sv message, sv file, sv function, uint line, uint32 messageId )noexcept:
 		MessageBase( level, message, file, function, line, messageId, IO::Crc::Calc32(file), IO::Crc::Calc32(function) )
 	{}
 }

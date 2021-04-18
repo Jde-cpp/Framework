@@ -95,14 +95,14 @@ namespace Jde::IO::Sockets
 		basio::async_read( *_pSocket, basio::buffer(reinterpret_cast<void*>(_message.data()), messageLength), onRead );
 	}
 /////////////////////////////////////////////////////////////////////////////////////
-	ProtoClient::ProtoClient( std::string_view host, uint16 port, string_view name )noexcept:
+	ProtoClient::ProtoClient( sv host, uint16 port, sv name )noexcept:
 		ProtoClientSession{ _asyncHelper },
 		Name{ name },
 		_host{host},
 		_port{port}
 	{}
 
-	void ProtoClient::Startup( string_view clientThreadName )noexcept
+	void ProtoClient::Startup( sv clientThreadName )noexcept
 	{
 		Connect();
 		RunAsyncHelper( clientThreadName );

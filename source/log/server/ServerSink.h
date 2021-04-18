@@ -53,8 +53,8 @@ namespace Logging
 				MessageBase(base)
 			{}
 			Message(const MessageBase& base, const vector<string>& values )noexcept;
-			Message( ELogLevel level, std::string_view message, std::string_view file, std::string_view function, uint line, const vector<string>& values )noexcept;
-			Message( ELogLevel level, std::string_view message, const std::string& file, const std::string& function, uint line, const vector<string>& values )noexcept;
+			Message( ELogLevel level, sv message, sv file, sv function, uint line, const vector<string>& values )noexcept;
+			Message( ELogLevel level, sv message, const std::string& file, const std::string& function, uint line, const vector<string>& values )noexcept;
 
 			TimePoint Timestamp{ Clock::now() };
 			vector<string> Variables;
@@ -66,7 +66,7 @@ namespace Logging
 	typedef IO::Sockets::TProtoClient<Logging::Proto::ToServer,Logging::Proto::FromServer> ProtoBase;
 	struct ServerSink : public IServerSink, Threading::Interrupt, public ProtoBase
 	{
-		static JDE_NATIVE_VISIBILITY sp<ServerSink> Create( string_view host, uint16 port )noexcept(false);
+		static JDE_NATIVE_VISIBILITY sp<ServerSink> Create( sv host, uint16 port )noexcept(false);
 		~ServerSink(){DBGX("{}"sv, "~ServerSink");}
 		void Log( const Messages::Message& message )noexcept override;
 		void Log( const MessageBase& messageBase )noexcept override;
@@ -80,7 +80,7 @@ namespace Logging
 		void SendCustom( uint32 requestId, const std::string& bytes )noexcept override;
 		void SetCustomFunction( function<void(uint32,sp<string>)>&& fnctn )noexcept{_customFunction=fnctn;}
 	private:
-		ServerSink( string_view host, uint16 port )noexcept;
+		ServerSink( sv host, uint16 port )noexcept;
 		void OnReceive( std::shared_ptr<Logging::Proto::FromServer> pFromServer )noexcept override;
 		TimePoint _lastConnectionCheck;
 		QueueValue<Messages::Message> _messages;

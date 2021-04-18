@@ -107,14 +107,14 @@ namespace Jde::IO::Crc
 		return crc32_rec( 0xFFFFFFFF, s );
 	}
 
-	constexpr unsigned int Calc32( std::string_view value, unsigned int crc=0xFFFFFFFF, size_t index=0 )
+	constexpr unsigned int Calc32( sv value, unsigned int crc=0xFFFFFFFF, size_t index=0 )
 	{
 		return index == value.size()
 			? crc ^ 0xFFFFFFFF
 			: Calc32( value, crc32_table[static_cast<unsigned char>(crc) ^ static_cast<unsigned char>(value[index])] ^ (crc >> 8), index + 1 );
 	}
 
-	inline unsigned int Calc32RunTime( std::string_view value )
+	inline unsigned int Calc32RunTime( sv value )
 	{
 		return Calc32( value );
 		/*boost::crc_32_type result;

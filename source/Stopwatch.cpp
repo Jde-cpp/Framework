@@ -20,12 +20,12 @@ namespace Jde
 	SDuration Stopwatch::_minimumToLog = 1s;
 	//map<string,SDuration> Stopwatch::_accumulations;
 
-	Stopwatch::Stopwatch( std::string_view what, bool started )noexcept:
+	Stopwatch::Stopwatch( sv what, bool started )noexcept:
 		_what{ what },
 		_start{ started ? SClock::now() : STimePoint{} }
 	{}
 
-	Stopwatch::Stopwatch( Stopwatch* pParent, std::string_view what, string_view instance, bool started )noexcept:
+	Stopwatch::Stopwatch( Stopwatch* pParent, sv what, sv instance, bool started )noexcept:
 		_what{ what },//what.length()==0 ? StopwatchNS::Context :
 		_instance{instance},
 		_start{ started ? SClock::now() : STimePoint{} },
@@ -45,7 +45,7 @@ namespace Jde
 		var asNano = duration_cast<SDuration>( end - _start - _elapsedPause );
 		return asNano;
 	}
-	string Stopwatch::Progress( uint index, uint total, std::string_view context, bool force/*=false*/ )const
+	string Stopwatch::Progress( uint index, uint total, sv context, bool force/*=false*/ )const
 	{
 		if( index==0 )
 			index = 1;
@@ -91,7 +91,7 @@ namespace Jde
 		_previousProgressElapsed = elapsed;
 		return result;
 	}
-	void Stopwatch::Output( string_view what, const SDuration& elapsed, bool logMemory )
+	void Stopwatch::Output( sv what, const SDuration& elapsed, bool logMemory )
 	{
 		if( logMemory )
 			DBG( "{{}) time:  {} - {} Gigs"sv, what, FormatSeconds(elapsed), IApplication::MemorySize()/std::pow(2,30) );
@@ -105,7 +105,7 @@ namespace Jde
 		Finish( ""sv );
 	}
 
-	void Stopwatch::Finish( string_view description )
+	void Stopwatch::Finish( sv description )
 	{
 		var elapsed = Elapsed();
 		Pause();
@@ -131,7 +131,7 @@ namespace Jde
 		pChild->second += sw.Elapsed();
 	}
 */
-/*	void Stopwatch::SetContext( const string& context )
+/*	void Stopwatch::SetContext( str context )
 	{
 		StopwatchNS::Context=context;
 	}

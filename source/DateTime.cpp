@@ -13,9 +13,9 @@ namespace Jde
 		TimePoint _epoch{ DateTime(1970,1,1).GetTimePoint() };
 		TimePoint Epoch()noexcept{ return _epoch; };
 
-		Duration ToDuration( string_view iso )noexcept(false)//P3Y6M4DT12H30M5S
+		Duration ToDuration( sv iso )noexcept(false)//P3Y6M4DT12H30M5S
 		{
-			istringstream is{ string{iso} };
+			std::istringstream is{ string{iso} };
 			if( is.get()!='P' )
 				THROW( Exception("Expected 'P' as first character.") );
 			bool parsingTime = false;
@@ -62,8 +62,8 @@ namespace Jde
 			var year = chrono::hours(24 * 365);
 			if( d >= year || d <= -year )
 			{
-				os << duration_cast<hours>(d).count()/year.count() << "Y"; 
-				d %= year; 
+				os << duration_cast<hours>(d).count()/year.count() << "Y";
+				d %= year;
 			}
 			var month = chrono::hours(24 * 30);
 			if( d >= month || d <= -month )
@@ -142,7 +142,7 @@ namespace Jde
 		_time_point = Clock::from_time_t( time )+nanoFraction;
 	}
 
-	DateTime::DateTime( string_view iso  )noexcept(false)
+	DateTime::DateTime( sv iso  )noexcept(false)
 	{
 		if( iso.size()<19 )
 			THROW( RuntimeException("ISO Date '{}' expected at least 19 characters vs '{}'", iso, iso.size()) );
@@ -270,8 +270,8 @@ namespace Jde
 		return fmt::format( "{}-{:0>2}-{:0>2}T{:0>2}:{:0>2}:{:0>2}Z", t.tm_year+1900, t.tm_mon+1, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec ).c_str();
 	}
 
-	constexpr std::array<string_view,12> months{ "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec" };
-	uint DateTime::ParseMonth( string_view month )noexcept(false)
+	constexpr std::array<sv,12> months{ "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec" };
+	uint DateTime::ParseMonth( sv month )noexcept(false)
 	{
 		var index = find( months.begin(), months.end(), StringUtilities::ToLower(string(month)) )-months.begin();
 		if( index>=(int)months.size() )
@@ -286,7 +286,7 @@ namespace Jde
 
 	namespace Timezone
 	{
-		Duration TryGetGmtOffset( string_view name, TimePoint utc )noexcept
+		Duration TryGetGmtOffset( sv name, TimePoint utc )noexcept
 		{
 			try
 			{

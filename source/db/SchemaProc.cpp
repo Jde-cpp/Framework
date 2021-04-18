@@ -12,6 +12,7 @@ namespace Jde::DB
 {
 	using boost::container::flat_map;
 	using nlohmann::json;
+	using nlohmann::ordered_json;
 	struct IDataSource;
 	string UniqueIndexName( const Index& index, ISchemaProc& dbSchema, bool uniqueName, const vector<Index>& indexes )noexcept(false);
 
@@ -38,7 +39,7 @@ namespace Jde::DB
 		}
 		return name.str();
 	}
-	Schema ISchemaProc::CreateSchema( const json& j )noexcept(false)
+	Schema ISchemaProc::CreateSchema( const ordered_json& j )noexcept(false)
 	{
 		var pSyntax = DB::DefaultSyntax();
 		var pDBTables = LoadTables();
@@ -69,6 +70,7 @@ namespace Jde::DB
 		for( var& [key, value] : j.items() )
 		{
 			var name = Schema::FromJson( key );
+//			DBG( name );
 			if( !key.starts_with("$") )
 				schema.Tables.emplace( name, make_shared<Table>(name, value, parentTables, schema.Types) );
 			else if( key!="$types" && parentTables.find(key)==parentTables.end() )

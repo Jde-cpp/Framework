@@ -5,7 +5,7 @@
 #define var const auto
 namespace Jde::DB
 {
-	Statement::Statement( string_view sql, const VectorPtr<DB::DataValue>& parameters, bool isStoredProc ):
+	Statement::Statement( sv sql, const VectorPtr<DB::DataValue>& parameters, bool isStoredProc ):
 		Sql{ sql },
 		Parameters{ parameters },
 		IsStoredProc{isStoredProc}
@@ -24,7 +24,7 @@ namespace Jde::DB
 		//_queue.Push( sp<Statement>{} );
 	}
 
-	void DBQueue::Push( string_view sql, const VectorPtr<DB::DataValue>& parameters, bool isStoredProc )noexcept
+	void DBQueue::Push( sv sql, const VectorPtr<DB::DataValue>& parameters, bool isStoredProc )noexcept
 	{
 		RETURN_IF( _stopped, "pushing '{}' when stopped"sv, sql );
 		// if( !_stopped )

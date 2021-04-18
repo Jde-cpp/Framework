@@ -1,5 +1,6 @@
 #pragma once
 #include "DataType.h"
+#include "../StringUtilities.h"
 #include "../math/Decimal.h"
 
 namespace Jde::DB
@@ -9,7 +10,8 @@ namespace Jde::DB
 		//virtual DataValue operator[]( uint value )const=0;
 		virtual DataValue operator[]( uint value )const=0;
 		virtual bool GetBit( uint position )const=0;
-		virtual const std::string GetString( uint position )const=0;
+		virtual std::string GetString( uint position )const=0;
+		virtual CIString GetCIString( uint position )const=0;
 		virtual int64_t GetInt( uint position )const=0;
 		virtual int32_t GetInt32( uint position )const=0;
 		virtual std::optional<_int> GetIntOpt( uint position )const=0;
@@ -52,12 +54,11 @@ namespace Jde::DB
 		mutable uint _index{0};
 	};
 
-	template<>
-	inline string IRow::Get<string>( uint position )const{ return GetString(position); }
+	template<> inline string IRow::Get<string>( uint position )const{ return GetString(position); }
+	template<> inline uint IRow::Get<uint>( uint position )const{ return GetUInt(position); }
+	template<> inline unsigned int IRow::Get<unsigned int>( uint position )const{ return (unsigned int)GetUInt(position); }
+	template<> inline optional<uint32> IRow::Get<optional<uint32>>( uint position )const{ const auto p = GetUIntOpt(position); return p ? optional<uint32>{*p} : optional<uint32>{}; }
+	template<> inline uint8 IRow::Get<uint8>( uint position )const{ return (uint8)GetUInt16(position); }
+	template<> inline CIString IRow::Get<CIString>( uint position )const{ return GetCIString(position); }
 
-	template<>
-	inline uint IRow::Get<uint>( uint position )const{ return GetUInt(position); }
-
-	template<>
-	inline unsigned int IRow::Get<unsigned int>( uint position )const{ return (unsigned int)GetUInt(position); }
 }

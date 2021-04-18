@@ -51,7 +51,7 @@ namespace Jde
 //	Logging::Lttng* GetEtwSink(){ return _pLttng;}
 #endif
 
-	void InitializeLogger( string_view fileName )noexcept
+	void InitializeLogger( sv fileName )noexcept
 	{
 		var pSettings = Settings::Global().SubContainer( "logging" );
 		var level = (ELogLevel)pSettings->Get<int>( "level", (int)ELogLevel::Debug );
@@ -270,13 +270,13 @@ namespace Jde
 
 	namespace Logging
 	{
-		MessageBase::MessageBase( ELogLevel level, sp<string> pMessage, std::string_view file, std::string_view function, uint line )noexcept:
+		MessageBase::MessageBase( ELogLevel level, sp<string> pMessage, sv file, sv function, uint line )noexcept:
 			MessageBase( level, *pMessage, file, function, line, IO::Crc::Calc32(*pMessage), IO::Crc::Calc32(file), IO::Crc::Calc32(function) )
 		{
 			_pMessage = pMessage;
 		}
 
-		MessageBase::MessageBase( ELogLevel level, const string& message, std::string_view file, std::string_view function, uint line )noexcept:
+		MessageBase::MessageBase( ELogLevel level, str message, sv file, sv function, uint line )noexcept:
 			MessageBase( level, message, file, function, line, IO::Crc::Calc32(message), IO::Crc::Calc32(file), IO::Crc::Calc32(function) )
 		{
 			_pMessage = make_shared<string>( message );

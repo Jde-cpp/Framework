@@ -12,7 +12,7 @@ namespace Jde
 	string DB::to_string( const DataValue& parameter )
 	{
 		ostringstream os;
-		constexpr string_view nullString = "null"sv;
+		constexpr sv nullString = "null"sv;
 		switch( (EDataValue)parameter.index() )
 		{
 		case EDataValue::Null:
@@ -22,7 +22,7 @@ namespace Jde
 			os << get<string>(parameter);
 		break;
 		case EDataValue::StringView:
-			os << get<string_view>(parameter);
+			os << get<sv>(parameter);
 		break;
 		case EDataValue::StringPtr:
 		{
@@ -70,7 +70,7 @@ namespace Jde
 		return os.str();
 	}
 
-	DB::DataType DB::ToDataType( string_view t )noexcept
+	DB::DataType DB::ToDataType( sv t )noexcept
 	{
 		CIString typeName{ t };
 		DataType type{ DataType::None };
@@ -183,6 +183,7 @@ namespace Jde
 				THROW_IF( !j.is_number(), Exception("{} could not conver to numeric", memberName) );
 				value = DB::DataValue{ j.get<_int>() };
 				break;
+			case DataType::UInt16:
 			case DataType::UInt:
 			case DataType::ULong:
 				THROW_IF( !j.is_number(), Exception("{} could not conver to numeric", memberName) );

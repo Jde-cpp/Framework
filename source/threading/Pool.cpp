@@ -2,7 +2,7 @@
 
 namespace Jde::Threading
 {
-	Pool::Pool( uint threadCount, string_view name ):
+	Pool::Pool( uint threadCount, sv name ):
 		_done(false),
 		_index{0},
 		_name{ name },

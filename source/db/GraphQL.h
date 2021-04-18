@@ -50,7 +50,7 @@ namespace Jde::DB
 		Add=5,
 		Remove=6
 	};
-	constexpr array<string_view,7> MutationQLStrings = { "create", "update", "delete", "restore", "purge", "add", "remove" };
+	constexpr array<sv,7> MutationQLStrings = { "create", "update", "delete", "restore", "purge", "add", "remove" };
 	struct MutationQL final
 	{
 		MutationQL( sv json, EMutationQL type, nlohmann::json args, optional<TableQL> resultPtr/*, sv parent*/ ):JsonName{json}, Type{type}, Args{args}, ResultPtr{resultPtr}/*, ParentJsonName{parent}*/{}

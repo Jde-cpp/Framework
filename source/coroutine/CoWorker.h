@@ -12,7 +12,7 @@ namespace Jde::Coroutine
 	protected:
 		void Start()noexcept;
 		virtual void Process()noexcept=0;
-		const str _name;
+		const string _name;
 		up<Threading::InterruptibleThread> _pThread;
 		std::condition_variable _cv; mutable std::mutex _mtx;
 		static sp<CoWorker> _pInstance;

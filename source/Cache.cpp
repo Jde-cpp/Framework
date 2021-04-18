@@ -1,5 +1,5 @@
 #include "Cache.h"
-
+#define var const auto
 namespace Jde
 {
 	sp<Cache> _pInstance;
@@ -14,5 +14,13 @@ namespace Jde
 	{
 		DBG0( "Cache::Shutdown"sv );
 		_pInstance = nullptr;
+	}
+
+	bool Cache::InstanceClear( str name )noexcept
+	{
+		unique_lock l{_cacheLock};
+		var erased = _cache.erase( name );
+		TRACE( "Cache::{} erased={}"sv, name, erased );
+		return erased;
 	}
 }

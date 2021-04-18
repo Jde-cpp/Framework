@@ -3,14 +3,14 @@
 #define var const auto
 namespace Jde::DB
 {
-	uint IDataSource::Scaler( string_view sql, const vector<DataValue>& parameters )noexcept(false)
+	uint IDataSource::Scaler( sv sql, const vector<DataValue>& parameters )noexcept(false)
 	{
 		uint count = 0;
 		function<void(const IRow&)> fnctn = [&count](const IRow& row){ row >> count; };
 		Execute( sql, &parameters, &fnctn, false, true );
 		return count;
 	}
-	optional<uint> IDataSource::ScalerOptional( string_view sql, const vector<DataValue>& parameters )noexcept(false)
+	optional<uint> IDataSource::ScalerOptional( sv sql, const vector<DataValue>& parameters )noexcept(false)
 	{
 		optional<uint> value;
 		function<void(const IRow&)> f = [&value](var& row){ value = row.GetUIntOpt(0); };
@@ -18,20 +18,20 @@ namespace Jde::DB
 		return value;
 	}
 
-	void IDataSource::Select( string_view sql, std::function<void(const IRow&)> f )
+	void IDataSource::Select( sv sql, std::function<void(const IRow&)> f )
 	{
-		Select( sql, f, nullptr, false );
+		Select( sql, f, nullptr, true );
 	}
-	void IDataSource::Select( string_view sql, std::function<void(const IRow&)> f, const vector<DataValue>& values, bool log )noexcept(false)
+	void IDataSource::Select( sv sql, std::function<void(const IRow&)> f, const vector<DataValue>& values, bool log )noexcept(false)
 	{
 		Select( sql, f, &values, log );
 	}
-	bool IDataSource::TrySelect( string_view sql, std::function<void(const IRow&)> f )noexcept
+	bool IDataSource::TrySelect( sv sql, std::function<void(const IRow&)> f )noexcept
 	{
 		return Try( [&]{Select( sql, f);} );
 	}
 
-	optional<uint> IDataSource::TryExecute( string_view sql )noexcept
+	optional<uint> IDataSource::TryExecute( sv sql )noexcept
 	{
 		optional<uint> result;
 		try
@@ -44,7 +44,7 @@ namespace Jde::DB
 		}
 		return result;
 	}
-	optional<uint> IDataSource::TryExecute( string_view sql, const vector<DataValue>& parameters, bool log )noexcept
+	optional<uint> IDataSource::TryExecute( sv sql, const vector<DataValue>& parameters, bool log )noexcept
 	{
 		optional<uint> result;
 		try
@@ -58,7 +58,7 @@ namespace Jde::DB
 		return result;
 	}
 
-	optional<uint> IDataSource::TryExecuteProc( string_view sql, const vector<DataValue>& parameters, bool log )noexcept
+	optional<uint> IDataSource::TryExecuteProc( sv sql, const vector<DataValue>& parameters, bool log )noexcept
 	{
 		optional<uint> result;
 		try

@@ -15,13 +15,13 @@ namespace Jde::Threading
 	class Interrupt
 	{
 	public:
-		JDE_NATIVE_VISIBILITY Interrupt( string_view threadName, Duration duration, bool paused=false );
+		JDE_NATIVE_VISIBILITY Interrupt( sv threadName, Duration duration, bool paused=false );
 		JDE_NATIVE_VISIBILITY virtual ~Interrupt();
 		Interrupt()=delete;
 		Interrupt(const Interrupt &)=delete;
 		Interrupt& operator=(const Interrupt &)=delete;
-		
-		//Interrupt( string_view threadName, bool paused=false );
+
+		//Interrupt( sv threadName, bool paused=false );
 		JDE_NATIVE_VISIBILITY void Wake()noexcept;
 		JDE_NATIVE_VISIBILITY void Stop()noexcept;
 

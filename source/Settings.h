@@ -17,39 +17,39 @@ namespace Jde::Settings
 	{
 		Container( const nlohmann::json& json )noexcept;
 		Container( path jsonFile )noexcept(false);
-		//Jde::Duration Duration( string_view path, const Jde::Duration& dflt )noexcept;
-		bool Bool( string_view path, bool dflt )noexcept;
-		bool Have( string_view path )noexcept;
-		string String( string_view path )noexcept;
-		uint16 Uint16( string_view path )noexcept;
+		//Jde::Duration Duration( sv path, const Jde::Duration& dflt )noexcept;
+		bool Bool( sv path, bool dflt )noexcept;
+		bool Have( sv path )noexcept;
+		string String( sv path )noexcept;
+		uint16 Uint16( sv path )noexcept;
 
 		template<typename T>
-		vector<T> Array( string_view path )noexcept(false);
+		vector<T> Array( sv path )noexcept(false);
 
 		template<typename TValue>
-		map<string,TValue> Map( string_view path )noexcept;
+		map<string,TValue> Map( sv path )noexcept;
 
-		//fs::path Path( string_view path, path dflt=fs::path() )const noexcept;
-		shared_ptr<Container> SubContainer( string_view entry )const noexcept(false);
+		//fs::path Path( sv path, path dflt=fs::path() )const noexcept;
+		sp<Container> SubContainer( sv entry )const noexcept(false);
+		optional<Container> TrySubContainer( sv entry )const noexcept;
 		template<typename T>
-		T Get( string_view path )const noexcept(false);
+		T Get( sv path )const noexcept(false);
 		template<typename T>
-		T Get( string_view path, T defaultValue )const noexcept;
+		T Get( sv path, T defaultValue )const noexcept;
 
-//		void Set( const string& path, uint size )noexcept;
 		template<typename T>
-		optional<T> Get2( string_view path )const noexcept;
+		optional<T> Get2( sv path )const noexcept;
 
 		nlohmann::json& Json()noexcept{ /*ASSERT(_pJson);*/ return *_pJson; }
 	private:
 		unique_ptr<nlohmann::json> _pJson;
 	};
 
-	template<> inline TimePoint Container::Get<TimePoint>( string_view path )const noexcept(false){ return DateTime{ Get<string>(path) }.GetTimePoint(); }
-	template<> inline fs::path Container::Get<fs::path>( string_view path )const noexcept(false){ var p = Get2<string>(path); return p.has_value() ? fs::path{*p} : fs::path{}; }
+	template<> inline TimePoint Container::Get<TimePoint>( sv path )const noexcept(false){ return DateTime{ Get<string>(path) }.GetTimePoint(); }
+	template<> inline fs::path Container::Get<fs::path>( sv path )const noexcept(false){ var p = Get2<string>(path); return p.has_value() ? fs::path{*p} : fs::path{}; }
 
 	template<typename T>
-	T Container::Get( string_view path )const noexcept(false)
+	T Container::Get( sv path )const noexcept(false)
 	{
 		auto item = _pJson->find( path );
 		if( item==_pJson->end() )
@@ -58,7 +58,7 @@ namespace Jde::Settings
 	}
 
 	template<>
-	inline optional<Duration> Container::Get2<Duration>( string_view path )const noexcept
+	inline optional<Duration> Container::Get2<Duration>( sv path )const noexcept
 	{
 		var strng = Get2<string>( path );
 		optional<std::chrono::system_clock::duration> result;
@@ -68,14 +68,14 @@ namespace Jde::Settings
 	}
 
 	template<typename T>
-	optional<T> Container::Get2( string_view path )const noexcept
+	optional<T> Container::Get2( sv path )const noexcept
 	{
 		auto item = _pJson->find( path );
 		return item==_pJson->end() ? optional<T>{} : optional<T>{ item->get<T>() };
 	}
 
 	template<typename T>
-	vector<T> Container::Array( string_view path )noexcept(false)
+	vector<T> Container::Array( sv path )noexcept(false)
 	{
 		auto item = _pJson->find( path );
 		if( item==_pJson->end() )
@@ -87,7 +87,7 @@ namespace Jde::Settings
 	}
 
 	template<typename TValue>
-	map<string,TValue> Container::Map( string_view path )noexcept
+	map<string,TValue> Container::Map( sv path )noexcept
 	{
 		auto pItem = _pJson->find( path );
 		map<string,TValue> values;
@@ -100,22 +100,35 @@ namespace Jde::Settings
 	}
 
 	template<>
-	inline fs::path Container::Get( string_view path, fs::path defaultValue )const noexcept
+	inline fs::path Container::Get( sv path, fs::path defaultValue )const noexcept
 	{
 		auto item = _pJson->find( path );
 		return item==_pJson->end() ? defaultValue : fs::path( item->get<string>() );
 	}
 
 	template<typename T>
-	T Container::Get( string_view path, T defaultValue )const noexcept
+	T Container::Get( sv path, T defaultValue )const noexcept
 	{
 		auto item = _pJson->find( path );
 		return item==_pJson->end() ? defaultValue : item->get<T>();
 	}
 
 
-	JDE_NATIVE_VISIBILITY Container& Global();
-	JDE_NATIVE_VISIBILITY void SetGlobal( shared_ptr<Container> container );
+	JDE_NATIVE_VISIBILITY Container& Global()noexcept;
+	sp<Container> GlobalPtr()noexcept;
+	JDE_NATIVE_VISIBILITY void SetGlobal( sp<Container> container )noexcept;
+
+	template<typename T>
+	optional<T> TryGetSubcontainer( sv container, sv path )noexcept
+	{
+		optional<T> v;
+		if( auto p=Settings::GlobalPtr(); p )
+		{
+			if( auto pSub=p->TrySubContainer( container ); pSub )
+				v = pSub->Get2<T>( path );
+		}
+		return v;
+	}
 
 	struct Server
 	{

@@ -24,7 +24,7 @@ namespace Jde
 		inline TimePoint FromDays( DayIndex days )noexcept{ return Epoch()+days*24h; }
 		inline TimePoint Date( const TimePoint& time )noexcept{ return Clock::from_time_t( Clock::to_time_t(time)/(60*60*24)*(60*60*24) ); }
 		inline Duration Time( const TimePoint& time )noexcept{ return time-Date(time); }
-		JDE_NATIVE_VISIBILITY Duration ToDuration( string_view iso )noexcept(false);
+		JDE_NATIVE_VISIBILITY Duration ToDuration( sv iso )noexcept(false);
 		JDE_NATIVE_VISIBILITY string ToString( Duration d )noexcept;
 
 		namespace TimeSpan
@@ -59,7 +59,7 @@ namespace Jde
 		DateTime( const DateTime& other )noexcept;
 		DateTime( time_t time )noexcept;
 		DateTime( uint16 year, uint8 month, uint8 day, uint8 hour=0, uint8 minute=0, uint8 second=0, Duration nanoFraction=Duration{0} )noexcept;
-		DateTime( string_view iso )noexcept(false);
+		DateTime( sv iso )noexcept(false);
 		DateTime( const TimePoint& tp )noexcept;
 		static DateTime BeginingOfWeek();
 		DateTime& operator=(const DateTime& other)noexcept;
@@ -89,7 +89,7 @@ namespace Jde
 		std::string LocalDisplay()const noexcept;
 		std::string ToIsoString()const noexcept;
 		static std::string ToIsoString(const tm& timeStruct)noexcept;
-		static uint ParseMonth( string_view month )noexcept(false);
+		static uint ParseMonth( sv month )noexcept(false);
 		time_t TimeT()const noexcept;
 		const TimePoint& GetTimePoint()const noexcept{return _time_point;}
 		operator TimePoint()const noexcept{ return _time_point; }
@@ -112,8 +112,8 @@ namespace Jde
 
 	namespace Timezone
 	{
-		JDE_NATIVE_VISIBILITY Duration GetGmtOffset( string_view name, TimePoint utc )noexcept(false);
-		JDE_NATIVE_VISIBILITY Duration TryGetGmtOffset( string_view name, TimePoint utc )noexcept;
+		JDE_NATIVE_VISIBILITY Duration GetGmtOffset( sv name, TimePoint utc )noexcept(false);
+		JDE_NATIVE_VISIBILITY Duration TryGetGmtOffset( sv name, TimePoint utc )noexcept;
 		JDE_NATIVE_VISIBILITY Duration EasternTimezoneDifference( TimePoint time )noexcept;
 		inline TimePoint EasternTimeNow()noexcept{ const auto now=Clock::now(); return now+EasternTimezoneDifference(now); };
 	}
@@ -121,7 +121,7 @@ namespace Jde
 	{
 		inline TimePoint ToTimePoint( uint16 year, uint8 month, uint8 day, uint8 hour=0, uint8 minute=0, uint8 second=0, Duration nanoFraction=Duration{0} )noexcept{ return DateTime(year,month, day, hour, minute,second, nanoFraction).GetTimePoint(); }
 		inline TimePoint EndOfMonth( const TimePoint& time )noexcept{ DateTime date{time}; return DateTime(date.Year()+(date.Month()==12 ? 1 : 0), date.Month()%12+1, 1).GetTimePoint()-1s; }
-		inline TimePoint to_timepoint( string_view iso )noexcept{ return DateTime{iso}.GetTimePoint(); }
+		inline TimePoint to_timepoint( sv iso )noexcept{ return DateTime{iso}.GetTimePoint(); }
 		inline string DateDisplay(const TimePoint& time)noexcept{ return DateTime{time}.DateDisplay(); }
 		inline string DateDisplay(DayIndex day)noexcept{ return DateTime{FromDays(day)}.DateDisplay(); }
 		inline TimePoint EndOfDay(const TimePoint& time){ DateTime date{time}; return DateTime(date.Year(), date.Month(), date.Day(), 23, 59, 59).GetTimePoint(); }

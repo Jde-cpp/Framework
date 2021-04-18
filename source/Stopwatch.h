@@ -24,14 +24,14 @@ namespace Jde
 	};
 	struct JDE_NATIVE_VISIBILITY Stopwatch
 	{
-		Stopwatch( std::string_view what, bool started=true )noexcept;
-		Stopwatch( Stopwatch* pParent, std::string_view what="", std::string_view instance="", bool started=true )noexcept;
+		Stopwatch( sv what, bool started=true )noexcept;
+		Stopwatch( Stopwatch* pParent, sv what="", sv instance="", bool started=true )noexcept;
 		virtual ~Stopwatch();
 
-		void Finish( string_view description );
+		void Finish( sv description );
 		void Finish( bool remove=true );
 		string Progress( uint count, uint total=0 )const{ return Progress( count, total, "" ); }
-		string Progress( uint count, uint total, std::string_view context, bool force=false )const;
+		string Progress( uint count, uint total, sv context, bool force=false )const;
 		SDuration Elapsed()const;
 		static std::string FormatSeconds( const SDuration& seconds );
 		static std::string FormatCount( double total );
@@ -40,7 +40,7 @@ namespace Jde
 		void Restart(){ _start = std::chrono::steady_clock::now(); }
 	private:
 		//void UpdateChild( const Stopwatch& sw );
-		static void Output( std::string_view what, const SDuration& elapsed, bool logMemory );
+		static void Output( sv what, const SDuration& elapsed, bool logMemory );
 
 		const std::string _what;
 		const std::string _instance;

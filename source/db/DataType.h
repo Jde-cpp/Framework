@@ -1,7 +1,7 @@
 #pragma once
 #include <variant>
 #pragma warning(push)
-#pragma warning( disable : 4715) 
+#pragma warning( disable : 4715)
 #include <nlohmann/json.hpp>
 #pragma warning(pop)
 #include "../math/Decimal.h"
@@ -13,7 +13,7 @@ namespace Jde::DB
 	typedef std::chrono::system_clock DBClock;
 	typedef DBClock::time_point DBDateTime;
 	enum class EDataValue: uint8 {Null,String,StringView,StringPtr,Bool,Int,Int64,Uint,Decimal2,Double,DoubleOptional,DateOptional };
-	typedef std::variant<std::nullptr_t,string,string_view,sp<string>,bool,int,_int,uint,Decimal2,double,std::optional<double>,std::optional<DBDateTime>> DataValue;
+	typedef std::variant<std::nullptr_t,string,sv,sp<string>,bool,int,_int,uint,Decimal2,double,std::optional<double>,std::optional<DBDateTime>> DataValue;
 	string to_string( const DataValue& parameter );
 
 	enum DataType
@@ -71,7 +71,7 @@ namespace Jde::DB
 		UInt8,
 		UInt16
 	};
-	DataType ToDataType( string_view typeName )noexcept;
+	DataType ToDataType( sv typeName )noexcept;
 	string ToString( DataType type, const Syntax& syntax )noexcept;
 
 	DataValue ToDataValue( DataType type, const nlohmann::json& j, sv memberName )noexcept(false);

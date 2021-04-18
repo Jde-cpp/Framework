@@ -17,7 +17,7 @@ namespace Jde::IO::Sockets
 		AsyncSocket()noexcept;
 		basio::io_context _asyncHelper;
 		void Join();
-		void RunAsyncHelper( string_view clientThreadName )noexcept;
+		void RunAsyncHelper( sv clientThreadName )noexcept;
 		void Close()noexcept;
 		virtual void OnClose()noexcept{};
 		void Shutdown()noexcept;

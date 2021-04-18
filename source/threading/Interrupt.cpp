@@ -7,10 +7,10 @@ namespace Jde::Threading
 {
 	//constexpr std::chrono::seconds RefreshRate = std::chrono::seconds(10);
 
-/*	Interrupt::Interrupt( string_view threadName, bool paused=false ):
+/*	Interrupt::Interrupt( sv threadName, bool paused=false ):
 		_threadName{ threadName },
 */
-	Interrupt::Interrupt( string_view threadName, Duration duration, bool paused ):
+	Interrupt::Interrupt( sv threadName, Duration duration, bool paused ):
 		_threadName{ threadName },
 		_paused{ paused },
 		_refreshRate{ duration }
