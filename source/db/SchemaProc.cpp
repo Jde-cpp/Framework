@@ -125,7 +125,7 @@ namespace Jde::DB
 		{
 			for( var& [id,value] : pTable->FlagsData )
 			{
-				if( _pDataSource->Scaler( format("select count(*) from {} where id=?", pTable->Name), {id})==0 )
+				if( _pDataSource->Scaler<uint>( format("select count(*) from {} where id=?", pTable->Name), {id})==0 )
 					_pDataSource->Execute( format("insert into {}(id,name)values( ?, ? )", pTable->Name), {id, value} );
 			}
 			for( var& jData : pTable->Data )
@@ -194,7 +194,7 @@ namespace Jde::DB
 						else
 							osInsertValues << (column.Default=="$now" ? pSyntax->UtcNow() : column.Default);
 					}
-					if( _pDataSource->Scaler( osSelect.str(), selectParams)==0 )
+					if( _pDataSource->Scaler<uint>( osSelect.str(), selectParams)==0 )
 					{
 						ostringstream sql;
 						var haveSequence = pTable->HaveSequence();

@@ -76,7 +76,7 @@ namespace Jde
 	typedef PK UserPK;
 	typedef int_fast32_t int32;
 
-	typedef uint_fast64_t uint;
+	using uint=uint_fast64_t;
 	typedef int_fast64_t _int;
 	typedef uint Handle;
 

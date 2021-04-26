@@ -22,7 +22,7 @@ namespace Jde
 
 	auto _pDeletedThreads = make_shared<std::vector<sp<Threading::InterruptibleThread>>>();
 
-	auto _pObjects = make_shared<std::list<sp<void>>>();  mutex ObjectMutex;
+	auto _pObjects = make_shared<std::vector<sp<void>>>();  mutex ObjectMutex;
 	auto _pShutdowns = make_shared<std::vector<sp<IShutdown>>>();
 }
 #define var const auto
@@ -166,13 +166,14 @@ namespace Jde
 
 	void IApplication::Add( sp<void> pShared )noexcept
 	{
-		lock_guard l{ObjectMutex};
+		lock_guard l{ ObjectMutex };
 		_pObjects->push_back( pShared );
 	}
+
 	void IApplication::AddShutdown( sp<IShutdown> pShared )noexcept
 	{
 		Add( pShared );
-		lock_guard l{ObjectMutex};
+		lock_guard l{ ObjectMutex };
 		_pShutdowns->push_back( pShared );
 	}
 	void IApplication::Remove( sp<void> pShared )noexcept

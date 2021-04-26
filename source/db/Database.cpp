@@ -17,10 +17,12 @@ namespace Jde
 	using nlohmann::json;
 	using nlohmann::ordered_json;
 
-	void DB::Log( sv sql, const std::vector<DataValue>* pParameters, sv file, sv fnctn, uint line, ELogLevel level )noexcept
+	void DB::Log( sv sql, const std::vector<DataValue>* pParameters, sv file, sv fnctn, uint line, ELogLevel level, sv error )noexcept
 	{
 		const auto size = pParameters ? pParameters->size() : 0;
 		ostringstream os;
+		if( error.size() )
+			os << error << "\n";
 		uint prevIndex=0;
 		for( uint sqlIndex=0, paramIndex=0; (sqlIndex=sql.find_first_of('?', prevIndex))!=string::npos && paramIndex<size; ++paramIndex, prevIndex=sqlIndex+1 )
 		{
@@ -151,6 +153,16 @@ namespace Jde
 	uint DB::Execute( sv sql, std::vector<DataValue>&& parameters )noexcept(false)
 	{
 		DS_RET(0)->Execute( sql, parameters );
+	}
+
+	CIString DB::SelectName( sv sql, uint id, sv cacheName )noexcept(false)
+	{
+		CIString y;
+		if( cacheName.size() )
+			y = Cache::GetValue<uint,CIString>( cacheName, id ).value_or( CIString{} );
+		if( y.empty() )
+			y = Scaler<CIString>( sql, {id} ).value_or( CIString{} );
+		return y;
 	}
 	//typedef DB::IDataSource* (*pDataSourceFactory)();
 	//typedef shared_ptr<DB::IDataSource> IDataSourcePtr;

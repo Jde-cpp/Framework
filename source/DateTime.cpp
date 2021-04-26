@@ -120,8 +120,12 @@ namespace Jde
 		_time_point( std::chrono::system_clock::from_time_t(time) )
 	{}
 
-	DateTime::DateTime( const TimePoint& tp )noexcept:
+	DateTime::DateTime( TimePoint tp )noexcept:
 		_time_point( tp )
+	{}
+
+	DateTime::DateTime( fs::file_time_type t )noexcept:
+		_time_point( Chrono::ToClock<Clock,file_clock>(t) )
 	{}
 
 
@@ -283,6 +287,16 @@ namespace Jde
 		var month = months[Month()-1];
 		return string{ (char)std::toupper(month[0]),month[1],month[2] };
 	}
+
+	// inline TimePoint ToTimePoint( fs::file_time_type fileTime )noexcept
+	// {
+	// 	var fileTimeT = fs::file_time_type::clock::to_time_t( fileTime );
+	// 	var fractional = fileTime-fs::file_time_type::clock::from_time_t( fileTimeT );
+	// 	TimePoint point = Clock::from_time_t( fileTimeT );
+	// 	Duration d = std::chrono::milliseconds( duration_cast<milliseconds>(fractional) );
+	// 	point += d;
+	// 	return point;
+	// }
 
 	namespace Timezone
 	{

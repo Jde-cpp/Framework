@@ -12,7 +12,7 @@
 namespace Jde
 {
 	//using std::sv;
-	//using std::string;
+	//using string;
 	using std::basic_string;
 	namespace StringUtilities
 	{
@@ -26,10 +26,10 @@ namespace Jde
 		JDE_NATIVE_VISIBILITY std::vector<sv> Split( sv s, char delim=',', uint estCnt=0 );
 
 		template<typename T>
-		std::string AddSeparators( T collection, sv separator, bool quote=false );
+		string AddSeparators( T collection, sv separator, bool quote=false );
 
 		template<typename T>
-		std::string AddCommas( T value, bool quote=false ){ return AddSeparators( value, ",", quote ); }
+		string AddCommas( T value, bool quote=false ){ return AddSeparators( value, ",", quote ); }
 
 		JDE_NATIVE_VISIBILITY sv NextWord( sv x )noexcept;
 
@@ -48,7 +48,7 @@ namespace Jde
 
 		template<typename T>
 		static float TryToFloat( const basic_string<T>& s )noexcept;
-		optional<double> TryToDouble( const std::string& s )noexcept;
+		optional<double> TryToDouble( str s )noexcept;
 
 		template<typename Enum, typename Collection>
 		sv FromEnum( const Collection& s, Enum value )noexcept;
@@ -59,11 +59,15 @@ namespace Jde
 		[[nodiscard]]inline bool StartsWith( sv value, sv starting ){ return starting.size() > value.size() ? false : std::equal( starting.begin(), starting.end(), value.begin() ); }
 		[[nodiscard]]inline bool StartsWithInsensitive( sv value, sv starting );
 
-		inline void LTrim( std::string &s ){ s.erase( s.begin(), std::find_if(s.begin(), s.end(), [](int ch) {return !std::isspace(ch); }) ); }
-		inline void RTrim( std::string &s ){ s.erase( std::find_if(s.rbegin(), s.rend(), [](int ch) {return !std::isspace(ch);}).base(), s.end() ); }
-		inline void Trim( std::string &s ){ LTrim(s); RTrim(s); }
-		inline std::string Trim( const std::string &s ){ auto y{s}; LTrim(y); RTrim(y); return y; }
+		inline void LTrim( string& s ){ s.erase( s.begin(), std::find_if(s.begin(), s.end(), [](int ch) {return !std::isspace(ch); }) ); }
+		inline void RTrim( string& s ){ s.erase( std::find_if(s.rbegin(), s.rend(), [](int ch) {return !std::isspace(ch);}).base(), s.end() ); }
+		inline void Trim( string& s ){ LTrim(s); RTrim(s); }
+		inline string Trim( str s ){ auto y{s}; LTrim(y); RTrim(y); return y; }
 	};
+	namespace Str
+	{
+		template<typename T> T Trim( const T& s, sv substring )noexcept;
+	}
 
 	struct ci_char_traits : public std::char_traits<char>
 	{
@@ -73,19 +77,58 @@ namespace Jde
 		JDE_NATIVE_VISIBILITY static int compare( const char* s1, const char* s2, size_t n );
 		JDE_NATIVE_VISIBILITY static const char* find( const char* s, int n, char a );
 	};
+#define var const auto
 	struct CIString : public basic_string<char, ci_char_traits>
 	{
-		typedef basic_string<char, ci_char_traits> base;
+		using base=basic_string<char, ci_char_traits>;
 		CIString()noexcept{};
 		CIString( sv sv )noexcept:base{sv.data(), sv.size()}{}
 		CIString( str s )noexcept:base{s.data(), s.size()}{}
+		CIString( const char* p, uint s )noexcept:base{p, s}{}
+		uint find( sv sub, uint pos = 0 )const noexcept;
+		uint find( const CIString& sub, uint pos = 0 )const noexcept{ return find( sv{sub.data(), sub.size()}, pos ); }
+		//inline CIString& operator=( sv s )noexcept{ base::reserve(s.size()+1); memcpy(data(), s.data(), s.size() ); data()[s.size()]='\0'; resize(s.size()); return *this; }
 		inline bool operator ==( sv s )const noexcept{ return size()==s.size() && base::compare( 0, s.size(), s.data(), s.size() )==0; }
 		inline bool operator ==( const char* psz )const noexcept{ return size()==strlen(psz) && base::compare( 0, size(), psz, size() )==0; }
 		inline bool operator !=( sv s )const noexcept{ return size() == s.size() && base::compare(0, s.size(), s.data(), s.size())!=0; }
 		inline bool operator !=( str s )const noexcept{ return *this!=sv{s}; }
+		inline CIString& operator+=( sv s )noexcept
+		{
+			var l = size()+s.size();
+			base::resize(l);
+			std::copy( s.data(), s.data()+s.size(), data() );
+			return *this;
+		}
+		inline char operator[]( uint i )const noexcept{ return data()[i]; }
 		operator string()const noexcept{ return string{data(), size()}; }
+		operator sv()const noexcept{ return sv{data(), size()}; }
 	};
-#define var const auto
+
+	namespace Impl
+	{
+		struct StringTraits : public std::char_traits<char>
+		{
+/*			static bool eq(char c1, char c2) { return toupper(c1) == toupper(c2); }
+			static bool ne(char c1, char c2) { return toupper(c1) != toupper(c2); }
+			static bool lt(char c1, char c2) { return toupper(c1) <  toupper(c2); }
+			static int compare( const char* s1, const char* s2, size_t n );
+			static const char* find( const char* s, int n, char a );
+*/
+		};
+	}
+
+/*	struct String : public basic_string<char, Impl::StringTraits>
+	{
+		using base=basic_string<char, Impl::StringTraits>;
+		friend bool operator<( str a, str b )noexcept{ return a<b; }
+	};
+*/
+	struct StringCompare
+	{
+   	bool operator()( str a, str b )const noexcept{ return a<b; }
+   };
+
+	//base::operator<(
 	template<typename T>
 	basic_string<T> StringUtilities::RTrim(basic_string<T> &s)
 	{
@@ -104,7 +147,7 @@ namespace Jde
 	}
 
 	template<typename T>
-	std::string StringUtilities::AddSeparators( T collection, sv separator, bool quote )
+	string StringUtilities::AddSeparators( T collection, sv separator, bool quote )
 	{
 		ostringstream os;
 		auto first = true;
@@ -147,7 +190,7 @@ namespace Jde
 			return std::nanf("");
 		}
 	}
-	inline optional<double> StringUtilities::TryToDouble( const std::string& s )noexcept
+	inline optional<double> StringUtilities::TryToDouble( str s )noexcept
 	{
 		optional<double> v;
 		try
@@ -201,5 +244,20 @@ namespace Jde
 	{
 		return static_cast<uint>(value)<stringValues.size() ? stringValues[value] : sv{};
 	}
+
+	template<typename T> T Str::Trim( const T& s, sv substring )noexcept
+	{
+		T os; uint i, current=0;
+		while( (i = s.find(substring, current))!=string::npos )
+		{
+			//sv s2{ s.data()+current, s.size()-current };
+			os += sv{ s.data()+current, i-current };
+			current = i+substring.size();
+		}
+		if( current && current<s.size() )
+			os+=sv{ s.data()+current, s.size()-current };
+		return current ? os : s;
+	}
+
 #undef var
 }

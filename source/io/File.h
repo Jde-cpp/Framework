@@ -13,7 +13,7 @@ namespace Jde
 {
 	namespace fs=std::filesystem;
 	struct Stopwatch;
-	class String;
+	//class String;
 	using boost::container::flat_map;
 namespace IO
 {

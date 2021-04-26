@@ -14,6 +14,7 @@ namespace Jde
 
 	using namespace std::literals::chrono_literals;
 	typedef uint16 DayIndex;
+	#define var const auto
 	namespace Chrono
 	{
 		JDE_NATIVE_VISIBILITY TimePoint Epoch()noexcept;
@@ -60,7 +61,8 @@ namespace Jde
 		DateTime( time_t time )noexcept;
 		DateTime( uint16 year, uint8 month, uint8 day, uint8 hour=0, uint8 minute=0, uint8 second=0, Duration nanoFraction=Duration{0} )noexcept;
 		DateTime( sv iso )noexcept(false);
-		DateTime( const TimePoint& tp )noexcept;
+		DateTime( TimePoint tp )noexcept;
+		DateTime( fs::file_time_type time )noexcept;
 		static DateTime BeginingOfWeek();
 		DateTime& operator=(const DateTime& other)noexcept;
 		bool operator==(const DateTime& other)const noexcept{return _time_point==other._time_point; }
@@ -107,15 +109,16 @@ namespace Jde
 		//std::tm	_tm;
 	};
 
-	inline string ToIsoString( const TimePoint& time )noexcept{ return DateTime(time).ToIsoString(); }
-	inline string to_string( const TimePoint& time ){ return DateTime(time).ToIsoString(); }//TODO take out.
+	inline string ToIsoString( TimePoint time )noexcept{ return DateTime(time).ToIsoString(); }
+	inline string ToIsoString( fs::file_time_type time )noexcept{ return DateTime(time).ToIsoString(); }
+	inline string to_string( TimePoint time ){ return DateTime(time).ToIsoString(); }//TODO take out.
 
 	namespace Timezone
 	{
 		JDE_NATIVE_VISIBILITY Duration GetGmtOffset( sv name, TimePoint utc )noexcept(false);
 		JDE_NATIVE_VISIBILITY Duration TryGetGmtOffset( sv name, TimePoint utc )noexcept;
 		JDE_NATIVE_VISIBILITY Duration EasternTimezoneDifference( TimePoint time )noexcept;
-		inline TimePoint EasternTimeNow()noexcept{ const auto now=Clock::now(); return now+EasternTimezoneDifference(now); };
+		inline TimePoint EasternTimeNow()noexcept{ var now=Clock::now(); return now+EasternTimezoneDifference(now); };
 	}
 	namespace Chrono
 	{
@@ -127,8 +130,20 @@ namespace Jde
 		inline TimePoint EndOfDay(const TimePoint& time){ DateTime date{time}; return DateTime(date.Year(), date.Month(), date.Day(), 23, 59, 59).GetTimePoint(); }
 		inline TimePoint BeginningOfDay(const TimePoint& time){ DateTime date{time}; return DateTime(date.Year(), date.Month(), date.Day(), 0, 0, 0).GetTimePoint(); }
 		inline TimePoint BeginningOfMonth( TimePoint time={} )noexcept{ DateTime date{time==TimePoint{} ? Clock::now() : time }; return DateTime{date.Year(), date.Month(), 1}.GetTimePoint(); }
+		//inline fs::file_time_type ToFileTime( TimePoint t )noexcept{ return fs::file_time_type::clock::from_time_t( Clock::to_time_t(t) ); }//TODO make more than exact to second.
+		//inline TimePoint ToTimePoint( fs::file_time_type t )noexcept;//{ return TimePoint::from_time_t( fs::file_time_type::clock::to_time_t(t) ); }
+		template<typename To, typename From> typename To::time_point ToClock( typename From::time_point f )noexcept;
+	}
+	template<typename To,typename From> typename To::time_point Chrono::ToClock( typename From::time_point from )noexcept
+	{
+		var fromTimeT = From::to_time_t( from );
+		var fractional = from-From::from_time_t( fromTimeT );
+		typename To::time_point point{ To::from_time_t(fromTimeT) };
+		var d = std::chrono::milliseconds( duration_cast<std::chrono::milliseconds>(fractional) );
+		point += d;
+		return point;
 	}
 }
 JDE_NATIVE_VISIBILITY std::ostream& operator<<( std::ostream &os, const std::chrono::system_clock::time_point& obj )noexcept;
-
+#undef var
 #endif

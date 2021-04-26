@@ -13,12 +13,12 @@ namespace Jde::DB
 		virtual ~IDataSource() = default;
 
 		virtual sp<ISchemaProc> SchemaProc()noexcept=0;
-		uint Scaler( sv sql, const std::vector<DataValue>& parameters )noexcept(false);
+		uint ScalerNonNull( sv sql, const std::vector<DataValue>& parameters )noexcept(false);
 
-		template<typename T>
-		optional<T> TryScaler( sv sql, const vector<DataValue>& parameters )noexcept;
+		template<typename T> optional<T> TryScaler( sv sql, const vector<DataValue>& parameters )noexcept;
+		template<typename T> optional<T> Scaler( sv sql, const vector<DataValue>& parameters )noexcept(false);
 
-		optional<uint> ScalerOptional( sv sql, const std::vector<DataValue>& parameters )noexcept(false);
+		//optional<uint> ScalerOptional( sv sql, const std::vector<DataValue>& parameters )noexcept(false);
 
 		optional<uint> TryExecute( sv sql )noexcept;
 		optional<uint> TryExecute( sv sql, const std::vector<DataValue>& parameters, bool log=true )noexcept;
@@ -65,6 +65,12 @@ namespace Jde::DB
 	{
 		optional<T> result;
 		Try( [&]{ Select( sql, [&result](const IRow& row){ result = row.Get<T>(0); }, parameters);} );
+		return result;
+	}
+	template<typename T> optional<T> IDataSource::Scaler( sv sql, const vector<DataValue>& parameters )noexcept(false)
+	{
+		optional<T> result;
+		Select( sql, [&result](const IRow& row){ result = row.Get<T>(0); }, parameters );
 		return result;
 	}
 

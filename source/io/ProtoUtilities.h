@@ -1,4 +1,5 @@
 #pragma once
+#include <google/protobuf/message.h>
 #include "File.h"
 
 namespace Jde::IO::Proto
@@ -9,6 +10,9 @@ namespace Jde::IO::Proto
 	up<T> TryLoad( path path )noexcept;
 	template<typename T>
 	void Load( path path, T& p )noexcept(false);
+
+	template<typename T>
+	up<T> Deserialize( const vector<char>& data )noexcept(false);
 
 	template<typename T>
 	vector<T> ToVector( const google::protobuf::RepeatedPtrField<T>& x )noexcept;
@@ -35,6 +39,21 @@ namespace Jde::IO
 	}
 
 	template<typename T>
+	void Deserialize2( const vector<char>& data, T& proto )noexcept(false)
+	{
+		google::protobuf::io::CodedInputStream input{ (const uint8*)data.data(), (int)data.size() };
+		if( !proto.MergePartialFromCodedStream(&input) )
+			THROW( IOException("MergePartialFromCodedStream returned false.") );
+	}
+
+	template<typename T>
+	up<T> Proto::Deserialize( const vector<char>& data )noexcept(false)
+	{
+		auto p = make_unique<T>();
+		Deserialize2<T>( data, *p );
+		return p;
+	}
+	template<typename T>
 	void Proto::Load( path path, T& proto )noexcept(false)
 	{
 		up<vector<char>> pBytes;
@@ -51,10 +70,7 @@ namespace Jde::IO
 			fs::remove( path );
 			THROW( IOException(path, "has 0 bytes. Removed") );
 		}
-
-		google::protobuf::io::CodedInputStream input{ (const uint8*)pBytes->data(), (int)pBytes->size() };
-		if( !proto.MergePartialFromCodedStream(&input) )
-			THROW( IOException(path, "MergePartialFromCodedStream returned false.") );
+		Deserialize( *pBytes, proto );
 	}
 
 	template<typename T>

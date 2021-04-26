@@ -3,7 +3,7 @@
 #define var const auto
 namespace Jde::DB
 {
-	uint IDataSource::Scaler( sv sql, const vector<DataValue>& parameters )noexcept(false)
+/*	uint IDataSource::Scaler( sv sql, const vector<DataValue>& parameters )noexcept(false)
 	{
 		uint count = 0;
 		function<void(const IRow&)> fnctn = [&count](const IRow& row){ row >> count; };
@@ -16,7 +16,7 @@ namespace Jde::DB
 		function<void(const IRow&)> f = [&value](var& row){ value = row.GetUIntOpt(0); };
 		Execute( sql, &parameters, &f, false, true );
 		return value;
-	}
+	}*/
 
 	void IDataSource::Select( sv sql, std::function<void(const IRow&)> f )
 	{

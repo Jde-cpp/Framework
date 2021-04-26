@@ -16,7 +16,7 @@ namespace Jde
 		GetDefaultLogger()->warn( "{} - ({}){}({}) - {}", pException ? pException->what() : "Unknown", pszFunction, pszFile, line, pszAdditional );
 	}
 
-	Exception::Exception( ELogLevel level, sv value, sv function, sv file, long line ):
+	Exception::Exception( ELogLevel level, sv value, sv function, sv file, long line )noexcept:
 		std::exception(),
 		_functionName{function},
 		_fileName{file},
@@ -26,18 +26,18 @@ namespace Jde
 		_format{ value }
 	{}
 
-	Exception::Exception( ELogLevel level, sv value ):
+	Exception::Exception( ELogLevel level, sv value )noexcept:
 		std::exception(),
 		_level{ level },
 		_what{ value },
 		_format{ value }
 	{}
-	Exception::Exception( sv value ):
+	Exception::Exception( sv value )noexcept:
 		_what{ value },
 		_format{ value }
 	{}
 
-	Exception::Exception( const std::exception& exp ):
+	Exception::Exception( const std::exception& exp )noexcept:
 		_what{ exp.what() },
 		_format( _what )
 	{}

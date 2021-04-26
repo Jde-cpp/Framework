@@ -24,6 +24,15 @@ namespace Jde
 		return s;
 	}
 
+	uint CIString::find( sv sub, uint i )const noexcept
+   {
+		uint j=0;
+		for( ; i+sub.size()<=size() && j<sub.size(); ++i )
+			for( j=0; i<size() && j<sub.size() && traits_type::eq( (*this)[i], sub[j] ); ++i, ++j );
+      return j==sub.size() ? i-sub.size()-1 : npos;
+	}
+
+
 	std::vector<sv> StringUtilities::Split( sv s, sv delim )
 	{
 		vector<sv> tokens;

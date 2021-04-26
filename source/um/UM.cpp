@@ -93,7 +93,7 @@ namespace Jde
 
 		_apis = pDataSource->SelectMap<string,uint>( "select name, id from um_apis" );
 		auto pUMApi = _apis.find( "UM" ); THROW_IF( pUMApi==_apis.end(), EnvironmentException("no user management in api table.") );
-		var umPermissionId = pDataSource->ScalerOptional( "select id from um_permissions where api_id=? and name is null", {pUMApi->second} ).value_or(0); THROW_IF( umPermissionId==0, EnvironmentException("no user management permission.") );
+		var umPermissionId = pDataSource->Scaler<uint>( "select id from um_permissions where api_id=? and name is null", {pUMApi->second} ).value_or(0); THROW_IF( umPermissionId==0, EnvironmentException("no user management permission.") );
 		for( var& table : schema.Tables )
 			_tablePermissions.try_emplace( table.first, umPermissionId );
 
@@ -160,7 +160,7 @@ namespace Jde
 				roleId = m.InputParam( "roleId" ).get<uint>();
 				permissionId = m.InputParam( "permissionId" ).get<uint>();
 			}
-			var access = DB::DataSource()->Scaler( "select right_id from um_role_permissions where role_id=? and permission_id=?", std::vector<DB::DataValue>{roleId, permissionId} );
+			var access = (UM::EAccess)DB::DataSource()->Scaler<uint>( "select right_id from um_role_permissions where role_id=? and permission_id=?", std::vector<DB::DataValue>{roleId, permissionId} ).value_or( 0 );
 			{
 				unique_lock l{ _rolePermissionMutex };
 				_rolePermissions.try_emplace( roleId ).first->second[permissionId] = (Jde::UM::EAccess)access;

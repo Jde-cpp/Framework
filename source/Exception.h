@@ -49,16 +49,18 @@ namespace Jde
 {
 	struct JDE_NATIVE_VISIBILITY Exception : public std::exception
 	{
-		Exception()=default;
-		Exception( const Exception& )=default;
-		Exception( Exception&& )=default;
-		Exception( ELogLevel level, sv value );
-		Exception( ELogLevel level, sv value, sv function, sv file, long line );
-		Exception( sv value );
-		template<class... Args>
-		Exception( sv value, Args&&... args );
+		Exception()noexcept=default;
+		Exception( const Exception& )noexcept=default;
+		Exception( ELogLevel level, sv value )noexcept;
+		Exception( ELogLevel level, sv value, sv function, sv file, long line )noexcept;
+		Exception( sv value )noexcept;
 
-		Exception( const std::exception& exp );
+		template<class... Args>
+		Exception( Exception&&, sv value={}, Args&&... args )noexcept;
+		template<class... Args>
+		Exception( sv value, Args&&... args )noexcept;
+
+		Exception( const std::exception& exp )noexcept;
 
 		virtual ~Exception();
 
@@ -78,21 +80,29 @@ namespace Jde
 
 		ELogLevel _level{ELogLevel::Trace};
 		mutable std::string _what;
+		sp<Exception> _pInner;//sp to save custom copy constructor
 	private:
 		std::string _format;
-		//uint32 _messageId;
 		vector<string> _args;
 	};
 
 
 	template<class... Args>
-	Exception::Exception( sv value, Args&&... args ):
+	Exception::Exception( sv value, Args&&... args )noexcept:
 		_what{ fmt::format(value,args...) },
 		_format{ value }
 	{
 		_args.reserve( sizeof...(args) );
 		ToVec::Append( _args, args... );
 	}
+
+	template<class... Args>
+	Exception::Exception( Exception&& e, sv value, Args&&... args )noexcept:
+		Exception{ value, args... }
+	{
+		_pInner = make_unique<Exception>( e );
+	}
+
 
 	//Before program runs
 	struct JDE_NATIVE_VISIBILITY LogicException : public Exception

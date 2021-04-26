@@ -69,7 +69,8 @@ namespace Jde::DB
 				if( j.contains("length") )
 				{
 					MaxLength = j.find( "length" )->get<uint>();
-					Type = DataType::VarTChar;
+					if( Type!=DataType::Char )
+						Type = DataType::VarTChar;
 				}
 				if( j.contains("default") )
 					Default = j.find("default")->get<string>();

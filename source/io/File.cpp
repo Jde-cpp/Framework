@@ -17,7 +17,7 @@ namespace Jde::IO
 	{
 		void ForEachItem( path path, std::function<void(const fs::directory_entry&)> function )noexcept(false)//__fs::filesystem::filesystem_error
 		{
-			for( const auto& dirEntry : fs::directory_iterator(path) )
+			for( var& dirEntry : fs::directory_iterator(path) )
      			function( dirEntry );
 		}
 
@@ -631,7 +631,7 @@ namespace Jde::IO
 		{
 			auto tokens = StringUtilities::Split( string(line) );
 			int iToken=0;
-			for( const auto& token : tokens )
+			for( var& token : tokens )
 			{
 				if( (!notColumns && std::find( columnNamesToFetch.begin(), columnNamesToFetch.end(), token)!=columnNamesToFetch.end())
 					|| (notColumns && std::find( columnNamesToFetch.begin(), columnNamesToFetch.end(), token)==columnNamesToFetch.end()) )

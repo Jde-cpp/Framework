@@ -16,11 +16,16 @@ namespace Jde
 		_pInstance = nullptr;
 	}
 
-	bool Cache::InstanceClear( str name )noexcept
+	bool Cache::InstanceClear( sv name )noexcept
 	{
 		unique_lock l{_cacheLock};
-		var erased = _cache.erase( name );
-		TRACE( "Cache::{} erased={}"sv, name, erased );
+		auto p = _cache.find( name );
+		var erased = p!=_cache.end();
+		if( erased )
+		{
+			_cache.erase( p );
+			TRACE( "Cache::{} erased={}"sv, name, erased );
+		}
 		return erased;
 	}
 }

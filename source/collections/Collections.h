@@ -7,11 +7,18 @@
 #define var const auto
 namespace Jde
 {
-	template<typename TKey,typename TValue>
-	TValue Find( const std::map<TKey,TValue>& collection, TKey key )
+	template<typename T>
+	typename T::mapped_type Find( const T& collection, typename T::key_type key )
 	{
 		auto pItem = collection.find( key );
-		return pItem==collection.end() ? TValue{} : pItem->second;
+		return pItem==collection.end() ? typename T::mapped_type{} : pItem->second;
+	}
+
+	template<typename T>
+	typename T::mapped_type Find( const sp<T>& p, typename T::key_type key )
+	{
+		auto pCopy = p;
+		return pCopy ? Find( *pCopy, key ) : typename T::mapped_type{};
 	}
 
 	template <typename T>
@@ -37,6 +44,14 @@ namespace Collections
 {
 	uint32 Crc( const vector<string> values )noexcept;
 	std::vector<uint> Indexes( const std::vector<string>& population, const std::vector<string>& subset )noexcept;
+
+	template<typename Y, typename T>
+	Y Map( const T& map, function<void( const typename T::key_type&, const typename T::mapped_type&, Y&)> f )
+	{
+		Y y;
+		std::for_each( map.begin(), map.end(), [f,&y](var& kv){ f(kv.first,kv.second,y);} );
+		return y;
+	}
 
 	template<typename TKey, typename TValue>
 	flat_map<TValue,TKey> Invert( const flat_map<TKey,TValue>& map )noexcept
