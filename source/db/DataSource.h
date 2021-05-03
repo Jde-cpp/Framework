@@ -35,8 +35,9 @@ namespace Jde::DB
 		void Select( sv sql, std::function<void(const IRow&)> f )noexcept(false);
 		virtual uint Select( sv sql, std::function<void(const IRow&)> f, const vector<DataValue>* pValues, bool log )noexcept(false)=0;
 		bool TrySelect( sv sql, std::function<void(const IRow&)> f )noexcept;
-		template<typename K,typename V>
-		flat_map<K,V> SelectMap( sv sql )noexcept(false);
+		//template<class K,class V> void SelectMap( sv sql, flat_map<K,V>& out )noexcept(false);
+		//template<class K,class V> flat_map<K,V> SelectMap( sv sql )noexcept(false);
+		template<class K,class V> sp<flat_map<K,V>> SelectMap( sv sql )noexcept(false);
 		string Catalog( sv sql )noexcept(false);
 	//protected:
 		string ConnectionString;
@@ -74,12 +75,10 @@ namespace Jde::DB
 		return result;
 	}
 
-	template<typename K,typename V>
-	flat_map<K,V> IDataSource::SelectMap( sv sql )noexcept(false)
+	template<class K,class V> sp<flat_map<K,V>> IDataSource::SelectMap( sv sql )noexcept(false)
 	{
-		flat_map<K,V> results;
-		auto fnctn = [&]( const IRow& row ){ results.emplace(row.Get<K>(0), row.Get<V>(1)); };
-		Select( sql, fnctn );
-		return results;
+		auto y = make_shared<flat_map<K,V>>();
+		Select( sql, [&y]( const IRow& row ){y->emplace(row.Get<K>(0), row.Get<V>(1));} );
+		return y;
 	}
 }

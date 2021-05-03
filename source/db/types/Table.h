@@ -1,9 +1,11 @@
 #pragma once
 #include "../DataType.h"
 #include "../../Exports.h"
+#include "../../StringUtilities.h"
 
 namespace Jde::DB
 {
+	using SchemaName=CIString;
 	struct Syntax;
 	struct Schema;
 	//struct SurrogateKey
@@ -37,13 +39,13 @@ namespace Jde::DB
 	struct  JDE_NATIVE_VISIBILITY Index
 	{
 		//Index( sv indexName, sv tableName, bool primaryKey, bool unique=true, bool clustered=false )noexcept;
-		Index( sv indexName, sv tableName, bool primaryKey, vector<string>* pColumns=nullptr, bool unique=true, optional<bool> clustered=optional<bool>{} )noexcept;//, bool clustered=false
+		Index( sv indexName, sv tableName, bool primaryKey, vector<CIString>* pColumns=nullptr, bool unique=true, optional<bool> clustered=optional<bool>{} )noexcept;//, bool clustered=false
 		Index( sv indexName, sv tableName, const Index& other )noexcept;
 
 		string Create( sv name, sv tableName, const Syntax& syntax )const noexcept;
-		string Name;
-		string TableName;
-		vector<string> Columns;
+		CIString Name;
+		CIString TableName;
+		vector<CIString> Columns;
 		bool Clustered;
 		bool Unique;
 		bool PrimaryKey;
@@ -77,8 +79,8 @@ namespace Jde::DB
 		string Name;
 		vector<Column> Columns;
 		vector<Index> Indexes;
-		vector<string> SurrogateKey;
-		vector<vector<string>> NaturalKeys;
+		vector<SchemaName> SurrogateKey;
+		vector<vector<SchemaName>> NaturalKeys;
 		flat_map<uint,string> FlagsData;
 		vector<nlohmann::json> Data;
 	};

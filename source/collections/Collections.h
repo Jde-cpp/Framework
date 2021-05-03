@@ -21,6 +21,14 @@ namespace Jde
 		return pCopy ? Find( *pCopy, key ) : typename T::mapped_type{};
 	}
 
+#define LAZY( x ) LazyWrap{ [&](){ return x;} }
+	template<class F> struct LazyWrap //https://stackoverflow.com/questions/62577415/lazy-argument-evaluation-for-try-emplace
+	{
+		LazyWrap( F&& f ):_f(f) {}
+		template<class T> operator T() { return _f(); }
+		F _f;
+	};
+
 	template <typename T>
 	struct SPCompare
 	{

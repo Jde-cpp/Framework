@@ -88,8 +88,14 @@ namespace Jde
 		uint find( sv sub, uint pos = 0 )const noexcept;
 		uint find( const CIString& sub, uint pos = 0 )const noexcept{ return find( sv{sub.data(), sub.size()}, pos ); }
 		//inline CIString& operator=( sv s )noexcept{ base::reserve(s.size()+1); memcpy(data(), s.data(), s.size() ); data()[s.size()]='\0'; resize(s.size()); return *this; }
+		template<class T> bool operator==( const T& s )const noexcept{ return size()==s.size() && base::compare( 0, s.size(), s.data(), s.size() )==0; }
+		bool operator==( const char* psz )const noexcept{ return size()==strlen(psz) && base::compare( 0, size(), psz, size() )==0; }
+		/*
+		inline bool operator ==( const CIString& s )const noexcept{ return size()==s.size() && base::compare( 0, s.size(), s.data(), s.size() )==0; }
 		inline bool operator ==( sv s )const noexcept{ return size()==s.size() && base::compare( 0, s.size(), s.data(), s.size() )==0; }
 		inline bool operator ==( const char* psz )const noexcept{ return size()==strlen(psz) && base::compare( 0, size(), psz, size() )==0; }
+		*/
+		friend std::ostream& operator<<( std::ostream &os, const CIString& obj )noexcept{ os << (string)obj; return os; }
 		inline bool operator !=( sv s )const noexcept{ return size() == s.size() && base::compare(0, s.size(), s.data(), s.size())!=0; }
 		inline bool operator !=( str s )const noexcept{ return *this!=sv{s}; }
 		inline CIString& operator+=( sv s )noexcept

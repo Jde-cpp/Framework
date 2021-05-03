@@ -70,7 +70,7 @@ namespace Jde::IO
 			fs::remove( path );
 			THROW( IOException(path, "has 0 bytes. Removed") );
 		}
-		Deserialize( *pBytes, proto );
+		Deserialize2( *pBytes, proto );
 	}
 
 	template<typename T>

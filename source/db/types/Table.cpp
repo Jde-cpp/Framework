@@ -131,7 +131,7 @@ namespace Jde::DB
 			}
 			else if( columnName=="$naturalKey" )
 			{
-				vector<string> columns;
+				vector<SchemaName> columns;
 				for( var& it : value )
 					columns.push_back( DB::Schema::FromJson(it.get<string>()) );
 				var name2 = NaturalKeys.empty() ? "nk" : format( "nk{}", NaturalKeys.size() );
@@ -246,10 +246,10 @@ namespace Jde::DB
 		PrimaryKey{primaryKey}
 	{}
 	*/
-	Index::Index( sv indexName, sv tableName, bool primaryKey, vector<string>* pColumns, bool unique, optional<bool> clustered )noexcept:
+	Index::Index( sv indexName, sv tableName, bool primaryKey, vector<CIString>* pColumns, bool unique, optional<bool> clustered )noexcept:
 		Name{ indexName },
 		TableName{ tableName },
-		Columns{ pColumns ? *pColumns : vector<string>{} },
+		Columns{ pColumns ? *pColumns : vector<CIString>{} },
 		Clustered{ clustered ? *clustered : primaryKey },
 		Unique{ unique },
 		PrimaryKey{ primaryKey }

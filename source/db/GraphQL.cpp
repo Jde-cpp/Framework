@@ -153,7 +153,7 @@ namespace DB
 						var values = _pDataSource->SelectMap<string,uint>( format("select name, id from {}", tableName) );
 						for( var& flag : *pValue )
 						{
-							if( var pFlag = values.find(flag); pFlag != values.end() )
+							if( var pFlag = values->find(flag); pFlag != values->end() )
 								value |= pFlag->second;
 						}
 					}
@@ -668,7 +668,7 @@ namespace DB
 				}
 			}
 		}
-		auto rowToJson = [&]( const DB::IRow& row, uint iColumn, json& obj, sv objectName, sv memberName, const vector<uint>& dates, const flat_map<uint,flat_map<uint,string>>& flagValues )
+		auto rowToJson = [&]( const DB::IRow& row, uint iColumn, json& obj, sv objectName, sv memberName, const vector<uint>& dates, const flat_map<uint,sp<flat_map<uint,string>>>& flagValues )
 		{
 			DB::DataValue value = row[iColumn];
 			var index = (EDataValue)value.index();
@@ -701,7 +701,7 @@ namespace DB
 					{
 						if( (remainingFlags & iFlag)==0 )
 							continue;
-						if( var pValue = pFlagValues->second.find(iFlag); pValue!=pFlagValues->second.end() )
+						if( var pValue = pFlagValues->second->find(iFlag); pValue!=pFlagValues->second->end() )
 							member.push_back( pValue->second );
 						else
 							member.push_back( std::to_string(iFlag) );
@@ -766,7 +766,7 @@ namespace DB
 
 				if( where2.size() )
 					subSql << endl << "where\t" << where2;
-				flat_map<uint,flat_map<uint,string>> subFlagValues;
+				flat_map<uint,sp<flat_map<uint,string>>> subFlagValues;
 				for( var& [index,pTable] : subFlags )
 					subFlagValues[index+2] = _pDataSource->SelectMap<uint,string>( format("select id, name from {}", pTable->Name) );
 				auto& rows = subTables.emplace( pQLTable->JsonName, flat_multimap<uint,json>{} ).first->second;
