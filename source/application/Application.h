@@ -1,6 +1,7 @@
 #pragma once
 #include "../Exports.h"
 #include "../JdeAssert.h"
+#include "../log/Logging.h"
 namespace Jde::Threading{ struct InterruptibleThread; }
 
 namespace Jde
@@ -14,7 +15,7 @@ namespace Jde
 	struct JDE_NATIVE_VISIBILITY IApplication
 	{
 		virtual ~IApplication();
-		static IApplication& Instance()noexcept{ assert(_pInstance); return *_pInstance; }
+		static IApplication& Instance()noexcept{ /*assert(_pInstance);*/ return *_pInstance; }
 		set<string> BaseStartup( int argc, char** argv, sv appName, sv companyName="jde-cpp" )noexcept(false);
 
 		static size_t MemorySize()noexcept;

@@ -48,7 +48,7 @@ namespace Jde
 		std::vector<sv> results;
 		if( estCnt )
 			results.reserve( estCnt );
-		for( uint16 fieldStart=0, iField=0, fieldEnd;fieldStart<s.size();++iField, fieldStart = fieldEnd+1 )
+		for( uint fieldStart=0, iField=0, fieldEnd;fieldStart<s.size();++iField, fieldStart = fieldEnd+1 )
 		{
 			fieldEnd = std::min( s.find_first_of(delim, fieldStart), s.size() );
 			results.push_back( sv{s.data()+fieldStart, fieldEnd-fieldStart} );

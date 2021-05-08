@@ -1,5 +1,7 @@
 baseDir=`pwd`;
 jdeRoot=jde;
+source common.sh
+
 if [[ -z "$REPO_DIR" ]]; then
 	export REPO_DIR=`pwd`;
 fi;
@@ -9,21 +11,24 @@ cd $REPO_DIR
 function findExecutable
 {
 	exe=$1;
-	echo exe=$1;
+	#echo exe=$1;
 	defaultPath=$2;
 	exitFailure=${3:-1};
-	echo defaultPath=$2;
-	echo path_to_exe='$(which $exe 2> /dev/null)';
+	#echo defaultPath=$2;
+	#echo path_to_exe='$(which $exe 2> /dev/null)';
 	path_to_exe=$(which "$exe" 2> /dev/null);
 	if [ ! -x "$path_to_exe" ]; then
-		echo 'PATH=$PATH:$defaultPath;'
-     	PATH=$PATH:$defaultPath;
-		path_to_exe=$(which "$exe" 2> /dev/null);
-		echo $path_to_exe;
-		echo 'if [ ! -x "'$path_to_exe'" ]; then echo no; else echo yes; fi;'
-		if [ ! -x "$path_to_exe" ]; then
-			echo can not find $defaultPath/$exe;
+		if  [[ -x "${defaultPath//\\}/$exe" ]]; then
+			echo found $exe adding to path;
+			#echo 'PATH=$defaultPath:$PATH'
+     		PATH=${defaultPath//\\}:$PATH;
+			#path_to_exe=$(which "$exe" 2> /dev/null);
+			#echo path_to_exe=$path_to_exe;pop
+			#echo 'if [ ! -x "'$path_to_exe'" ]; then echo no; else echo yes; fi;'
+		else 
+			#echo can not find $exe;
 			if [ $exitFailure -eq 1 ]; then
+				echo can not find "${defaultPath//\\}/$exe";
 				exit 1;
 			fi;
 		fi;
@@ -33,8 +38,11 @@ function findExecutable
 if windows; then
 	findExecutable MSBuild.exe '/c/Program\ Files\ \(X86\)/Microsoft\ Visual\ Studio/2019/BuildTools/MSBuild/Current/Bin' 0
 	findExecutable MSBuild.exe '/c/Program\ Files\ \(X86\)/Microsoft\ Visual\ Studio/2019/Enterprise/MSBuild/Current/Bin' 1
+	#findExecutable protoc.exe `pwd`/vcpkg/installed/x64-windows/tools/protobuf 1
+	findExecutable cmake.exe
+	findExecutable cl.exe '/c/Program\ Files\ \(X86\)/Microsoft\ Visual\ Studio/2019/BuildTools/VC/Tools/MSVC/14.28.29910/bin/Hostx64/x64' 0
+	findExecutable cl.exe '/c/Program\ Files\ \(X86\)/Microsoft\ Visual\ Studio/2019/Enterprise/VC/Tools/MSVC/14.28.29910/bin/Hostx64/x64' 1
 fi;
-
 
 function fetch
 {
@@ -44,7 +52,7 @@ function fetch
 	else
 		cd $1; git pull -q;
 	fi;
-	cd source/;
+	if [ -f source ];then cd source; fi;
 }
 
 function buildConfig
@@ -74,51 +82,84 @@ function buildLinux
 		buildConfig release $projectClean
 	fi;
 }
+function buildWindows2
+{
+	#echo `pwd`;
+	#echo $1
+	$1
+	if [ $? -ne 0 ]; then
+		echo `pwd`;
+		echo $1
+		exit 1;
+	fi;
+}
 function buildWindows
 {
 	dir=${1};
-	if [ ! -f "$dir.vcxproj.user" ]; then
+	if [[ ! -f "$dir.vcxproj.user" && -f "$dir.vcxproj._user" ]]; then
 		echo cp $dir.vcxproj._user $dir.vcxproj.user
 		cp $dir.vcxproj._user $dir.vcxproj.user
 	fi;
 	if [ $clean -eq 1 ]; then
 		rm -r -f .bin;
 	fi;
-	if [ $dir != "Framework" ]; then
+	if [[ $dir != "Framework" && -f ../../Framework/source/.bin/debug/Jde.lib ]]; then
 		mkdir .bin/debug -p
 		mkdir .bin/release -p
 		cp ../../Framework/source/.bin/debug/Jde.lib .bin/debug
 		cp ../../Framework/source/.bin/release/Jde.lib .bin/release
 	fi;
-	msbuild.exe $dir.vcxproj -p:Configuration=Release -p:Platform=x64 -maxCpuCount -nologo -v:q
-	if [ $? -ne 0 ]; then
-		echo `pwd`;
-		echo msbuild.exe $dir.vcxproj -p:Configuration=Release -p:Platform=x64 -maxCpuCount -nologo -v:q
-		exit 1;
+	cmd="msbuild.exe $dir.vcxproj -p:Platform=x64 -maxCpuCount -nologo -v:q  /clp:ErrorsOnly -p:Configuration"
+	buildWindows2 "$cmd=Release";
+	buildWindows2 "$cmd=Debug";
+	# msbuild.exe $dir.vcxproj -p:Configuration=Debug -p:Platform=x64 -maxCpuCount -nologo -v:q
+	# if [ $? -ne 0 ]; then
+	# 	echo `pwd`;
+	# 	echo msbuild.exe $dir.vcxproj -p:Configuration=Debug -p:Platform=x64 -maxCpuCount -nologo -v:q
+	# 	exit 1;
+	# fi;
+	echo build $dir complete.
+}
+
+function createProto
+{
+    dir=$1;
+    file=$2;
+    export=$3;
+	cleanProtoc=$clean;
+    pushd `pwd` > /dev/null;
+	cd $dir;
+	if [ ! -f file.pb.cc ]; then
+		cleanProtoc=1;
 	fi;
-	msbuild.exe $dir.vcxproj -p:Configuration=Debug -p:Platform=x64 -maxCpuCount -nologo -v:q
-	if [ $? -ne 0 ]; then
-		echo `pwd`;
-		echo msbuild.exe $dir.vcxproj -p:Configuration=Debug -p:Platform=x64 -maxCpuCount -nologo -v:q
-		exit 1;
+	if [ $cleanProtoc -eq 1 ]; then
+		protoc --cpp_out . $file.proto;
+		if [ $? -ne 0 ]; then exit 1; fi;
 	fi;
+	popd > /dev/null;
+}
+
+function fetchDefault
+{
+	cd $baseDir/$jdeRoot;
+	fetch $1
 }
 function build
 {
-	echo 'start build'
-	dir=$1;
-	localSH=$2;
-	proto=$3;
-	echo build $dir $localSH
-	cd $baseDir/$jdeRoot;
-	echo `pwd`
-	fetch $dir
-	if [[ ! -z "$proto" ]]; then
-	   `$proto`;
-   	fi;
-	if windows; then
-		buildWindows $dir
-	else
-		buildLinux $localSH
+	if windows; then 
+		buildWindows $1 
+	else 
+		buildLinux $2 
 	fi;
+}
+function fetchBuild
+{
+	proto=$3;
+	fetchDefault $1 $2;
+	if [[ ! -z "$proto" ]]; then
+		echo calling \"$proto\";
+	   (`$proto`);
+	   echo finished \"$proto\";
+   	fi;
+	build
 }

@@ -3,6 +3,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include "Exports.h"
 
 using std::string;
 

@@ -2,6 +2,7 @@
 #include "DateTime.h"
 #include "JdeAssert.h"
 #include "Exports.h"
+#include "Exception.h"
 
 #pragma warning(push)
 #pragma warning( disable : 4715)
@@ -51,9 +52,7 @@ namespace Jde::Settings
 	template<typename T>
 	T Container::Get( sv path )const noexcept(false)
 	{
-		auto item = _pJson->find( path );
-		if( item==_pJson->end() )
-			THROW( EnvironmentException(fmt::format("'{}' was not found in settings.", path)) );
+		auto item = _pJson->find( path ); THROW_IFX( item == _pJson->end(), EnvironmentException("'{}' was not found in settings.", path) );
 		return item->get<T>();
 	}
 
@@ -77,9 +76,7 @@ namespace Jde::Settings
 	template<typename T>
 	vector<T> Container::Array( sv path )noexcept(false)
 	{
-		auto item = _pJson->find( path );
-		if( item==_pJson->end() )
-			THROW( EnvironmentException(fmt::format("'{}' was not found in settings.", path)) );
+		auto item = _pJson->find( path ); THROW_IFX( item == _pJson->end(), EnvironmentException("'{}' was not found in settings.", path) );
 		vector<T> values;
 		for( auto& element : *item )
 			values.push_back( element.get<T>() );

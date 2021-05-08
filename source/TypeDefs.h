@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #ifndef JDE_TYPEDEFS
 #define JDE_TYPEDEFS
 
@@ -165,4 +165,6 @@ namespace Jde
 	using std::experimental::suspend_never;
 #endif
 }
+#define 🕀 auto
+#define 📎 inline auto
 #endif // !JDE_TYPEDEFS

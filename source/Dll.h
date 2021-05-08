@@ -2,9 +2,7 @@
 #include "./JdeAssert.h"
 
 #ifndef _MSC_VER
-#ifndef __INTELLISENSE__
 	#include <dlfcn.h>
-#endif
 	namespace Jde
 	{
 		typedef void* HMODULE;
@@ -61,18 +59,16 @@ namespace Jde
 		}
 
 
-		ProcPtr operator[](sv proc_name) const
+		ProcPtr operator[](sv proc_name) const noexcept(false)
 		{
 #if _MSC_VER
 			auto procAddress = ::GetProcAddress( _module, string(proc_name).c_str() );
 #else
-			//auto procAddress2 = ::dlsym( _module, "MBlocklyVersion" );
 			auto procAddress = ::dlsym( _module, string(proc_name).c_str() );
 #endif
-			ASSRT_NN( procAddress );
+			CHECK( procAddress );
 			return ProcPtr( procAddress );
 		}
-		//static HMODULE _parent_module;
 	private:
 		fs::path _path;
 		HMODULE _module;

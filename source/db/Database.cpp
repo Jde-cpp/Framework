@@ -67,7 +67,7 @@ namespace Jde
 	sp<DB::Syntax> _pSyntax;
 	sp<DB::IDataSource> _pDefault;
 	up<vector<function<void()>>> _pDBShutdowns = make_unique<vector<function<void()>>>();
-	void ShutdownClean( function<void()>& shutdown )noexcept
+	void DB::ShutdownClean( function<void()>& shutdown )noexcept
 	{
 		_pDBShutdowns->push_back( shutdown );
 	}

@@ -3,6 +3,7 @@
 #include "Row.h"
 #include "Database.h"
 #include "DataSource.h"
+#include "../Exception.h"
 #include "Syntax.h"
 #include "../DateTime.h"
 #include "../StringUtilities.h"

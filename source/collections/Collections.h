@@ -3,6 +3,7 @@
 #include <forward_list>
 #include <sstream>
 #include "../io/Crc.h"
+#include "../log/Logging.h"
 
 #define var const auto
 namespace Jde

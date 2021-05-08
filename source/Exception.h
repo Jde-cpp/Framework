@@ -4,11 +4,11 @@
 
 #include "./Exports.h"
 
-#ifndef NO_FORMAT
-#include <spdlog/spdlog.h>
-#include <spdlog/sinks/basic_file_sink.h>
-#include <spdlog/fmt/ostr.h>
-#endif
+//#ifndef NO_FORMAT
+//#include <spdlog/spdlog.h>
+//#include <spdlog/sinks/basic_file_sink.h>
+//#include <spdlog/fmt/ostr.h>
+//#endif
 
 #include "collections/ToVec.h"
 
@@ -18,32 +18,32 @@ namespace boost::system{ class error_code; }
 #ifndef  THROW
 # define THROW(x) Jde::throw_exception(x, __func__,__FILE__,__LINE__)
 #endif
-#ifndef  THROW_IFX
-# define THROW_IFX(condition, x) if( condition ) THROW(x)
-#endif
-#ifndef  THROW_IF
-# define THROW_IF(condition, x, ...) if( condition ) Jde::throw_exception( Jde::Exception(x __VA_OPT__(,) __VA_ARGS__), __func__, __FILE__, __LINE__ )
-#endif
-#ifndef  CHECK
-# define CHECK(condition) THROW_IF( !condition, #condition )
-#endif
-
 //mysql undefs THROW :(
 #ifndef  THROW2
 # define THROW2(x) Jde::throw_exception(x, __func__,__FILE__,__LINE__)
 #endif
 
-#ifndef CATCH_STD
-# define CATCH_STD(pszAdditional) catch (const std::exception& e){Jde::catch_exception(__func__,__FILE__,__LINE__,pszAdditional, &e); }
+#ifndef  THROW_IF
+# define THROW_IF(condition, x, ...) if( condition ) Jde::throw_exception( Jde::Exception(x __VA_OPT__(,) __VA_ARGS__), __func__, __FILE__, __LINE__ )
+#endif
+#ifndef  THROW_IFX
+# define THROW_IFX(condition, x) if( condition ) THROW(x)
+#endif
+#ifndef  CHECK
+# define CHECK(condition) THROW_IF( !condition, #condition )
 #endif
 
-#ifndef CATCH_ALL
-# define CATCH_ALL(pszAdditional) catch (...){Jde::catch_exception(__func__,__FILE__,__LINE__,pszAdditional); }
-#endif
-
-#ifndef CATCH_DEFAULT
-# define CATCH_DEFAULT(pszAdditional) catch (const Exception&){} CATCH_STD(pszAdditional) CATCH_ALL(pszAdditional)
-#endif
+//#ifndef CATCH_STD
+//# define CATCH_STD(pszAdditional) catch (const std::exception& e){Jde::catch_exception(__func__,__FILE__,__LINE__,pszAdditional, &e); }
+//#endif
+//
+//#ifndef CATCH_ALL
+//# define CATCH_ALL(pszAdditional) catch (...){Jde::catch_exception(__func__,__FILE__,__LINE__,pszAdditional); }
+//#endif
+//
+//#ifndef CATCH_DEFAULT
+//# define CATCH_DEFAULT(pszAdditional) catch (const Exception&){} CATCH_STD(pszAdditional) CATCH_ALL(pszAdditional)
+//#endif
 
 namespace Jde
 {

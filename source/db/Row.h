@@ -57,7 +57,7 @@ namespace Jde::DB
 	template<> inline string IRow::Get<string>( uint position )const{ return GetString(position); }
 	template<> inline uint IRow::Get<uint>( uint position )const{ return GetUInt(position); }
 	template<> inline unsigned int IRow::Get<unsigned int>( uint position )const{ return (unsigned int)GetUInt(position); }
-	template<> inline optional<uint32> IRow::Get<optional<uint32>>( uint position )const{ const auto p = GetUIntOpt(position); return p ? optional<uint32>{*p} : optional<uint32>{}; }
+	template<> inline optional<uint32> IRow::Get<optional<uint32>>( uint position )const{ const auto p = GetUIntOpt(position); return p ? optional<uint32>{static_cast<uint32>(*p)} : optional<uint32>{}; }
 	template<> inline uint8 IRow::Get<uint8>( uint position )const{ return (uint8)GetUInt16(position); }
 	template<> inline CIString IRow::Get<CIString>( uint position )const{ return GetCIString(position); }
 
