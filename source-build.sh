@@ -1,12 +1,17 @@
 baseDir=`pwd`;
 jdeRoot=jde;
-source common.sh
+#echo sourceBuild says commonBuild=\'$commonBuild\';
+if [[ -z $commonBuild ]]; then source common.sh; fi;
+#echo sourceBuild says commonBuild=\'$commonBuild\';
+
+t=$(readlink -f "${BASH_SOURCE[0]}"); sourceBuild=$(basename "$t"); unset t;
+#echo running $sourceBuild
 
 if [[ -z "$REPO_DIR" ]]; then
 	export REPO_DIR=`pwd`;
 fi;
 cd $REPO_DIR
-#echo REPO_DIR=$REPO_DIR
+
 
 function findExecutable
 {
@@ -19,7 +24,7 @@ function findExecutable
 	path_to_exe=$(which "$exe" 2> /dev/null);
 	if [ ! -x "$path_to_exe" ]; then
 		if  [[ -x "${defaultPath//\\}/$exe" ]]; then
-			echo found $exe adding to path;
+			#echo found $exe adding to path;
 			#echo 'PATH=$defaultPath:$PATH'
      		PATH=${defaultPath//\\}:$PATH;
 			#path_to_exe=$(which "$exe" 2> /dev/null);
@@ -38,10 +43,11 @@ function findExecutable
 if windows; then
 	findExecutable MSBuild.exe '/c/Program\ Files\ \(X86\)/Microsoft\ Visual\ Studio/2019/BuildTools/MSBuild/Current/Bin' 0
 	findExecutable MSBuild.exe '/c/Program\ Files\ \(X86\)/Microsoft\ Visual\ Studio/2019/Enterprise/MSBuild/Current/Bin' 1
-	#findExecutable protoc.exe `pwd`/vcpkg/installed/x64-windows/tools/protobuf 1
 	findExecutable cmake.exe
-	findExecutable cl.exe '/c/Program\ Files\ \(X86\)/Microsoft\ Visual\ Studio/2019/BuildTools/VC/Tools/MSVC/14.28.29910/bin/Hostx64/x64' 0
-	findExecutable cl.exe '/c/Program\ Files\ \(X86\)/Microsoft\ Visual\ Studio/2019/Enterprise/VC/Tools/MSVC/14.28.29910/bin/Hostx64/x64' 1
+	#findExecutable cl.exe '/c/Program\ Files\ \(X86\)/Microsoft\ Visual\ Studio/2019/BuildTools/VC/Tools/MSVC/14.28.29910/bin/Hostx64/x64' 0
+	#findExecutable cl.exe '/c/Program\ Files\ \(X86\)/Microsoft\ Visual\ Studio/2019/Enterprise/VC/Tools/MSVC/14.28.29910/bin/Hostx64/x64' 1
+	toBashDir $REPO_DIR REPO_BASH
+	#findExecutable protoc.exe $REPO_BASH/jde/Public/stage/Release;
 fi;
 
 function fetch
@@ -50,9 +56,10 @@ function fetch
 		echo calling git clone $1
 		git clone https://github.com/Jde-cpp/$1.git -q; cd $1;
 	else
-		cd $1; git pull -q;
+		cd $1; 
+		if  [[ $shouldFetch -eq 1 ]]; then git pull -q; fi;
 	fi;
-	if [ -f source ];then cd source; fi;
+	if [ -d source ];then cd source; fi;
 }
 
 function buildConfig
@@ -84,40 +91,55 @@ function buildLinux
 }
 function buildWindows2
 {
-	#echo `pwd`;
-	#echo $1
-	$1
-	if [ $? -ne 0 ]; then
-		echo `pwd`;
-		echo $1
-		exit 1;
+	#echo buildWindows2 $1 $2 $3;
+	#echo $3 - starting;
+	configuration=$3;
+	cmd="$1=$configuration";
+	outFile=$2;
+	out=.bin/$configuration/$file;
+	targetDir=$baseDir/$jdeRoot/Public/stage/$configuration;
+	target=$targetDir/$file;
+	if [ ! -f $target ]; then
+		$cmd
+		if [ $? -ne 0 ]; then
+			echo `pwd`;
+			echo $cmd;
+			exit 1;
+		fi;
+		if [ -f $target ]; then echo $cmd outputing stage dir.; rm $taget; fi;
+		sourceDir=`pwd`;
+		subDir=$(if [ -d .bin ]; then echo "/.bin"; else echo ""; fi);
+		cd $targetDir;
+		#mklink $outFile $sourceDir/.bin/$configuration;
+		#echo cp "$sourceDir$subDir/$configuration/$outFile" .;
+		
+		cp "$sourceDir$subDir/$configuration/$outFile" .;
+		if [[ $outFile == *.dll ]]; then
+			#mklink ${outFile:0:-3}lib $sourceDir/.bin/$configuration;
+			cp "$sourceDir/.bin/$configuration/${outFile:0:-3}lib" .;
+		fi;
+		#echo cd "$sourceDir";
+		cd "$sourceDir";
 	fi;
+	#echo $3 - done;
 }
 function buildWindows
 {
-	dir=${1};
+	dir=$1;
 	if [[ ! -f "$dir.vcxproj.user" && -f "$dir.vcxproj._user" ]]; then
 		echo cp $dir.vcxproj._user $dir.vcxproj.user
 		cp $dir.vcxproj._user $dir.vcxproj.user
 	fi;
-	if [ $clean -eq 1 ]; then
+	if [ ${clean:-1} -eq 1 ]; then
 		rm -r -f .bin;
 	fi;
-	if [[ $dir != "Framework" && -f ../../Framework/source/.bin/debug/Jde.lib ]]; then
-		mkdir .bin/debug -p
-		mkdir .bin/release -p
-		cp ../../Framework/source/.bin/debug/Jde.lib .bin/debug
-		cp ../../Framework/source/.bin/release/Jde.lib .bin/release
-	fi;
-	cmd="msbuild.exe $dir.vcxproj -p:Platform=x64 -maxCpuCount -nologo -v:q  /clp:ErrorsOnly -p:Configuration"
-	buildWindows2 "$cmd=Release";
-	buildWindows2 "$cmd=Debug";
-	# msbuild.exe $dir.vcxproj -p:Configuration=Debug -p:Platform=x64 -maxCpuCount -nologo -v:q
-	# if [ $? -ne 0 ]; then
-	# 	echo `pwd`;
-	# 	echo msbuild.exe $dir.vcxproj -p:Configuration=Debug -p:Platform=x64 -maxCpuCount -nologo -v:q
-	# 	exit 1;
-	# fi;
+	file=$2;
+	if [[ -z $file ]]; then [[ $dir = "Framework" ]] && file="Jde.dll" || file="Jde.$dir.dll"; fi;
+	#echo buildWindows $dir `pwd`;
+	baseCmd="msbuild.exe $dir.vcxproj -p:Platform=x64 -maxCpuCount -nologo -v:q /clp:ErrorsOnly -p:Configuration"
+	#echo buildWindows $cmd 
+	buildWindows2 "$baseCmd" $file release;
+	buildWindows2 "$baseCmd" $file debug;
 	echo build $dir complete.
 }
 
@@ -147,19 +169,19 @@ function fetchDefault
 function build
 {
 	if windows; then 
-		buildWindows $1 
+		buildWindows $1 $3
 	else 
 		buildLinux $2 
 	fi;
 }
 function fetchBuild
 {
-	proto=$3;
-	fetchDefault $1 $2;
-	if [[ ! -z "$proto" ]]; then
-		echo calling \"$proto\";
-	   (`$proto`);
-	   echo finished \"$proto\";
-   	fi;
-	build
+#	proto=$3;
+	fetchDefault $1;
+	# if [[ ! -z "$proto" ]]; then
+	# 	echo calling \"$proto\";
+	#    (`$proto`);
+	#    echo finished \"$proto\";
+   	# fi;
+	build $1 $2;
 }

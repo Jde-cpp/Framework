@@ -1,7 +1,7 @@
 #pragma once
 #include "../DataType.h"
-#include "../../Exports.h"
-#include "../../StringUtilities.h"
+#include <jde/Exports.h>
+#include <jde/Str.h>
 
 namespace Jde::DB
 {

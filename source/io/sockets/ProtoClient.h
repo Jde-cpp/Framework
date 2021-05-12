@@ -1,14 +1,12 @@
 #pragma once
 #include "Socket.h"
 #include "../../collections/Queue.h"
-#include "../../log/Logging.h"
-#include "../../Exception.h"
+#include <jde/Log.h>
+#include <jde/Exception.h>
 
-#pragma warning(disable:4127)
-#pragma warning(disable:4244)
+DISABLE_WARNINGS
 #include <google/protobuf/message_lite.h>
-#pragma warning(default:4244)
-#pragma warning(default:4127)
+ENABLE_WARNINGS
 
 namespace Jde::IO::Sockets
 {

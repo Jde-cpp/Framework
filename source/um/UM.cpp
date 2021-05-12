@@ -1,14 +1,12 @@
 #include "UM.h"
 #include <boost/container/flat_set.hpp>
 #include "../Settings.h"
-#include "../StringUtilities.h"
-#include "../TypeDefs.h"
-#include "../application/Application.h"
+#include <jde/Str.h>
 #include "../db/DataSource.h"
 #include "../db/Database.h"
 #include "../db/GraphQL.h"
 #include "../db/Syntax.h"
-#include "../io/File.h"
+#include <jde/io/File.h>
 
 #define var const auto
 namespace Jde

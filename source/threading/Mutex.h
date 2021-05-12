@@ -2,7 +2,7 @@
 #include <string_view>
 #include <shared_mutex>
 #include "Thread.h"
-#include "../log/Logging.h"
+#include <jde/Log.h>
 
 namespace Jde{ enum class ELogLevel : uint8; }
 namespace Jde::Threading

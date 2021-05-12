@@ -1,6 +1,6 @@
 #include "DataType.h"
 #include "../DateTime.h"
-#include "../StringUtilities.h"
+#include <jde/Str.h>
 #include "Syntax.h"
 
 #define var const auto

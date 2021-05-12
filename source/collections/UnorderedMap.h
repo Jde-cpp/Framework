@@ -4,7 +4,7 @@
 #include <forward_list>
 #include <shared_mutex>
 #include <functional>
-#include "../TypeDefs.h"
+#include <jde/TypeDefs.h>
 //#include "../SmartPointer.h"
 
 namespace Jde

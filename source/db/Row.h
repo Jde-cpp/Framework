@@ -1,6 +1,6 @@
 #pragma once
 #include "DataType.h"
-#include "../StringUtilities.h"
+#include <jde/Str.h>
 #include "../math/Decimal.h"
 
 namespace Jde::DB

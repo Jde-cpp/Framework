@@ -2,8 +2,8 @@
 #include "DataType.h"
 #include <atomic>
 #include "../collections/Queue.h"
-#include "../Exports.h"
-#include "../application/Application.h"
+#include <jde/Exports.h>
+#include <jde/App.h>
 
 namespace Jde::Threading{struct InterruptibleThread;}
 namespace Jde::DB

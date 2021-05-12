@@ -1,9 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="StringUtilities.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="Stopwatch.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -24,9 +21,6 @@
     </ClCompile>
     <ClCompile Include="threading\Interrupt.cpp">
       <Filter>Source\threading</Filter>
-    </ClCompile>
-    <ClCompile Include="log\Logging.cpp">
-      <Filter>Source\log</Filter>
     </ClCompile>
     <ClCompile Include="log\server\ServerSink.cpp">
       <Filter>Source\log\server</Filter>
@@ -72,9 +66,6 @@
     </ClCompile>
     <ClCompile Include="db\types\Table.cpp">
       <Filter>Source\db\types</Filter>
-    </ClCompile>
-    <ClCompile Include="application\Application.cpp">
-      <Filter>Source\application</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Windows\source\WindowsApp.cpp">
       <Filter>Source\application</Filter>
@@ -122,17 +113,20 @@
       <Filter>Source\db</Filter>
     </ClCompile>
     <ClCompile Include="db\DataSource.cpp">
-      <Filter>Headers\db</Filter>
+      <Filter>Source\db</Filter>
+    </ClCompile>
+    <ClCompile Include="Str.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="App.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Log.cpp">
+      <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="StringUtilities.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
     <ClInclude Include="Stopwatch.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="Exception.h">
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="io\Buffer.h">
@@ -149,9 +143,6 @@
     </ClInclude>
     <ClInclude Include="io\sockets\Socket.h">
       <Filter>Headers\io\sockets</Filter>
-    </ClInclude>
-    <ClInclude Include="TypeDefs.h">
-      <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="log\Logging.h">
       <Filter>Headers\log</Filter>
@@ -192,9 +183,6 @@
     <ClInclude Include="collections\UnorderedSet.h">
       <Filter>Headers\collections</Filter>
     </ClInclude>
-    <ClInclude Include="Collections.h">
-      <Filter>Headers\collections</Filter>
-    </ClInclude>
     <ClInclude Include="Defines.h">
       <Filter>Headers</Filter>
     </ClInclude>
@@ -219,12 +207,6 @@
     <ClInclude Include="log\server\ServerSink.h">
       <Filter>Headers\log\server</Filter>
     </ClInclude>
-    <ClInclude Include="Exports.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="JdeAssert.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
     <ClInclude Include="collections\UnorderedMapValue.h">
       <Filter>Headers\collections</Filter>
     </ClInclude>
@@ -233,9 +215,6 @@
     </ClInclude>
     <ClInclude Include="io\Tar.h">
       <Filter>Headers\io</Filter>
-    </ClInclude>
-    <ClInclude Include="Dll.h">
-      <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="log\server\EtwSink.h">
       <Filter>Headers\log\server</Filter>
@@ -288,9 +267,6 @@
     <ClInclude Include="db\types\Table.h">
       <Filter>Headers\db\types</Filter>
     </ClInclude>
-    <ClInclude Include="application\Application.h">
-      <Filter>Headers\application</Filter>
-    </ClInclude>
     <ClInclude Include="Settings.h">
       <Filter>Headers</Filter>
     </ClInclude>
@@ -314,6 +290,39 @@
     </ClInclude>
     <ClInclude Include="um\UM.h">
       <Filter>Headers\um</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Public\jde\Application.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Public\jde\Dll.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Public\jde\Exception.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Public\jde\Exports.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Public\jde\JdeAssert.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Public\jde\Str.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Public\jde\TypeDefs.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Public\jde\collections\ToVec.h">
+      <Filter>Headers\collections</Filter>
+    </ClInclude>
+    <ClInclude Include="collections\Collections.h">
+      <Filter>Headers\collections</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Public\jde\Log.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Cache.h">
+      <Filter>Headers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -392,9 +401,6 @@
     </Filter>
     <Filter Include="Source\db\types">
       <UniqueIdentifier>{95ad6653-3ffe-45d2-a48a-db0d945d0370}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Headers\application">
-      <UniqueIdentifier>{11c6cd86-c9e8-4f70-9018-7010023fbc94}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source\application">
       <UniqueIdentifier>{118c135c-7ad9-4c23-bc92-a43e8da3cb94}</UniqueIdentifier>

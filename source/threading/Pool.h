@@ -5,7 +5,7 @@
 #include <shared_mutex>
 #include "Thread.h"
 #include "../collections/Queue.h"
-#include "../application/Application.h"
+#include <jde/App.h>
 #include "InterruptibleThread.h"
 
 namespace Jde::Threading

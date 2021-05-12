@@ -66,7 +66,7 @@
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>false</SDLCheck>
-      <PreprocessorDefinitions>Jde_EXPORTS;PROTOBUF_USE_DLLS;BOOST_ALL_DYN_LINK;_SCL_SECURE_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;_SILENCE_CXX17_ALLOCATOR_VOID_DEPRECATION_WARNING;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;NOMINMAX;_WINDOWS;_USRDLL;_WIN32_WINNT=0x0A00;PROTOBUF_USE_EXCEPTIONS=0;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>Jde_EXPORTS;BOOST_ALL_DYN_LINK;_SCL_SECURE_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;_SILENCE_CXX17_ALLOCATOR_VOID_DEPRECATION_WARNING;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;NOMINMAX;_WINDOWS;_USRDLL;_WIN32_WINNT=0x0A00;ONE_CORE;PROTOBUF_USE_DLLS;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <DisableSpecificWarnings>4068;4251;4275;4297;4706;5104;5105;4996;4025</DisableSpecificWarnings>
@@ -77,14 +77,19 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <StringPooling>true</StringPooling>
+      <AdditionalIncludeDirectories>../../Public</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(OutDir);../../Public/stage/$(ConfigurationName);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ShowProgress>NotSet</ShowProgress>
-      <AdditionalDependencies>Ws2_32.lib;Onecore.lib;libprotobufd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Ws2_32.lib;libprotobufd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>
+      </Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -94,7 +99,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>false</SDLCheck>
-      <PreprocessorDefinitions>Jde_EXPORTS;PROTOBUF_USE_DLLS;BOOST_ALL_DYN_LINK;_SCL_SECURE_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;_SILENCE_CXX17_ALLOCATOR_VOID_DEPRECATION_WARNING;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;NOMINMAX;_WINDOWS;_USRDLL;_WIN32_WINNT=0x0A00;PROTOBUF_USE_EXCEPTIONS=0;PROTOBUF_USE_DLLS;NDEBUG;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>Jde_EXPORTS;BOOST_ALL_DYN_LINK;_SCL_SECURE_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;_SILENCE_CXX17_ALLOCATOR_VOID_DEPRECATION_WARNING;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;NOMINMAX;_WINDOWS;_USRDLL;_WIN32_WINNT=0x0A00;ONE_CORE;PROTOBUF_USE_DLLS;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <DisableSpecificWarnings>4068;4251;4275;4297;4706;5104;5105;4996;4025</DisableSpecificWarnings>
@@ -104,26 +109,44 @@
       <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <StringPooling>true</StringPooling>
+      <AdditionalIncludeDirectories>../../Public</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(OutDir);../../Public/stage/$(ConfigurationName);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ShowProgress>NotSet</ShowProgress>
-      <AdditionalDependencies>Ws2_32.lib;Onecore.lib;libprotobuf.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Ws2_32.lib;libprotobuf.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>
+      </Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="App.cpp" />
     <ClCompile Include="coroutine\Task.cpp" />
     <ClCompile Include="db\DataSource.cpp" />
     <ClCompile Include="db\GraphQL.cpp" />
     <ClCompile Include="db\SchemaProc.cpp" />
+    <ClCompile Include="Log.cpp" />
+    <ClCompile Include="Str.cpp" />
     <ClCompile Include="threading\Mutex.cpp" />
     <ClCompile Include="threading\Worker.cpp" />
     <ClCompile Include="um\UM.cpp" />
-    <ClInclude Include="application\Application.h" />
+    <ClInclude Include="..\..\Public\jde\Application.h" />
+    <ClInclude Include="..\..\Public\jde\collections\ToVec.h" />
+    <ClInclude Include="..\..\Public\jde\Dll.h" />
+    <ClInclude Include="..\..\Public\jde\Exception.h" />
+    <ClInclude Include="..\..\Public\jde\Exports.h" />
+    <ClInclude Include="..\..\Public\jde\JdeAssert.h" />
+    <ClInclude Include="..\..\Public\jde\Log.h" />
+    <ClInclude Include="..\..\Public\jde\Str.h" />
+    <ClInclude Include="..\..\Public\jde\TypeDefs.h" />
+    <ClInclude Include="Cache.h" />
+    <ClInclude Include="collections\Collections.h" />
     <ClInclude Include="collections\UnorderedMapValue.h" />
     <ClInclude Include="coroutine\Alarm.h" />
     <ClInclude Include="coroutine\Awaitable.h" />
@@ -141,23 +164,18 @@
     <ClInclude Include="db\SchemaProc.h" />
     <ClInclude Include="db\types\Schema.h" />
     <ClInclude Include="db\types\Table.h" />
-    <ClInclude Include="Dll.h" />
     <ClInclude Include="io\DiskWatcher.h" />
     <ClInclude Include="io\sockets\Client.h" />
     <ClInclude Include="io\sockets\ProtoClient.h" />
     <ClInclude Include="io\sockets\ProtoServer.h" />
     <ClInclude Include="io\sockets\Server.h" />
     <ClInclude Include="io\Tar.h" />
-    <ClInclude Include="JdeAssert.h" />
-    <ClInclude Include="Collections.h" />
     <ClInclude Include="collections\Map.h" />
     <ClInclude Include="collections\Queue.h" />
     <ClInclude Include="collections\UnorderedMap.h" />
     <ClInclude Include="collections\UnorderedSet.h" />
     <ClInclude Include="DateTime.h" />
     <ClInclude Include="Defines.h" />
-    <ClInclude Include="Exception.h" />
-    <ClInclude Include="Exports.h" />
     <ClInclude Include="io\Buffer.h" />
     <ClInclude Include="io\File.h" />
     <ClInclude Include="io\Parser.h" />
@@ -181,12 +199,6 @@
     <ClCompile Include="..\..\Windows\source\WindowsThread.cpp" />
     <ClCompile Include="..\..\Windows\source\WindowsTimezone.cpp" />
     <ClCompile Include="..\..\Windows\source\WindowsUtilities.cpp" />
-    <ClCompile Include="application\Application.cpp">
-      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'"> %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|x64'"> %(AdditionalOptions)</AdditionalOptions>
-      <ForcedIncludeFiles Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">stdafx.h</ForcedIncludeFiles>
-      <ForcedIncludeFiles Condition="'$(Configuration)|$(Platform)'=='Release|x64'">stdafx.h</ForcedIncludeFiles>
-    </ClCompile>
     <ClCompile Include="Cache.cpp" />
     <ClCompile Include="coroutine\Alarm.cpp" />
     <ClCompile Include="coroutine\Coroutine.cpp" />
@@ -205,8 +217,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
       <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4068;4251;4275;4297;4244;4268;4267;4125;4127;4100;4996;5054</DisableSpecificWarnings>
       <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4068;4251;4275;4297;4244;4268;4267;4125;4127;4100;4996;5054</DisableSpecificWarnings>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">/D JDE_NATIVE_VISIBILITY="__declspec( dllexport )" %(AdditionalOptions)</AdditionalOptions>
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">/D JDE_NATIVE_VISIBILITY="__declspec( dllexport )" %(AdditionalOptions)</AdditionalOptions>
       <ForcedIncludeFiles Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -229,13 +239,11 @@
     <ClInclude Include="Settings.h" />
     <ClInclude Include="SmartPointer.h" />
     <ClInclude Include="Stopwatch.h" />
-    <ClInclude Include="StringUtilities.h" />
     <ClInclude Include="threading\InterruptibleThread.h" />
     <ClInclude Include="threading\Interrupt.h" />
     <ClInclude Include="threading\Pool.h" />
     <ClInclude Include="threading\ReusableThread.h" />
     <ClInclude Include="threading\Thread.h" />
-    <ClInclude Include="TypeDefs.h" />
     <ClInclude Include="um\UM.h" />
   </ItemGroup>
   <ItemGroup>
@@ -244,12 +252,10 @@
       <ForcedIncludeFiles Condition="'$(Configuration)|$(Platform)'=='Release|x64'">stdafx.h</ForcedIncludeFiles>
     </ClCompile>
     <ClCompile Include="io\File.cpp" />
-    <ClCompile Include="log\Logging.cpp" />
     <ClCompile Include="log\server\ServerSink.cpp" />
     <ClCompile Include="math\MathUtilities.cpp" />
     <ClCompile Include="Settings.cpp" />
     <ClCompile Include="Stopwatch.cpp" />
-    <ClCompile Include="StringUtilities.cpp" />
     <ClCompile Include="threading\InterruptibleThread.cpp" />
     <ClCompile Include="threading\Interrupt.cpp" />
     <ClCompile Include="threading\Pool.cpp" />

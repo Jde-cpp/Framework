@@ -1,12 +1,12 @@
-#include "Exception.h"
+#include <jde/Exception.h>
 #include <iostream>
 #include <spdlog/spdlog.h>
 #include <spdlog/fmt/ostr.h>
 #include <boost/system/error_code.hpp>
 
-#include "log/Logging.h"
+#include <jde/Log.h>
 #include "log/server/ServerSink.h"
-#include "TypeDefs.h"
+#include <jde/TypeDefs.h>
 #define var const auto
 
 namespace Jde

@@ -1,11 +1,10 @@
 #pragma once
 #include <variant>
-#pragma warning(push)
-#pragma warning( disable : 4715)
+DISABLE_WARNINGS
 #include <nlohmann/json.hpp>
-#pragma warning(pop)
+ENABLE_WARNINGS
 #include "../math/Decimal.h"
-#include <nlohmann/json.hpp>
+
 
 namespace Jde::DB
 {

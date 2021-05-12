@@ -2,7 +2,7 @@
 #include "../threading/Worker.h"
 #include "Coroutine.h"
 #include "Awaitable.h"
-#include "Task.h"
+#include <jde/coroutine/Task.h>
 #include <boost/container/flat_map.hpp>
 
 namespace Jde::Threading

@@ -1,5 +1,5 @@
 #pragma once
-#include "../TypeDefs.h"
+#include <jde/TypeDefs.h>
 
 namespace Jde
 {

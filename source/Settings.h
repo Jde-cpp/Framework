@@ -1,8 +1,8 @@
-#pragma once
+﻿#pragma once
 #include "DateTime.h"
-#include "JdeAssert.h"
-#include "Exports.h"
-#include "Exception.h"
+#include <jde/Assert.h>
+#include <jde/Exports.h>
+#include <jde/Exception.h>
 
 #pragma warning(push)
 #pragma warning( disable : 4715)
@@ -56,14 +56,19 @@ namespace Jde::Settings
 		return item->get<T>();
 	}
 
-	template<>
-	inline optional<Duration> Container::Get2<Duration>( sv path )const noexcept
+	ψ Container::Get2<Duration>( sv path )const noexcept->optional<Duration>
 	{
 		var strng = Get2<string>( path );
 		optional<std::chrono::system_clock::duration> result;
 		if( strng.has_value() )
 			Try( [strng, &result](){ result = Chrono::ToDuration(*strng);} );
 		return  result;
+	}
+
+	ψ Container::Get2<fs::path>( sv path )const noexcept->optional<fs::path>
+	{
+		var p = Get2<string>( path );
+		return p ? optional<fs::path>(*p) : std::nullopt;
 	}
 
 	template<typename T>
@@ -112,7 +117,7 @@ namespace Jde::Settings
 
 
 	JDE_NATIVE_VISIBILITY Container& Global()noexcept;
-	sp<Container> GlobalPtr()noexcept;
+	JDE_NATIVE_VISIBILITY sp<Container> GlobalPtr()noexcept;
 	JDE_NATIVE_VISIBILITY void SetGlobal( sp<Container> container )noexcept;
 
 	template<typename T>

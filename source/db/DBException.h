@@ -1,8 +1,7 @@
 #pragma once
-#include "../Exports.h"
+#include <jde/Exports.h>
 #include "DataType.h"
-//#include "../log/Logging.h"
-#include "../Exception.h"
+#include <jde/Exception.h>
 
 #define DB_TRY(x) try{x;}catch( const DB::DBException&){}
 #define THROW_DB(sql,params)

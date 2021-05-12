@@ -2,8 +2,8 @@
 #ifndef JDE_DATE_TIME
 #define JDE_DATE_TIME
 #include <chrono>
-#include "TypeDefs.h"
-#include "./Exports.h"
+#include <jde/TypeDefs.h>
+#include <jde/Exports.h>
 
 namespace Jde
 {

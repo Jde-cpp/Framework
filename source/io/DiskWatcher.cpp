@@ -6,9 +6,9 @@
 #include <forward_list>
 #include <memory>
 
-#include "../Exception.h"
-#include "File.h"
-#include "../application/Application.h"
+#include <jde/Exception.h>
+#include <jde/io/File.h>
+#include <jde/App.h>
 #define var const auto
 
 namespace Jde::IO

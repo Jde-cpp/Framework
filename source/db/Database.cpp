@@ -2,11 +2,10 @@
 #include "c_api.h"
 #include "GraphQL.h"
 #include "DataSource.h"
-#include "../application/Application.h"
-#include "../io/File.h"
+#include <jde/App.h>
+#include <jde/io/File.h>
 #include "../Settings.h"
-#include "../TypeDefs.h"
-#include "../Dll.h"
+#include <jde/Dll.h>
 #include "Syntax.h"
 #include <boost/container/flat_map.hpp>
 

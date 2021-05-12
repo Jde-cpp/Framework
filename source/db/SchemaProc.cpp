@@ -5,7 +5,7 @@
 #include "DataSource.h"
 #include "Syntax.h"
 #include "types/Table.h"
-#include "../StringUtilities.h"
+#include <jde/Str.h>
 
 #define var const auto
 namespace Jde::DB
@@ -29,7 +29,7 @@ namespace Jde::DB
 			return word.size()>2 && os.str().size()<word.size()-1 ? os.str() : word;
 		};
 		//var original = Schema::FromJson( schemaName );
-		var splits = StringUtilities::Split( DB::Schema::ToSingular(schemaName), '_' );
+		var splits = Str::Split( DB::Schema::ToSingular(schemaName), '_' );
 		ostringstream name;
 		for( uint i=1; i<splits.size(); ++i )
 		{

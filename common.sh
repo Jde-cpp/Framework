@@ -8,6 +8,9 @@
 # echo fetchLocation=$fetchLocation;
 # echo file=$file
 windows() { [[ -n "$WINDIR" ]]; }
+t=$(readlink -f "${BASH_SOURCE[0]}"); commonBuild=$(basename "$t"); unset t;
+#echo running $commonBuild
+
 
 function moveToDir
 {
@@ -26,6 +29,8 @@ function toWinDir()
     local -n _winDir=$2
     _winDir=${bashDir////\\}; _winDir=${_winDir/\\c/c:};
 }
+
+
 function fetch
 {
     file2=${1};

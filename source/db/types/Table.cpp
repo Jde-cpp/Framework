@@ -1,5 +1,5 @@
 #include "Table.h"
-#include "../../StringUtilities.h"
+#include <jde/Str.h>
 #include "../DataType.h"
 #include "../Syntax.h"
 #include "Schema.h"
@@ -272,7 +272,7 @@ namespace Jde::DB
 		else
 			os << "create " << (Clustered && syntax.SpecifyIndexCluster() ? "clustered " : " ") << unique << " index "<< name << " on " << endl << tableName << "(";
 
-		os << StringUtilities::AddCommas( Columns ) << ")";
+		os << Str::AddCommas( Columns ) << ")";
 
 		return os.str();
 	}
@@ -283,7 +283,7 @@ namespace Jde::DB
 		//std::for_each( pkTable.Columns.begin(), pkTable.Columns.end(), [&](auto& x){if( x.IsId ) surrogateKeys.push_back(x);} );
 		THROW_IF( pkTable.SurrogateKey.size()!=1, EnvironmentException("{} has {} columns in pk, !1 has not implemented", pkTable.Name, pkTable.SurrogateKey.size() ) );
 		ostringstream os;
-		os << "alter table " << foreignTable << " add constraint " << name << " foreign key(" << columnName << ") references " << pkTable.Name << "(" << StringUtilities::AddCommas(pkTable.SurrogateKey) << ")";
+		os << "alter table " << foreignTable << " add constraint " << name << " foreign key(" << columnName << ") references " << pkTable.Name << "(" << Str::AddCommas(pkTable.SurrogateKey) << ")";
 		return os.str();
 	}
 	const Column* Table::FindColumn( sv name )const noexcept
@@ -300,7 +300,7 @@ namespace Jde::DB
 
 	string TableNamePart( const Table& table, uint8 index )noexcept(false)
 	{
-		var nameParts = StringUtilities::Split( table.NameWithoutType(), '_' ); //THROW_IF( nameParts.size()!=3, Exception("Child/Parent expected 3 parts to table name {}", table.Name) );
+		var nameParts = Str::Split( table.NameWithoutType(), '_' ); //THROW_IF( nameParts.size()!=3, Exception("Child/Parent expected 3 parts to table name {}", table.Name) );
 		return nameParts.size()>index ? DB::Schema::ToSingular( nameParts[index] ) : string{};
 	}
 	string Table::Prefix()const noexcept{ return TableNamePart(*this, 0); }

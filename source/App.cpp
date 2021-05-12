@@ -1,13 +1,12 @@
-#include "../pc.h"//stdafx.h
-#include "Application.h"
+#include <jde/App.h>
 #include <signal.h>
 #include <sys/types.h>
 #include <stdexcept>
 
-#include "../Cache.h"
-#include "../log/server/ServerSink.h"
-#include "../Settings.h"
-#include "../threading/InterruptibleThread.h"
+#include "Cache.h"
+#include "log/server/ServerSink.h"
+#include "Settings.h"
+#include "threading/InterruptibleThread.h"
 
 namespace Jde
 {
