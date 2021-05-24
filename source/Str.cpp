@@ -43,6 +43,17 @@ namespace Jde
 			tokens.push_back( s.substr(i) );
 		return tokens;
 	}
+	α Str::Split( sv text, const CIString& delim )->vector<sv>
+	{
+		vector<sv> tokens;
+		uint i=0;
+		const CIString s{text};
+		for( uint next = s.find(delim); next!=string::npos; i=next+delim.size(), next = s.find(delim, i) )
+			tokens.push_back( text.substr(i, next-i) );
+		if( i<s.size() )
+			tokens.push_back( text.substr(i) );
+		return tokens;
+	}
 	α Str::Split( sv s, char delim, uint estCnt )->vector<sv>
 	{
 		vector<sv> results;

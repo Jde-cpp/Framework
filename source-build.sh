@@ -1,25 +1,23 @@
-baseDir=`pwd`;
+scriptDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+if [[ -z $commonBuild ]]; then source $scriptDir/common.sh; fi;
+baseDir=$scriptDir/../..;
 jdeRoot=jde;
-#echo sourceBuild says commonBuild=\'$commonBuild\';
-if [[ -z $commonBuild ]]; then source common.sh; fi;
-#echo sourceBuild says commonBuild=\'$commonBuild\';
+
 
 t=$(readlink -f "${BASH_SOURCE[0]}"); sourceBuild=$(basename "$t"); unset t;
 #echo running $sourceBuild
 
-if [[ -z "$REPO_DIR" ]]; then
-	export REPO_DIR=`pwd`;
-fi;
+if [[ -z "$REPO_DIR" ]]; then export REPO_DIR=$baseDir; fi;
+pushd `pwd` > /dev/null;
 cd $REPO_DIR
 
 
 function findExecutable
 {
 	exe=$1;
-	#echo exe=$1;
 	defaultPath=$2;
 	exitFailure=${3:-1};
-	#echo defaultPath=$2;
+	#echo findExecutable exe=\"$exe\", defaultPath=\"$defaultPath\" exitFailure=\"$exitFailure\";
 	#echo path_to_exe='$(which $exe 2> /dev/null)';
 	path_to_exe=$(which "$exe" 2> /dev/null);
 	if [ ! -x "$path_to_exe" ]; then
@@ -30,7 +28,7 @@ function findExecutable
 			#path_to_exe=$(which "$exe" 2> /dev/null);
 			#echo path_to_exe=$path_to_exe;pop
 			#echo 'if [ ! -x "'$path_to_exe'" ]; then echo no; else echo yes; fi;'
-		else 
+		else
 			#echo can not find $exe;
 			if [ $exitFailure -eq 1 ]; then
 				echo can not find "${defaultPath//\\}/$exe";
@@ -42,11 +40,11 @@ function findExecutable
 
 if windows; then
 	findExecutable MSBuild.exe '/c/Program\ Files\ \(X86\)/Microsoft\ Visual\ Studio/2019/BuildTools/MSBuild/Current/Bin' 0
-	findExecutable MSBuild.exe '/c/Program\ Files\ \(X86\)/Microsoft\ Visual\ Studio/2019/Enterprise/MSBuild/Current/Bin' 1
-	findExecutable cmake.exe
-	#findExecutable cl.exe '/c/Program\ Files\ \(X86\)/Microsoft\ Visual\ Studio/2019/BuildTools/VC/Tools/MSVC/14.28.29910/bin/Hostx64/x64' 0
-	#findExecutable cl.exe '/c/Program\ Files\ \(X86\)/Microsoft\ Visual\ Studio/2019/Enterprise/VC/Tools/MSVC/14.28.29910/bin/Hostx64/x64' 1
-	toBashDir $REPO_DIR REPO_BASH
+	findExecutable MSBuild.exe '/c/Program\ Files\ \(X86\)/Microsoft\ Visual\ Studio/2019/Enterprise/MSBuild/Current/Bin'
+	findExecutable cmake.exe '/c/Program\ Files/CMake/bin'
+	findExecutable cl.exe '/c/Program\ Files\ \(X86\)/Microsoft\ Visual\ Studio/2019/BuildTools/VC/Tools/MSVC/14.28.29910/bin/Hostx64/x64' 0
+	findExecutable cl.exe '/c/Program\ Files\ \(X86\)/Microsoft\ Visual\ Studio/2019/Enterprise/VC/Tools/MSVC/14.28.29910/bin/Hostx64/x64' 1
+	findExecutable vswhere.exe '/c/Program\ Files\ \(X86\)/Microsoft\ Visual\ Studio/installer' 0
 	#findExecutable protoc.exe $REPO_BASH/jde/Public/stage/Release;
 fi;
 
@@ -56,7 +54,7 @@ function fetch
 		echo calling git clone $1
 		git clone https://github.com/Jde-cpp/$1.git -q; cd $1;
 	else
-		cd $1; 
+		cd $1;
 		if  [[ $shouldFetch -eq 1 ]]; then git pull -q; fi;
 	fi;
 	if [ -d source ];then cd source; fi;
@@ -94,29 +92,29 @@ function buildWindows2
 	#echo buildWindows2 $1 $2 $3;
 	#echo $3 - starting;
 	configuration=$3;
-	cmd="$1=$configuration";
+	cmd2="$1=$configuration";
 	outFile=$2;
 	out=.bin/$configuration/$file;
 	targetDir=$baseDir/$jdeRoot/Public/stage/$configuration;
 	target=$targetDir/$file;
 	if [ ! -f $target ]; then
-		$cmd
+		$cmd2
 		if [ $? -ne 0 ]; then
 			echo `pwd`;
-			echo $cmd;
+			echo $cmd2;
 			exit 1;
 		fi;
-		if [ -f $target ]; then echo $cmd outputing stage dir.; rm $taget; fi;
+		if [ -f $target ]; then echo $cmd2 outputing stage dir.; rm $taget; fi;
 		sourceDir=`pwd`;
 		subDir=$(if [ -d .bin ]; then echo "/.bin"; else echo ""; fi);
 		cd $targetDir;
 		#mklink $outFile $sourceDir/.bin/$configuration;
 		#echo cp "$sourceDir$subDir/$configuration/$outFile" .;
-		
+
 		cp "$sourceDir$subDir/$configuration/$outFile" .;
 		if [[ $outFile == *.dll ]]; then
 			#mklink ${outFile:0:-3}lib $sourceDir/.bin/$configuration;
-			cp "$sourceDir/.bin/$configuration/${outFile:0:-3}lib" .;
+			cp "$sourceDir$subDir/$configuration/${outFile:0:-3}lib" .;
 		fi;
 		#echo cd "$sourceDir";
 		cd "$sourceDir";
@@ -127,8 +125,9 @@ function buildWindows
 {
 	dir=$1;
 	if [[ ! -f "$dir.vcxproj.user" && -f "$dir.vcxproj._user" ]]; then
-		echo cp $dir.vcxproj._user $dir.vcxproj.user
-		cp $dir.vcxproj._user $dir.vcxproj.user
+		echo linkFile $dir.vcxproj._user $dir.vcxproj.user
+		linkFile $dir.vcxproj._user $dir.vcxproj.user;
+		if [ $? -ne 0 ]; then echo `pwd`; echo linkFile $dir.vcxproj._user $dir.vcxproj.user; exit 1; fi;
 	fi;
 	if [ ${clean:-1} -eq 1 ]; then
 		rm -r -f .bin;
@@ -137,7 +136,7 @@ function buildWindows
 	if [[ -z $file ]]; then [[ $dir = "Framework" ]] && file="Jde.dll" || file="Jde.$dir.dll"; fi;
 	#echo buildWindows $dir `pwd`;
 	baseCmd="msbuild.exe $dir.vcxproj -p:Platform=x64 -maxCpuCount -nologo -v:q /clp:ErrorsOnly -p:Configuration"
-	#echo buildWindows $cmd 
+	#echo buildWindows $cmd
 	buildWindows2 "$baseCmd" $file release;
 	buildWindows2 "$baseCmd" $file debug;
 	echo build $dir complete.
@@ -145,11 +144,11 @@ function buildWindows
 
 function createProto
 {
-    dir=$1;
-    file=$2;
-    export=$3;
+	dir=$1;
+	file=$2;
+	export=$3;
 	cleanProtoc=$clean;
-    pushd `pwd` > /dev/null;
+	pushd `pwd` > /dev/null;
 	cd $dir;
 	if [ ! -f file.pb.cc ]; then
 		cleanProtoc=1;
@@ -168,10 +167,10 @@ function fetchDefault
 }
 function build
 {
-	if windows; then 
+	if windows; then
 		buildWindows $1 $3
-	else 
-		buildLinux $2 
+	else
+		buildLinux $2
 	fi;
 }
 function fetchBuild
@@ -183,5 +182,10 @@ function fetchBuild
 	#    (`$proto`);
 	#    echo finished \"$proto\";
    	# fi;
-	build $1 $2;
+	build $1 $2 $3;
 }
+function findProtoc
+{
+	findExecutable protoc.exe $REPO_BASH/protobuf/cmake/build/sln/Release;
+}
+popd > /dev/null;

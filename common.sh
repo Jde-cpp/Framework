@@ -11,18 +11,24 @@ windows() { [[ -n "$WINDIR" ]]; }
 t=$(readlink -f "${BASH_SOURCE[0]}"); commonBuild=$(basename "$t"); unset t;
 #echo running $commonBuild
 
+function toBashDir()
+{
+    windowsDir=$1;
+    local -n _bashDir=$2
+    _bashDir=${windowsDir/:/}; _bashDir=${_bashDir//\\//}; _bashDir=${_bashDir/C/c};
+	 if [[ ${_bashDir:0:1} != "/" ]]; then _bashDir=/$_bashDir; fi;
+}
+if windows; then
+	toBashDir $REPO_DIR REPO_BASH;
+else
+	REPO_BASH=$REPO_DIR;
+fi;
 
 function moveToDir
 {
 	if [ ! -d $1 ]; then mkdir $1; fi;
 	cd $1;
 };
-function toBashDir()
-{
-    windowsDir=$1;
-    local -n _bashDir=$2
-    _bashDir=/${windowsDir/:/}; _bashDir=${_bashDir//\\//}; 
-}
 function toWinDir()
 {
     bashDir=$1;
@@ -46,20 +52,76 @@ function fetch
         fi;
     fi;
 }
+
+function addHard
+{
+	local file=$1;#TwsSocketClient64.vcxproj
+	local fetchLocation=$2;
+	if [ -f $file ]; then rm $file; fi;
+	if windows; then
+		toWinDir "$fetchLocation" _source;
+		toWinDir "`pwd`" _destination;
+		cmd <<< "mklink /H \"$_destination\\$file\" \"$_source\\$file\" " > /dev/null; #"
+		if [ $? -ne 0 ]; then
+			echo `pwd`;
+			echo cmd <<< "mklink \"$_destination\\$file\" \"$_source\\$file\" "; #"
+			exit 1;
+		fi;
+	else
+		ln $fetchLocation/$file .;
+	fi;
+};
+
+function addHardDir
+{
+	#echo addHardDir;
+	local dir=$1;
+	local sourceDir=$2/$1;
+	moveToDir $dir;
+	#echo $sourceDir/$dir;
+	for filename in $sourceDir/*; do
+		#echo $filename;
+		if [ -f $filename ]; then addHard $(basename "$filename") $sourceDir;
+		elif [ -d $filename ]; then addHardDir $(basename "$filename") $sourceDir; fi;
+	done;
+	cd ..;
+}
+
+
 function mklink
 {
-    _file=$1;#TwsSocketClient64.vcxproj
-    _fetchLocation=$2;
-    rm -f $_file;
-    if windows; then
-        toWinDir "$_fetchLocation" source;
-        toWinDir "`pwd`" destination;
-
-        #link=`pwd`; link=${link////\\}; link=${link/\\c/c:};
-        ##cmd <<< "mklink $link\\$_file ${_fetchLocation////\\}\\$_file" > /dev/null;
-        #echo "mklink $destination\\$_file $source\\$_file";
-        cmd <<< "mklink \"$destination\\$_file\" \"$source\\$_file\"" > /dev/null;
-    else
-        ln -s $_fetchLocation/$_file .;
-    fi;
+	local file=$1;#TwsSocketClient64.vcxproj
+	local fetchLocation=$2;
+	if [ -f $file ]; then rm $file; fi;
+	if windows; then
+		toWinDir "$fetchLocation" _source;
+		toWinDir "`pwd`" _destination;
+		cmd <<< "mklink \"$_destination\\$file\" \"$_source\\$file\" " > /dev/null;  #"
+		if [ $? -ne 0 ]; then
+			echo `pwd`;
+			echo cmd <<< "mklink \"$_destination\\$file\" \"$_source\\$file\" "; #"
+			exit 1;
+		fi;
+	else
+ 	if [ -L $file ]; then rm $file; fi;
+		ln -s $fetchLocation/$file .;
+	fi;
+}
+function linkFile
+{
+	local original=$1;#TwsSocketClient64.vcxproj._user
+	local link=$2; #TwsSocketClient64.vcxproj.user
+	if [ -f $link ]; then exit 0; fi;
+	if windows; then
+		toWinDir "`pwd`" _pwd;
+		cmd <<< "mklink \"$_pwd\\$link\" \"$_pwd\\$original\" " > /dev/null;  #"
+		if [ $? -ne 0 ]; then
+			echo `pwd`;
+			echo cmd <<< "mklink \"$_pwd\\$link\" \"$_pwd\\$original\" " > /dev/null;  #"
+			exit 1;
+		fi;
+	else
+ 	if [ -L $file ]; then rm $file; fi;
+		ln -s $original $link;
+	fi;
 }

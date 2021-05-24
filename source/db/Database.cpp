@@ -15,8 +15,7 @@ namespace Jde
 	using boost::container::flat_map;
 	using nlohmann::json;
 	using nlohmann::ordered_json;
-
-	void DB::Log( sv sql, const std::vector<DataValue>* pParameters, sv file, sv fnctn, uint line, ELogLevel level, sv error )noexcept
+	string DB::Message( sv sql, const std::vector<DataValue>* pParameters, sv error )noexcept
 	{
 		const auto size = pParameters ? pParameters->size() : 0;
 		ostringstream os;
@@ -30,11 +29,11 @@ namespace Jde
 		}
 		if( prevIndex<sql.size() )
 			os << sql.substr( prevIndex );
-
-		//if( os.str()=="{{error}}" )
-			//DBG("HERE"sv);
-		Logging::Log( Logging::MessageBase(level, os.str(), file, fnctn, line) );
-		//DBG( os.str() );
+		return os.str();
+	}
+	void DB::Log( sv sql, const std::vector<DataValue>* pParameters, sv file, sv fnctn, uint line, ELogLevel level, sv error )noexcept
+	{
+		Logging::Log( Logging::MessageBase(level, Message(sql, pParameters, error), file, fnctn, line) );
 	};
 
 	class DataSourceApi
@@ -95,7 +94,7 @@ namespace Jde
 		var path = Settings::Global().Get<fs::path>( "metaDataPath" );
 		INFO( "db meta='{}'"sv, path.string() );
 		ordered_json j = json::parse( IO::FileUtilities::Load(path) );
-		/*var schema =*/ pDataSource->SchemaProc()->CreateSchema( j );
+		/*var schema =*/ pDataSource->SchemaProc()->CreateSchema( j, path.parent_path() );
 	}
 	sp<DB::Syntax> DB::DefaultSyntax()noexcept
 	{

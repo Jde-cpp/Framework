@@ -85,7 +85,7 @@ namespace Jde
 		var path = Settings::Global().Get<fs::path>( "metaDataPath" );
 		INFO( "db meta='{}'"sv, path.string() );
 		var j = json::parse( IO::FileUtilities::Load(path) );
-		var schema = pDataSource->SchemaProc()->CreateSchema( j );
+		var schema = pDataSource->SchemaProc()->CreateSchema( j, path.parent_path() );
 		AppendQLSchema( schema );
 		SetQLDataSource( pDataSource );
 

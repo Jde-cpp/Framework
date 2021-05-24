@@ -29,10 +29,10 @@ namespace Jde::DB
 		//IsNullable{ name.ends_with("?") }
 	{}
 
-	Column::Column( sv name, const nlohmann::json& j, const flat_map<string,Column>& commonColumns )noexcept(false):
+	Column::Column( sv name, const nlohmann::json& j, const flat_map<string,Column>& commonColumns, const flat_map<string,Table>& parents, const nlohmann::ordered_json& schema )noexcept(false):
 		Name{ name }
 	{
-		auto getType = [this,&commonColumns]( sv typeName )
+		auto getType = [this,&commonColumns, &schema, &parents]( sv typeName )
 		{
 			IsNullable = typeName.ends_with( "?" );
 			if( IsNullable )
@@ -49,7 +49,18 @@ namespace Jde::DB
 				Type = ToDataType( typeName );
 				if( Type==DataType::None )
 				{
-					Type = DataType::UInt;
+					if( schema.contains(string{typeName}) )
+					{
+						//nlohmann::json tableJson = *schema.find( string{typeName} );
+						Table table{ typeName, *schema.find(string{typeName}), parents, commonColumns, schema };
+						if( table.SurrogateKey.size()==1 )
+						{
+							if( var pColumn = table.FindColumn(table.SurrogateKey.front()); pColumn )
+								Type = pColumn->Type;
+						}
+					}
+					if( Type==DataType::None )
+						Type = DataType::UInt;
 					PKTable = Schema::FromJson( typeName );
 				}
 			}
@@ -100,7 +111,7 @@ namespace Jde::DB
 		return format( "{} {} {}{}{}", Name, DataTypeString(syntax), null, sequence, dflt );
 	}
 
-	Table::Table( sv name, const nlohmann::json& j, const flat_map<string,Table>& parents, const flat_map<string,Column>& commonColumns ):
+	Table::Table( sv name, const nlohmann::json& j, const flat_map<string,Table>& parents, const flat_map<string,Column>& commonColumns, const nlohmann::ordered_json& schema ):
 		Name{ name }
 	{
 		for( var& [columnName,value] : j.items() )
@@ -160,10 +171,12 @@ namespace Jde::DB
 						Data.push_back( it );
 				}
 			}
+			else if( columnName=="$customInsertProc" )
+				CustomInsertProc = value.get<bool>();
 			else
 			{
 				var dbName = Schema::FromJson( columnName );
-				Columns.push_back( Column{dbName, value, commonColumns} );
+				Columns.push_back( Column{dbName, value, commonColumns, parents, schema} );
 				//DBG( "{}.{}, dt={}"sv, name, columnName, Columns.back().DataTypeString() );
 				if( auto p=find(SurrogateKey.begin(), SurrogateKey.end(), dbName); p!=SurrogateKey.end() )
 				{
@@ -177,7 +190,7 @@ namespace Jde::DB
 	string Table::InsertProcName()const noexcept
 	{
 		var haveSequence = std::find_if( Columns.begin(), Columns.end(), [](var& c){return c.IsIdentity;} )!=Columns.end();
-		return !haveSequence /*|| FlagsData.size() || Data.size()*/ ? string{} : format( "{}_insert", DB::Schema::ToSingular(Name) );
+		return !haveSequence || CustomInsertProc/*|| FlagsData.size() || Data.size()*/ ? string{} : format( "{}_insert", DB::Schema::ToSingular(Name) );
 	}
 
 	string Table::InsertProcText( const Syntax& syntax )const noexcept
@@ -279,8 +292,6 @@ namespace Jde::DB
 
 	string ForeignKey::Create( sv name, sv columnName, const DB::Table& pkTable, sv foreignTable )noexcept(false)
 	{
-		//vector<Column> surrogateKeys;
-		//std::for_each( pkTable.Columns.begin(), pkTable.Columns.end(), [&](auto& x){if( x.IsId ) surrogateKeys.push_back(x);} );
 		THROW_IF( pkTable.SurrogateKey.size()!=1, EnvironmentException("{} has {} columns in pk, !1 has not implemented", pkTable.Name, pkTable.SurrogateKey.size() ) );
 		ostringstream os;
 		os << "alter table " << foreignTable << " add constraint " << name << " foreign key(" << columnName << ") references " << pkTable.Name << "(" << Str::AddCommas(pkTable.SurrogateKey) << ")";

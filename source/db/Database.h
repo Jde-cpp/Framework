@@ -8,6 +8,7 @@ namespace Jde::DB
 {
 	#define 🚪 JDE_NATIVE_VISIBILITY auto
 	struct IDataSource; struct Syntax; //struct DataValue;
+	string Message( sv sql, const std::vector<DataValue>* pParameters, sv error={} )noexcept;
 	void Log( sv sql, const std::vector<DataValue>* pParameters, sv file, sv fnctn, uint line, ELogLevel level=ELogLevel::Debug, sv error={} )noexcept;
 	JDE_NATIVE_VISIBILITY sp<Syntax> DefaultSyntax()noexcept;
 	JDE_NATIVE_VISIBILITY sp<IDataSource> DataSource()noexcept(false);

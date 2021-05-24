@@ -1,11 +1,13 @@
 #include "SchemaProc.h"
 #include <nlohmann/json.hpp>
 #include <boost/container/flat_map.hpp>
+#include <jde/Str.h>
+#include <jde/io/File.h>
 #include "Database.h"
 #include "DataSource.h"
 #include "Syntax.h"
 #include "types/Table.h"
-#include <jde/Str.h>
+
 
 #define var const auto
 namespace Jde::DB
@@ -39,7 +41,7 @@ namespace Jde::DB
 		}
 		return name.str();
 	}
-	Schema ISchemaProc::CreateSchema( const ordered_json& j )noexcept(false)
+	Schema ISchemaProc::CreateSchema( const ordered_json& j, path relativePath )noexcept(false)
 	{
 		var pSyntax = DB::DefaultSyntax();
 		var pDBTables = LoadTables();
@@ -54,7 +56,7 @@ namespace Jde::DB
 		if( j.contains("$types") )
 		{
 			for( var& [columnName, column] : j.find("$types")->items() )
-				schema.Types.emplace( columnName, Column{columnName, column, schema.Types} );
+				schema.Types.emplace( columnName, Column{columnName, column, schema.Types, parentTables, j} );
 		}
 		function<void(sv,const json&)> addTable;
 		addTable = [&]( sv key, const json& item )
@@ -65,14 +67,14 @@ namespace Jde::DB
 				THROW_IF( j.find(parentId)==j.end(), Exception("Could not find parent {}", parentId) );
 				addTable( parentId, *j.find(parentId) );
 			}
-			parentTables.emplace( key, Table{key, item, parentTables, schema.Types} );
+			parentTables.emplace( key, Table{key, item, parentTables, schema.Types, j} );
 		};
 		for( var& [key, value] : j.items() )
 		{
 			var name = Schema::FromJson( key );
 //			DBG( name );
 			if( !key.starts_with("$") )
-				schema.Tables.emplace( name, make_shared<Table>(name, value, parentTables, schema.Types) );
+				schema.Tables.emplace( name, make_shared<Table>(name, value, parentTables, schema.Types, j) );
 			else if( key!="$types" && parentTables.find(key)==parentTables.end() )
 				addTable( key, value );
 		}
@@ -119,6 +121,25 @@ namespace Jde::DB
 				var procCreate = pTable->InsertProcText( *pSyntax );
 				_pDataSource->Execute( procCreate );
 				DBG( "Created proc '{}'."sv, pTable->InsertProcName() );
+			}
+			if( j.contains("$scripts") )
+			{
+				for( var& nameObj : *j.find("$scripts") )
+				{
+					auto name = fs::path{ nameObj.get<string>() };
+					var procName = name.stem();
+					if( procedures.find(procName.string())!=procedures.end() )
+						continue;
+					if( pSyntax->ProcFileSuffix().size() )
+						name = name.parent_path()/( name.stem().string()+string{pSyntax->ProcFileSuffix()}+name.extension().string() );
+					var path = relativePath/name; THROW_IF( !fs::exists(path), "Could not find {}"sv, path.string() );
+					var text = IO::FileUtilities::Load( path );
+					DBG( "Executing '{}'"sv, path.string() );
+					var queries = Str::Split( text, CIString{"\ngo"sv} );
+					for( var& query : queries )
+						_pDataSource->Execute( query );
+					DBG( "Finished '{}'"sv, path.string() );
+				}
 			}
 		}
 		for( var& [tableName, pTable] : schema.Tables )
