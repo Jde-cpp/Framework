@@ -1,5 +1,4 @@
 #include "Alarm.h"
-#include "../TypeDefs.h"
 
 #define IntancePtr if( auto p=Instance(); p ) p
 #define var const auto

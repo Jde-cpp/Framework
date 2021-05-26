@@ -1,9 +1,9 @@
 #pragma once
 //adapted from https://livebook.manning.com/#!/book/c-plus-plus-concurrency-in-action-second-edition/chapter-9/v-7/1
 #include <future>
-#include "../Exception.h"
+#include <jde/Exception.h>
 #include "Thread.h"
-#include "../application/Application.h"
+#include <jde/App.h>
 
 namespace Jde::Threading  //TODO Reflection remove Threading from public items.
 {

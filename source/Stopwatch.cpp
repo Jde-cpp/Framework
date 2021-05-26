@@ -6,9 +6,9 @@
 #include <sstream>
 
 #include "DateTime.h"
-#include "Exception.h"
+#include <jde/Exception.h>
 #include "math/MathUtilities.h"
-#include "application/Application.h"
+#include <jde/App.h>
 #define var const auto
 
 namespace Jde

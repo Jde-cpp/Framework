@@ -1,4 +1,4 @@
-#include "StringUtilities.h"
+﻿#include <jde/Str.h>
 
 #include <algorithm>
 #include <functional>
@@ -7,7 +7,7 @@
 namespace Jde
 {
 
-	int ci_char_traits::compare( const char* s1, const char* s2, size_t n )
+	α ci_char_traits::compare( const char* s1, const char* s2, size_t n )noexcept->int 
 	{
 		while( n-- != 0 )
 		{
@@ -17,7 +17,7 @@ namespace Jde
 		}
 		return 0;
 	}
-	const char* ci_char_traits::find(const char* s, int n, char a)
+	α ci_char_traits::find( const char* s, size_t n, char a )noexcept->const char* 
 	{
 		while( n-- > 0 && toupper(*s) != toupper(a) )
 			++s;
@@ -33,7 +33,7 @@ namespace Jde
 	}
 
 
-	std::vector<sv> StringUtilities::Split( sv s, sv delim )
+	α Str::Split( sv s, sv delim )->vector<sv>
 	{
 		vector<sv> tokens;
 		uint i=0;
@@ -43,12 +43,23 @@ namespace Jde
 			tokens.push_back( s.substr(i) );
 		return tokens;
 	}
-	std::vector<sv> StringUtilities::Split( sv s, char delim, uint estCnt )
+	α Str::Split( sv text, const CIString& delim )->vector<sv>
 	{
-		std::vector<sv> results;
+		vector<sv> tokens;
+		uint i=0;
+		const CIString s{text};
+		for( uint next = s.find(delim); next!=string::npos; i=next+delim.size(), next = s.find(delim, i) )
+			tokens.push_back( text.substr(i, next-i) );
+		if( i<s.size() )
+			tokens.push_back( text.substr(i) );
+		return tokens;
+	}
+	α Str::Split( sv s, char delim, uint estCnt )->vector<sv>
+	{
+		vector<sv> results;
 		if( estCnt )
 			results.reserve( estCnt );
-		for( uint16 fieldStart=0, iField=0, fieldEnd;fieldStart<s.size();++iField, fieldStart = fieldEnd+1 )
+		for( uint fieldStart=0, iField=0, fieldEnd;fieldStart<s.size();++iField, fieldStart = fieldEnd+1 )
 		{
 			fieldEnd = std::min( s.find_first_of(delim, fieldStart), s.size() );
 			results.push_back( sv{s.data()+fieldStart, fieldEnd-fieldStart} );
@@ -56,7 +67,7 @@ namespace Jde
 		return results;
 	}
 
-	string StringUtilities::Replace( sv source, sv find, sv replace )noexcept
+	α Str::Replace( sv source, sv find, sv replace )noexcept->string
 	{
 		string::size_type i=0, iLast=0;
 		ostringstream os;
@@ -72,7 +83,7 @@ namespace Jde
 
 		return os.str();
 	}
-	string StringUtilities::Replace( sv source, char find, char replace )noexcept
+	α Str::Replace( sv source, char find, char replace )noexcept->string 
 	{
 		string result{ source };
 		for( char* pFrom=(char*)source.data(), *pTo=(char*)result.data(); pFrom<source.data()+source.size(); ++pFrom, ++pTo )
@@ -87,17 +98,17 @@ namespace Jde
 		std::transform( result.begin(), result.end(), result.begin(), fnctn );
 		return result;
 	}
-	string StringUtilities::ToLower( sv source )noexcept
+	α Str::ToLower( sv source )noexcept->string
 	{
 		return Transform( source, ::tolower );
 	}
 
-	string StringUtilities::ToUpper( sv source )noexcept
+	string Str::ToUpper( sv source )noexcept
 	{
 		return Transform( source, ::toupper );
 	}
 
-	sv StringUtilities::NextWord( sv x )noexcept
+	sv Str::NextWord( sv x )noexcept
 	{
 		uint iStart = 0;
 		for( ;iStart<x.size() && ::isspace(x[iStart]); ++iStart );

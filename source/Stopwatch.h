@@ -3,6 +3,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <jde/Exports.h>
 
 using std::string;
 

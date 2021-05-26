@@ -8,7 +8,7 @@ namespace Jde::DB
 	struct ISchemaProc
 	{
 		ISchemaProc( sp<IDataSource> pDataSource ):_pDataSource{pDataSource}{}
-		JDE_NATIVE_VISIBILITY Schema CreateSchema( const nlohmann::ordered_json& json )noexcept(false);
+		JDE_NATIVE_VISIBILITY Schema CreateSchema( const nlohmann::ordered_json& json, path relativePath )noexcept(false);
 		virtual MapPtr<string,Table> LoadTables( sv catalog={} )noexcept(false)=0;
 		virtual flat_map<string,Procedure> LoadProcs( sv catalog={} )noexcept(false)=0;
 		virtual DataType ToDataType( sv typeName )noexcept=0;

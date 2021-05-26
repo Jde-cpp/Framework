@@ -17,7 +17,7 @@ namespace Jde::Coroutine
 		IdleLimit{idleLimit},
 		ThreadParam{ name, Threading::BumpThreadHandle() },
 		_param{ move(param) },
-		_thread{ [this]( stop_token stoken )
+		_thread{ [this]( std::stop_token stoken )
 		{
 			Threading::SetThreadDscrptn( format("CoroutineThread - {}", ThreadParam.AppHandle) );
 			var index = INDEX++;

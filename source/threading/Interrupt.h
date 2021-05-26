@@ -4,8 +4,8 @@
 #include <functional>
 #include <mutex>
 #include <thread>
-#include "../TypeDefs.h"
-#include "../Exports.h"
+#include <jde/TypeDefs.h>
+#include <jde/Exports.h>
 
 namespace Jde::Threading
 {

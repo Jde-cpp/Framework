@@ -1,8 +1,8 @@
 #pragma once
 #include <boost/asio.hpp>
 #include <boost/asio/io_context.hpp>
-#include "../../Exports.h"
-#include "../../application/Application.h"
+#include <jde/Exports.h>
+#include <jde/App.h>
 
 //namespace boost::asio{ class io_context; class executor_work_guard; class executor_type; }
 namespace Jde::Threading{ struct InterruptibleThread; }

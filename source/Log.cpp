@@ -1,7 +1,4 @@
-#include "Logging.h"
-#include <boost/lexical_cast.hpp>
-#include "server/ServerSink.h"
-#include "../Settings.h"
+#include <jde/Log.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #ifdef _MSC_VER
 	#include <crtdbg.h>
@@ -12,6 +9,9 @@
 #else
 //	#include "Lttng.h"
 #endif
+#include <boost/lexical_cast.hpp>
+#include "log/server/ServerSink.h"
+#include "Settings.h"
 #define var const auto
 
 namespace Jde

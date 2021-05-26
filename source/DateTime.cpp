@@ -1,5 +1,6 @@
 #include "DateTime.h"
-#include "StringUtilities.h"
+//#include <chrono>
+#include <jde/Str.h>
 #include "math/MathUtilities.h"
 
 #define var const auto
@@ -59,19 +60,19 @@ namespace Jde
 				}
 			};*/
 #ifdef _MSC_VER
-			var year = chrono::hours(24 * 365);
+			var year = hours(24 * 365);
 			if( d >= year || d <= -year )
 			{
 				os << duration_cast<hours>(d).count()/year.count() << "Y";
 				d %= year;
 			}
-			var month = chrono::hours(24 * 30);
+			var month = hours(24 * 30);
 			if( d >= month || d <= -month )
 			{
 				os << duration_cast<hours>(d).count() / month.count() << "M";
 				d %= month;
 			}
-			var days = chrono::hours(24);
+			var days = hours(24);
 			if( d >= days || d <= -days )
 			{
 				os << duration_cast<hours>(d).count() / days.count() << "M";
@@ -108,7 +109,7 @@ namespace Jde
 	}
 #endif
 	DateTime::DateTime()noexcept:
-		_time_point( std::chrono::system_clock::now() )
+		_time_point( system_clock::now() )
 	{}
 
 	DateTime::DateTime( const DateTime& other )noexcept
@@ -117,7 +118,7 @@ namespace Jde
 	}
 
 	DateTime::DateTime( time_t time )noexcept:
-		_time_point( std::chrono::system_clock::from_time_t(time) )
+		_time_point( system_clock::from_time_t(time) )
 	{}
 
 	DateTime::DateTime( TimePoint tp )noexcept:
@@ -125,9 +126,8 @@ namespace Jde
 	{}
 
 	DateTime::DateTime( fs::file_time_type t )noexcept:
-		_time_point( Chrono::ToClock<Clock,file_clock>(t) )
+		_time_point( Chrono::ToClock<Clock,fs::file_time_type::clock>(t) )
 	{}
-
 
 	DateTime::DateTime( uint16 year, uint8 month, uint8 day, uint8 hour, uint8 minute, uint8 second, Duration nanoFraction )noexcept
 	{
@@ -209,7 +209,7 @@ namespace Jde
 	time_t DateTime::TimeT()const noexcept
 	{
 		if( !_pTime )
-			_pTime = make_unique<time_t>( std::chrono::system_clock::to_time_t(_time_point) );
+			_pTime = make_unique<time_t>( system_clock::to_time_t(_time_point) );
 		return *_pTime;
 	}
 
@@ -277,7 +277,7 @@ namespace Jde
 	constexpr std::array<sv,12> months{ "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec" };
 	uint DateTime::ParseMonth( sv month )noexcept(false)
 	{
-		var index = find( months.begin(), months.end(), StringUtilities::ToLower(string(month)) )-months.begin();
+		var index = find( months.begin(), months.end(), Str::ToLower(string(month)) )-months.begin();
 		if( index>=(int)months.size() )
 			THROW( ArgumentException("Could not parse month '{}'", month) );
 		return index+1;
@@ -293,7 +293,7 @@ namespace Jde
 	// 	var fileTimeT = fs::file_time_type::clock::to_time_t( fileTime );
 	// 	var fractional = fileTime-fs::file_time_type::clock::from_time_t( fileTimeT );
 	// 	TimePoint point = Clock::from_time_t( fileTimeT );
-	// 	Duration d = std::chrono::milliseconds( duration_cast<milliseconds>(fractional) );
+	// 	Duration d = milliseconds( duration_cast<milliseconds>(fractional) );
 	// 	point += d;
 	// 	return point;
 	// }

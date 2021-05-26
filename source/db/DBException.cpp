@@ -13,11 +13,27 @@ namespace Jde::DB
 		}
 		return y;
 	}
-	DBException::DBException( const std::runtime_error& inner, sv sql, const std::vector<DataValue>* pValues )noexcept:
+	DBException::DBException( const std::runtime_error& inner, sv sql, const std::vector<DataValue>* pValues, uint errorCode )noexcept:
 		RuntimeException( inner ),
 		Sql{sql},
-		Parameters{ CopyParams(pValues) }
+		Parameters{ CopyParams(pValues) },
+		ErrorCode{ errorCode }
 	{}
+
+	DBException::DBException( uint errorCode, sv sql, const std::vector<DataValue>* pValues )noexcept:
+		DBException{ std::runtime_error{""}, sql, pValues, errorCode }
+	{}
+
+	DBException::DBException( sv sql, const std::vector<DataValue>* pValues )noexcept:
+		DBException{ 0, sql, pValues }
+	{}
+
+	const char* DBException::what() const noexcept
+	{
+		if( Sql.size() && _what.empty() )
+			_what =  DB::Message( Sql, &Parameters, string{RuntimeException::what()} );
+		return RuntimeException::what();
+	}
 
 	void DBException::Log( sv /*pszAdditionalInformation*/, ELogLevel level )const noexcept
 	{

@@ -1,21 +1,20 @@
 #pragma once
 #include "../DataType.h"
-#include "../../Exports.h"
-#include "../../StringUtilities.h"
+#include <jde/Exports.h>
+#include <jde/Str.h>
 
 namespace Jde::DB
 {
 	using SchemaName=CIString;
 	struct Syntax;
 	struct Schema;
-	//struct SurrogateKey
-	//{};
+	struct Table;
 	struct JDE_NATIVE_VISIBILITY Column
 	{
 		Column()=default;
 		Column( sv name, uint ordinalPosition, sv dflt, bool isNullable, DataType type, optional<uint> maxLength, bool isIdentity, bool isId, optional<uint> numericPrecision, optional<uint> numericScale )noexcept;
 		Column( sv name )noexcept;
-		Column( sv name, const nlohmann::json& j, const flat_map<string,Column>& commonColumns )noexcept(false);
+		Column( sv name, const nlohmann::json& j, const flat_map<string,Column>& commonColumns, const flat_map<string,Table>& parents, const nlohmann::ordered_json& schema )noexcept(false);
 
 		string Create( const Syntax& syntax )const noexcept;
 		string DataTypeString(const Syntax& syntax)const noexcept;
@@ -34,11 +33,9 @@ namespace Jde::DB
 		bool Updateable{true};
 		string PKTable;
 	};
-	//void from_json( const nlohmann::json& j, Column& column );
 	struct Table;
 	struct  JDE_NATIVE_VISIBILITY Index
 	{
-		//Index( sv indexName, sv tableName, bool primaryKey, bool unique=true, bool clustered=false )noexcept;
 		Index( sv indexName, sv tableName, bool primaryKey, vector<CIString>* pColumns=nullptr, bool unique=true, optional<bool> clustered=optional<bool>{} )noexcept;//, bool clustered=false
 		Index( sv indexName, sv tableName, const Index& other )noexcept;
 
@@ -52,11 +49,8 @@ namespace Jde::DB
 	};
 	struct JDE_NATIVE_VISIBILITY Table
 	{
-		Table( sv schema, sv name ):
-			Schema{schema},
-			Name{name}
-		{}
-		Table( sv name, const nlohmann::json& j, const flat_map<string,Table>& parents, const flat_map<string,Column>& commonColumns )noexcept(false);
+		Table( sv schema, sv name )noexcept:Schema{schema}, Name{name}{}
+		Table( sv name, const nlohmann::json& j, const flat_map<string,Table>& parents, const flat_map<string,Column>& commonColumns, const nlohmann::ordered_json& schema )noexcept(false);
 
 		string Create( const Syntax& syntax )const noexcept;
 		string InsertProcName()const noexcept;
@@ -73,7 +67,7 @@ namespace Jde::DB
 		string ParentId()const noexcept(false);
 		sp<const Table> ChildTable( const DB::Schema& schema )const noexcept(false);
 		sp<const Table> ParentTable( const DB::Schema& schema )const noexcept(false);
-
+		
 		bool HaveSequence()const noexcept{ return std::find_if( Columns.begin(), Columns.end(), [](const auto& c){return c.IsIdentity;} )!=Columns.end(); }
 		string Schema;
 		string Name;
@@ -83,10 +77,11 @@ namespace Jde::DB
 		vector<vector<SchemaName>> NaturalKeys;
 		flat_map<uint,string> FlagsData;
 		vector<nlohmann::json> Data;
+		bool CustomInsertProc{false};
+
 	};
 	struct ForeignKey
 	{
-		//ForeignKey( sv name, sv table, const vector<string>& columns, sv pkTable )noexcept;
 		static string Create( sv name, sv columnName, const DB::Table& pkTable, sv foreignTable )noexcept(false);
 
 		string Name;
@@ -99,5 +94,4 @@ namespace Jde::DB
 	{
 		string Name;
 	};
-	//typedef shared_ptr<Table> TablePtr_;
 }

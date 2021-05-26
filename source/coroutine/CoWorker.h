@@ -1,5 +1,5 @@
 #pragma once
-#include "../application/Application.h"
+#include <jde/App.h>
 #include "../threading/Thread.h"
 
 namespace Jde::Coroutine

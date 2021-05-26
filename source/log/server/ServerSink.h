@@ -3,7 +3,11 @@
 #include "../../collections/Queue.h"
 #include "../../collections/UnorderedSet.h"
 #include "../../io/sockets/ProtoClient.h"
-#include "./proto/messages.pb.h"
+#pragma warning(push)
+#pragma warning( disable : 4127 )
+#pragma warning( disable : 5054 )
+	#include "./proto/messages.pb.h"
+#pragma warning(pop)
 
 namespace Jde
 {

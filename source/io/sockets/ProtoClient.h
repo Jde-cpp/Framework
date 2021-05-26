@@ -1,10 +1,13 @@
 #pragma once
 #include "Socket.h"
 #include "../../collections/Queue.h"
-#include "../../log/Logging.h"
-#pragma warning(disable:4244)
+#include <jde/Log.h>
+#include <jde/Exception.h>
+
+DISABLE_WARNINGS
 #include <google/protobuf/message_lite.h>
-#pragma warning(default:4244)
+ENABLE_WARNINGS
+
 namespace Jde::IO::Sockets
 {
 	namespace basio = boost::asio;

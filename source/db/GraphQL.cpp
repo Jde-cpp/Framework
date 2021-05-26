@@ -3,10 +3,10 @@
 #include "Row.h"
 #include "Database.h"
 #include "DataSource.h"
+#include <jde/Exception.h>
 #include "Syntax.h"
 #include "../DateTime.h"
-#include "../StringUtilities.h"
-#include "../TypeDefs.h"
+#include <jde/Str.h>
 
 #define var const auto
 namespace Jde
@@ -167,7 +167,7 @@ namespace DB
 		for( var& param : whereParams ) parameters.push_back( param );
 		if( sqlUpdate.size() )
 			sql << sqlUpdate;
-		sql << " where " << StringUtilities::AddSeparators( where, " and " );
+		sql << " where " << Str::AddSeparators( where, " and " );
 
 		var result = _pDataSource->Execute( sql.str(), parameters );
 //		DBG( "result={}"sv, result );
@@ -450,7 +450,7 @@ namespace DB
 		ostringstream sql{ "select id,", std::ios::ate };
 		vector<string> columns;
 		for_each( fieldTable.Columns.begin(), fieldTable.Columns.end(), [&columns, &dbTable](var& x){ if(dbTable.FindColumn(x.JsonName)) columns.push_back(x.JsonName);} );//sb only id/name.
-		sql << StringUtilities::AddCommas( columns ) << " from " << dbTable.Name << " order by id";
+		sql << Str::AddCommas( columns ) << " from " << dbTable.Name << " order by id";
 		_pDataSource->Select( sql.str(), [&columns,&fields]( const DB::IRow& row ){ json j; for( uint i=0; i<columns.size(); ++i ) j[columns[i]] = row.GetString(i+1); fields.push_back(j); } );
 		json jTable;
 		jTable["enumValues"] = fields;
@@ -620,7 +620,7 @@ namespace DB
 					}
 				}
 			}
-			return StringUtilities::AddCommas( columns );
+			return Str::AddCommas( columns );
 		};
 		vector<uint> dates; map<uint,sp<const DB::Table>> flags;
 		string joins;
@@ -997,13 +997,13 @@ namespace DB
 		// auto paramStringA = string{ q.Next(')') }; THROW_IF( paramStringA.front()!='(', Exception("Expected '(' vs {} @ '{}' to start function - '{}'.",  paramStringA.front(), q.Index()-1, q.Text()) );
 		// var lastIndex = paramStringA.find_last_of( ')' ); THROW_IF( lastIndex==string::npos, Exception("Expected ')' - '{}'.",  paramStringA, q.Text()) );
 		// var paramString = paramStringA.substr( 1, lastIndex-1 );
-		// var params = StringUtilities::Split( paramString );
+		// var params = Str::Split( paramString );
 		// json j;
 		// for( var& param : params )
 		// {
-		// 	auto keyValue = StringUtilities::Split( param, ':' ); THROW_IF( keyValue.size()!=2, Exception("Could not parse {} keyValue.size()!=2", paramString) );
-		// 	auto key = keyValue[0]; StringUtilities::Trim(key);
-		// 	auto value  = keyValue[1]; StringUtilities::Trim(value); THROW_IF( key.empty() || value.empty(), Exception("Could not parse {} key.empty() || value.empty()", paramString) );
+		// 	auto keyValue = Str::Split( param, ':' ); THROW_IF( keyValue.size()!=2, Exception("Could not parse {} keyValue.size()!=2", paramString) );
+		// 	auto key = keyValue[0]; Str::Trim(key);
+		// 	auto value  = keyValue[1]; Str::Trim(value); THROW_IF( key.empty() || value.empty(), Exception("Could not parse {} key.empty() || value.empty()", paramString) );
 		// 	if( value.starts_with("\"") && value.ends_with("\"") )
 		// 	{
 		// 		THROW_IF( value.size()==1, Exception("Could not parse {}.  value.size()==1", paramString) );
@@ -1075,7 +1075,7 @@ namespace DB
 /*		string parentJsonName;
 		if( type>DB::EMutationQL::Purge )
 		{
-			var childParent = StringUtilities::Split( string{tableJsonName}, "To" ); THROW_IF( childParent.size()!=2, Exception("could not find child/parent in {}", command) );
+			var childParent = Str::Split( string{tableJsonName}, "To" ); THROW_IF( childParent.size()!=2, Exception("could not find child/parent in {}", command) );
 			tableJsonName = childParent[0];
 			parentJsonName = childParent[1];
 		}*/

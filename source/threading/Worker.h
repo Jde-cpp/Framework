@@ -1,7 +1,7 @@
 #pragma once
-#include "../TypeDefs.h"
+#include <jde/TypeDefs.h>
 //#include "Coroutine.h"
-#include "../application/Application.h"
+#include <jde/App.h>
 #include "InterruptibleThread.h"
 
 namespace Jde::Threading

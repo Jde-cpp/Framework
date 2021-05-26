@@ -1,12 +1,14 @@
-#pragma once
-#include "../Exports.h"
+﻿#pragma once
+#include <jde/Exports.h>
 #include "DataSource.h"
 #include "../Cache.h"
 
 #define QUERY if( var pDS = Jde::DB::DataSource(); pDS ) (*pDS)
 namespace Jde::DB
 {
+	#define 🚪 JDE_NATIVE_VISIBILITY auto
 	struct IDataSource; struct Syntax; //struct DataValue;
+	string Message( sv sql, const std::vector<DataValue>* pParameters, sv error={} )noexcept;
 	void Log( sv sql, const std::vector<DataValue>* pParameters, sv file, sv fnctn, uint line, ELogLevel level=ELogLevel::Debug, sv error={} )noexcept;
 	JDE_NATIVE_VISIBILITY sp<Syntax> DefaultSyntax()noexcept;
 	JDE_NATIVE_VISIBILITY sp<IDataSource> DataSource()noexcept(false);
@@ -25,9 +27,9 @@ namespace Jde::DB
 	JDE_NATIVE_VISIBILITY void Select( sv sql, std::function<void(const IRow&)> f )noexcept(false);
 	//template<class K,class V> sp<flat_map<K,V>> SelectMapSP( sv sql, str cacheName={} )noexcept(false);
 	template<class K,class V> sp<flat_map<K,V>> SelectMap( sv sql, str cacheName={} )noexcept(false);
-	template<class T> boost::container::flat_set<T> SelectSet( sv sql, const std::vector<DataValue>& parameters )noexcept(false);
+	ⓣ SelectSet( sv sql, const std::vector<DataValue>& parameters )noexcept(false)->boost::container::flat_set<T>;
 
-	CIString SelectName( sv sql, uint id, sv cacheName )noexcept(false);
+	🚪 SelectName( sv sql, uint id, sv cacheName )noexcept(false)->CIString;
 }
 
 namespace Jde
@@ -76,4 +78,5 @@ namespace Jde
 	}
 
 #undef var
+#undef  🚪
 }

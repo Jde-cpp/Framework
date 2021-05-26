@@ -1,8 +1,9 @@
-#pragma once
+﻿#pragma once
 #include <algorithm>
 #include <forward_list>
 #include <sstream>
-#include "../io/Crc.h"
+#include <jde/io/Crc.h>
+#include <jde/Log.h>
 
 #define var const auto
 namespace Jde
@@ -21,7 +22,16 @@ namespace Jde
 		return pCopy ? Find( *pCopy, key ) : typename T::mapped_type{};
 	}
 
-#define LAZY( x ) LazyWrap{ [&](){ return x;} }
+	ⓣ EmplaceShared( T& map, typename T::key_type key )->typename T::mapped_type&
+	{
+		auto p = map.find( key );
+		if( p==map.end() )
+			p = map.try_emplace( key, make_shared<T::mapped_type::element_type>() ).first;
+		return p->second;
+	}
+
+
+	#define LAZY( x ) LazyWrap{ [&](){ return x;} }//doesn't work in ms
 	template<class F> struct LazyWrap //https://stackoverflow.com/questions/62577415/lazy-argument-evaluation-for-try-emplace
 	{
 		LazyWrap( F&& f ):_f(f) {}

@@ -1,7 +1,7 @@
 #pragma once
 #include "../threading/Thread.h"
 #include "../Settings.h"
-#include "../application/Application.h"
+#include <jde/App.h>
 #include "../collections/Queue.h"
 #include "../threading/jthread.h"
 

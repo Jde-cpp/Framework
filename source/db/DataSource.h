@@ -2,7 +2,7 @@
 #include "Row.h"
 //#include "../../types/Schema.h"
 #include "SchemaProc.h"
-#include "../log/Logging.h"
+#include <jde/Log.h>
 
 #define DBLOG(message,params) Jde::DB::Log( message, params, MY_FILE, __func__, __LINE__ )
 namespace Jde::DB

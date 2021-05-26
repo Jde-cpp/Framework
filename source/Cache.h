@@ -1,8 +1,8 @@
 #pragma once
-#include "application/Application.h"
-#include "log/Logging.h"
-#include "StringUtilities.h"
-#include "Exports.h"
+#include <jde/App.h>
+#include <jde/Log.h>
+#include <jde/Str.h>
+#include <jde/Exports.h>
 
 namespace Jde
 {
@@ -20,7 +20,7 @@ namespace Jde
 		static sp<T> Get( str name )noexcept(false);
 		template<class T>
 		static sp<T> Set( str name, sp<T> pValue )noexcept;
-		static bool Clear( sv name )noexcept{ CALL(InstanceClear(name),false); }
+		JDE_NATIVE_VISIBILITY static auto Clear( sv name )noexcept->bool{ CALL(InstanceClear(name),false); }
 
 		template<class K,class V> static optional<V> GetValue( sv cacheName, K id )noexcept;
 

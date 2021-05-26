@@ -1,4 +1,4 @@
-#include "File.h"
+#include <jde/io/File.h>
 
 #include <cmath>
 #include <fstream>
@@ -6,9 +6,8 @@
 #include <thread>
 #include <unordered_set>
 #include <spdlog/fmt/ostr.h>
-#include "../TypeDefs.h"
 #include "../Stopwatch.h"
-#include "../StringUtilities.h"
+#include <jde/Str.h>
 #define var const auto
 
 namespace Jde::IO
@@ -210,7 +209,7 @@ namespace Jde::IO
 	vector<string> FileUtilities::LoadColumnNames( path csvFileName )
 	{
 		std::vector<string> columnNames;
-		auto columnNameFunction = [&columnNames](string line){ columnNames = StringUtilities::Split<char>(line); };
+		auto columnNameFunction = [&columnNames](string line){ columnNames = Str::Split<char>(line); };
 		IO::File::ForEachLine<char>( csvFileName.string(), columnNameFunction, 1 );
 		return columnNames;
 	}
@@ -629,7 +628,7 @@ namespace Jde::IO
 		std::set<size_t> columnIndexes;
 		auto columnNameFunction = [&columnNamesToFetch,&columnIndexes,&columnNames,&notColumns](sv line)
 		{
-			auto tokens = StringUtilities::Split( string(line) );
+			auto tokens = Str::Split( string(line) );
 			int iToken=0;
 			for( var& token : tokens )
 			{
@@ -700,7 +699,7 @@ namespace Jde::IO
 	{
 		auto sourceContent = Load( source );
 		for( var& [search,replacement] : replacements )
-			sourceContent = StringUtilities::Replace( sourceContent, search, replacement );
+			sourceContent = Str::Replace( sourceContent, search, replacement );
 		Save( destination, sourceContent );
 	}
 }

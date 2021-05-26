@@ -2,7 +2,7 @@
 #include <condition_variable>
 #include <deque>
 #include <shared_mutex>
-#include "../Exception.h"
+#include <jde/Exception.h>
 
 namespace Jde::Threading
 {
