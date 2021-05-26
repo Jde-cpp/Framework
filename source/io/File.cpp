@@ -94,13 +94,13 @@ namespace Jde::IO
 
 			f.write( data.data(), data.size() );
 		}
-		void Save( path path, const std::string& value, std::ios_base::openmode openMode )noexcept(false)
+		void Save( path path, sv value, std::ios_base::openmode openMode )noexcept(false)
 		{
 			std::ofstream f( path, openMode );
 			if( f.fail() )
 				THROW( IOException(path, "Could not open file") );
 
-			f.write( value.c_str(), value.size() );
+			f.write( value.data(), value.size() );
 		}
 		void Compression::Save( path path, const vector<char>& data )
 		{
