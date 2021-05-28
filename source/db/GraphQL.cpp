@@ -939,9 +939,9 @@ namespace DB
 	{
 		ostringstream os;
 		bool inValue = false;
-		uint i=0;
-		for( char ch = json[i]; i<json.size(); ch = json[++i] )
+		for( uint i=0; i<json.size(); ++i )
 		{
+			char ch = json[i];
 			if( std::isspace(ch) )
 				os << ch;
 			else if( ch=='{' || ch=='}' )
@@ -992,37 +992,8 @@ namespace DB
 				inValue = true;
 			}
 		}
-		DBG( os.str() );
+		//DBG( os.str() );
 		return os.str();
-		// auto paramStringA = string{ q.Next(')') }; THROW_IF( paramStringA.front()!='(', Exception("Expected '(' vs {} @ '{}' to start function - '{}'.",  paramStringA.front(), q.Index()-1, q.Text()) );
-		// var lastIndex = paramStringA.find_last_of( ')' ); THROW_IF( lastIndex==string::npos, Exception("Expected ')' - '{}'.",  paramStringA, q.Text()) );
-		// var paramString = paramStringA.substr( 1, lastIndex-1 );
-		// var params = Str::Split( paramString );
-		// json j;
-		// for( var& param : params )
-		// {
-		// 	auto keyValue = Str::Split( param, ':' ); THROW_IF( keyValue.size()!=2, Exception("Could not parse {} keyValue.size()!=2", paramString) );
-		// 	auto key = keyValue[0]; Str::Trim(key);
-		// 	auto value  = keyValue[1]; Str::Trim(value); THROW_IF( key.empty() || value.empty(), Exception("Could not parse {} key.empty() || value.empty()", paramString) );
-		// 	if( value.starts_with("\"") && value.ends_with("\"") )
-		// 	{
-		// 		THROW_IF( value.size()==1, Exception("Could not parse {}.  value.size()==1", paramString) );
-		// 		j[key] = value.size()==2 ? "" : value.substr( 1, value.size()-2 );
-		// 	}
-		// 	else if( value=="null" )
-		// 		j[key] = nullptr;
-		// 	else if( value=="true" )
-		// 		j[key] = true;
-		// 	else if( value=="false" )
-		// 		j[key] = false;
-		// 	else
-		// 	{
-		// 		istringstream is{ value };
-		// 		double v2; is >> v2;
-		// 		j[key] = v2;
-		// 	}
-		// }
-		// return j;
 	}
 	json ParseJson( Parser& q )
 	{

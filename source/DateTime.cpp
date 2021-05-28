@@ -233,7 +233,8 @@ namespace Jde
 		time_t time = TimeT();
 		auto pLocal = make_unique<std::tm>();
 #ifdef _WINDOWS
-		localtime_s( pLocal.get(), &time );
+		_localtime64_s( pLocal.get(), &time );
+		//localtime_s( pLocal.get(), &time );
 #else
 		localtime_r( &time, pLocal.get() );
 #endif

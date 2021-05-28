@@ -78,6 +78,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <StringPooling>true</StringPooling>
       <AdditionalIncludeDirectories>../../Public</AdditionalIncludeDirectories>
+      <PreprocessToFile>false</PreprocessToFile>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -110,6 +111,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <StringPooling>true</StringPooling>
       <AdditionalIncludeDirectories>../../Public</AdditionalIncludeDirectories>
+      <PreprocessToFile>false</PreprocessToFile>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -128,10 +130,16 @@
   <ItemGroup>
     <ClCompile Include="App.cpp" />
     <ClCompile Include="coroutine\Task.cpp" />
-    <ClCompile Include="db\DataSource.cpp" />
+    <ClCompile Include="db\DataSource.cpp">
+      <ForcedIncludeFiles Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">stdafx.h</ForcedIncludeFiles>
+      <ForcedIncludeFiles Condition="'$(Configuration)|$(Platform)'=='Release|x64'">stdafx.h</ForcedIncludeFiles>
+    </ClCompile>
     <ClCompile Include="db\GraphQL.cpp" />
     <ClCompile Include="db\SchemaProc.cpp" />
-    <ClCompile Include="Log.cpp" />
+    <ClCompile Include="Log.cpp">
+      <PreprocessToFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</PreprocessToFile>
+      <PreprocessToFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</PreprocessToFile>
+    </ClCompile>
     <ClCompile Include="Str.cpp" />
     <ClCompile Include="threading\Mutex.cpp" />
     <ClCompile Include="threading\Worker.cpp" />
@@ -141,6 +149,7 @@
     <ClInclude Include="..\..\Public\jde\Dll.h" />
     <ClInclude Include="..\..\Public\jde\Exception.h" />
     <ClInclude Include="..\..\Public\jde\Exports.h" />
+    <ClInclude Include="..\..\Public\jde\io\File.h" />
     <ClInclude Include="..\..\Public\jde\JdeAssert.h" />
     <ClInclude Include="..\..\Public\jde\Log.h" />
     <ClInclude Include="..\..\Public\jde\Str.h" />
@@ -177,7 +186,6 @@
     <ClInclude Include="DateTime.h" />
     <ClInclude Include="Defines.h" />
     <ClInclude Include="io\Buffer.h" />
-    <ClInclude Include="io\File.h" />
     <ClInclude Include="io\Parser.h" />
     <ClInclude Include="io\sockets\SessionCallbacks.h" />
     <ClInclude Include="io\sockets\Socket.h" />

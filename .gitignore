@@ -49,3 +49,4 @@ source/.clang-format
 
 source/out/*
 tests/out/*
+source/stdafx.h

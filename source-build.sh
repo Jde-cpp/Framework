@@ -42,8 +42,8 @@ if windows; then
 	findExecutable MSBuild.exe '/c/Program\ Files\ \(X86\)/Microsoft\ Visual\ Studio/2019/BuildTools/MSBuild/Current/Bin' 0
 	findExecutable MSBuild.exe '/c/Program\ Files\ \(X86\)/Microsoft\ Visual\ Studio/2019/Enterprise/MSBuild/Current/Bin'
 	findExecutable cmake.exe '/c/Program\ Files/CMake/bin'
-	findExecutable cl.exe '/c/Program\ Files\ \(X86\)/Microsoft\ Visual\ Studio/2019/BuildTools/VC/Tools/MSVC/14.28.29910/bin/Hostx64/x64' 0
-	findExecutable cl.exe '/c/Program\ Files\ \(X86\)/Microsoft\ Visual\ Studio/2019/Enterprise/VC/Tools/MSVC/14.28.29910/bin/Hostx64/x64' 1
+	findExecutable cl.exe '/c/Program\ Files\ \(X86\)/Microsoft\ Visual\ Studio/2019/BuildTools/VC/Tools/MSVC/14.29.30037/bin/Hostx64/x64' 0
+	findExecutable cl.exe '/c/Program\ Files\ \(X86\)/Microsoft\ Visual\ Studio/2019/Enterprise/VC/Tools/MSVC/14.29.30037/bin/Hostx64/x64' 1
 	findExecutable vswhere.exe '/c/Program\ Files\ \(X86\)/Microsoft\ Visual\ Studio/installer' 0
 	#findExecutable protoc.exe $REPO_BASH/jde/Public/stage/Release;
 fi;
@@ -186,6 +186,7 @@ function fetchBuild
 }
 function findProtoc
 {
+	echo REPO_BASH=$REPO_BASH;
 	findExecutable protoc.exe $REPO_BASH/protobuf/cmake/build/sln/Release;
 }
 popd > /dev/null;

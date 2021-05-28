@@ -118,10 +118,10 @@
     <ClCompile Include="Str.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="App.cpp">
+    <ClCompile Include="Log.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Log.cpp">
+    <ClCompile Include="App.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>
@@ -130,9 +130,6 @@
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="io\Buffer.h">
-      <Filter>Headers\io</Filter>
-    </ClInclude>
-    <ClInclude Include="io\File.h">
       <Filter>Headers\io</Filter>
     </ClInclude>
     <ClInclude Include="io\Parser.h">
@@ -323,6 +320,9 @@
     </ClInclude>
     <ClInclude Include="Cache.h">
       <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Public\jde\io\File.h">
+      <Filter>Headers\io</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

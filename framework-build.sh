@@ -53,8 +53,8 @@ moveToDir debug; cd ..;
 moveToDir release; popd  > /dev/null;
 if [ $shouldFetch -eq 1 ]; then
 	vcpkg.exe install nlohmann-json --triplet x64-windows
-	vcpkg.exe install fmt --triplet x64-windows
-	vcpkg.exe install spdlog --triplet x64-windows
+	#vcpkg.exe install fmt --triplet x64-windows
+	#vcpkg.exe install spdlog --triplet x64-windows
 	vcpkg.exe install boost --triplet x64-windows
 	#vcpkg.exe install protobuf[zlib]:x64-windows ./configure --disable-shared
 fi;
@@ -62,6 +62,7 @@ buildProto=$shouldFetch
 #buildProto=1
 cd $REPO_BASH;
 if [ ! -d protobuf ]; then  git clone https://github.com/Jde-cpp/protobuf.git; buildProto=1; fi;
+if [ ! -d spdlog ]; then  git clone https://github.com/gabime/spdlog.git; fi;#buildSpd=1; fi;
 function protocBuild
 {
 	type=sln;#lib;
