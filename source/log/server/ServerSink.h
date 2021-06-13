@@ -37,7 +37,7 @@ namespace Logging
 		bool ShouldSendFunction( uint messageId )noexcept{ return _functionsSent.emplace(messageId); }
 		bool ShouldSendUser( uint messageId )noexcept{ return _usersSent.emplace(messageId); }
 		bool ShouldSendThread( uint messageId )noexcept{ return _threadsSent.emplace(messageId); }
-		virtual void SendCustom( uint32 /*requestId*/, const std::string& /*bytes*/ )noexcept{ CRITICAL0("SendCustom not implemented"sv); }
+		virtual void SendCustom( uint32 /*requestId*/, const std::string& /*bytes*/ )noexcept{ CRITICAL("SendCustom not implemented"sv); }
 		std::atomic<bool> SendStatus{false};
 	protected:
 		sp<IServerSink> GetInstnace()noexcept;

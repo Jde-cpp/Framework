@@ -122,24 +122,24 @@ namespace Jde::DB
 				_pDataSource->Execute( procCreate );
 				DBG( "Created proc '{}'."sv, pTable->InsertProcName() );
 			}
-			if( j.contains("$scripts") )
+		}
+		if( j.contains("$scripts") )
+		{
+			for( var& nameObj : *j.find("$scripts") )
 			{
-				for( var& nameObj : *j.find("$scripts") )
-				{
-					auto name = fs::path{ nameObj.get<string>() };
-					var procName = name.stem();
-					if( procedures.find(procName.string())!=procedures.end() )
-						continue;
-					if( pSyntax->ProcFileSuffix().size() )
-						name = name.parent_path()/( name.stem().string()+string{pSyntax->ProcFileSuffix()}+name.extension().string() );
-					var path = relativePath/name; THROW_IF( !fs::exists(path), "Could not find {}"sv, path.string() );
-					var text = IO::FileUtilities::Load( path );
-					DBG( "Executing '{}'"sv, path.string() );
-					var queries = Str::Split( text, CIString{"\ngo"sv} );
-					for( var& query : queries )
-						_pDataSource->Execute( query );
-					DBG( "Finished '{}'"sv, path.string() );
-				}
+				auto name = fs::path{ nameObj.get<string>() };
+				var procName = name.stem();
+				if( procedures.find(procName.string())!=procedures.end() )
+					continue;
+				if( pSyntax->ProcFileSuffix().size() )
+					name = name.parent_path()/( name.stem().string()+string{pSyntax->ProcFileSuffix()}+name.extension().string() );
+				var path = relativePath/name; THROW_IF( !fs::exists(path), "Could not find {}"sv, path.string() );
+				var text = IO::FileUtilities::Load( path );
+				DBG( "Executing '{}'"sv, path.string() );
+				var queries = Str::Split( text, CIString{"\ngo"sv} );
+				for( var& query : queries )
+					_pDataSource->Execute( query, nullptr, nullptr, false );
+				DBG( "Finished '{}'"sv, path.string() );
 			}
 		}
 		for( var& [tableName, pTable] : schema.Tables )

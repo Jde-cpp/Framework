@@ -84,9 +84,9 @@ namespace Jde::IO::Sockets
 	void ProtoServer::Run()noexcept
 	{
 		Threading::SetThreadDscrptn( "ProtoServer::Run" );
-		DBG0( "ProtoServer::Run"sv );
+		DBG( "ProtoServer::Run"sv );
 		_asyncHelper.run();
-		DBG0( "ProtoServer::Run Exit"sv );
+		DBG( "ProtoServer::Run Exit"sv );
 	}
 
 	ProtoSession::ProtoSession( basio::ip::tcp::socket& socket, SessionPK id )noexcept:
@@ -119,7 +119,7 @@ namespace Jde::IO::Sockets
 				ReadBody( messageLength );
 			}
 		};
-		TRACE0( "Server::Session::ReadHeader"sv );
+		TRACE( "Server::Session::ReadHeader"sv );
 		basio::async_read( _socket2, basio::buffer(static_cast<void*>(_readMessageSize), sizeof(_readMessageSize)), onComplete );
 	}
 }

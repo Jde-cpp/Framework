@@ -32,7 +32,6 @@ include_directories( "$ENV{REPO_DIR}/tws-api/source/cppclient/client" )
 #set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -stdlib=libc++")
 #target_link_libraries(Tests.Framework c++abi)
 target_link_libraries(Tests.Framework Jde)
-#target_link_libraries(Tests.Framework Jde.UM)
 target_link_libraries(Tests.Framework protobuf)
 target_link_libraries(Tests.Framework gtest_main)
 target_link_libraries(Tests.Framework stdc++)
@@ -50,6 +49,6 @@ target_precompile_headers(Tests.Framework PRIVATE
 	<spdlog/sinks/basic_file_sink.h>
 	<spdlog/fmt/ostr.h>
 	<nlohmann/json.hpp>
-	"../../Framework/source/TypeDefs.h"
+	<jde/TypeDefs.h>
 	"../../Framework/source/DateTime.h"
 )

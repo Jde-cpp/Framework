@@ -276,7 +276,7 @@ namespace Jde
 	}
 
 	constexpr std::array<sv,12> months{ "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec" };
-	uint DateTime::ParseMonth( sv month )noexcept(false)
+	uint8 DateTime::ParseMonth( sv month )noexcept(false)
 	{
 		var index = find( months.begin(), months.end(), Str::ToLower(string(month)) )-months.begin();
 		if( index>=(int)months.size() )

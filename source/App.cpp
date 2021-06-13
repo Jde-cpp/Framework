@@ -34,7 +34,7 @@ namespace Jde
 	IApplication::~IApplication()
 	{
 		if( HaveLogger() )
-			DBG0( "IApplication::~IApplication"sv );
+			DBG( "IApplication::~IApplication"sv );
 	}
 	set<string> IApplication::BaseStartup( int argc, char** argv, sv appName, sv companyName )noexcept(false)//no config file
 	{
@@ -68,7 +68,7 @@ namespace Jde
 		if( !fs::exists(settingsPath) )
 		{
 			var settingsPathB = std::filesystem::path{".."}/fileName;
-			std::cout << "'" << std::filesystem::current_path().string() << "/" << settingsPath.string() << "' not found look:  '" << settingsPathB.string() << "'" << endl;
+			//std::cout << "'" << std::filesystem::current_path().string() << "/" << settingsPath.string() << "' not found look:  '" << settingsPathB.string() << "'" << endl;
 			settingsPath = fs::exists(settingsPathB) ? settingsPathB : ApplicationDataFolder()/fileName;
 		}
 		Settings::SetGlobal( std::make_shared<Jde::Settings::Container>(settingsPath) );
@@ -128,19 +128,19 @@ namespace Jde
 			std::this_thread::sleep_for( 2s );
 		}
 		Settings::SetGlobal( nullptr );
-		DBG0( "Leaving Application::Wait"sv );
+		DBG( "Leaving Application::Wait"sv );
 	}
 
 	void IApplication::AddThread( sp<Threading::InterruptibleThread> pThread )noexcept
 	{
-		TRACE0( "Adding Backgound thread"sv );
+		TRACE( "Adding Backgound thread"sv );
 		lock_guard l{_threadMutex};
 		_pBackgroundThreads->push_back( pThread );
 	}
 
 	void IApplication::RemoveThread( sp<Threading::InterruptibleThread> pThread )noexcept
 	{
-		TRACE0( "RemoveThread"sv );
+		TRACE( "RemoveThread"sv );
 		lock_guard l{_threadMutex};
 		_pDeletedThreads->push_back( pThread );//TODO remove from _pBackgroundThreads
 		for( auto ppThread = _pBackgroundThreads->begin(); ppThread!=_pBackgroundThreads->end();  )
@@ -199,7 +199,7 @@ namespace Jde
 		_pDeletedThreads = nullptr;
 		for( var& shutdown : *_pShutdownFunctions )
 			shutdown();
-		INFO0( "Clearing Logger"sv );
+		INFO( "Clearing Logger"sv );
 		if( GetServerSink() )
 			GetServerSink()->Destroy();
 		Jde::DestroyLogger();

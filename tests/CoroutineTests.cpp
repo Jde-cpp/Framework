@@ -65,8 +65,7 @@ namespace Jde::Coroutine
 			_pThreads{pThreads}
 		{};
 		~Awaitable()=default;
-		bool await_ready()noexcept{return false;};
-		void await_suspend( Awaitable::Handle h )noexcept override
+		void await_suspend( coroutine_handle<Task<string>::promise_type> h )noexcept override
 		{
 			base::await_suspend( h );
 			_pPromise = &h.promise();
@@ -81,12 +80,12 @@ namespace Jde::Coroutine
 					_pThreads->push_back( make_shared<ResumeThread>("pool[0]", IdleLimit, move(*param)) );
 				}
 				else
-					LOGN0( ELogLevel::Information, "Resumed", 1 );
+					LOGN( ELogLevel::Information, "Resumed", 1 );
 			}
 			else
 				CoroutinePool::Resume( move(h) );
 		}
-		string await_resume()noexcept(false)
+		string await_resume()noexcept override
 		{
 			//DBG( "({})TickManager::Awaitable::await_resume"sv, std::this_thread::get_id() );
 			if( OriginalThreadParamPtr )
@@ -113,19 +112,19 @@ namespace Jde::Coroutine
 		co_await Co( &threads, MinTick*2 );
 		jthread( []()->Coroutine::Task<string>
 		{
-			DBG0( "Begin sleep1"sv );
+			DBG( "Begin sleep1"sv );
 			std::this_thread::sleep_for( MinTick );
-			DBG0( "End sleep1"sv );
+			DBG( "End sleep1"sv );
 			co_await Co( &threads, MinTick );//should resume
 			std::this_thread::sleep_for( MinTick*2 );
 			ASSERT_DESC( FindMemoryLog(1).size()==1, format("FindMemoryLog(1).size()=={}", FindMemoryLog(1).size()) );
 			ClearMemoryLog();
-			DBG0( "--------------------------------New Test--------------------------------"sv );
+			DBG( "--------------------------------New Test--------------------------------"sv );
 			jthread( []()->Coroutine::Task<string>
 			{
-				DBG0( "Begin sleep2"sv );
+				DBG( "Begin sleep2"sv );
 				std::this_thread::sleep_for( MinTick*2 );
-				DBG0( "End sleep2"sv );
+				DBG( "End sleep2"sv );
 				co_await Co( &threads, MinTick*2 );//should create new thread
 				ASSERT_DESC( FindMemoryLog(1).size()==0, format("FindMemoryLog(1).size()=={}", FindMemoryLog(1).size()) );
 				std::shared_lock l{ mtx };
@@ -178,7 +177,7 @@ namespace Jde::Coroutine
 		}
 		catch( Exception& e )
 		{
-			DBG0( string{e.what()} );
+			DBG( string{e.what()} );
 			thrown = true;
 		}
 		ASSERT_DESC( thrown, "Expecting thrown exception." );

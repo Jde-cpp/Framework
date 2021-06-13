@@ -22,8 +22,8 @@ namespace Jde
 
 	struct foo
 	{
-		foo(){ DBG0("foo"sv); }
-		~foo(){ DBG0("~foo"sv); }
+		foo(){ DBG("foo"sv); }
+		~foo(){ DBG("~foo"sv); }
 	};
 	Coroutine::TaskVoid Call( Duration d, Coroutine::Handle& handle, bool cancel=false )
 	{
@@ -58,7 +58,7 @@ namespace Jde
 		Call( -1s, handle );
 		Call( 2s, handle );
 		Call( 5500ms, handle );
-		DBG0( "Sleeping"sv );
+		DBG( "Sleeping"sv );
 		std::this_thread::sleep_for( 6s );
 		ASSERT_EQ( Count, 6 );
 	}

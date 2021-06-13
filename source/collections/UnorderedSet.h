@@ -26,6 +26,7 @@ namespace Jde
 		template<class... Args >
 		bool emplace( Args&&... args )noexcept;
 		uint ForEach( std::function<void(const TKey& key)> func )const noexcept(false);
+		bool MoveIn( TKey&& id )noexcept{ unique_lock<shared_mutex> l(_mutex); return base::emplace( move(id) ).second; }
 	private:
 		mutable std::shared_mutex _mutex;
 	};

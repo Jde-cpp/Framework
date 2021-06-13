@@ -13,7 +13,7 @@ namespace Jde::DB
 		DBException( sv sql, const std::vector<DataValue>* pValues=nullptr )noexcept;
 		DBException( const std::runtime_error& inner, sv sql, const std::vector<DataValue>* pValues=nullptr, uint errorCode=0 )noexcept;
 
-		void Log( sv pszAdditionalInformation="", ELogLevel level=ELogLevel::Debug )const noexcept;
+		void Log( sv pszAdditionalInformation="", ELogLevel level=ELogLevel::Debug )const noexcept override;
 		template<class... Args>
 		DBException( sv value, Args&&... args ):
 			RuntimeException( value, args... ),

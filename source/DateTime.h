@@ -91,7 +91,7 @@ namespace Jde
 		std::string LocalDisplay()const noexcept;
 		std::string ToIsoString()const noexcept;
 		static std::string ToIsoString(const tm& timeStruct)noexcept;
-		static uint ParseMonth( sv month )noexcept(false);
+		static uint8 ParseMonth( sv month )noexcept(false);
 		time_t TimeT()const noexcept;
 		const TimePoint& GetTimePoint()const noexcept{return _time_point;}
 		operator TimePoint()const noexcept{ return _time_point; }

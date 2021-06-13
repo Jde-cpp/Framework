@@ -32,38 +32,56 @@ shouldFetch=${2:-1};
 # 	fi;
 # fi
 #source ./common.sh;
-if [[ -z $sourceBuild ]]; then source $REPO_DIR/jde/Framework/source-build.sh; fi;
+scriptDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+if [[ -z $sourceBuild ]]; then source $scriptDir/source-build.sh; fi;
 echo framework-build.sh clean=$clean shouldFetch=$shouldFetch;
 cd $REPO_DIR;
-path_to_exe=$(which vcpkg.exe 2> /dev/null);
-if [ ! -x "$path_to_exe" ] ; then
-	if [ ! -d vcpkg ]; then
-		echo installing vcpkg;
-		git clone https://github.com/microsoft/vcpkg;
-		./vcpkg/bootstrap-vcpkg.bat;
+
+if windows; then
+	path_to_exe=$(which vcpkg.exe 2> /dev/null);
+	if [ ! -x "$path_to_exe" ] ; then
+		if [ ! -d vcpkg ]; then
+			echo installing vcpkg;
+			git clone https://github.com/microsoft/vcpkg;
+			./vcpkg/bootstrap-vcpkg.bat;
+		fi;
+		findExecutable vcpkg.exe `pwd`/vcpkg
 	fi;
-	findExecutable vcpkg.exe `pwd`/vcpkg
+else
+	pushd `pwd` > /dev/null;
+	cd $BOOST_ROOT;
+	#./bootstrap.sh --with-toolset=clang
+	#./b2 clean
+	#./b2 variant=debug   toolset=clang cxxflags="-stdlib=libc++" linkflags="-stdlib=libc++" link=shared threading=multi runtime-link=shared address-model=64 --with-system
+	#./b2 variant=release toolset=clang cxxflags="-stdlib=libc++" linkflags="-stdlib=libc++" link=shared threading=multi runtime-link=shared address-model=64 --with-system
+	#./b2 variant=debug   toolset=clang cxxflags="-stdlib=libc++" linkflags="-stdlib=libc++" link=shared threading=multi runtime-link=shared address-model=64 --with-thread
+	#./b2 variant=release toolset=clang cxxflags="-stdlib=libc++" linkflags="-stdlib=libc++" link=shared threading=multi runtime-link=shared address-model=64 --with-thread
+	#./b2 variant=debug   toolset=clang cxxflags="-stdlib=libc++ -D_GLIBCXX_DEBUG" linkflags="-stdlib=libc++" link=shared threading=multi runtime-link=shared address-model=64 --with-iostreams
+	#./b2 variant=release toolset=clang cxxflags="-stdlib=libc++" linkflags="-stdlib=libc++" link=shared threading=multi runtime-link=shared address-model=64 --with-iostreams
+	popd  > /dev/null;
 fi;
 #if [ ! -d $jdeRoot ]; then mkdir $jdeRoot; fi;
 fetchDefault Public;
-pushd `pwd` > /dev/null;
-cd $REPO_DIR/jde/Public;
-moveToDir stage;
-moveToDir debug; cd ..;
-moveToDir release; popd  > /dev/null;
-if [ $shouldFetch -eq 1 ]; then
-	vcpkg.exe install nlohmann-json --triplet x64-windows
-	#vcpkg.exe install fmt --triplet x64-windows
-	#vcpkg.exe install spdlog --triplet x64-windows
-	vcpkg.exe install boost --triplet x64-windows
-	#vcpkg.exe install protobuf[zlib]:x64-windows ./configure --disable-shared
+cd $scriptDir/../Public;
+if windows; then
+	pushd `pwd` > /dev/null;
+	moveToDir stage;
+	moveToDir debug; cd ..;
+	moveToDir release; popd  > /dev/null;
+	if [ $shouldFetch -eq 1 ]; then
+		vcpkg.exe install nlohmann-json --triplet x64-windows
+		#vcpkg.exe install fmt --triplet x64-windows
+		#vcpkg.exe install spdlog --triplet x64-windows
+		vcpkg.exe install boost --triplet x64-windows
+		#vcpkg.exe install protobuf[zlib]:x64-windows ./configure --disable-shared
+	fi;
 fi;
 buildProto=$shouldFetch
-#buildProto=1
+buildProto=0
 cd $REPO_BASH;
 if [ ! -d protobuf ]; then  git clone https://github.com/Jde-cpp/protobuf.git; buildProto=1; fi;
 if [ ! -d spdlog ]; then  git clone https://github.com/gabime/spdlog.git; fi;#buildSpd=1; fi;
-function protocBuild
+function protocBuildWin
 {
 	type=sln;#lib;
 	sharedLibs=$(if [ $type = "sln" ]; then echo "ON"; else echo "OFF"; fi)
@@ -107,26 +125,39 @@ function protocBuild
 	# 	cp Release/protoc.exe $REPO_BASH/jde/Public/stage/Release/protoc.exe;
 	# fi;
 }
+function protocBuildLinux
+{
+	cd $REPO_DIR/protobuf;
+	git submodule update --init --recursive;
+	./autogen.sh;
+	export CXX='clang++';
+	export CXXFLAGS='-std=c++20 -stdlib=libc++';
+	export LDFLAGS='-stdlib=libc++';
+	export CC=clang;
+	./configure;
+	if (( $clean == 1 )); then make clean; fi;
+	make;
+	make check;
+	sudo make install;
+	sudo ldconfig;
+}
 if [ $buildProto -eq 1 ]; then
-	echo building protoc clean=$clean
+	echo building protoc clean=$clean; echo `pwd`;
 	cd protobuf;
 	if [ $shouldFetch -eq 1 ]; then git pull; fi;
 	cd cmake;
 	if [ $clean -eq 1 ]; then echo rm build; rm -r -f build; fi;
 	moveToDir build;
-	protocBuild;
-	#protocBuild Release;
+	if windows; then protocBuildWin; else protocBuildLinux; fi;
 fi;
-
 #protobufInclude=`pwd`/vcpkg/installed/x64-windows/include
 #findExecutable protoc.exe `pwd`/vcpkg/installed/x64-windows/tools/protobuf 1
 #echo $REPO_DIR;
 #echo $REPO_BASH;
 #exit 1;
 protobufInclude=$REPO_DIR/protobuf/src;
-findExecutable protoc.exe $REPO_BASH/jde/Public/stage/release;
+if windows; then findExecutable protoc.exe $REPO_BASH/jde/Public/stage/release; fi;
 #echo findExecutable protoc.exe; exit 1;
-
 
 cd $baseDir/$jdeRoot;
 if windows; then
@@ -150,5 +181,5 @@ function frameworkProtoc
 }
 fetchDefault Framework;
 frameworkProtoc;
-#echo "Building Framework";
 build Framework 0;
+

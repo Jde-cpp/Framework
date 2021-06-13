@@ -11,12 +11,12 @@ if [ ! -d .obj ]; then mkdir .obj; fi;
 cd .obj;
 if [ ! -d $type ]; then mkdir $type; fi;
 cd $type
-#echo `pwd`
-if [ $clean -eq 1 ] || [ ! -f CMakeCache.txt ]; then
+if (( $clean == 1 )) || [ ! -f CMakeCache.txt ]; then
 	if [ -f CMakeCache.txt ]; then rm CMakeCache.txt; fi;
-	cmake -DCMAKE_BUILD_TYPE=$type  $dir > /dev/null;
+	cmake -DCMAKE_BUILD_TYPE=$type $dir > /dev/null;
 	make clean;
 fi
 make -j7;
-cd $cwd
-exit $?
+result=$?;
+cd $cwd;
+exit $result;

@@ -84,7 +84,8 @@ namespace Jde
 		_level = level;
 	}
 
-	BoostCodeException::BoostCodeException( const boost::system::error_code& errorCode )noexcept:
+	BoostCodeException::BoostCodeException( const boost::system::error_code& errorCode, str msg )noexcept:
+		RuntimeException{ msg },
 		_errorCode{ make_unique<boost::system::error_code>(errorCode) }
 	{}
 	BoostCodeException::BoostCodeException( const BoostCodeException& e )noexcept:
@@ -109,11 +110,11 @@ namespace Jde
 	{
 		return errorCategory.name();
 	}
-	std::string CodeException::ToString( const std::error_condition& errorCondition )noexcept
+	string CodeException::ToString( const std::error_condition& errorCondition )noexcept
 	{
 		const int value = errorCondition.value();
 		const std::error_category& category = errorCondition.category();
-		const std::string message = errorCondition.message();
+		const string message = errorCondition.message();
 		return format( "({}){} - {})", value, category.name(), message );
 	}
 

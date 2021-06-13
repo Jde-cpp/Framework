@@ -1,7 +1,9 @@
 #include "Coroutine.h"
 #include "../threading/InterruptibleThread.h"
 //#include "../threading/Thread.h"
-#ifndef _MSC_VER
+#ifdef _MSC_VER
+	using std::stop_token;
+#else
 	using Jde::stop_token;
 #endif
 #define var const auto
@@ -17,7 +19,7 @@ namespace Jde::Coroutine
 		IdleLimit{idleLimit},
 		ThreadParam{ name, Threading::BumpThreadHandle() },
 		_param{ move(param) },
-		_thread{ [this]( std::stop_token stoken )
+		_thread{ [this]( stop_token stoken )
 		{
 			Threading::SetThreadDscrptn( format("CoroutineThread - {}", ThreadParam.AppHandle) );
 			var index = INDEX++;
@@ -90,7 +92,7 @@ namespace Jde::Coroutine
 	{
 		if( IApplication::ShuttingDown() )
 		{
-			DBG0( "Can't resume, shutting down."sv );
+			DBG( "Can't resume, shutting down."sv );
 			return;
 		}
 		{
@@ -99,7 +101,7 @@ namespace Jde::Coroutine
 			{
 				auto addSettings = []()noexcept
 				{
-					INFO0( "coroutinePool settings not found."sv );
+					INFO( "coroutinePool settings not found."sv );
 					nlohmann::json j2 = { {"maxThreadCount", 100}, {"threadDuration", "PT5S"}, {"poolIdleThreshold", "PT60S"} };
 					_pSettings = make_shared<Settings::Container>( j2 );
 				};

@@ -29,7 +29,7 @@ namespace Jde
 
 	void DestroyLogger()
 	{
-		TRACE0( "Destroying Logger"sv );
+		TRACE( "Destroying Logger"sv );
 		pLogger = nullptr;
 		spLogger = nullptr;
 		{
@@ -176,7 +176,7 @@ namespace Jde
 			for( int i=0; i<_status.details_size(); ++i )
 				os << ";  " << _status.details(i);
 
-			TRACE0X( os.str() );
+			TRACEX( os.str() );
 			if( _pServerSink )
 				_pServerSink->SendStatus = true;
 			_lastStatusUpdate = Clock::now();
@@ -249,7 +249,7 @@ namespace Jde
 	void ClearMemoryLog()noexcept
 	{
 		_logMemory = true;
-		DBG0( "ClearMemoryLog"sv );
+		DBG( "ClearMemoryLog"sv );
 		unique_lock l{ MemoryLogMutex };
 		_pMemoryLog = std::make_unique<std::vector<Logging::Messages::Message>>();
 	}

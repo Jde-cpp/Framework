@@ -131,11 +131,11 @@ namespace Jde::IO
 		virtual ~DiskWatcher();
 		constexpr static EDiskWatcherEvents DefaultEvents = {EDiskWatcherEvents::Modify | EDiskWatcherEvents::MovedFrom | EDiskWatcherEvents::MovedTo | EDiskWatcherEvents::Create | EDiskWatcherEvents::Delete};
 	protected:
-		virtual void OnModify( path path, const NotifyEvent& /*event*/ )noexcept{WARNN( "No listener for OnModify {}.", path.string() );};
-		virtual void OnMovedFrom( path path, const NotifyEvent& /*event*/ )noexcept{WARNN( "No listener for OnMovedFrom {}.", path.string() );};
-		virtual void OnMovedTo( path path, const NotifyEvent& /*event*/ )noexcept{WARNN( "No listener for OnMovedTo {}.", path.string() );};
+		virtual void OnModify( path path, const NotifyEvent& /*event*/ )noexcept{WARN( "No listener for OnModify {}."sv, path.string() );};
+		virtual void OnMovedFrom( path path, const NotifyEvent& /*event*/ )noexcept{WARN( "No listener for OnMovedFrom {}."sv, path.string() );};
+		virtual void OnMovedTo( path path, const NotifyEvent& /*event*/ )noexcept{WARN( "No listener for OnMovedTo {}."sv, path.string() );};
 		virtual void OnCreate( path path, const NotifyEvent& /*event*/ )noexcept=0;
-		virtual void OnDelete( path path, const NotifyEvent& /*event*/ )noexcept{WARNN( "No listener for OnDelete {}.", path.string() );};
+		virtual void OnDelete( path path, const NotifyEvent& /*event*/ )noexcept{WARN( "No listener for OnDelete {}."sv, path.string() );};
 	private:
 		void Run()noexcept;
 		void ReadEvent( const pollfd& fd, bool isRetry=false )noexcept(false);

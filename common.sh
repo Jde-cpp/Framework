@@ -1,22 +1,13 @@
 #!/bin/bash
-# if [ ! -z "$1" ]; then echo set file - $1; file=$1; else echo unset file; unset file; fi;
-# #file=${1:-""}; #source-build.sh
-# fetchLocation=${2}; #jde/Framework
-# gitTarget=${3};#Jde-cpp/Framework/master
-# #set disable-completion on;
-# echo gitTarget=$gitTarget;
-# echo fetchLocation=$fetchLocation;
-# echo file=$file
 windows() { [[ -n "$WINDIR" ]]; }
 t=$(readlink -f "${BASH_SOURCE[0]}"); commonBuild=$(basename "$t"); unset t;
-#echo running $commonBuild
 
-function toBashDir()
+function toBashDir
 {
-    windowsDir=$1;
-    local -n _bashDir=$2
-    _bashDir=${windowsDir/:/}; _bashDir=${_bashDir//\\//}; _bashDir=${_bashDir/C/c};
-	 if [[ ${_bashDir:0:1} != "/" ]]; then _bashDir=/$_bashDir; fi;
+	windowsDir=$1;
+   local -n _bashDir=$2
+   _bashDir=${windowsDir/:/}; _bashDir=${_bashDir//\\//}; _bashDir=${_bashDir/C/c};
+	if [[ ${_bashDir:0:1} != "/" ]]; then _bashDir=/$_bashDir; fi;
 }
 if windows; then
 	toBashDir $REPO_DIR REPO_BASH;
@@ -29,7 +20,7 @@ function moveToDir
 	if [ ! -d $1 ]; then mkdir $1; fi;
 	cd $1;
 };
-function toWinDir()
+function toWinDir
 {
     bashDir=$1;
     local -n _winDir=$2

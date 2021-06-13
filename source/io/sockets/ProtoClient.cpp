@@ -136,7 +136,7 @@ namespace Jde::IO::Sockets
 			if( !_pSocket )
 				_pSocket = make_unique<basio::ip::tcp::socket>( _asyncHelper );//_pSocket = make_unique<basio::ip::tcp::socket>( _asyncHelper );
 			auto result = basio::connect( *_pSocket, endpoints );
-			TRACE0( "Client::Connect"sv );
+			TRACE( "Client::Connect"sv );
 			onConnect( std::error_code(), result );
 		}
 		catch( const boost::system::system_error& e )

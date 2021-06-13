@@ -100,7 +100,7 @@ namespace Jde::IO::Sockets
 		var pMessage = _writeMessages.TryPop();
 		if( !pMessage )
 		{
-			CRITICAL0( "no message to write."sv );
+			CRITICAL( "no message to write."sv );
 			return;
 		}
 		var pData = ProtoClientSession::ToBuffer( *pMessage );

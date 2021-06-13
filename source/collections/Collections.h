@@ -26,7 +26,7 @@ namespace Jde
 	{
 		auto p = map.find( key );
 		if( p==map.end() )
-			p = map.try_emplace( key, make_shared<T::mapped_type::element_type>() ).first;
+			p = map.try_emplace( key, make_shared<typename T::mapped_type::element_type>() ).first;
 		return p->second;
 	}
 
@@ -252,7 +252,7 @@ namespace Collections
 		{
 			const uint index = find( population.begin(), population.end(), subsetItem ) - population.begin();
 			if( index==population.size() )
-				ERRN( "Could not index {}", subsetItem );
+				ERR( "Could not index {}"sv, subsetItem );
 			results.push_back( index );
 		}
 		return results;

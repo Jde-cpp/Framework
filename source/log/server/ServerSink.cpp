@@ -53,7 +53,7 @@ namespace Jde::Logging
 
 	void ServerSink::OnDisconnect()noexcept
 	{
-		DBG0( "Disconnected from LogServer."sv );
+		DBG( "Disconnected from LogServer."sv );
 		_messagesSent.clear();
 		_filesSent.clear();
 		_functionsSent.clear();

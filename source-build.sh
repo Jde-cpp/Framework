@@ -1,6 +1,7 @@
-scriptDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-if [[ -z $commonBuild ]]; then source $scriptDir/common.sh; fi;
-baseDir=$scriptDir/../..;
+#!/bin/bash
+sourceBuildDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+if [[ -z $commonBuild ]]; then source $sourceBuildDir/common.sh; fi;
+baseDir=$sourceBuildDir/../..;
 jdeRoot=jde;
 
 
@@ -68,9 +69,13 @@ function buildConfig
 		echo no `pwd`/.obj/$config/Makefile configClean=1;
 		configClean=1;
 	fi;
-	echo ../../Framework/cmake/buildc.sh `pwd` $config $configClean;
-	../../Framework/cmake/buildc.sh `pwd` $config $configClean;
+	#echo $sourceBuildDir/cmake/buildc.sh `pwd` $config $configClean;
+	cmd="$sourceBuildDir/cmake/buildc.sh `pwd` $config $configClean";
+	$cmd; if [ $? -ne 0 ]; then echo "FAILED"; echo `pwd`; echo $cmd; exit 1; fi;
+	#echo '-----------------------------------------------------------';
+	#exit 1;
 }
+
 function buildLinux
 {
 	local=${1:-0};
@@ -186,7 +191,9 @@ function fetchBuild
 }
 function findProtoc
 {
-	echo REPO_BASH=$REPO_BASH;
-	findExecutable protoc.exe $REPO_BASH/protobuf/cmake/build/sln/Release;
+	if windows; then
+		echo REPO_BASH=$REPO_BASH;
+		findExecutable protoc.exe $REPO_BASH/protobuf/cmake/build/sln/Release;
+	fi;
 }
 popd > /dev/null;

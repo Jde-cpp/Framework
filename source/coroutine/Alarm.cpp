@@ -5,16 +5,16 @@
 
 namespace Jde::Threading
 {
-	void AlarmAwaitable::await_suspend( AlarmAwaitable::Handle h )noexcept
+	void AlarmAwaitable::await_suspend( AlarmAwaitable::THandle h )noexcept
 	{
 		Alarm::Add( _alarm, h, _hClient );
 	}
 
-	void Alarm::Add( TimePoint t, AlarmAwaitable::Handle h, Coroutine::Handle myHandle )noexcept
+	void Alarm::Add( TimePoint t, AlarmAwaitable::THandle h, Coroutine::Handle myHandle )noexcept
 	{
 		IntancePtr->Add2( t, h, myHandle );
 	}
-	void Alarm::Add2( TimePoint t, AlarmAwaitable::Handle h, Coroutine::Handle myHandle )noexcept
+	void Alarm::Add2( TimePoint t, AlarmAwaitable::THandle h, Coroutine::Handle myHandle )noexcept
 	{
 		{
 			unique_lock l{_coroutineMutex};

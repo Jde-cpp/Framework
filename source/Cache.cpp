@@ -12,7 +12,7 @@ namespace Jde
 	}
 	void Cache::Shutdown()noexcept
 	{
-		DBG0( "Cache::Shutdown"sv );
+		DBG( "Cache::Shutdown"sv );
 		_pInstance = nullptr;
 	}
 

@@ -3,7 +3,7 @@
 #include "../source/db/Database.h"
 #include "../source/db/GraphQL.h"
 #include "../source/db/types/Schema.h"
-#include "../source/log/Logging.h"
+#include <jde/Log.h>
 
 #define var const auto
 namespace Jde::UM
@@ -111,11 +111,11 @@ namespace Jde::UM
 		DB::Query( updateDef, 0 );
 
 		auto pDataSource = Jde::DB::DataSource();
-		if( !pDataSource->Scaler( format("select count(*) from um_group_roles where group_id={} and role_id={}", administersId, readUMRoleId), {}) )
+		if( !pDataSource->Scaler<uint>( format("select count(*) from um_group_roles where group_id={} and role_id={}", administersId, readUMRoleId), {}) )
 			AddRemove( "addGroupRole", "groupId", "roleId", administersId, readUMRoleId );
-		if( !pDataSource->Scaler( format("select count(*) from um_user_groups where user_id={} and group_id={}", authenticatedUserId, administersId), {}) )
+		if( !pDataSource->Scaler<uint>( format("select count(*) from um_user_groups where user_id={} and group_id={}", authenticatedUserId, administersId), {}) )
 			AddRemove( "addUserGroup", "userId", "groupId", authenticatedUserId, administersId );
-		if( !pDataSource->Scaler( format("select count(*) from um_role_permissions where role_id={} and permission_id={}", readUMRoleId, permissionId), {}) )
+		if( !pDataSource->Scaler<uint>( format("select count(*) from um_role_permissions where role_id={} and permission_id={}", readUMRoleId, permissionId), {}) )
 			AddRemove( "addRolePermission", "roleId", "permissionId", readUMRoleId, permissionId, format(", \"rightId\": 7") );
 
 		var updateDef2 = format( "{{ mutation {{ updateRolePermission(\"roleId\":{}, \"permissionId\":{}, \"input\":{{ \"rights\": [\"Administer\"]}}) }} }}", 3, 3 );

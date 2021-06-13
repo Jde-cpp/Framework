@@ -6,7 +6,7 @@
 
 #include <boost/crc.hpp>
 
-#include <boost/exception/diagnostic_information.hpp> 
+#include <boost/exception/diagnostic_information.hpp>
 #include <boost/core/noncopyable.hpp>
 
 #ifndef __INTELLISENSE__
@@ -21,7 +21,6 @@
 #pragma warning( pop  )
 
 #include <jde/Log.h>
-//#include "Exception.h"
 #include <jde/Assert.h>
 #include <jde/Exports.h>
 

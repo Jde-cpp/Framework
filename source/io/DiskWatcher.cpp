@@ -1,6 +1,7 @@
 #include "DiskWatcher.h"
 #ifndef _MSC_VER
 	#include <sys/inotify.h>
+	#include <poll.h>
 #endif
 #include <errno.h>
 #include <forward_list>
@@ -123,7 +124,7 @@ namespace Jde::IO
 			{
 				if( err == EINTR && !isRetry )
 				{
-					WARN0( "read return EINTR, retrying"sv );
+					WARN( "read return EINTR, retrying"sv );
 					ReadEvent( fd, true );
 				}
 				THROW( IOException("read return '{}'"sv, err) );

@@ -2,7 +2,7 @@
 #include "../source/um/UM.h"
 #include "../source/db/GraphQL.h"
 //#include "../source/db/types/Schema.h"
-#include "../source/log/Logging.h"
+#include <jde/Log.h>
 
 #define var const auto
 namespace Jde::DB

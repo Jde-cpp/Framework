@@ -21,6 +21,8 @@ namespace Jde::DB
 	void DBQueue::Shutdown()noexcept
 	{
 		_pThread->Interrupt();
+		while( !_stopped )
+			std::this_thread::yield();
 		//_queue.Push( sp<Statement>{} );
 	}
 
@@ -92,6 +94,6 @@ namespace Jde::DB
 		}
 		_stopped = true;
 		_spDataSource = nullptr;
-		DBG0( "DBQueue::Run - Ending"sv );
+		DBG( "DBQueue::Run - Ending"sv );
 	}
 }

@@ -10,7 +10,7 @@ namespace Jde
 #define CALL(x,y) auto p = GetInstance(); return p ? p->x : y
 	struct Cache final : public Jde::IShutdown
 	{
-		~Cache(){ if( HaveLogger() ) DBG0("~Cache"sv); }
+		~Cache(){ if( HaveLogger() ) DBG("~Cache"sv); }
 		JDE_NATIVE_VISIBILITY static void CreateInstance()noexcept;
 		void Shutdown()noexcept;// override;
 		static bool Has( str name )noexcept;
