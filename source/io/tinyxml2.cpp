@@ -1670,7 +1670,19 @@ const char* XMLElement::GetText() const
 std::string_view XMLElement::ChildText( const char* elementName )noexcept(false)
 {
 	auto p = FirstChildElement( elementName ); THROW_IF( !p, "Could not find {} in {}", elementName, Name() );
-	return std::string_view{ p->GetText() };
+	const char* psz = p->GetText();
+	return psz ? std::string_view{psz} : std::string_view{};
+}
+std::string_view XMLElement::TryChildText( const char* elementName )noexcept
+{
+	auto p = FirstChildElement( elementName );
+	const char* psz = p ? p->GetText() : nullptr;
+	return psz ? std::string_view{psz} : std::string_view{};
+}
+std::string_view XMLElement::TryChildAttribute( const char* elementName, const char* attributeName )noexcept
+{
+	auto p = FirstChildElement( elementName );
+	return p ? p->AttributeValue( attributeName ) : std::string_view{};
 }
 void	XMLElement::SetText( const char* inText )
 {

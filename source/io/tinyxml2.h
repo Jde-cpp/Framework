@@ -1628,8 +1628,9 @@ public:
       //}
       //return std::optional<T>{};
    }
-	std::string_view TryChildText( const char* elementName )noexcept{ auto p = FirstChildElement(elementName); return p ? std::string_view{p->GetText()} : std::string_view{}; }
+	std::string_view TryChildText( const char* elementName )noexcept;
 	std::string_view ChildText( const char* elementName )noexcept(false);
+	std::string_view TryChildAttribute( const char* elementName, const char* pAttribute )noexcept;
 	/// See QueryIntText()
 	XMLError QueryUnsigned64Text(uint64_t* uval) const;
 	/// See QueryIntText()
