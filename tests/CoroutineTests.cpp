@@ -1,6 +1,7 @@
 #include "gtest/gtest.h"
 #include "../source/coroutine/Alarm.h"
 #include "../source/coroutine/Coroutine.h"
+#include "../source/threading/Mutex.h"
 //#include "../source/log/Logging.h"
 #include "../source/log/server/ServerSink.h"
 
@@ -164,6 +165,42 @@ namespace Jde::Coroutine
 		std::shared_lock l{ mtx };
 		cv.wait( l );
 		std::this_thread::sleep_for( MinTick*3 );
+	}
+
+	α SyncLock()->Task2
+	{
+		for( uint i=0; i<50; ++i )
+			auto l = co_await Threading::CoLock( "Test" );
+	}
+
+	α AsyncLock2( uint i, bool last )->Task2
+	{
+		static uint a = 0;
+		auto l = co_await Threading::CoLock( "Test" );
+		DBG( "a={}, i={}"sv, a, i );
+		ASSERT( a==i );
+		++a;
+		if( last )
+		{
+			std::shared_lock l{ mtx };
+			cv.notify_one();
+		}
+	}
+	α AsyncLock()->Task2
+	{
+		var l = co_await Threading::CoLock( "Test" );
+		for( uint i=0; i<50; ++i )
+			AsyncLock2( i, i==49 );
+		DBG( "~AsyncLock"sv );
+	}
+	TEST_F(CoroutineTests, CoLock)
+	{
+		var id = Threading::GetThreadId();
+		//SyncLock();
+		ASSERT_DESC( id==Threading::GetThreadId(), "Expecting same thread." );
+		AsyncLock();
+		std::shared_lock l{ mtx };
+		cv.wait( l );
 	}
 
 /*	static auto Throw()noexcept{ return ThrowAwaitable{}; }

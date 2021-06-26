@@ -38,7 +38,7 @@ namespace Jde::DB
 	void DBException::Log( sv /*pszAdditionalInformation*/, ELogLevel level )const noexcept
 	{
 		if( Sql.find("log_message_insert")==string::npos )
-			DB::Log( Sql, Parameters.size() ? &Parameters : nullptr, _fileName, _functionName, _line, level, _pInner ? string{_pInner->what()} : string{} );
+			DB::Log( Sql, Parameters.size() ? &Parameters : nullptr, _fileName, _functionName, _line, level, _pInner ? string{_pInner->what()} : what() );
 		else
 			ERRX( "log_message_insert sql='{}'"sv, Sql );
 	}

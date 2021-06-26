@@ -47,21 +47,17 @@ namespace Jde
 		//std::cerr << "here";
 	}
 
-	void Exception::Log( sv pszAdditionalInformation, ELogLevel level )const noexcept
+	void Exception::Log( sv additionalInformation, ELogLevel level )const noexcept
 	{
-		std::ostringstream os; std::ostringstream os2;
-		if( pszAdditionalInformation.size() )
-		{
-			os << "[" << pszAdditionalInformation << "] ";
-			os2 << os.str();
-		}
-		os << _what;
-		os2 << _format;
+		std::ostringstream os;
+		if( additionalInformation.size() )
+			os << "[" << additionalInformation << "] ";
+		os << what();
 		if( HaveLogger() )
 		{
 			GetDefaultLogger()->log( (spdlog::level::level_enum)level, os.str() );
 			if( GetServerSink() )
-				LogServer( Logging::Messages::Message{level, os2.str(), _fileName, _functionName, (uint32)_line, _args} );
+				LogServer( Logging::Messages::Message{level, os.str(), _fileName, _functionName, (uint32)_line, _args} );
 		}
 		else
 			std::cerr << os.str() << endl;
@@ -94,15 +90,11 @@ namespace Jde
 	BoostCodeException::~BoostCodeException()
 	{}
 
-/*	EnvironmentException::EnvironmentException( sv value ):
-		Exception( value, ELogLevel::Critical )
-	{}
-*/
+
 	string CodeException::ToString( const std::error_code& errorCode )noexcept
 	{
 		const int value = errorCode.value();
 		const std::error_category& category = errorCode.category();
-		//const std::error_condition condition = errorCode.default_error_condition();  //category().default_error_condition(value()).
 		const std::string message = errorCode.message(); //category().message(value())
 		return format( "({}){} - {})", value, category.name(), message );
 	}
@@ -127,7 +119,10 @@ namespace Jde
 	{
 		return  _pUnderLying ? _pUnderLying->code().value() : _errorCode;
 	}
-
+	void IOException::TestExists( path path )noexcept(false)
+	{
+		THROW_IF( !fs::exists(path), IOException{path, "does not exist"} );
+	}
 	path IOException::Path()const noexcept
 	{
 		return  _pUnderLying? _pUnderLying->path1() : _path;
@@ -138,10 +133,5 @@ namespace Jde
 		_what = _pUnderLying ? _pUnderLying->what() : format( "({}) {} - {} path='{}'", ErrorCode(), std::strerror(errno), RuntimeException::what(), Path().string() );
 		return _what.c_str();
 	}
-/*	ostream& operator<<(ostream& os, const Exception& dt)
-	{
-		os << _what.c_str();
-		return os;
-	}
-	*/
+
 }

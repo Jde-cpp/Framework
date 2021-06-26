@@ -63,12 +63,10 @@ namespace Jde
 		if( !console )
 			AsService();
 		var fileName = std::filesystem::path{ format("{}.json", appName) };
-		//std::filesystem::path settingsPath = ProgramDataFolder()/companyName/appName/fileName;
 		std::filesystem::path settingsPath{ fileName };
 		if( !fs::exists(settingsPath) )
 		{
 			var settingsPathB = std::filesystem::path{".."}/fileName;
-			//std::cout << "'" << std::filesystem::current_path().string() << "/" << settingsPath.string() << "' not found look:  '" << settingsPathB.string() << "'" << endl;
 			settingsPath = fs::exists(settingsPathB) ? settingsPathB : ApplicationDataFolder()/fileName;
 		}
 		Settings::SetGlobal( std::make_shared<Jde::Settings::Container>(settingsPath) );
@@ -80,10 +78,6 @@ namespace Jde
 		Cache::CreateInstance();
 		return values;
 	}
-	// bool IApplication::Kill( uint processId )noexcept
-	// {
-	// 	return _pInstance ? _pInstance->KillInstance( processId ) : false;
-	// }
 	void IApplication::Pause()noexcept
 	{
 		_pInstance->AddSignals();
@@ -99,8 +93,6 @@ namespace Jde
 			lock_guard l{ObjectMutex};
 			for( auto pShutdown : *_pShutdowns )
 			{
-		//		if( pShutdown.use_count()>4 )//1 pShutdown, 1 class, 1 _pShutdowns, 1 _pObjects
-		//			CRITICAL( "Use Count=={}"sv, pShutdown.use_count() );
 				if( pShutdown )//not sure why it would be null.
 					pShutdown->Shutdown();
 			}
@@ -121,7 +113,6 @@ namespace Jde
 					else
 						++ppThread;
 				}
-				//DBGX( "{} = {}", _pBackgroundThreads->size(), _pBackgroundThreads->size()==0 );
 				if( _pBackgroundThreads->size()==0 )
 					break;
 			}

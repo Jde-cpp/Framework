@@ -1,15 +1,47 @@
 #pragma once
-#include <string_view>
 #include <shared_mutex>
+#include <boost/core/noncopyable.hpp>
 #include "Thread.h"
 #include <jde/Log.h>
+#include <jde/coroutine/Task.h>
+#include "../coroutine/Awaitable.h"
 
+#define 🚪 JDE_NATIVE_VISIBILITY auto
 namespace Jde{ enum class ELogLevel : uint8; }
 namespace Jde::Threading
 {
-	JDE_NATIVE_VISIBILITY std::unique_lock<std::shared_mutex> UniqueLock( str key )noexcept;
-	//std::unique_ptr<std::unique_lock<std::shared_mutex>> UniqueLock( str key )noexcept;
-	//std::shared_lock<std::shared_mutex> SharedLock( str key )noexcept;
+	🚪 UniqueLock( str key )noexcept->std::unique_lock<std::shared_mutex>;
+
+	struct AtomicGuard final : boost::noncopyable
+	{
+		AtomicGuard( atomic<bool>& v )noexcept;
+		~AtomicGuard();
+		atomic<bool>& Value;
+	};
+
+	struct CoLockAwatiable : Coroutine::IAwaitable<Coroutine::Task2>
+	{
+		CoLockAwatiable( str key )noexcept:Key{key}{}
+		using base=Coroutine::IAwaitable<Coroutine::Task2>;
+		bool await_ready()noexcept override;
+		void await_suspend( typename base::THandle h )noexcept override;
+		typename base::TResult await_resume()noexcept override;
+	private:
+		base::THandle Handle{nullptr};
+		string Key;
+	};
+
+	struct CoLockGuard final : boost::noncopyable
+	{
+		CoLockGuard( str Key, std::variant<CoLockAwatiable*,coroutine_handle<>> )noexcept;
+		~CoLockGuard();
+	private:
+		std::variant<CoLockAwatiable*,coroutine_handle<>> Handle;
+		string Key;
+	};
+
+	inline α CoLock( str key )noexcept{ return CoLockAwatiable{key}; }
+
 
 #ifndef NDEBUG //TODORefactor move somewhere else
 	struct MyLock
@@ -67,4 +99,5 @@ namespace Jde::Threading
 		ELogLevel _logLevel{ GetDefaultLogLevel() };
 	};
 #endif
+#undef 🚪
 }

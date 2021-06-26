@@ -17,10 +17,12 @@ namespace Jde::DB
 		virtual bool SpecifyIndexCluster()const noexcept{ return true; }
 		virtual bool UniqueIndexNames()const noexcept{ return false; }
 		virtual sv UtcNow()const noexcept{ return "getutcdate()"sv; }
+		virtual sv NowDefault()const noexcept{ return UtcNow(); }
 		virtual sv ZeroSequenceMode()const noexcept{ return {}; }
 		virtual sv CatalogSelect()const noexcept{ return "select db_name();"; }
 		virtual sv ProcFileSuffix()const noexcept{ return ".ms"; }
 	};
+
 	struct MySqlSyntax final: Syntax
 	{
 		string AddDefault( sv tableName, sv columnName, sv columnDefault )const noexcept override{ return format("ALTER TABLE {} ALTER COLUMN {} SET DEFAULT {}", tableName, columnName, columnDefault); }
@@ -34,6 +36,7 @@ namespace Jde::DB
 		sv ProcStart()const noexcept override{ return "begin"sv; }
 		bool SpecifyIndexCluster()const noexcept override{ return false; }
 		sv UtcNow()const noexcept override{ return "CURRENT_TIMESTAMP()"sv; }
+		sv NowDefault()const noexcept override{ return "CURRENT_TIMESTAMP"sv; }
 		sv ZeroSequenceMode()const noexcept override{ return "SET @@session.sql_mode = CASE WHEN @@session.sql_mode NOT LIKE '%NO_AUTO_VALUE_ON_ZERO%' THEN CASE WHEN LENGTH(@@session.sql_mode)>0 THEN CONCAT_WS(',',@@session.sql_mode,'NO_AUTO_VALUE_ON_ZERO') ELSE 'NO_AUTO_VALUE_ON_ZERO' END ELSE @@session.sql_mode END"sv; }
 		sv CatalogSelect()const noexcept override{ return "select database() from dual;"; }
 		sv ProcFileSuffix()const noexcept override{ return ""; }

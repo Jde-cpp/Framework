@@ -84,13 +84,16 @@ namespace Jde::IO
 	up<T> Proto::TryLoad( path path )noexcept
 	{
 		up<T> pValue{};
-		try
+		if( fs::exists(path) )
 		{
-			pValue = Load<T>( path );
-		}
-		catch( Jde::Exception& e )
-		{
-			e.Log();
+			try
+			{
+				pValue = Load<T>( path );
+			}
+			catch( Jde::Exception& e )
+			{
+				e.Log();
+			}
 		}
 		return pValue;
 	}

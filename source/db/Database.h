@@ -20,14 +20,16 @@ namespace Jde::DB
 	JDE_NATIVE_VISIBILITY uint ExecuteProc( sv sql, std::vector<DataValue>&& parameters )noexcept(false);
 	JDE_NATIVE_VISIBILITY uint Execute( sv sql, std::vector<DataValue>&& parameters )noexcept(false);
 
-	template<class T> optional<T> TryScaler( sv sql, const vector<DataValue>& parameters )noexcept;
-	template<class T> optional<T> Scaler( sv sql, const vector<DataValue>& parameters )noexcept;
+	ⓣ TryScaler( sv sql, const vector<DataValue>& parameters )noexcept->optional<T>;
+	ⓣ Scaler( sv sql, const vector<DataValue>& parameters )noexcept->optional<T>;
 
-	JDE_NATIVE_VISIBILITY void Select( sv sql, std::function<void(const IRow&)> f, const vector<DataValue>& values )noexcept(false);
-	JDE_NATIVE_VISIBILITY void Select( sv sql, std::function<void(const IRow&)> f )noexcept(false);
-	//template<class K,class V> sp<flat_map<K,V>> SelectMapSP( sv sql, str cacheName={} )noexcept(false);
+	🚪 Select( sv sql, std::function<void(const IRow&)> f, const vector<DataValue>& values )noexcept(false)->void;
+	🚪 Select( sv sql, std::function<void(const IRow&)> f )noexcept(false)->void;
+	🚪 SelectIds( sv sql, const set<uint>& ids, std::function<void(const IRow&)> f )noexcept(false)->void;
+
 	template<class K,class V> sp<flat_map<K,V>> SelectMap( sv sql, str cacheName={} )noexcept(false);
 	ⓣ SelectSet( sv sql, const std::vector<DataValue>& parameters )noexcept(false)->boost::container::flat_set<T>;
+	ⓣ SelectSet( sv sql, str cacheName, const std::vector<DataValue>& parameters )noexcept(false)->sp<boost::container::flat_set<T>>;
 
 	🚪 SelectName( sv sql, uint id, sv cacheName )noexcept(false)->CIString;
 }
@@ -46,16 +48,6 @@ namespace Jde
 		RETURN( optional<T>{} )->TryScaler<T>( sql, parameters );
 	}
 
-/*	sp<template<class K,class V>> flat_map<K,V> DB::SelectMap( sv sql )noexcept(false)
-	{
-		auto p = DataSource();
-		return p ? p->SelectMap<K,V>( sql ) : flat_map<K,V>{};
-	}
-	template<class K,class V> flat_map<K,V> DB::SelectMapSP( sv sql )noexcept(false)
-	{
-		auto p = DataSource();
-		return p ? p->SelectMapSP<K,V>( sql ) : sp<flat_map<K,V>>{};
-	}*/
 #define var const auto
 	template<class K,class V> sp<flat_map<K,V>> DB::SelectMap( sv sql, str cacheName )noexcept(false)
 	{
@@ -75,6 +67,13 @@ namespace Jde
 		auto fnctn = [&results]( const IRow& row ){ results.emplace(row.Get<T>(0)); };
 		Select( sql, fnctn, parameters );
 		return results;
+	}
+	ⓣ DB::SelectSet( sv sql, str cacheName, const std::vector<DataValue>& parameters )noexcept(false)->sp<boost::container::flat_set<T>>
+	{
+		auto p = cacheName.size() ? Cache::Get<boost::container::flat_set<T>>( cacheName ) : make_shared<flat_set<T>>(SelectSet<T>(sql, parameters) );
+		if( !p )
+			Cache::Set( cacheName, p = make_shared<flat_set<T>>(SelectSet<T>(sql, parameters)) );
+		return p;
 	}
 
 #undef var

@@ -162,6 +162,18 @@ namespace Jde
 			y = Scaler<CIString>( sql, {id} ).value_or( CIString{} );
 		return y;
 	}
-	//typedef DB::IDataSource* (*pDataSourceFactory)();
-	//typedef shared_ptr<DB::IDataSource> IDataSourcePtr;
+
+	α DB::SelectIds( sv sql, const set<uint>& ids, std::function<void(const IRow&)> f )noexcept(false)->void
+	{
+		vector<DataValue> params; params.reserve( ids.size() );
+		string str; str.reserve( ids.size()*2 );
+		for( var id : ids )
+		{
+			if( str.size() )
+				str+=",";
+			str+="?";
+			params.emplace_back( id );
+		}
+		Select( format("{}({})", sql, str), f, params );
+	}
 }
