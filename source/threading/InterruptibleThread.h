@@ -22,7 +22,6 @@ namespace Jde::Threading  //TODO Reflection remove Threading from public items.
 		std::condition_variable* _pThreadCondition{nullptr};
 		std::condition_variable_any* _pThreadConditionAny{nullptr};
 		std::mutex _setClearMutex;
-		// rest as before
 	};
 	extern thread_local InterruptFlag ThreadInterruptFlag;
 	JDE_NATIVE_VISIBILITY InterruptFlag& GetThreadInterruptFlag()noexcept;
@@ -37,9 +36,11 @@ namespace Jde::Threading  //TODO Reflection remove Threading from public items.
 		bool IsDone()const noexcept{ return _pFlag && _pFlag->IsDone(); }
 		const string Name;
 		JDE_NATIVE_VISIBILITY void Shutdown()noexcept override;
+		void Detach()noexcept{ _internalThread.detach(); ShouldJoin = false; }//destructor on same thread.
 	private:
 		std::thread _internalThread;
 		InterruptFlag* _pFlag{nullptr};
+		bool ShouldJoin{true};
 	};
 
 	template<typename FunctionType>
@@ -53,6 +54,7 @@ namespace Jde::Threading  //TODO Reflection remove Threading from public items.
 			promise.set_value( &GetThreadInterruptFlag() );
 			SetThreadDscrptn( nameCopy );
 			f();
+			DBG( "~InterruptibleThread::f({})"sv, nameCopy );
 			GetThreadInterruptFlag().SetIsDone();
 		});
 		_pFlag = promise.get_future().get();

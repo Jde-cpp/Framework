@@ -33,7 +33,8 @@ namespace Jde::Threading
 	{
 		if( GetDefaultLogger() )
 			DBG( "~InterruptibleThread({})"sv, Name );
-		Join();
+		if( ShouldJoin )
+			Join();
 	}
 	void InterruptibleThread::Interrupt()noexcept
 	{
@@ -46,7 +47,7 @@ namespace Jde::Threading
 	}
 	void InterruptibleThread::Join()
 	{
-		if( _internalThread.joinable() )//ProtoClient::Run
+		if( _internalThread.joinable() )
 			_internalThread.join();
 	}
 	void InterruptibleThread::Shutdown()noexcept
@@ -54,9 +55,4 @@ namespace Jde::Threading
 		DBG("{} - Shutdown"sv, Name);
 		Interrupt();
 	};
-/*
-	ThreadInterrupted::ThreadInterrupted():
-		Exception( ELogLevel::Trace, "interupted" )
-	{}
-*/
 }

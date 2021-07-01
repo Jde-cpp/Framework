@@ -226,7 +226,7 @@ namespace Jde
 		void Push( T&& new_value )noexcept;
 		optional<T> TryPop( Duration duration )noexcept;
 		bool empty()const noexcept{ SLOCK; return _queue.empty(); }
-		//uint size()const noexcept{ SLOCK; return _queue.size(); }
+		optional<T> Pop()noexcept;
 	private:
 		mutable std::shared_mutex _mtx;
 		std::queue<T> _queue;
@@ -238,6 +238,18 @@ namespace Jde
 		LOCK;
 		_queue.push( std::move(new_value) );
 		_cv.notify_one();
+	}
+	template<typename T>
+	optional<T> QueueMove<T>::Pop()noexcept
+	{
+		LOCK;
+		optional<T> p;
+		if( !_queue.empty() )
+		{
+			p = move( _queue.front() );
+			_queue.pop();
+		}
+		return p;
 	}
 	template<typename T>
 	optional<T> QueueMove<T>::TryPop( Duration duration )noexcept

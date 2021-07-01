@@ -166,6 +166,16 @@ namespace Jde
 		lock_guard l{ ObjectMutex };
 		_pShutdowns->push_back( pShared );
 	}
+	void IApplication::RemoveShutdown( sp<IShutdown> pShutdown )noexcept
+	{
+		Remove( pShutdown );
+		lock_guard l{ ObjectMutex };
+		if( auto p=find( _pShutdowns->begin(), _pShutdowns->end(), pShutdown ); p!=_pShutdowns->end() )
+			_pShutdowns->erase( p );
+		else
+			WARN( "Could not find shutdown"sv );
+	}
+
 	void IApplication::Remove( sp<void> pShared )noexcept
 	{
 		lock_guard l{ObjectMutex};
