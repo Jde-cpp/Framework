@@ -1,4 +1,5 @@
 #include "Coroutine.h"
+#include "../threading/InterruptibleThread.h"
 #ifdef _MSC_VER
 	using std::stop_token;
 #else
@@ -21,7 +22,6 @@ namespace Jde::Coroutine
 		{
 			Threading::SetThreadDscrptn( format("CoroutineThread - {}", ThreadParam.AppHandle) );
 			var index = INDEX++;
-			//LOG( CoroutinePool::LogLevel(), "({})ResumeThread::ResumeThread"sv, std::this_thread::get_id() );
 			auto timeout = Clock::now()+IdleLimit;
 			while( !stoken.stop_requested() )
 			{
@@ -34,16 +34,12 @@ namespace Jde::Coroutine
 							std::this_thread::yield();
 						else
 						{
-							//LOG( CoroutinePool::LogLevel(), "{}>{}"sv, ToIsoString(timeout), ToIsoString(now) );
-							//LOG( CoroutinePool::LogLevel(), "timeout={}"sv, ToIsoString(timeout) );
-							//LOG( CoroutinePool::LogLevel(), "diff={} vs {}"sv, duration_cast<milliseconds>(now-(timeout-IdleLimit)).count(), duration_cast<milliseconds>(IdleLimit).count() );
 							LOG( CoroutinePool::LogLevel(), "({})CoroutineThread Stopping"sv, index );
 							_thread.request_stop();
 						}
 						continue;
 					}
 				}
-				//SetThreadInfo( *_param ); let awaitable do this.
 				LOG( CoroutinePool::LogLevel(), "({})CoroutineThread call resume"sv, index );
 				_param->CoHandle.resume();
 				LOG( CoroutinePool::LogLevel(), "({})CoroutineThread finish resume"sv, index );
@@ -62,8 +58,10 @@ namespace Jde::Coroutine
 		if( !IApplication::ShuttingDown() )
 			LOG( CoroutinePool::LogLevel(), "({})ResumeThread::~ResumeThread"sv, std::this_thread::get_id() );
 		if( _thread.joinable() )
+		{
+			_thread.request_stop();
 			_thread.join();
-		//_thread.request_stop(); s/b auto
+		}
 	}
 	optional<CoroutineParam> ResumeThread::Resume( CoroutineParam&& param )noexcept
 	{

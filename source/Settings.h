@@ -9,8 +9,8 @@
 #include <nlohmann/json.hpp>
 #pragma warning(pop)
 
-
 #define var const auto
+#define 🚪 JDE_NATIVE_VISIBILITY auto
 namespace Jde::Settings
 {
 	using nlohmann::json;
@@ -120,6 +120,8 @@ namespace Jde::Settings
 	JDE_NATIVE_VISIBILITY sp<Container> GlobalPtr()noexcept;
 	JDE_NATIVE_VISIBILITY void SetGlobal( sp<Container> container )noexcept;
 
+	ⓣ Get( sv path )noexcept{ return Global().Get2<T>( path ); }
+
 	template<typename T>
 	optional<T> TryGetSubcontainer( sv container, sv path )noexcept
 	{
@@ -142,3 +144,4 @@ namespace Jde::Settings
 	JDE_NATIVE_VISIBILITY void from_json( const nlohmann::json& j, Server& server );
 }
 #undef var
+#undef 🚪
