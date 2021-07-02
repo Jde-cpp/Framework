@@ -489,7 +489,7 @@ namespace DB
 			var jsonType = pDBTable->JsonTypeName();
 
 			json field;
-			field["name"] = format( "create{}", jsonType );
+			field["name"] = format( "create{}"sv, jsonType );
 			//json::array args;
 			var addField = [&jsonType, pDBTable, &fields]( sv name, bool allColumns=false, bool idColumn=true )
 			{
@@ -768,7 +768,7 @@ namespace DB
 					subSql << endl << "where\t" << where2;
 				flat_map<uint,sp<flat_map<uint,string>>> subFlagValues;
 				for( var& [index,pTable] : subFlags )
-					subFlagValues[index+2] = _pDataSource->SelectMap<uint,string>( format("select id, name from {}", pTable->Name) );
+					subFlagValues[index+2] = _pDataSource->SelectMap<uint,string>( format("select id, name from {}"sv, pTable->Name) );
 				auto& rows = subTables.emplace( pQLTable->JsonName, flat_multimap<uint,json>{} ).first->second;
 				auto forEachRow = [&]( const DB::IRow& row )
 				{

@@ -100,7 +100,7 @@ namespace Jde::DB
 	{
 		var null = IsNullable ? "null"sv : "not null"sv;
 		const string sequence = IsIdentity ?  " "+string{syntax.IdentityColumnSyntax()} : string{};
-		string dflt = Default.size() ? format( " default {}", Default=="$now" ? syntax.NowDefault() : format("'{}'", Default) ) : string{};
+		string dflt = Default.size() ? format( " default {}", Default=="$now" ? syntax.NowDefault() : format("'{}'"sv, Default) ) : string{};
 		return format( "{} {} {}{}{}", Name, DataTypeString(syntax), null, sequence, dflt );
 	}
 
@@ -191,7 +191,7 @@ namespace Jde::DB
 		char delimiter = ' ';
 		for( var& column : Columns )
 		{
-			string value = format( "{}{}", prefix, column.Name );
+			string value = format( "{}{}"sv, prefix, column.Name );
 			if( column.Insertable )
 				osCreate << delimiter << prefix << column.Name  << " " << column.DataTypeString( syntax );
 			else
@@ -222,7 +222,7 @@ namespace Jde::DB
 		for( var& column : Columns )
 		{
 			if( column.IsIdentity )
-				pk = format( "PRIMARY KEY({})", column.Name );
+				pk = format( "PRIMARY KEY({})"sv, column.Name );
 			createStatement << suffix << endl << "\t" << column.Create( syntax );
 			suffix = ",";
 		}

@@ -4,6 +4,7 @@
 #include <jde/App.h>
 #include "../collections/Queue.h"
 #include "../threading/jthread.h"
+#include "../threading/InterruptibleThread.h"
 
 namespace Jde::Threading{ struct InterruptibleThread; }
 

@@ -1,6 +1,4 @@
 #include "Coroutine.h"
-#include "../threading/InterruptibleThread.h"
-//#include "../threading/Thread.h"
 #ifdef _MSC_VER
 	using std::stop_token;
 #else

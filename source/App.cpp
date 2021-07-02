@@ -206,11 +206,11 @@ namespace Jde
 	fs::path IApplication::ApplicationDataFolder()noexcept
 	{
 #ifdef _MSC_VER
-		sv frmt = "{}"sv;
+		sv company = CompanyName();
 #else
-		sv frmt = ".{}"sv;
+		const string company{ format(".{}"sv, CompanyName()) };
 #endif
 		auto p=_pInstance;
-		return p ? p->ProgramDataFolder()/format(frmt, CompanyName())/ApplicationName() : ".app";
+		return p ? p->ProgramDataFolder()/company/ApplicationName() : ".app";
 	}
 }

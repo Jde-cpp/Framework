@@ -127,8 +127,7 @@ namespace Jde::IO
 		{
 			var command = CompressCommand( path );
 			GetDefaultLogger()->trace( command );
-			if( system(command.c_str())==-1 )
-				THROW( Exception(format("{} failed.", command)) );
+			THROW_IF( system(command.c_str())==-1, "{} failed.", command );
 			if( deleteAfter && !CompressAutoDeletes() )
 			{
 				GetDefaultLogger()->trace( "removed {}.", path.string() );

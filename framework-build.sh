@@ -11,30 +11,9 @@
 
 clean=${1:-0};
 shouldFetch=${2:-1};
-
-#windows() { [[ -n "$WINDIR" ]]; }
-
-# if [ ! -f source-build.sh ]; then
-# 	echo no source;
-# 	if [ -f jde/Framework/source-build.sh ]; then
-# 		echo source found;
-# 		if windows; then
-# 			file=source-build.sh;
-# 			dest=`pwd`;
-# 			dest=${dest////\\};
-# 			dest=${dest/\\c/c:};
-# 			cmd <<< "mklink $dest\\$file $dest\\jde\\Framework\\$file" > /dev/null;
-# 		else
-# 			ln -s jde/Framework/source-build.sh .;
-# 		fi;
-# 	else
-# 		curl https://raw.githubusercontent.com/Jde-cpp/Framework/master/source-build.sh -o source-build.sh
-# 	fi;
-# fi
-#source ./common.sh;
 scriptDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 if [[ -z $sourceBuild ]]; then source $scriptDir/source-build.sh; fi;
-echo framework-build.sh clean=$clean shouldFetch=$shouldFetch;
+echo framework-build.sh clean=$clean shouldFetch=$shouldFetch
 cd $REPO_DIR;
 
 if windows; then
@@ -63,24 +42,61 @@ fi;
 #if [ ! -d $jdeRoot ]; then mkdir $jdeRoot; fi;
 fetchDefault Public;
 cd $scriptDir/../Public;
+stageDir=$REPO_BASH/jde/Public/stage
 if windows; then
 	pushd `pwd` > /dev/null;
 	moveToDir stage;
 	moveToDir debug; cd ..;
 	moveToDir release; popd  > /dev/null;
 	if [ $shouldFetch -eq 1 ]; then
-		vcpkg.exe install nlohmann-json --triplet x64-windows
+		if [ ! -d $REPO_BASH/vcpkg/installed/x64-windows/include/nlohmann ]; then vcpkg.exe install nlohmann-json --triplet x64-windows; fi;
 		#vcpkg.exe install fmt --triplet x64-windows
 		#vcpkg.exe install spdlog --triplet x64-windows
-		vcpkg.exe install boost --triplet x64-windows
-		#vcpkg.exe install protobuf[zlib]:x64-windows ./configure --disable-shared
+		toBashDir $BOOST_DIR BOOST_BASH;
+		if [ ! -d $BOOST_BASH ]; then
+			echo ERROR - $BOOST_BASH not found;
+			exit 1;
+			vcpkg.exe install boost --triplet x64-windows; if [ $? -ne 0 ]; then echo "vcpkg install boost failed"; exit 1; fi;
+		elif [ ! -f $stageDir/release/boost_date_time-vc142-mt-x64-1_76.lib ]; then
+			cd $BOOST_BASH;
+			cmd <<< bootstrap.bat;
+			cmd <<< "b2 variant=release link=shared threading=multi runtime-link=shared address-model=64 --with-date_time"  > /dev/null;
+			echo linkFileAbs `pwd`/lib/boost_date_time-vc142-mt-x64-1_76.lib $stageDir/release/boost_date_time-vc142-mt-x64-1_76.lib;
+			linkFile `pwd`/lib/boost_date_time-vc142-mt-x64-1_76.lib $stageDir/release/boost_date_time-vc142-mt-x64-1_76.lib;
+		   cmd <<< "b2 variant=debug link=shared threading=multi runtime-link=shared address-model=64 --with-date_time"  > /dev/null;
+			echo linkFileAbs `pwd`/lib/boost_date_time-vc142-mt-x64-1_76.lib $stageDir/release/boost_date_time-vc142-mt-x64-1_76.lib;
+			linkFile `pwd`/lib/boost_date_time-vc142-mt-gd-x64-1_76.lib $stageDir/release/boost_date_time-vc142-mt-gd-x64-1_76.lib;
+		fi;
 	fi;
 fi;
 buildProto=$shouldFetch
-buildProto=0
+#buildProto=0
 cd $REPO_BASH;
 if [ ! -d protobuf ]; then  git clone https://github.com/Jde-cpp/protobuf.git; buildProto=1; fi;
-if [ ! -d spdlog ]; then  git clone https://github.com/gabime/spdlog.git; fi;#buildSpd=1; fi;
+if [ ! -d spdlog ]; then
+	git clone https://github.com/gabime/spdlog.git;
+elif [ $shouldFetch -eq 1 ]; then
+	cd spdlog; git pull; cd ..;
+fi;
+
+if windows; then
+	if [ ! -d fmt ]; then
+		git clone https://github.com/fmtlib/fmt.git; cd fmt;
+	elif [ $shouldFetch -eq 1 ]; then
+		cd fmt; git pull;
+	fi;
+	if [ ! -d build ]; then
+		moveToDir build;
+		cmake -DCMAKE_CXX_STANDARD=20 ..;
+	else
+		cd build;
+	fi;
+	baseCmd="msbuild.exe fmt.vcxproj -p:Platform=x64 -maxCpuCount -nologo -v:q /clp:ErrorsOnly -p:Configuration"
+	if [ ! -f $stageDir/release/fmt.lib ]; then echo build fmt.lib; buildWindows2 "$baseCmd" fmt.lib release; fi;
+	if [ ! -f $stageDir/debug/fmtd.lib ]; then echo build fmtd.lib; buildWindows2 "$baseCmd" fmtd.lib debug; fi;
+	cd ../..;
+fi;
+
 function protocBuildWin
 {
 	type=sln;#lib;
@@ -146,7 +162,7 @@ if [ $buildProto -eq 1 ]; then
 	cd protobuf;
 	if [ $shouldFetch -eq 1 ]; then git pull; fi;
 	cd cmake;
-	if [ $clean -eq 1 ]; then echo rm build; rm -r -f build; fi;
+	if [ $clean -eq 1 ]; then echo rm protoc/build; rm -r -f build; fi;
 	moveToDir build;
 	if windows; then protocBuildWin; else protocBuildLinux; fi;
 fi;
@@ -181,5 +197,6 @@ function frameworkProtoc
 }
 fetchDefault Framework;
 frameworkProtoc;
+echo  build Framework
 build Framework 0;
-
+echo  built Framework

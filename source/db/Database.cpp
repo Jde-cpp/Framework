@@ -1,4 +1,4 @@
-#include "Database.h"
+﻿#include "Database.h"
 #include "c_api.h"
 #include "GraphQL.h"
 #include "DataSource.h"

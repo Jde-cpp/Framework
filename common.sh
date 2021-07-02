@@ -98,6 +98,23 @@ function mklink
 		ln -s $fetchLocation/$file .;
 	fi;
 }
+function linkFileAbs
+{
+	local original=$1;#TwsSocketClient64.vcxproj._user
+	local link=$2; #TwsSocketClient64.vcxproj.user
+	if [ -f $link ]; then exit 0; fi;
+	if windows; then
+		# echo Hi;
+		toWinDir $original originalWin;
+		toWinDir $link linkWin;
+		cmd <<< "mklink \"$linkWin\" \"$originalWin\" " > /dev/null;  #"
+		if [ $? -ne 0 ]; then echo `pwd`; echo cmd <<< "mklink \"$linkWin\" \"$originalWin\" " > /dev/null;  exit 1; fi; #"
+	else
+		if [ -L $file ]; then rm $file; fi;
+		ln -s $original $link;
+	fi;
+}
+
 function linkFile
 {
 	local original=$1;#TwsSocketClient64.vcxproj._user
@@ -105,12 +122,8 @@ function linkFile
 	if [ -f $link ]; then exit 0; fi;
 	if windows; then
 		toWinDir "`pwd`" _pwd;
-		cmd <<< "mklink \"$_pwd\\$link\" \"$_pwd\\$original\" " > /dev/null;  #"
-		if [ $? -ne 0 ]; then
-			echo `pwd`;
-			echo cmd <<< "mklink \"$_pwd\\$link\" \"$_pwd\\$original\" " > /dev/null;  #"
-			exit 1;
-		fi;
+		linkFileAbs "`pwd`/$link\" \"`pwd`/$original\" #"
+		if [ $? -ne 0 ]; then exit 1; fi;
 	else
  	if [ -L $file ]; then rm $file; fi;
 		ln -s $original $link;

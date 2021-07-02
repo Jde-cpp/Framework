@@ -133,6 +133,7 @@ function buildWindows
 		echo linkFile $dir.vcxproj._user $dir.vcxproj.user
 		linkFile $dir.vcxproj._user $dir.vcxproj.user;
 		if [ $? -ne 0 ]; then echo `pwd`; echo linkFile $dir.vcxproj._user $dir.vcxproj.user; exit 1; fi;
+		echo linkFile $dir.vcxproj._user $dir.vcxproj.user;
 	fi;
 	if [ ${clean:-1} -eq 1 ]; then
 		rm -r -f .bin;

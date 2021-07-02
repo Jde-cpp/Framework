@@ -10,7 +10,7 @@
 #include <boost/core/noncopyable.hpp>
 
 #ifndef __INTELLISENSE__
-#ifdef MSC_VER
+#ifdef _MSC_VER
 	#include <fmt/core.h>
 #endif
 #pragma warning( disable: 4702  )

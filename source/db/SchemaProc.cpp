@@ -146,8 +146,8 @@ namespace Jde::DB
 		{
 			for( var& [id,value] : pTable->FlagsData )
 			{
-				if( _pDataSource->Scaler<uint>( format("select count(*) from {} where id=?", pTable->Name), {id})==0 )
-					_pDataSource->Execute( format("insert into {}(id,name)values( ?, ? )", pTable->Name), {id, value} );
+				if( _pDataSource->Scaler<uint>( format("select count(*) from {} where id=?"sv, pTable->Name), {id})==0 )
+					_pDataSource->Execute( format("insert into {}(id,name)values( ?, ? )"sv, pTable->Name), {id, value} );
 			}
 			for( var& jData : pTable->Data )
 			{
