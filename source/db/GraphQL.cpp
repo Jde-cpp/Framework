@@ -894,13 +894,12 @@ namespace DB
 			sv result = _peekValue;
 			if( result.empty() )
 			{
-				for( auto ch = _text[i]; i<_text.size() && isspace(ch); ch = _text[++i] );
+				for( auto ch = _text[i]; i<_text.size() && isspace(ch); ch = i<_text.size()-1 ? _text[++i] : _text[i++] );
 				if( i<_text.size() )
 				{
 					uint start=i;
-					for( auto ch = _text[i]; i<_text.size() && !isspace(ch) && find(Delimiters.begin(), Delimiters.end(), ch)==Delimiters.end(); ch = _text[++i] );
-					if( i==start )
-						++i;
+					for( auto ch = Delimiters.front(); i<_text.size() && !isspace(ch) && find(Delimiters.begin(), Delimiters.end(), ch)==Delimiters.end(); ++i )
+						 ch = _text[i];
 					result = _text.substr( start, i-start );
 				}
 			}

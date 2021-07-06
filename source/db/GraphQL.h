@@ -53,7 +53,7 @@ namespace Jde::DB
 	constexpr array<sv,7> MutationQLStrings = { "create", "update", "delete", "restore", "purge", "add", "remove" };
 	struct MutationQL final
 	{
-		MutationQL( sv json, EMutationQL type, nlohmann::json args, optional<TableQL> resultPtr/*, sv parent*/ ):JsonName{json}, Type{type}, Args{args}, ResultPtr{resultPtr}/*, ParentJsonName{parent}*/{}
+		MutationQL( sv json, EMutationQL type, const nlohmann::json& args, optional<TableQL> resultPtr/*, sv parent*/ ):JsonName{json}, Type{type}, Args(args), ResultPtr{resultPtr}/*, ParentJsonName{parent}*/{}
 		string TableSuffix()const noexcept;
 		string JsonName;
 		EMutationQL Type;
