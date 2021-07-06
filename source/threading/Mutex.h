@@ -12,23 +12,27 @@ namespace Jde::Threading
 {
 	🚪 UniqueLock( str key )noexcept->std::unique_lock<std::shared_mutex>;
 
-	struct AtomicGuard final : boost::noncopyable
+	struct JDE_NATIVE_VISIBILITY AtomicGuard final : boost::noncopyable
 	{
-		AtomicGuard( atomic<bool>& v )noexcept;
-		~AtomicGuard();
+		AtomicGuard( atomic<bool>& v )noexcept: Value{ v }
+		{
+			while( Value.exchange(true) )
+				std::this_thread::yield();
+		}
+		~AtomicGuard(){ ASSERT( Value ); Value = false; }
 		atomic<bool>& Value;
 	};
 
-	struct CoLockAwatiable : Coroutine::IAwaitable<Coroutine::Task2>
+	struct JDE_NATIVE_VISIBILITY CoLockAwatiable : Coroutine::TAwaitable<>
 	{
 		CoLockAwatiable( str key )noexcept:Key{key}{}
-		using base=Coroutine::IAwaitable<Coroutine::Task2>;
+		using base=Coroutine::TAwaitable<>;
 		bool await_ready()noexcept override;
 		void await_suspend( typename base::THandle h )noexcept override;
 		typename base::TResult await_resume()noexcept override;
 	private:
 		base::THandle Handle{nullptr};
-		string Key;
+		const string Key;
 	};
 
 	struct CoLockGuard final : boost::noncopyable

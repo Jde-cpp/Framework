@@ -124,6 +124,9 @@
     <ClCompile Include="App.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="io\tinyxml2.cpp">
+      <Filter>Source\io</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Stopwatch.h">
@@ -279,9 +282,6 @@
     <ClInclude Include="coroutine\CoWorker.h">
       <Filter>Headers\coroutine</Filter>
     </ClInclude>
-    <ClInclude Include="coroutine\Task.h">
-      <Filter>Headers\coroutine</Filter>
-    </ClInclude>
     <ClInclude Include="db\GraphQL.h">
       <Filter>Headers\db</Filter>
     </ClInclude>
@@ -322,6 +322,18 @@
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Public\jde\io\File.h">
+      <Filter>Headers\io</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Public\jde\coroutine\Task.h">
+      <Filter>Headers\coroutine</Filter>
+    </ClInclude>
+    <ClInclude Include="threading\Worker.h">
+      <Filter>Headers\threading</Filter>
+    </ClInclude>
+    <ClInclude Include="threading\Mutex.h">
+      <Filter>Headers\threading</Filter>
+    </ClInclude>
+    <ClInclude Include="io\tinyxml2.h">
       <Filter>Headers\io</Filter>
     </ClInclude>
   </ItemGroup>

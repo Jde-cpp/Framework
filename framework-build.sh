@@ -43,6 +43,38 @@ fi;
 fetchDefault Public;
 cd $scriptDir/../Public;
 stageDir=$REPO_BASH/jde/Public/stage
+
+function winBoostConfig
+{
+	local file=$1;
+	local config=$2;
+	if [ ! -f $stageDir/$config/$file ]; then
+		echo NOT exists - $stageDir/$config/$file
+		cd $BOOST_BASH;
+		if [ ! -f b2.exe ]; then echo boost bootstrap; cmd <<< bootstrap.bat; echo boost bootstrap finished; fi;
+		local comand="b2 variant=$config link=shared threading=multi runtime-link=shared address-model=64 --with-$lib"
+		echo $comand;
+		cmd <<< "$command";#  > /dev/null;
+		if [ ! -f `pwd`/stage/lib/$file ];
+		then
+			echo ERROR NOT FOUND:  `pwd`/stage/lib/$file
+			echo `pwd`;
+			echo $comand;
+			exit 1;
+		fi;
+		echo `pwd`/stage/lib/$file found!
+		linkFileAbs `pwd`/stage/lib/$file $stageDir/$config/$file;
+#	else
+#		echo exists - $stageDir/release/$file;
+	fi;
+}
+function winBoost
+{
+	lib=$1;
+	echo winBoost - $lib
+	winBoostConfig boost_$lib-vc142-mt-x64-1_76.lib release;
+	winBoostConfig boost_$lib-vc142-mt-gd-x64-1_76.lib debug;
+}
 if windows; then
 	pushd `pwd` > /dev/null;
 	moveToDir stage;
@@ -50,6 +82,7 @@ if windows; then
 	moveToDir release; popd  > /dev/null;
 	if [ $shouldFetch -eq 1 ]; then
 		if [ ! -d $REPO_BASH/vcpkg/installed/x64-windows/include/nlohmann ]; then vcpkg.exe install nlohmann-json --triplet x64-windows; fi;
+		if [ ! -d $REPO_BASH/vcpkg/installed/x64-windows/lib/zlib.lib ]; then vcpkg.exe install zlib --triplet x64-windows; fi;
 		#vcpkg.exe install fmt --triplet x64-windows
 		#vcpkg.exe install spdlog --triplet x64-windows
 		toBashDir $BOOST_DIR BOOST_BASH;
@@ -57,15 +90,11 @@ if windows; then
 			echo ERROR - $BOOST_BASH not found;
 			exit 1;
 			vcpkg.exe install boost --triplet x64-windows; if [ $? -ne 0 ]; then echo "vcpkg install boost failed"; exit 1; fi;
-		elif [ ! -f $stageDir/release/boost_date_time-vc142-mt-x64-1_76.lib ]; then
-			cd $BOOST_BASH;
-			cmd <<< bootstrap.bat;
-			cmd <<< "b2 variant=release link=shared threading=multi runtime-link=shared address-model=64 --with-date_time"  > /dev/null;
-			echo linkFileAbs `pwd`/lib/boost_date_time-vc142-mt-x64-1_76.lib $stageDir/release/boost_date_time-vc142-mt-x64-1_76.lib;
-			linkFile `pwd`/lib/boost_date_time-vc142-mt-x64-1_76.lib $stageDir/release/boost_date_time-vc142-mt-x64-1_76.lib;
-		   cmd <<< "b2 variant=debug link=shared threading=multi runtime-link=shared address-model=64 --with-date_time"  > /dev/null;
-			echo linkFileAbs `pwd`/lib/boost_date_time-vc142-mt-x64-1_76.lib $stageDir/release/boost_date_time-vc142-mt-x64-1_76.lib;
-			linkFile `pwd`/lib/boost_date_time-vc142-mt-gd-x64-1_76.lib $stageDir/release/boost_date_time-vc142-mt-gd-x64-1_76.lib;
+		else
+			winBoost date_time;
+			winBoost iostreams;  #b2 variant=debug link=shared threading=multi runtime-link=shared address-model=64  -sZLIB_BINARY=zlib -sZLIB_LIBPATH=C:\Users\duffyj\source\repos\vcpkg\installed\x64-windows\lib -sZLIB_INCLUDE=C:\Users\duffyj\source\repos\vcpkg\installed\x64-windows\include -sNO_ZLIB=0 -sNO_COMPRESSION=0 -sBOOST_IOSTREAMS_USE_DEPRECATED  --with-iostreams
+			winBoost context;
+			winBoost coroutine;
 		fi;
 	fi;
 fi;
@@ -76,14 +105,14 @@ if [ ! -d protobuf ]; then  git clone https://github.com/Jde-cpp/protobuf.git; b
 if [ ! -d spdlog ]; then
 	git clone https://github.com/gabime/spdlog.git;
 elif [ $shouldFetch -eq 1 ]; then
-	cd spdlog; git pull; cd ..;
+	cd spdlog; echo pulling spdlog; git pull > /dev/null; cd ..;
 fi;
 
 if windows; then
 	if [ ! -d fmt ]; then
 		git clone https://github.com/fmtlib/fmt.git; cd fmt;
 	elif [ $shouldFetch -eq 1 ]; then
-		cd fmt; git pull;
+		cd fmt; echo pulling fmt; git pull;
 	fi;
 	if [ ! -d build ]; then
 		moveToDir build;
@@ -197,6 +226,4 @@ function frameworkProtoc
 }
 fetchDefault Framework;
 frameworkProtoc;
-echo  build Framework
 build Framework 0;
-echo  built Framework

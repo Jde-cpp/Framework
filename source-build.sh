@@ -94,15 +94,16 @@ function buildLinux
 }
 function buildWindows2
 {
-	#echo buildWindows2 $1 $2 $3;
-	#echo $3 - starting;
-	configuration=$3;
-	cmd2="$1=$configuration";
-	outFile=$2;
-	out=.bin/$configuration/$file;
-	targetDir=$baseDir/$jdeRoot/Public/stage/$configuration;
-	target=$targetDir/$file;
+	echo buildWindows2 $1 $2 $3;
+	echo $3 - starting;
+	local configuration=$3;
+	local cmd2="$1=$configuration";
+	local file=$2;
+	local out=.bin/$configuration/$file;
+	local targetDir=$baseDir/$jdeRoot/Public/stage/$configuration;
+	local target=$targetDir/$file;
 	if [ ! -f $target ]; then
+		echo $target - not found;
 		$cmd2
 		if [ $? -ne 0 ]; then
 			echo `pwd`;
@@ -113,36 +114,55 @@ function buildWindows2
 		sourceDir=`pwd`;
 		subDir=$(if [ -d .bin ]; then echo "/.bin"; else echo ""; fi);
 		cd $targetDir;
-		#mklink $outFile $sourceDir/.bin/$configuration;
-		#echo cp "$sourceDir$subDir/$configuration/$outFile" .;
+		#mklink $file $sourceDir/.bin/$configuration;
+		#echo cp "$sourceDir$subDir/$configuration/$file" .;
 
-		cp "$sourceDir$subDir/$configuration/$outFile" .;
-		if [[ $outFile == *.dll ]]; then
-			#mklink ${outFile:0:-3}lib $sourceDir/.bin/$configuration;
-			cp "$sourceDir$subDir/$configuration/${outFile:0:-3}lib" .;
+		cp "$sourceDir$subDir/$configuration/$file" .;
+		if [[ $file == *.dll ]]; then
+			#mklink ${file:0:-3}lib $sourceDir/.bin/$configuration;
+			cp "$sourceDir$subDir/$configuration/${file:0:-3}lib" .;
 		fi;
 		#echo cd "$sourceDir";
 		cd "$sourceDir";
+	else
+		echo $target - found;
 	fi;
 	#echo $3 - done;
 }
 function buildWindows
 {
+	echo buildWindows $1;
 	dir=$1;
 	if [[ ! -f "$dir.vcxproj.user" && -f "$dir.vcxproj._user" ]]; then
+		echo `pwd`
 		echo linkFile $dir.vcxproj._user $dir.vcxproj.user
-		linkFile $dir.vcxproj._user $dir.vcxproj.user;
-		if [ $? -ne 0 ]; then echo `pwd`; echo linkFile $dir.vcxproj._user $dir.vcxproj.user; exit 1; fi;
+		linkFile $dir.vcxproj._user $dir.vcxproj.user;	if [ $? -ne 0 ]; then echo `pwd`; echo FAILED:  linkFile $dir.vcxproj._user $dir.vcxproj.user; exit 1; fi;
 		echo linkFile $dir.vcxproj._user $dir.vcxproj.user;
+		echo done linking file;
 	fi;
+	echo clean=$clean;
 	if [ ${clean:-1} -eq 1 ]; then
+		echo rm -r -f $dir/.bin;
 		rm -r -f .bin;
 	fi;
 	file=$2;
-	if [[ -z $file ]]; then [[ $dir = "Framework" ]] && file="Jde.dll" || file="Jde.$dir.dll"; fi;
-	#echo buildWindows $dir `pwd`;
+	echo file=$file dir=$dir;
+	#echo if [[ -z file ]] then [[ $dir = "Framework" ]] && file="Jde.dll" || file="Jde.dir.dll" fi;
+	#if [[ -z $file ]]; then [[ $dir = "Framework" ]] && file="Jde.dll" || file="Jde.$dir.dll"; fi;
+	if [[ -z $2 ]]; then
+		echo file empty;
+		if [[ $dir = "Framework" ]]; then
+			file="Jde.dll";
+		else
+			file="Jde.$dir.dll";
+		fi;
+	else
+		echo file not empty;
+	fi;
+	echo file=$file;
+	echo buildWindows $dir `pwd`;
 	baseCmd="msbuild.exe $dir.vcxproj -p:Platform=x64 -maxCpuCount -nologo -v:q /clp:ErrorsOnly -p:Configuration"
-	#echo buildWindows $cmd
+	echo buildWindows $baseCmd $file release
 	buildWindows2 "$baseCmd" $file release;
 	buildWindows2 "$baseCmd" $file debug;
 	echo build $dir complete.
@@ -181,13 +201,8 @@ function build
 }
 function fetchBuild
 {
-#	proto=$3;
 	fetchDefault $1;
-	# if [[ ! -z "$proto" ]]; then
-	# 	echo calling \"$proto\";
-	#    (`$proto`);
-	#    echo finished \"$proto\";
-   	# fi;
+	echo fetchDefault $1 finished;
 	build $1 $2 $3;
 }
 function findProtoc

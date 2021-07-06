@@ -72,7 +72,7 @@ namespace Jde
 		Settings::SetGlobal( std::make_shared<Jde::Settings::Container>(settingsPath) );
 		InitializeLogger( appName );
 		SetConsoleTitle( appName );
-		Threading::SetThreadDscrptn( string(appName) );
+		Threading::SetThreadDscrptn( appName );
 		INFO( "{}, settings='{}' Running as console='{}'"sv, arg0, settingsPath, console );
 
 		Cache::CreateInstance();
@@ -204,7 +204,6 @@ namespace Jde
 		if( GetServerSink() )
 			GetServerSink()->Destroy();
 		Jde::DestroyLogger();
-		//can't work obviously INFO0( "~Clearing Logger"sv );
 		_pApplicationName = nullptr;
 		_pCompanyName = nullptr;
 		_pInstance = nullptr;

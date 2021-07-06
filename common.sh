@@ -86,6 +86,7 @@ function mklink
 	if [ -f $file ]; then rm $file; fi;
 	if windows; then
 		toWinDir "$fetchLocation" _source;
+		if [ ! -f $_source ]; then echo $_source not found; exit 1; fi;
 		toWinDir "`pwd`" _destination;
 		cmd <<< "mklink \"$_destination\\$file\" \"$_source\\$file\" " > /dev/null;  #"
 		if [ $? -ne 0 ]; then
@@ -107,8 +108,11 @@ function linkFileAbs
 		# echo Hi;
 		toWinDir $original originalWin;
 		toWinDir $link linkWin;
-		cmd <<< "mklink \"$linkWin\" \"$originalWin\" " > /dev/null;  #"
-		if [ $? -ne 0 ]; then echo `pwd`; echo cmd <<< "mklink \"$linkWin\" \"$originalWin\" " > /dev/null;  exit 1; fi; #"
+		#echo cmd  "mklink $linkWin $originalWin "; #
+		cmd <<< "mklink $linkWin $originalWin " > /dev/null;  #need to send in quoted, linkFile is already quoting.
+		#echo if [ ! -f $link ];
+		#if [ ! -f $link ]; then echo file not found; echo `pwd`; echo cmd  "linkFileAbs $original $link ";  exit 1; fi; #"
+		#echo success;
 	else
 		if [ -L $file ]; then rm $file; fi;
 		ln -s $original $link;
@@ -122,10 +126,11 @@ function linkFile
 	if [ -f $link ]; then exit 0; fi;
 	if windows; then
 		toWinDir "`pwd`" _pwd;
-		linkFileAbs "`pwd`/$link\" \"`pwd`/$original\" #"
-		if [ $? -ne 0 ]; then exit 1; fi;
+		linkFileAbs \"`pwd`/$original\" \"`pwd`/$link\" #"
+		if [ ! -f "$link" ]; then echo file not found; echo `pwd`; echo linkFileAbs \"`pwd`/$original\" \"`pwd`/$link\";  exit 1; fi; #"
+		#if [ $? -ne 0 ]; then exit 1; fi;
 	else
- 	if [ -L $file ]; then rm $file; fi;
+ 		if [ -L $file ]; then rm $file; fi;
 		ln -s $original $link;
 	fi;
 }

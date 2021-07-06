@@ -43,9 +43,7 @@ namespace Jde
 	{}
 
 	Exception::~Exception()
-	{
-		//std::cerr << "here";
-	}
+	{}
 
 	void Exception::Log( sv additionalInformation, ELogLevel level )const noexcept
 	{
@@ -81,7 +79,7 @@ namespace Jde
 	}
 
 	BoostCodeException::BoostCodeException( const boost::system::error_code& errorCode, sv msg )noexcept:
-		RuntimeException{ str{msg} },
+		RuntimeException{ string{msg} },
 		_errorCode{ make_unique<boost::system::error_code>(errorCode) }
 	{}
 	BoostCodeException::BoostCodeException( const BoostCodeException& e )noexcept:
@@ -93,9 +91,9 @@ namespace Jde
 
 	string CodeException::ToString( const std::error_code& errorCode )noexcept
 	{
-		const int value = errorCode.value();
-		const std::error_category& category = errorCode.category();
-		const std::string message = errorCode.message(); //category().message(value())
+		var value = errorCode.value();
+		var& category = errorCode.category();
+		var message = errorCode.message();
 		return format( "({}){} - {})", value, category.name(), message );
 	}
 	string CodeException::ToString( const std::error_category& errorCategory )noexcept

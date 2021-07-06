@@ -25,7 +25,7 @@ namespace Jde::Threading
 	JDE_NATIVE_VISIBILITY uint GetThreadId()noexcept;
 	JDE_NATIVE_VISIBILITY uint GetAppThreadHandle()noexcept;
 	JDE_NATIVE_VISIBILITY void SetThreadDscrptn( std::thread& thread, sv description )noexcept;
-	JDE_NATIVE_VISIBILITY void SetThreadDscrptn( const std::string& description )noexcept;
+	JDE_NATIVE_VISIBILITY void SetThreadDscrptn( sv description )noexcept;
 	JDE_NATIVE_VISIBILITY void SetThreadInfo( const ThreadParam& param )noexcept;
 	HThread BumpThreadHandle()noexcept;
 	//JDE_NATIVE_VISIBILITY void SetThreadInfo( ThreadParam& param )noexcept;

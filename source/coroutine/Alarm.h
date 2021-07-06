@@ -20,15 +20,16 @@ namespace Jde::Threading
 		TimePoint _alarm;
 	};
 
-	struct JDE_NATIVE_VISIBILITY Alarm final: Threading::Worker
+	struct JDE_NATIVE_VISIBILITY Alarm final: Threading::TWorker<Alarm>
 	{
-		Alarm():Worker{"Alarm"}{};
+		using base=Threading::TWorker<Alarm>;
+		Alarm():base{"Alarm"sv}{};
 		~Alarm(){ if( GetDefaultLogger() ) DBG("Alarm::~Alarm"sv); }
 		static auto Wait( TimePoint t, Coroutine::Handle& handle )noexcept{return AlarmAwaitable{t, handle};}
 		static void Cancel( Coroutine::Handle handle )noexcept;
 	private:
 		void Shutdown()noexcept override;
-		void Process()noexcept override;
+		bool Poll()noexcept override;
 		static sp<Alarm> Instance()noexcept;
 		optional<TimePoint> Next()noexcept;
 		static void Add( TimePoint t, AlarmAwaitable::THandle h, Coroutine::Handle myHandle )noexcept;

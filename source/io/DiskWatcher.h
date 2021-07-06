@@ -110,7 +110,7 @@ namespace Jde::IO
 		TimePoint ModifiedTime;
 	};
 	typedef sp<const IDirEntry> IDirEntryPtr;
-	struct IDrive
+	struct IDrive : std::enable_shared_from_this<IDrive>
 	{
 		virtual map<string,IDirEntryPtr> Recursive( path path )noexcept(false)=0;
 		virtual IDirEntryPtr Get( path path )noexcept(false)=0;

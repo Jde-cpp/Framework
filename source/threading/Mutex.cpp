@@ -5,19 +5,6 @@ namespace Jde::Threading
 {
 	map<string,std::deque<std::variant<CoLockAwatiable*,coroutine_handle<>>>> _coLocks; atomic<bool> _coLocksLock;
 
-	AtomicGuard::AtomicGuard( atomic<bool>& v )noexcept:
-		Value{ v }
-	{
-		while( Value.exchange(true) )
-			std::this_thread::yield();
-	}
-
-	AtomicGuard::~AtomicGuard()
-	{
-		ASSERT( Value );
-		Value = false;
-	}
-
 	CoLockGuard::CoLockGuard( str key, std::variant<CoLockAwatiable*,coroutine_handle<>> h )noexcept:
 		Handle{h},
 		Key{key}

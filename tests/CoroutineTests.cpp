@@ -1,10 +1,12 @@
-#include "gtest/gtest.h"
+﻿#include "gtest/gtest.h"
+#include <random>
 #include "../source/coroutine/Alarm.h"
 #include "../source/coroutine/Coroutine.h"
 #include "../source/threading/Mutex.h"
-//#include "../source/log/Logging.h"
 #include "../source/log/server/ServerSink.h"
-
+#ifdef _MSC_VER
+	#include "../../Windows/source/WindowsDrive.h"
+#endif
 #define var const auto
 namespace Jde::Coroutine
 {
@@ -20,37 +22,6 @@ namespace Jde::Coroutine
 		Coroutine::Task<string> CallPool();
 		Coroutine::Task<string> CallThrow();
 	};
-
-/*	struct ThrowAwaitable final : CancelAwaitable<Task<string>>
-	{
-		typedef CancelAwaitable<Task<string>> base;
-		ThrowAwaitable()noexcept:base(_hClient){};
-		~ThrowAwaitable()=default;
-		bool await_ready()noexcept{return false;};
-		void await_suspend( ThrowAwaitable::Handle h )noexcept override
-		{
-			base::await_suspend( h );
-			//optional<CoroutineParam> param{ CoroutineParam{h} };
-			jthread( [h, this]()mutable
-			{
-				Threading::SetThreadDscrptn( "await_suspend" );
-				std::this_thread::yield();
-				_pPromise->get_return_object().ExceptionPtr = std::make_exception_ptr( Exception{"Error"} );
-				h.resume();
-			} ).detach();
-		}
-		string await_resume()noexcept(false)
-		{
-			if( OriginalThreadParam )
-				Threading::SetThreadInfo( *OriginalThreadParam );
-			auto& result = _pPromise->get_return_object();
-			if( result.ExceptionPtr )
-				throw result.ExceptionPtr;
-			return result.Result;
-		}
-		uint _hClient;
-	};
-*/
 
 	uint Count{0};
 	Duration MinTick{1ms};
@@ -202,34 +173,46 @@ namespace Jde::Coroutine
 		std::shared_lock l{ mtx };
 		cv.wait( l );
 	}
-
-/*	static auto Throw()noexcept{ return ThrowAwaitable{}; }
-	Coroutine::Task<string> CoroutineTests::CallThrow()
+#ifdef _MSC_VER	
+	α Write( path path, sp<vector<char>> pBuffer )->Task2
 	{
-		bool thrown;
-		try
-		{
-			co_await Throw();
-			thrown = false;
-		}
-		catch( Exception& e )
-		{
-			DBG( string{e.what()} );
-			thrown = true;
-		}
-		ASSERT_DESC( thrown, "Expecting thrown exception." );
-
+		auto p = make_shared<IO::Drive::WindowsDrive>();
+		co_await p->Write( fs::path{path}, pBuffer );
+		std::shared_lock l{ mtx };
+		cv.notify_one();
+	}
+	sp<vector<char>> _pRead;
+	α Read( path path )->Task2
+	{
+		auto p = make_shared<IO::Drive::WindowsDrive>();
+		_pRead = ( co_await p->Read( fs::path{path} ) ).Get<vector<char>>();
 		std::shared_lock l{ mtx };
 		cv.notify_one();
 	}
 
-	TEST_F(CoroutineTests, Error)
+	TEST_F(CoroutineTests, File)
 	{
-		Threading::SetThreadDscrptn( "Test" );
-		CallThrow();
-
+		var chunksize=4096;
+		var threadSize=5;
+		constexpr uint itemSize = sizeof( double );
+		var itemCount = chunksize*threadSize*2.5/itemSize;
+		var totalSize = (itemCount+1)*itemSize;
+		auto pBuffer = make_shared<vector<char>>( totalSize );
+		std::uniform_real_distribution<double> unif( 0, std::numeric_limits<double>::max() );
+		std::default_random_engine re;
+		for( uint i=0; i<itemCount; ++i )
+		{
+		   double v = unif( re );
+			memcpy( pBuffer->data()+i*itemSize, &v, itemSize );
+		}
+		var path = fs::path( "c:\\temp\\test.dat" );
+		Write( path, pBuffer );
 		std::shared_lock l{ mtx };
 		cv.wait( l );
-		std::this_thread::sleep_for( MinTick*3 );
-	}*/
+		Read( path );
+		std::shared_lock l2{ mtx };
+		cv.wait( l2 );
+		ASSERT_EQ( *pBuffer, *_pRead );
+	}
+#endif
 }

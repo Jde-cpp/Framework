@@ -51,7 +51,7 @@ namespace Jde::Threading
 		unique_lock l{ _coroutineMutex };//only shared
 		return _coroutines.size() ? _coroutines.begin()->first : optional<TimePoint>{};
 	}
-	void Alarm::Process()noexcept
+	bool Alarm::Poll()noexcept
 	{
 		static uint i=0;
 		{
@@ -67,13 +67,14 @@ namespace Jde::Threading
 		unique_lock l{ _coroutineMutex };
 		for( auto p=_coroutines.begin(); p!=_coroutines.end() && p->first<Clock::now(); p = _coroutines.erase(p) )
 			Coroutine::CoroutinePool::Resume( move(get<1>(p->second)) );
+		return _coroutines.size();
 	}
 	void Alarm::Shutdown()noexcept
 	{
-		_pThread->Interrupt();
+		_pThread->request_stop();
 		std::unique_lock<std::mutex> lk( _mtx );
 		_cv.notify_one();
-		Worker::Shutdown();
+		base::Shutdown();
 	}
 	std::once_flag _singleThread;
 	sp<Alarm> Alarm::Instance()noexcept//TODO move to base.

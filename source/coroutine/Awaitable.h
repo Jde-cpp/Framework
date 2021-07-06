@@ -5,15 +5,15 @@ namespace Jde::Coroutine
 {
 	using ClientHandle = uint;
 
-	template<typename TTask>
-	struct IAwaitable
+	template<class TTask=Task2>
+	struct TAwaitable
 	{
 		using TResult=typename TTask::TResult;
 		using TPromise=typename TTask::promise_type;
 		using THandle=coroutine_handle<TPromise>;
-		IAwaitable()noexcept=default;
-		IAwaitable( str name )noexcept:_name{name}{};
-		virtual ~IAwaitable()=0;
+		TAwaitable()noexcept=default;
+		TAwaitable( str name )noexcept:_name{name}{};
+		virtual ~TAwaitable()=0;
 
 		virtual α await_ready()noexcept->bool{ return false; }
 		virtual TResult await_resume()noexcept=0;
@@ -31,47 +31,51 @@ namespace Jde::Coroutine
 		string ThreadName;
 		const string _name;
 	};
-	template<typename TTask> IAwaitable<TTask>::~IAwaitable(){}
+	template<class T> TAwaitable<T>::~TAwaitable(){}
 
-	struct NotReadyErrorAwaitable /*final*/ : IAwaitable<Task2>
+	struct IAwaitable /*abstract*/ : TAwaitable<Task2>
 	{
-		using base=IAwaitable<Task2>;
-		NotReadyErrorAwaitable( str name={} )noexcept:base{name}{};
-		bool await_ready()noexcept override{ return false; }
+		using base=TAwaitable<Task2>;
+		virtual ~IAwaitable()=0;
+
+		IAwaitable( str name={} )noexcept:base{name}{};
 		void await_suspend( typename base::THandle h )noexcept override{ base::await_suspend( h ); _pPromise = &h.promise(); }
 		typename base::TResult await_resume()noexcept override{ AwaitResume(); return _pPromise->get_return_object().GetResult(); }
 	protected:
 		typename base::TPromise* _pPromise{ nullptr };
 	};
+	inline IAwaitable::~IAwaitable(){}
 
-	struct ErrorAwaitable final : NotReadyErrorAwaitable//<T>
+	struct AsyncAwaitable final : IAwaitable
 	{
-		using base=NotReadyErrorAwaitable;
-		ErrorAwaitable( function<sp<void>()> fnctn )noexcept:_fnctn{fnctn}{};
+		using base=IAwaitable;
+		AsyncAwaitable( function<sp<void>()> fnctn )noexcept:_fnctn{fnctn}{};
 		void await_suspend( typename base::THandle h )noexcept override;
 	private:
 		function<sp<void>()> _fnctn;
 	};
 
-	struct ErrorAwaitableAsync final : NotReadyErrorAwaitable
+	struct FunctionAwaitable final : IAwaitable //TODO try FunctionType like InteruptableThread
 	{
-		using base=NotReadyErrorAwaitable;
-		ErrorAwaitableAsync( function<Task2(typename base::THandle)> fnctn, str name={} )noexcept:base{name}, _fnctn2{fnctn}{};
+		using base=IAwaitable;
+		FunctionAwaitable( function<Task2(typename base::THandle)> fnctn, str name={} )noexcept:base{name}, _fnctn2{fnctn}{};
 
 		void await_suspend( typename base::THandle h )noexcept override{ base::await_suspend( h ); _fnctn2( move(h) ); }
 	private:
 		function<Task2(typename base::THandle)> _fnctn2;
 	};
 
-	template<class TTask>
-	struct CancelAwaitable : IAwaitable<TTask>
+	template<class T>
+	struct CancelAwaitable /*abstract*/ : TAwaitable<T>
 	{
 		CancelAwaitable( ClientHandle& handle )noexcept:_hClient{ NextHandle() }{ handle = _hClient; }
+		virtual ~CancelAwaitable()=0;
 	protected:
 		const ClientHandle _hClient;
 	};
+	template<class T> CancelAwaitable<T>::~CancelAwaitable(){}
 
-	inline void ErrorAwaitable::await_suspend( typename base::THandle h )noexcept
+	inline void AsyncAwaitable::await_suspend( typename base::THandle h )noexcept
 	{
 		base::await_suspend( h );
 		std::thread( [this,h2=move(h)]()mutable//TODO move to thread pool

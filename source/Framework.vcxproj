@@ -136,6 +136,7 @@
     </ClCompile>
     <ClCompile Include="db\GraphQL.cpp" />
     <ClCompile Include="db\SchemaProc.cpp" />
+    <ClCompile Include="io\tinyxml2.cpp" />
     <ClCompile Include="Log.cpp">
       <PreprocessToFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</PreprocessToFile>
       <PreprocessToFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</PreprocessToFile>
@@ -146,6 +147,7 @@
     <ClCompile Include="um\UM.cpp" />
     <ClInclude Include="..\..\Public\jde\Application.h" />
     <ClInclude Include="..\..\Public\jde\collections\ToVec.h" />
+    <ClInclude Include="..\..\Public\jde\coroutine\Task.h" />
     <ClInclude Include="..\..\Public\jde\Dll.h" />
     <ClInclude Include="..\..\Public\jde\Exception.h" />
     <ClInclude Include="..\..\Public\jde\Exports.h" />
@@ -161,7 +163,6 @@
     <ClInclude Include="coroutine\Awaitable.h" />
     <ClInclude Include="coroutine\Coroutine.h" />
     <ClInclude Include="coroutine\CoWorker.h" />
-    <ClInclude Include="coroutine\Task.h" />
     <ClInclude Include="db\c_api.h" />
     <ClInclude Include="db\Database.h" />
     <ClInclude Include="db\DataSource.h" />
@@ -189,6 +190,7 @@
     <ClInclude Include="io\Parser.h" />
     <ClInclude Include="io\sockets\SessionCallbacks.h" />
     <ClInclude Include="io\sockets\Socket.h" />
+    <ClInclude Include="io\tinyxml2.h" />
     <ClInclude Include="log\Logging.h" />
     <ClInclude Include="log\server\EtwSink.h" />
     <ClInclude Include="log\server\proto\messages.pb.h" />
@@ -249,9 +251,11 @@
     <ClInclude Include="Stopwatch.h" />
     <ClInclude Include="threading\InterruptibleThread.h" />
     <ClInclude Include="threading\Interrupt.h" />
+    <ClInclude Include="threading\Mutex.h" />
     <ClInclude Include="threading\Pool.h" />
     <ClInclude Include="threading\ReusableThread.h" />
     <ClInclude Include="threading\Thread.h" />
+    <ClInclude Include="threading\Worker.h" />
     <ClInclude Include="um\UM.h" />
   </ItemGroup>
   <ItemGroup>
