@@ -209,7 +209,7 @@ function findProtoc
 {
 	if windows; then
 		echo REPO_BASH=$REPO_BASH;
-		findExecutable protoc.exe $REPO_BASH/protobuf/cmake/build/sln/Release;
+		findExecutable protoc.exe $REPO_BASH/jde/Public/stage/release;
 	fi;
 }
 popd > /dev/null;

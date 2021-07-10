@@ -243,12 +243,10 @@ namespace Jde
 	optional<T> QueueMove<T>::Pop()noexcept
 	{
 		LOCK;
-		optional<T> p;
-		if( !_queue.empty() )
-		{
-			p = move( _queue.front() );
+		var hasSize = !_queue.empty();
+		optional<T> p = hasSize ? move( _queue.front() ) : optional<T>{};
+		if( p )
 			_queue.pop();
-		}
 		return p;
 	}
 	template<typename T>

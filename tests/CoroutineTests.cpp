@@ -19,25 +19,29 @@ namespace Jde::Coroutine
 		void SetUp() override {}
 		void TearDown() override {}
 	public:
-		Coroutine::Task<string> CallPool();
-		Coroutine::Task<string> CallThrow();
+//		α CallPool()->Coroutine::Task2;
+//		α CallThrow()->Coroutine::Task2;
 	};
 
 	uint Count{0};
 	Duration MinTick{1ms};
+	vector<sp<ResumeThread>> threads;
+	std::condition_variable_any cv;
+	std::shared_mutex mtx;
+	std::shared_mutex mtx2;
 	using namespace Chrono;
 	using std::chrono::milliseconds;
-
-	struct Awaitable final : CancelAwaitable<Task<string>>
+	/*
+	struct Awaitable final : CancelAwaitable<Task2>
 	{
-		typedef CancelAwaitable<Task<string>> base;
+		typedef CancelAwaitable<Task2> base;
 		Awaitable( vector<sp<ResumeThread>>* pThreads, Duration idleLimit )noexcept:
 			base(_hClient),
 			IdleLimit{idleLimit},
 			_pThreads{pThreads}
 		{};
 		~Awaitable()=default;
-		void await_suspend( coroutine_handle<Task<string>::promise_type> h )noexcept override
+		void await_suspend( coroutine_handle<Task2::promise_type> h )noexcept override
 		{
 			base::await_suspend( h );
 			_pPromise = &h.promise();
@@ -57,32 +61,28 @@ namespace Jde::Coroutine
 			else
 				CoroutinePool::Resume( move(h) );
 		}
-		string await_resume()noexcept override
+		TaskResult await_resume()noexcept override
 		{
 			//DBG( "({})TickManager::Awaitable::await_resume"sv, std::this_thread::get_id() );
 			if( OriginalThreadParamPtr )
 				Threading::SetThreadInfo( *OriginalThreadParamPtr );
 			auto& result = _pPromise->get_return_object();
-			return result.Result;
+			return result.GetResult();
 		}
 		const Duration IdleLimit;
 	private:
 		uint _hClient;
 		vector<sp<ResumeThread>>* _pThreads;
-		Task<string>::promise_type* _pPromise{nullptr};
+		Task2::promise_type* _pPromise{nullptr};
 		//void End( Awaitable::Handle h, const Tick* pTick )noexcept; std::once_flag _singleEnd;
 	};
 	static auto Co( vector<sp<ResumeThread>>* pThreads, Duration idle )noexcept{ return Awaitable{pThreads, idle}; }
 
-	vector<sp<ResumeThread>> threads;
-	std::condition_variable_any cv;
-	std::shared_mutex mtx;
-
-	Coroutine::Task<string> Call()
+	α Call()->Coroutine::Task2
 	{
 		ClearMemoryLog();
 		co_await Co( &threads, MinTick*2 );
-		jthread( []()->Coroutine::Task<string>
+		jthread( []()->Coroutine::Task2
 		{
 			DBG( "Begin sleep1"sv );
 			std::this_thread::sleep_for( MinTick );
@@ -92,7 +92,7 @@ namespace Jde::Coroutine
 			ASSERT_DESC( FindMemoryLog(1).size()==1, format("FindMemoryLog(1).size()=={}", FindMemoryLog(1).size()) );
 			ClearMemoryLog();
 			DBG( "--------------------------------New Test--------------------------------"sv );
-			jthread( []()->Coroutine::Task<string>
+			jthread( []()->Coroutine::Task2
 			{
 				DBG( "Begin sleep2"sv );
 				std::this_thread::sleep_for( MinTick*2 );
@@ -112,12 +112,12 @@ namespace Jde::Coroutine
 		std::this_thread::sleep_for( MinTick*3 );
 	}
 
-	Coroutine::Task<string> CoroutineTests::CallPool()
+	α CoroutineTests::CallPool()->Coroutine::Task2
 	{
 		ClearMemoryLog();
 		co_await Co( nullptr, 1ms );
 		ASSERT_DESC( CoroutinePool::_pInstance->_pQueue==nullptr && CoroutinePool::_pInstance->_pThread==nullptr, "Expected no queue when max thread count==1." );
-		jthread( []()->Coroutine::Task<string>
+		jthread( []()->Coroutine::Task2
 		{
 			co_await Co( nullptr, 1ms );//should queue
 			ASSERT_DESC( CoroutinePool::_pInstance->_pQueue!=nullptr && CoroutinePool::_pInstance->_pThread!=nullptr, "Expected queue when max thread count==1." );
@@ -173,7 +173,8 @@ namespace Jde::Coroutine
 		std::shared_lock l{ mtx };
 		cv.wait( l );
 	}
-#ifdef _MSC_VER	
+	*/
+#ifdef _MSC_VER
 	α Write( path path, sp<vector<char>> pBuffer )->Task2
 	{
 		auto p = make_shared<IO::Drive::WindowsDrive>();
@@ -181,12 +182,13 @@ namespace Jde::Coroutine
 		std::shared_lock l{ mtx };
 		cv.notify_one();
 	}
+
 	sp<vector<char>> _pRead;
 	α Read( path path )->Task2
 	{
 		auto p = make_shared<IO::Drive::WindowsDrive>();
 		_pRead = ( co_await p->Read( fs::path{path} ) ).Get<vector<char>>();
-		std::shared_lock l{ mtx };
+		std::shared_lock l{ mtx2 };
 		cv.notify_one();
 	}
 
@@ -197,7 +199,7 @@ namespace Jde::Coroutine
 		constexpr uint itemSize = sizeof( double );
 		var itemCount = chunksize*threadSize*2.5/itemSize;
 		var totalSize = (itemCount+1)*itemSize;
-		auto pBuffer = make_shared<vector<char>>( totalSize );
+		auto pBuffer = make_shared<vector<char>>( (size_t)totalSize );
 		std::uniform_real_distribution<double> unif( 0, std::numeric_limits<double>::max() );
 		std::default_random_engine re;
 		for( uint i=0; i<itemCount; ++i )
@@ -209,10 +211,11 @@ namespace Jde::Coroutine
 		Write( path, pBuffer );
 		std::shared_lock l{ mtx };
 		cv.wait( l );
+//		std::this_thread::sleep_for( 60s );
 		Read( path );
-		std::shared_lock l2{ mtx };
+		std::shared_lock l2{ mtx2 };
 		cv.wait( l2 );
-		ASSERT_EQ( *pBuffer, *_pRead );
+		ASSERT_TRUE( *pBuffer==*_pRead );
 	}
 #endif
 }

@@ -42,6 +42,8 @@ namespace Jde::Threading
 					std::swap( pKeepAlive, _pInstance );
 					IApplication::RemoveShutdown( pKeepAlive );
 					_pThread->request_stop();
+					_pThread->detach();
+					_pThread = nullptr;
 				}
 				else
 					_lastRequest = Clock::now()+keepAlive;

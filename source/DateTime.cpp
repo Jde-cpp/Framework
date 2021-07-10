@@ -281,7 +281,7 @@ namespace Jde
 		var index = find( months.begin(), months.end(), Str::ToLower(string(month)) )-months.begin();
 		if( index>=(int)months.size() )
 			THROW( ArgumentException("Could not parse month '{}'", month) );
-		return index+1;
+		return (uint8)index+1;
 	}
 	string DateTime::MonthAbbrev()const noexcept
 	{

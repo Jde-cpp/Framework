@@ -1,6 +1,8 @@
 ﻿#pragma once
-#include "Coroutine.h"
+#include <jde/Exports.h> 
 #include <jde/coroutine/Task.h>
+#include "Coroutine.h"
+
 namespace Jde::Coroutine
 {
 	using ClientHandle = uint;
@@ -13,12 +15,12 @@ namespace Jde::Coroutine
 		using THandle=coroutine_handle<TPromise>;
 		TAwaitable()noexcept=default;
 		TAwaitable( str name )noexcept:_name{name}{};
-		virtual ~TAwaitable()=0;
+		//virtual ~TAwaitable()=0;
 
 		virtual α await_ready()noexcept->bool{ return false; }
 		virtual TResult await_resume()noexcept=0;
-		virtual α await_suspend( THandle /*h*/ )noexcept->void{ OriginalThreadParamPtr = { Threading::GetThreadDescription(), Threading::GetAppThreadHandle() }; }
-		void AwaitResume()noexcept
+		inline virtual void await_suspend( std::coroutine_handle<Task2::promise_type> /*h*/ )noexcept{ OriginalThreadParamPtr = { Threading::GetThreadDescription(), Threading::GetAppThreadHandle() }; }
+		inline void AwaitResume()noexcept
 		{
 			if( _name.size() )
 				DBG("({}){}::await_resume"sv, std::this_thread::get_id(), _name);
@@ -31,7 +33,7 @@ namespace Jde::Coroutine
 		string ThreadName;
 		const string _name;
 	};
-	template<class T> TAwaitable<T>::~TAwaitable(){}
+	//template<class T> TAwaitable<T>::~TAwaitable(){}
 
 	struct IAwaitable /*abstract*/ : TAwaitable<Task2>
 	{

@@ -48,22 +48,23 @@ function winBoostConfig
 {
 	local file=$1;
 	local config=$2;
-	if [ ! -f $stageDir/$config/$file ]; then
+	if [ ! -L $stageDir/$config/$file ]; then
 		echo NOT exists - $stageDir/$config/$file
 		cd $BOOST_BASH;
 		if [ ! -f b2.exe ]; then echo boost bootstrap; cmd <<< bootstrap.bat; echo boost bootstrap finished; fi;
-		local comand="b2 variant=$config link=shared threading=multi runtime-link=shared address-model=64 --with-$lib"
-		echo $comand;
+		local command="b2 variant=$config link=shared threading=multi runtime-link=shared address-model=64 --with-$lib"
+		#echo $command;
 		cmd <<< "$command";#  > /dev/null;
+		echo $file - $config - build complete
+		linkFileAbs `pwd`/stage/lib/$file $stageDir/$config/$file;
 		if [ ! -f `pwd`/stage/lib/$file ];
 		then
 			echo ERROR NOT FOUND:  `pwd`/stage/lib/$file
 			echo `pwd`;
-			echo $comand;
+			echo $command;
 			exit 1;
 		fi;
 		echo `pwd`/stage/lib/$file found!
-		linkFileAbs `pwd`/stage/lib/$file $stageDir/$config/$file;
 #	else
 #		echo exists - $stageDir/release/$file;
 	fi;
@@ -85,6 +86,7 @@ if windows; then
 		if [ ! -d $REPO_BASH/vcpkg/installed/x64-windows/lib/zlib.lib ]; then vcpkg.exe install zlib --triplet x64-windows; fi;
 		#vcpkg.exe install fmt --triplet x64-windows
 		#vcpkg.exe install spdlog --triplet x64-windows
+		if [ -z $BOOST_DIR ]; then echo \$BOOST_DIR not set; exit 1; fi;
 		toBashDir $BOOST_DIR BOOST_BASH;
 		if [ ! -d $BOOST_BASH ]; then
 			echo ERROR - $BOOST_BASH not found;

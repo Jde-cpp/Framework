@@ -36,7 +36,6 @@ source/.vscode/c_cpp_properties.json
 source/Framework.sln
 source/log/server/proto/*.pb.*
 source/.vs
-source/.bin
 source/Framework.vcxproj.user
 .vs/*
 tests/.vscode/launch.json
@@ -52,3 +51,9 @@ tests/out/*
 source/stdafx.h
 source/packages/*
 *.user
+*/.vs/*
+tests/Tests.Framework.sln
+*/.bin/*
+tests/Debug/*
+tests/packages/*
+Tests.Framework.log

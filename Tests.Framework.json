@@ -1,0 +1,27 @@
+{
+	"wakeDuration": "PT5S",
+	"dbDriver": "libJde.MySql.so",
+	"connectionString": "Jde_UM_Connection",
+	"metaDataPath": "../edgar.json",
+	"logging":
+	{
+		"level": 1,
+		"path": "..",
+		"serverPort":  0,
+		"serverPortTest":  4321
+	},
+	"coroutinePool":
+	{
+		"maxThreadCount": 100,
+		"threadDuration": "PT5S",
+		"poolIdleThreshold": "PT60S"
+	},
+	"edgar":
+	{
+		"dir":  "/mnt/2TB/securities/edgar"
+	},
+	"um":
+	{
+		"use": true
+	}
+}

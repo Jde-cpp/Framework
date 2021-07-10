@@ -42,6 +42,7 @@ namespace Jde::Threading
 	TARG struct IQueueWorker /*abstract*/: TWorker<TDerived>
 	{
 		using base=TWorker<TDerived>; using Class=IQueueWorker<TArg,TDerived>;
+		IQueueWorker( sv threadName ):base{ threadName }{}
 		Ω Push( TArg&& x )noexcept->void;
 		virtual void HandleRequest( TArg&& x )noexcept=0;
 	protected:
@@ -58,7 +59,7 @@ namespace Jde::Threading
 		Threading::AtomicGuard l{ _mutex };
 		if( !_pInstance )
 		{
-	//		_pInstance = make_shared<T>();
+			_pInstance = make_shared<T>();
 			IApplication::AddShutdown( _pInstance );
 			//_pInstance->_pThread = make_unique<jthread>([&]( stop_token st ){_pInstance->Run( st );} );
 		}
