@@ -56,7 +56,8 @@ namespace Jde::Settings
 		return item->get<T>();
 	}
 
-	ψ Container::Get2<Duration>( sv path )const noexcept->optional<Duration>
+	template<> inline α
+	Container::Get2<Duration>( sv path )const noexcept->optional<Duration>
 	{
 		var strng = Get2<string>( path );
 		optional<std::chrono::system_clock::duration> result;
@@ -65,7 +66,8 @@ namespace Jde::Settings
 		return  result;
 	}
 
-	ψ Container::Get2<fs::path>( sv path )const noexcept->optional<fs::path>
+	template<> inline α 
+	Container::Get2<fs::path>( sv path )const noexcept->optional<fs::path>
 	{
 		var p = Get2<string>( path );
 		return p ? optional<fs::path>(*p) : std::nullopt;
@@ -122,14 +124,24 @@ namespace Jde::Settings
 
 	ⓣ Get( sv path )noexcept{ return Global().Get2<T>( path ); }
 
-	template<typename T>
-	optional<T> TryGetSubcontainer( sv container, sv path )noexcept
+	ⓣ TryGetSubcontainer( sv container, sv path )noexcept->optional<T>
 	{
 		optional<T> v;
 		if( auto p=Settings::GlobalPtr(); p )
 		{
 			if( auto pSub=p->TrySubContainer( container ); pSub )
 				v = pSub->Get2<T>( path );
+		}
+		return v;
+	}
+	
+	template<> inline auto TryGetSubcontainer<Container>( sv container, sv path )noexcept->optional<Container>
+	{
+		optional<Container> v;
+		if( auto p=Settings::GlobalPtr(); p )
+		{
+			if( auto pSub=p->TrySubContainer( container ); pSub )
+				v = pSub->TrySubContainer( path );
 		}
 		return v;
 	}

@@ -2,6 +2,7 @@
 #include <shared_mutex>
 #include <boost/core/noncopyable.hpp>
 #include "Thread.h"
+#include <jde/Assert.h>
 #include <jde/Log.h>
 #include <jde/coroutine/Task.h>
 #include "../coroutine/Awaitable.h"
@@ -14,13 +15,15 @@ namespace Jde::Threading
 
 	struct JDE_NATIVE_VISIBILITY AtomicGuard final : boost::noncopyable
 	{
-		AtomicGuard( atomic<bool>& v )noexcept: Value{ v }
+		AtomicGuard( atomic<bool>& v )noexcept: _pValue{ &v }
 		{
-			while( Value.exchange(true) )
+			while( _pValue->exchange(true) )
 				std::this_thread::yield();
 		}
-		~AtomicGuard(){ ASSERT( Value ); Value = false; }
-		atomic<bool>& Value;
+		~AtomicGuard(){ if( _pValue ){ ASSERT(*_pValue) *_pValue = false; } }
+		void unlock()noexcept{ ASSERT(_pValue) *_pValue=false; _pValue = nullptr; }
+	private:
+		atomic<bool>* _pValue;
 	};
 
 	struct JDE_NATIVE_VISIBILITY CoLockAwatiable : Coroutine::TAwaitable<>

@@ -17,22 +17,15 @@ namespace Jde
 
 int main( int argc, char **argv )
 {
-#ifdef _MSC_VER
-	_crtBreakAlloc = 163;
-	 _CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
-    _CrtSetBreakAlloc( 3879 );
-#endif
+	using namespace Jde;
 	::testing::InitGoogleTest( &argc, argv );
-#ifdef _MSC_VER
-	auto x = new char[]{"aaaaaaaaaaaaaaaaaaaaaaaaaa"};
-#endif
-	Jde::Startup( argc, argv );
+	Startup( argc, argv );
 	auto result = EXIT_FAILURE;
 	{
 		::testing::GTEST_FLAG(filter) = "CoroutineTests.CoLock";//QLTests.DefTestsFetch
 	   result = RUN_ALL_TESTS();
-		Jde::IApplication::Instance().Wait();
-		Jde::IApplication::CleanUp();
+		IApplication::Instance().Wait();
+		IApplication::CleanUp();
 	}
 	return result;
 }

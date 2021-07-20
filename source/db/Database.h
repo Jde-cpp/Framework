@@ -21,7 +21,8 @@ namespace Jde::DB
 	JDE_NATIVE_VISIBILITY uint Execute( sv sql, std::vector<DataValue>&& parameters )noexcept(false);
 
 	ⓣ TryScaler( sv sql, const vector<DataValue>& parameters )noexcept->optional<T>;
-	ⓣ Scaler( sv sql, const vector<DataValue>& parameters )noexcept->optional<T>;
+	ⓣ Scaler( sv sql, const vector<DataValue>& parameters )noexcept(false)->optional<T>;
+	ⓣ ScalerCo( string&& sql, const vector<DataValue>&& parameters )noexcept(false);
 
 	🚪 Select( sv sql, std::function<void(const IRow&)> f, const vector<DataValue>& values )noexcept(false)->void;
 	🚪 Select( sv sql, std::function<void(const IRow&)> f )noexcept(false)->void;
@@ -39,7 +40,7 @@ namespace Jde
 	using boost::container::flat_set;
 #define RETURN(x) auto pDataSource = DataSource(); return !pDataSource ? x : pDataSource
 
-	template<class T> optional<T> DB::Scaler( sv sql, const vector<DataValue>& parameters )noexcept
+	template<class T> optional<T> DB::Scaler( sv sql, const vector<DataValue>& parameters )noexcept(false)
 	{
 		RETURN( optional<T>{} )->Scaler<T>( sql, parameters );
 	}
@@ -47,7 +48,6 @@ namespace Jde
 	{
 		RETURN( optional<T>{} )->TryScaler<T>( sql, parameters );
 	}
-
 #define var const auto
 	template<class K,class V> sp<flat_map<K,V>> DB::SelectMap( sv sql, str cacheName )noexcept(false)
 	{

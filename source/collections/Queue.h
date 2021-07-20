@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 //adapted from https://livebook.manning.com/#!/book/c-plus-plus-concurrency-in-action-second-edition/chapter-4/v-7/40
 #include <queue>
 #include <memory>
@@ -223,10 +223,13 @@ namespace Jde
 	{
 	public:
 		QueueMove()=default;
+		QueueMove( T&& initial )noexcept{ _queue.push(move(initial)); }
 		void Push( T&& new_value )noexcept;
 		optional<T> TryPop( Duration duration )noexcept;
 		bool empty()const noexcept{ SLOCK; return _queue.empty(); }
+		uint size()const noexcept{ SLOCK; return _queue.size(); }
 		optional<T> Pop()noexcept;
+		α PopAll()noexcept->vector<T>;
 	private:
 		mutable std::shared_mutex _mtx;
 		std::queue<T> _queue;
@@ -249,6 +252,19 @@ namespace Jde
 			_queue.pop();
 		return p;
 	}
+	
+	ⓣ QueueMove<T>::PopAll()noexcept->vector<T> 
+	{
+		LOCK;
+		vector<T> results; results.reserve( _queue.size() );
+		while( !_queue.empty() )
+		{
+			results.push_back( move(_queue.front()) );
+			_queue.pop();
+		}
+		return results;
+	}
+
 	template<typename T>
 	optional<T> QueueMove<T>::TryPop( Duration duration )noexcept
 	{

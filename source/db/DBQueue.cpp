@@ -28,7 +28,7 @@ namespace Jde::DB
 
 	void DBQueue::Push( sv sql, const VectorPtr<DB::DataValue>& parameters, bool isStoredProc )noexcept
 	{
-		RETURN_IF( _stopped, "pushing '{}' when stopped"sv, sql );
+		RETURN_IF( _stopped, "pushing '{}' when stopped", sql );
 		// if( !_stopped )
 		// 	_queue.Push( make_shared<Statement>(sql, parameters, isStoredProc) );
 		// else

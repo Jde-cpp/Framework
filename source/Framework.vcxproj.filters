@@ -67,20 +67,11 @@
     <ClCompile Include="db\types\Table.cpp">
       <Filter>Source\db\types</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Windows\source\WindowsApp.cpp">
-      <Filter>Source\application</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\Windows\source\WindowsTimezone.cpp">
       <Filter>Source\windows</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Windows\source\WindowsUtilities.cpp">
       <Filter>Source\windows</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Windows\source\WindowsDrive.cpp">
-      <Filter>Source\application</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Windows\source\WindowsThread.cpp">
-      <Filter>Source\application</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Windows\source\dllmain.cpp">
       <Filter>Source</Filter>
@@ -126,6 +117,21 @@
     </ClCompile>
     <ClCompile Include="io\tinyxml2.cpp">
       <Filter>Source\io</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Windows\source\WindowsApp.cpp">
+      <Filter>Source\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Windows\source\WindowsDrive.cpp">
+      <Filter>Source\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Windows\source\WindowsSvc.cpp">
+      <Filter>Source\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Windows\source\WindowsThread.cpp">
+      <Filter>Source\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Windows\source\WindowsWorker.cpp">
+      <Filter>Source\windows</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -288,9 +294,6 @@
     <ClInclude Include="um\UM.h">
       <Filter>Headers\um</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Public\jde\Application.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Public\jde\Dll.h">
       <Filter>Headers</Filter>
     </ClInclude>
@@ -335,6 +338,27 @@
     </ClInclude>
     <ClInclude Include="io\tinyxml2.h">
       <Filter>Headers\io</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Public\jde\App.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Windows\source\WindowsWorker.h">
+      <Filter>Headers\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Windows\source\WindowsSvc.h">
+      <Filter>Headers\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Windows\source\WindowsDrive.h">
+      <Filter>Headers\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Windows\source\WindowsHandle.h">
+      <Filter>Headers\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Windows\source\WindowsUtilities.h">
+      <Filter>Headers\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Windows\source\WindowsTimezone.h">
+      <Filter>Headers\windows</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -414,9 +438,6 @@
     <Filter Include="Source\db\types">
       <UniqueIdentifier>{95ad6653-3ffe-45d2-a48a-db0d945d0370}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source\application">
-      <UniqueIdentifier>{118c135c-7ad9-4c23-bc92-a43e8da3cb94}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source\windows">
       <UniqueIdentifier>{ad6d81d5-6b26-4755-ae42-f20bb949ada7}</UniqueIdentifier>
     </Filter>
@@ -431,6 +452,9 @@
     </Filter>
     <Filter Include="Headers\um">
       <UniqueIdentifier>{e14239c7-ea18-4d53-95c5-022730f37ded}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\windows">
+      <UniqueIdentifier>{be3130a9-4d16-49b7-aee1-d6dda54f6961}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

@@ -53,7 +53,7 @@ namespace Jde
 			if( pDataSource == _pConnections->end() )
 			{
 				auto pNew = shared_ptr<Jde::DB::IDataSource>{ GetDataSourceFunction() };
-				pNew->ConnectionString = connectionString;
+				pNew->SetConnectionString( connectionString );
 				pDataSource = _pConnections->emplace( connectionString, pNew ).first;
 			}
 			return pDataSource->second;
@@ -120,9 +120,9 @@ namespace Jde
 		if( !_pDefault )
 		{
 			Initialize( Settings::Global().Get<string>("dbDriver") );
-			var cs = Settings::Global().Get<string>( "connectionString" );//			Initialize( "Jde.DB.Odbc.dll" );
-			var env = IApplication::Instance().GetEnvironmentVariable( cs );
-			_pDefault->ConnectionString = env.empty() ? cs : env;
+			var cs = Settings::Global().Get<string>( "connectionString" );
+			var env = cs.find( '=' )==string::npos ? IApplication::Instance().GetEnvironmentVariable( cs ) : string{};
+			_pDefault->SetConnectionString( env.empty() ? cs : env );
 		}
 		ASSERT( _pDefault );
 		return _pDefault;

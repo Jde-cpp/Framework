@@ -39,7 +39,7 @@ namespace Jde
 	set<string> IApplication::BaseStartup( int argc, char** argv, sv appName, sv companyName )noexcept(false)//no config file
 	{
 		_pApplicationName = std::make_unique<string>( appName );
-		_pCompanyName = std::make_unique<string>(companyName);
+		_pCompanyName = std::make_unique<string>( companyName );
 
 		bool console = false;
 		const string arg0{ argv[0] };
@@ -60,7 +60,9 @@ namespace Jde
 		}
 		if( terminate )
 			std::set_terminate( OnTerminate );
-		if( !console )
+		if( console )
+			SetConsoleTitle( appName );
+		else
 			AsService();
 		var fileName = std::filesystem::path{ format("{}.json", appName) };
 		std::filesystem::path settingsPath{ fileName };
@@ -71,7 +73,6 @@ namespace Jde
 		}
 		Settings::SetGlobal( std::make_shared<Jde::Settings::Container>(settingsPath) );
 		InitializeLogger( appName );
-		SetConsoleTitle( appName );
 		Threading::SetThreadDscrptn( appName );
 		INFO( "{}, settings='{}' Running as console='{}'"sv, arg0, settingsPath, console );
 
@@ -116,7 +117,7 @@ namespace Jde
 				if( _pBackgroundThreads->size()==0 )
 					break;
 			}
-			std::this_thread::sleep_for( 2s );
+			std::this_thread::yield(); //std::this_thread::sleep_for( 2s );
 		}
 		Settings::SetGlobal( nullptr );
 		DBG( "Leaving Application::Wait"sv );
