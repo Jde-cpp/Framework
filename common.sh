@@ -22,11 +22,11 @@ function moveToDir
 };
 function toWinDir
 {
-    bashDir=$1;
-    local -n _winDir=$2
-    _winDir=${bashDir////\\}; _winDir=${_winDir/\\c/c:};
+	bashDir=$1;
+	local -n _winDir=$2
+	_winDir=${bashDir////\\};
+	if [[ $_winDir == \\c\\* ]]; then _winDir=c:${_winDir:2}; fi;
 }
-
 
 function fetch
 {
@@ -42,6 +42,17 @@ function fetch
             curl https://raw.githubusercontent.com/$gitTarget2/$file2 -o $file2
         fi;
     fi;
+}
+
+function fetchDir
+{
+    local dir=${1};
+    local fetch=${2};
+	if [ ! -d $dir ]; then
+		git clone https://github.com/Jde-cpp/$dir.git;
+	elif (( $fetch == 1 )); then
+		cd $dir; git pull; cd ..;
+	fi;
 }
 
 function addHard
@@ -81,12 +92,12 @@ function addHardDir
 
 function mklink
 {
-	local file=$1;#TwsSocketClient64.vcxproj
+	local file=$1;
 	local fetchLocation=$2;
 	if [ -f $file ]; then rm $file; fi;
 	if windows; then
 		toWinDir "$fetchLocation" _source;
-		if [ ! -f $_source ]; then echo $_source not found; exit 1; fi;
+		if [ ! -f $_source/$file ]; then echo $_source/$file not found; exit 1; fi;
 		toWinDir "`pwd`" _destination;
 		cmd <<< "mklink \"$_destination\\$file\" \"$_source\\$file\" " > /dev/null;  #"
 		if [ $? -ne 0 ]; then

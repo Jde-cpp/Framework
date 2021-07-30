@@ -82,6 +82,8 @@ namespace Jde
 			type=DataType::Float;
 		else if( typeName=="real" )
 			type=DataType::SmallFloat;
+		else if( typeName=="bool" )
+			type=DataType::Bit;
 		else if( typeName=="int" )
 			type = DataType::Int;
 		else if( typeName=="uint32" )

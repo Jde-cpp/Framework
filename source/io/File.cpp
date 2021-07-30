@@ -61,7 +61,7 @@ namespace Jde::IO
 
 		unique_ptr<vector<char>> LoadBinary( path path )noexcept(false)//fs::filesystem_error
 		{
-			IOException::TestExists( path );
+			CHECK_FILE_EXISTS( path );
 			auto size = GetFileSize( path );
 			TRACE( "Opening {} - {} bytes "sv, path.string(), size );
 			std::ifstream f( path, std::ios::binary );
@@ -74,7 +74,7 @@ namespace Jde::IO
 		}
 		string Load( path path )noexcept(false)
 		{
-			IOException::TestExists( path );
+			CHECK_FILE_EXISTS( path );
 			auto size = GetFileSize( path );
 			TRACE( "Opening {} - {} bytes "sv, path.string(), size );
 			std::ifstream f( path, std::ios::binary );

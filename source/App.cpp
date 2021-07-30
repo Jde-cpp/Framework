@@ -21,7 +21,7 @@ namespace Jde
 
 	auto _pDeletedThreads = make_shared<std::vector<sp<Threading::InterruptibleThread>>>();
 
-	auto _pObjects = make_shared<std::vector<sp<void>>>();  mutex ObjectMutex;
+	std::vector<sp<void>> _objects;  mutex ObjectMutex;
 	auto _pShutdowns = make_shared<std::vector<sp<IShutdown>>>();
 }
 #define var const auto
@@ -33,10 +33,10 @@ namespace Jde
 
 	IApplication::~IApplication()
 	{
-		if( HaveLogger() )
-			DBG( "IApplication::~IApplication"sv );
+//		if( HaveLogger() )
+//			DBG( "IApplication::~IApplication"sv );
 	}
-	set<string> IApplication::BaseStartup( int argc, char** argv, sv appName, sv companyName )noexcept(false)//no config file
+	set<string> IApplication::BaseStartup( int argc, char** argv, sv appName, string serviceDescription, sv companyName )noexcept(false)//no config file
 	{
 		_pApplicationName = std::make_unique<string>( appName );
 		_pCompanyName = std::make_unique<string>( companyName );
@@ -55,6 +55,16 @@ namespace Jde
 				console = true;
 			else if( string(argv[i])=="-t" )
 				terminate = !terminate;
+			else if( string(argv[i])=="-install" )
+			{
+				Install( serviceDescription );
+				THROW( Exception( ELogLevel::Trace, "successfully installed.") );
+			}
+			else if( string(argv[i])=="-uninstall" )
+			{
+				Uninstall();
+				THROW( Exception( ELogLevel::Trace, "successfully uninstalled.") );
+			}
 			else
 				values.emplace( argv[i] );
 		}
@@ -74,7 +84,7 @@ namespace Jde
 		Settings::SetGlobal( std::make_shared<Jde::Settings::Container>(settingsPath) );
 		InitializeLogger( appName );
 		Threading::SetThreadDscrptn( appName );
-		INFO( "{}, settings='{}' Running as console='{}'"sv, arg0, settingsPath, console );
+		INFO( "{}, settings='{}' cwd='{}' Running as console='{}'"sv, arg0, settingsPath, fs::current_path(), console );
 
 		Cache::CreateInstance();
 		return values;
@@ -158,7 +168,7 @@ namespace Jde
 	void IApplication::Add( sp<void> pShared )noexcept
 	{
 		lock_guard l{ ObjectMutex };
-		_pObjects->push_back( pShared );
+		_objects.push_back( pShared );
 	}
 
 	void IApplication::AddShutdown( sp<IShutdown> pShared )noexcept
@@ -180,11 +190,11 @@ namespace Jde
 	void IApplication::Remove( sp<void> pShared )noexcept
 	{
 		lock_guard l{ObjectMutex};
-		for( auto ppObject = _pObjects->begin(); ppObject!=_pObjects->end(); ++ppObject )
+		for( auto ppObject = _objects.begin(); ppObject!=_objects.end(); ++ppObject )
 		{
 			if( *ppObject==pShared )
 			{
-				_pObjects->erase( ppObject );
+				_objects.erase( ppObject );
 				break;
 			}
 		}
@@ -196,7 +206,6 @@ namespace Jde
 	}
 	void IApplication::CleanUp()noexcept
 	{
-		_pObjects = nullptr;
 		_pBackgroundThreads = nullptr;
 		_pDeletedThreads = nullptr;
 		for( var& shutdown : *_pShutdownFunctions )

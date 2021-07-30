@@ -82,7 +82,9 @@ namespace Jde
 			_pSettings->ConnectionString = Settings::Global().Get2<string>( "connectionString" ).value_or( "" );
 		THROW_IF( _pSettings->ConnectionString.empty(), EnvironmentException("no user management connection string.") );
 		auto pDataSource = DB::DataSource();// _pSettings->LibraryName, _pSettings->ConnectionString );
-		var path = Settings::Global().Get<fs::path>( "metaDataPath" );
+		auto path = Settings::Global().Get<fs::path>( "metaDataPath" );
+		if( !fs::exists(path) )
+			path = IApplication::ApplicationDataFolder()/path;
 		INFO( "db meta='{}'"sv, path.string() );
 		var j = json::parse( IO::FileUtilities::Load(path) );
 		var schema = pDataSource->SchemaProc()->CreateSchema( j, path.parent_path() );

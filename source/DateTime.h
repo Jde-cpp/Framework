@@ -1,6 +1,4 @@
 #pragma once
-#ifndef JDE_DATE_TIME
-#define JDE_DATE_TIME
 #include <chrono>
 #include <jde/TypeDefs.h>
 #include <jde/Exports.h>
@@ -137,14 +135,7 @@ namespace Jde
 	template<typename To,typename From> typename To::time_point Chrono::ToClock( typename From::time_point from )noexcept
 	{
 		return To::now()-std::chrono::milliseconds( duration_cast<std::chrono::milliseconds>(From::time_point::clock::now()-from) );
-/*		var fromTimeT = From::to_time_t( from );
-		var fractional = from-From::from_time_t( fromTimeT );
-		typename To::time_point point{ To::from_time_t(fromTimeT) };
-		var d = std::chrono::milliseconds( duration_cast<std::chrono::milliseconds>(fractional) );
-		point += d;
-		return point;*/
 	}
 }
 JDE_NATIVE_VISIBILITY std::ostream& operator<<( std::ostream &os, const std::chrono::system_clock::time_point& obj )noexcept;
 #undef var
-#endif

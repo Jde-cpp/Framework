@@ -1,5 +1,6 @@
 #pragma once
 #include <jde/App.h>
+#include <jde/coroutine/Task.h>
 #include "../threading/Thread.h"
 
 namespace Jde::Coroutine
@@ -9,8 +10,8 @@ namespace Jde::Coroutine
 	{
 		CoWorker( sv name )noexcept:_name{name}{};
 		void Shutdown()noexcept override;
-	protected:
 		void Start()noexcept;
+	protected:
 		virtual void Process()noexcept=0;
 		const string _name;
 		up<Threading::InterruptibleThread> _pThread;
@@ -26,12 +27,10 @@ namespace Jde::Coroutine
 	{
 		TCoWorker( sv name )noexcept:CoWorker{name}{};
 		template<typename TAwaitable2=TAwaitable>
-		struct Handles{ typename TAwaitable2::Handle HCoroutine; Coroutine::ClientHandle HClient; };
+		struct Handles{ typename coroutine_handle<Task2::promise_type> HCoroutine; Coroutine::ClientHandle HClient; };
 		virtual ~TCoWorker()noexcept{ DBG("TCoWorker::~TCoWorker({})"sv, _name); }
 		static sp<TDerived> Instance()noexcept{ return std::static_pointer_cast<TDerived>(_pInstance); }
 	protected:
-
-
 //		static sp<TDerived> _pInstance; no cpp to put it in.
 		static constexpr Duration WakeDuration{5s};
 	};

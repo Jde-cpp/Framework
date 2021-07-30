@@ -48,6 +48,7 @@ namespace Jde
 	void Exception::Log( sv additionalInformation, ELogLevel level )const noexcept
 	{
 		std::ostringstream os;
+		os << "[" << _fileName << "." << _line << "] ";
 		if( additionalInformation.size() )
 			os << "[" << additionalInformation << "] ";
 		os << what();
@@ -116,10 +117,6 @@ namespace Jde
 	uint IOException::ErrorCode()const noexcept
 	{
 		return  _pUnderLying ? _pUnderLying->code().value() : _errorCode;
-	}
-	void IOException::TestExists( path path )noexcept(false)
-	{
-		THROW_IF( !fs::exists(path), IOException{path, "does not exist"} );
 	}
 	path IOException::Path()const noexcept
 	{
