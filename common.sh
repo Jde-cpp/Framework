@@ -2,6 +2,29 @@
 windows() { [[ -n "$WINDIR" ]]; }
 t=$(readlink -f "${BASH_SOURCE[0]}"); commonBuild=$(basename "$t"); unset t;
 
+function findExecutable
+{
+	exe=$1;
+	defaultPath=$2;
+	exitFailure=${3:-1};
+	#echo hi;
+	local path_to_exe=$(which "$exe" 2> /dev/null);
+	if [ ! -x "$path_to_exe" ]; then
+		if  [[ -x "${defaultPath//\\}/$exe" ]]; then
+     		PATH=${defaultPath//\\}:$PATH;
+		else
+			if [ $exitFailure -eq 1 ]; then
+				echo can not find "${defaultPath//\\}/$exe";
+				exit 1;
+			fi;
+			#echo 'false';
+			false; return;
+		fi;
+	fi;
+	#echo 'true';
+	true;
+}
+
 function toBashDir
 {
 	windowsDir=$1;
@@ -25,7 +48,8 @@ function toWinDir
 	bashDir=$1;
 	local -n _winDir=$2
 	_winDir=${bashDir////\\};
-	if [[ $_winDir == \\c\\* ]]; then _winDir=c:${_winDir:2}; fi;
+	if [[ $_winDir == \\c\\* ]]; then _winDir=c:${_winDir:2}; 
+	elif [[ $_winDir == \"\\c\\* ]]; then _winDir=\"c:${_winDir:3}; fi;
 }
 
 function fetch
@@ -97,7 +121,7 @@ function mklink
 	if [ -f $file ]; then rm $file; fi;
 	if windows; then
 		toWinDir "$fetchLocation" _source;
-		if [ ! -f $_source/$file ]; then echo $_source/$file not found; exit 1; fi;
+		if [ ! -f "$_source/$file" ]; then echo $_source/$file not found; exit 1; fi;
 		toWinDir "`pwd`" _destination;
 		cmd <<< "mklink \"$_destination\\$file\" \"$_source\\$file\" " > /dev/null;  #"
 		if [ $? -ne 0 ]; then
@@ -116,14 +140,11 @@ function linkFileAbs
 	local link=$2; #TwsSocketClient64.vcxproj.user
 	if [ -f $link ]; then exit 0; fi;
 	if windows; then
-		# echo Hi;
 		toWinDir $original originalWin;
 		toWinDir $link linkWin;
-		#echo cmd  "mklink $linkWin $originalWin "; #
 		cmd <<< "mklink $linkWin $originalWin " > /dev/null;  #need to send in quoted, linkFile is already quoting.
 		#echo if [ ! -f $link ];
 		#if [ ! -f $link ]; then echo file not found; echo `pwd`; echo cmd  "linkFileAbs $original $link ";  exit 1; fi; #"
-		#echo success;
 	else
 		if [ -L $file ]; then rm $file; fi;
 		ln -s $original $link;
@@ -137,8 +158,9 @@ function linkFile
 	if [ -f $link ]; then exit 0; fi;
 	if windows; then
 		toWinDir "`pwd`" _pwd;
+		echo linkFileAbs start;
 		linkFileAbs \"`pwd`/$original\" \"`pwd`/$link\" #"
-		if [ ! -f "$link" ]; then echo file not found; echo `pwd`; echo linkFileAbs \"`pwd`/$original\" \"`pwd`/$link\";  exit 1; fi; #"
+		if [ ! -f "$link" ]; then echo file $link not found; echo `pwd`; echo linkFileAbs \"`pwd`/$original\" \"`pwd`/$link\";  exit 1; fi; #"
 		#if [ $? -ne 0 ]; then exit 1; fi;
 	else
  		if [ -L $file ]; then rm $file; fi;

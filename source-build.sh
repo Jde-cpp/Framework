@@ -12,33 +12,6 @@ if [[ -z "$REPO_DIR" ]]; then export REPO_DIR=$baseDir; fi;
 pushd `pwd` > /dev/null;
 cd $REPO_DIR
 
-
-function findExecutable
-{
-	exe=$1;
-	defaultPath=$2;
-	exitFailure=${3:-1};
-	#echo findExecutable exe=\"$exe\", defaultPath=\"$defaultPath\" exitFailure=\"$exitFailure\";
-	#echo path_to_exe='$(which $exe 2> /dev/null)';
-	path_to_exe=$(which "$exe" 2> /dev/null);
-	if [ ! -x "$path_to_exe" ]; then
-		if  [[ -x "${defaultPath//\\}/$exe" ]]; then
-			#echo found $exe adding to path;
-			#echo 'PATH=$defaultPath:$PATH'
-     		PATH=${defaultPath//\\}:$PATH;
-			#path_to_exe=$(which "$exe" 2> /dev/null);
-			#echo path_to_exe=$path_to_exe;pop
-			#echo 'if [ ! -x "'$path_to_exe'" ]; then echo no; else echo yes; fi;'
-		else
-			#echo can not find $exe;
-			if [ $exitFailure -eq 1 ]; then
-				echo can not find "${defaultPath//\\}/$exe";
-				exit 1;
-			fi;
-		fi;
-	fi;
-}
-
 if windows; then
 	findExecutable MSBuild.exe '/c/Program\ Files\ \(X86\)/Microsoft\ Visual\ Studio/2019/BuildTools/MSBuild/Current/Bin' 0
 	findExecutable MSBuild.exe '/c/Program\ Files\ \(X86\)/Microsoft\ Visual\ Studio/2019/Enterprise/MSBuild/Current/Bin'

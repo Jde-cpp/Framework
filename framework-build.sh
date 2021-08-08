@@ -48,23 +48,23 @@ function winBoostConfig
 {
 	local file=$1;
 	local config=$2;
-	if [ ! -L $stageDir/$config/$file ]; then
-		echo NOT exists - $stageDir/$config/$file
+	if [ ! -L $stageDir/$config/$file.lib ]; then
+		echo NOT exists - $stageDir/$config/$file.lib
 		cd $BOOST_BASH;
 		if [ ! -f b2.exe ]; then echo boost bootstrap; cmd <<< bootstrap.bat; echo boost bootstrap finished; fi;
 		local command="b2 variant=$config link=shared threading=multi runtime-link=shared address-model=64 --with-$lib"
 		#echo $command;
 		cmd <<< "$command";#  > /dev/null;
 		echo $file - $config - build complete
-		linkFileAbs `pwd`/stage/lib/$file $stageDir/$config/$file;
-		if [ ! -f `pwd`/stage/lib/$file ];
-		then
+		linkFileAbs `pwd`/stage/lib/$file.lib $stageDir/$config/$file.lib;
+		if [ ! -f `pwd`/stage/lib/$file ]; then
 			echo ERROR NOT FOUND:  `pwd`/stage/lib/$file
 			echo `pwd`;
 			echo $command;
 			exit 1;
 		fi;
-		echo `pwd`/stage/lib/$file found!
+		linkFileAbs `pwd`/stage/lib/$file.dll $stageDir/$config/$file.dll;
+		#echo `pwd`/stage/lib/$file found!
 #	else
 #		echo exists - $stageDir/release/$file;
 	fi;
@@ -73,8 +73,8 @@ function winBoost
 {
 	lib=$1;
 	echo winBoost - $lib
-	winBoostConfig boost_$lib-vc142-mt-x64-1_76.lib release;
-	winBoostConfig boost_$lib-vc142-mt-gd-x64-1_76.lib debug;
+	winBoostConfig boost_$lib-vc142-mt-x64-1_76 release;
+	winBoostConfig boost_$lib-vc142-mt-gd-x64-1_76 debug;
 }
 if windows; then
 	pushd `pwd` > /dev/null;
@@ -97,6 +97,7 @@ if windows; then
 			winBoost iostreams;  #b2 variant=debug link=shared threading=multi runtime-link=shared address-model=64  -sZLIB_BINARY=zlib -sZLIB_LIBPATH=C:\Users\duffyj\source\repos\vcpkg\installed\x64-windows\lib -sZLIB_INCLUDE=C:\Users\duffyj\source\repos\vcpkg\installed\x64-windows\include -sNO_ZLIB=0 -sNO_COMPRESSION=0 -sBOOST_IOSTREAMS_USE_DEPRECATED  --with-iostreams
 			winBoost context;
 			winBoost coroutine;
+			winBoost thread;
 		fi;
 	fi;
 fi;
@@ -220,9 +221,19 @@ function frameworkProtoc
 	if [ ! -f messages.pb.cc ]; then
 		cleanProtoc=1;
 	fi;
+	echo frameworkProtoc $cleanProtoc
 	if [ $cleanProtoc -eq 1 ]; then
-	   protoc --cpp_out dllexport_decl=JDE_NATIVE_VISIBILITY:. -I$protobufInclude -I. messages.proto;
+	   	protoc --cpp_out dllexport_decl=JDE_NATIVE_VISIBILITY:. -I$protobufInclude -I. messages.proto;
 		if [ $? -ne 0 ]; then exit 1; fi;
+		if windows; then
+			echo `pwd`;
+			echo sed -i 's/PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT InstanceDefaultTypeInternal _Instance_default_instance_;/PROTOBUF_ATTRIBUTE_NO_DESTROY InstanceDefaultTypeInternal _Instance_default_instance_;/' messages.pb.cc;
+			sed -i 's/PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT InstanceDefaultTypeInternal _Instance_default_instance_;/PROTOBUF_ATTRIBUTE_NO_DESTROY InstanceDefaultTypeInternal _Instance_default_instance_;/' messages.pb.cc;
+			sed -i 's/PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT RequestStringDefaultTypeInternal _RequestString_default_instance_;/PROTOBUF_ATTRIBUTE_NO_DESTROY RequestStringDefaultTypeInternal _RequestString_default_instance_;/' messages.pb.cc;
+			sed -i 's/PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT CustomMessageDefaultTypeInternal _CustomMessage_default_instance_;/PROTOBUF_ATTRIBUTE_NO_DESTROY CustomMessageDefaultTypeInternal _CustomMessage_default_instance_;/' messages.pb.cc;
+			sed -i 's/PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT GenericFromServerDefaultTypeInternal _GenericFromServer_default_instance_;/PROTOBUF_ATTRIBUTE_NO_DESTROY GenericFromServerDefaultTypeInternal _GenericFromServer_default_instance_;/' messages.pb.cc;
+			#sed -i 's/class Fundamentals_ValuesEntry_DoNotUse/class JDE_MARKETS_EXPORT Fundamentals_ValuesEntry_DoNotUse/' results.pb.h;
+		fi;
 	fi;
 	cd ../../..;
 }
