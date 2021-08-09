@@ -57,7 +57,7 @@ function winBoostConfig
 		cmd <<< "$command";#  > /dev/null;
 		echo $file - $config - build complete
 		linkFileAbs `pwd`/stage/lib/$file.lib $stageDir/$config/$file.lib;
-		if [ ! -f `pwd`/stage/lib/$file ]; then
+		if [ ! -f `pwd`/stage/lib/$file.lib ]; then
 			echo ERROR NOT FOUND:  `pwd`/stage/lib/$file
 			echo `pwd`;
 			echo $command;

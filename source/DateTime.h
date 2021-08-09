@@ -80,7 +80,11 @@ namespace Jde
 		uint_fast16_t Year()const noexcept{ return static_cast<uint_fast16_t>(Tm()->tm_year+1900); }
 
 		TimePoint Date()const noexcept{ return Clock::from_time_t( TimeT()/(60*60*24)*(60*60*24) ); }
-		static TimePoint Today()noexcept{ return Clock::from_time_t( time(nullptr)/(60*60*24)*(60*60*24) ); }
+#ifdef _MSC_VER
+		static TimePoint Today()noexcept{ return Clock::from_time_t( _time64(nullptr)/(60*60*24)*(60*60*24) ); }
+#else
+		static TimePoint Today()noexcept { return Clock::from_time_t(time(nullptr) / (60 * 60 * 24) * (60 * 60 * 24)); }
+#endif
 		std::string DateDisplay()const noexcept;
 		std::string DateDisplay4()const noexcept;
 		std::string TimeDisplay()const noexcept;
