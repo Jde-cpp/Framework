@@ -6,7 +6,6 @@
 # dest=${dest////\\};
 # dest=${dest/\\c/c:};
 # cmd <<< "mklink $dest\\$file $dest\\jde\\Framework\\$file" > /dev/null;
-
 #chmod 777 framework-build.sh
 
 clean=${1:-0};
@@ -29,17 +28,8 @@ if windows; then
 else
 	pushd `pwd` > /dev/null;
 	cd $BOOST_ROOT;
-	#./bootstrap.sh --with-toolset=clang
-	#./b2 clean
-	#./b2 variant=debug   toolset=clang cxxflags="-stdlib=libc++" linkflags="-stdlib=libc++" link=shared threading=multi runtime-link=shared address-model=64 --with-system
-	#./b2 variant=release toolset=clang cxxflags="-stdlib=libc++" linkflags="-stdlib=libc++" link=shared threading=multi runtime-link=shared address-model=64 --with-system
-	#./b2 variant=debug   toolset=clang cxxflags="-stdlib=libc++" linkflags="-stdlib=libc++" link=shared threading=multi runtime-link=shared address-model=64 --with-thread
-	#./b2 variant=release toolset=clang cxxflags="-stdlib=libc++" linkflags="-stdlib=libc++" link=shared threading=multi runtime-link=shared address-model=64 --with-thread
-	#./b2 variant=debug   toolset=clang cxxflags="-stdlib=libc++ -D_GLIBCXX_DEBUG" linkflags="-stdlib=libc++" link=shared threading=multi runtime-link=shared address-model=64 --with-iostreams
-	#./b2 variant=release toolset=clang cxxflags="-stdlib=libc++" linkflags="-stdlib=libc++" link=shared threading=multi runtime-link=shared address-model=64 --with-iostreams
 	popd  > /dev/null;
 fi;
-#if [ ! -d $jdeRoot ]; then mkdir $jdeRoot; fi;
 fetchDefault Public;
 cd $scriptDir/../Public;
 stageDir=$REPO_BASH/jde/Public/stage
@@ -53,7 +43,6 @@ function winBoostConfig
 		cd $BOOST_BASH;
 		if [ ! -f b2.exe ]; then echo boost bootstrap; cmd <<< bootstrap.bat; echo boost bootstrap finished; fi;
 		local command="b2 variant=$config link=shared threading=multi runtime-link=shared address-model=64 --with-$lib"
-		#echo $command;
 		cmd <<< "$command";#  > /dev/null;
 		echo $file - $config - build complete
 		linkFileAbs `pwd`/stage/lib/$file.lib $stageDir/$config/$file.lib;
@@ -64,9 +53,6 @@ function winBoostConfig
 			exit 1;
 		fi;
 		linkFileAbs `pwd`/stage/lib/$file.dll $stageDir/$config/$file.dll;
-		#echo `pwd`/stage/lib/$file found!
-#	else
-#		echo exists - $stageDir/release/$file;
 	fi;
 }
 function winBoost
@@ -84,8 +70,6 @@ if windows; then
 	if [ $shouldFetch -eq 1 ]; then
 		if [ ! -d $REPO_BASH/vcpkg/installed/x64-windows/include/nlohmann ]; then vcpkg.exe install nlohmann-json --triplet x64-windows; fi;
 		if [ ! -d $REPO_BASH/vcpkg/installed/x64-windows/lib/zlib.lib ]; then vcpkg.exe install zlib --triplet x64-windows; fi;
-		#vcpkg.exe install fmt --triplet x64-windows
-		#vcpkg.exe install spdlog --triplet x64-windows
 		if [ -z $BOOST_DIR ]; then echo \$BOOST_DIR not set; exit 1; fi;
 		toBashDir $BOOST_DIR BOOST_BASH;
 		if [ ! -d $BOOST_BASH ]; then
@@ -102,11 +86,10 @@ if windows; then
 	fi;
 fi;
 buildProto=$shouldFetch
-#buildProto=0
 cd $REPO_BASH;
 if [ ! -d protobuf ]; then  git clone https://github.com/Jde-cpp/protobuf.git; buildProto=1; fi;
 if [ ! -d spdlog ]; then
-	git clone https://github.com/gabime/spdlog.git;
+	git clone https://github.com/Jde-cpp/spdlog;
 elif [ $shouldFetch -eq 1 ]; then
 	cd spdlog; echo pulling spdlog; git pull > /dev/null; cd ..;
 fi;
@@ -136,42 +119,17 @@ function protocBuildWin
 	if [ ! -d "`pwd`/$type" ]; then mkdir $type; fi;
 	cd $type;
 	if test ! -f libprotobuf.vcxproj; then
-		#subDir=$([ "$type" = "Debug" ] && echo "/$type" || echo "");
-		#cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=$type -Dprotobuf_WITH_ZLIB=ON -DZLIB_INCLUDE_DIR=$REPO_DIR/vcpkg/installed/x64-windows$subDir/include -DZLIB_LIB=$REPO_DIR/vcpkg/installed/x64-windows$subDir/lib ../..
-		#cmake -G "Visual Studio 16 2019" -DCMAKE_BUILD_TYPE=$type -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_WITH_ZLIB=ON -DZLIB_INCLUDE_DIR=$REPO_DIR/vcpkg/installed/x64-windows/include -DZLIB_LIB=$REPO_DIR/vcpkg/installed/x64-windows$subDir/lib ../..
-		#-DCMAKE_BUILD_TYPE=Release
 		cmake -G "Visual Studio 16 2019" -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_WITH_ZLIB=ON -DZLIB_INCLUDE_DIR=$REPO_DIR/vcpkg/installed/x64-windows/include -DZLIB_LIB=$REPO_DIR/vcpkg/installed/x64-windows/lib -Dprotobuf_MSVC_STATIC_RUNTIME=OFF -Dprotobuf_BUILD_SHARED_LIBS=$sharedLibs ../..
 		if [ $? -ne 0 ]; then
-		 	#t="/c/Program\ Files\ \(X86\)/Microsoft\ Visual\ Studio/2019/Enterprise/Common7/Tools"
-			#if [[ -d ${t//\\} ]]; then
-
-				#toWinDir $t winDir;
-				#CMAKE_GENERATOR_INSTANCE=$winDir;
-			#fi;
 			echo `pwd`/$cmd;
 			exit 1;
 		fi;
 	fi;
-	#nmake;
-	#if [ ! -f Debug/libprotobufd.lib ]; then
-		baseCmd="msbuild.exe libprotobuf.vcxproj -p:Platform=x64 -maxCpuCount -nologo -v:q /clp:ErrorsOnly -p:Configuration"
-		buildWindows2 "$baseCmd" libprotobuf.dll release;
-		#cp Release/libprotobuf.lib $REPO_BASH/jde/Public/stage/Release/libprotobufd.lib;
-		buildWindows2 "$baseCmd" libprotobufd.dll debug;
-		#cp Debug/libprotobufd.lib $REPO_BASH/jde/Public/stage/Debug/libprotobufd.lib;
-		buildWindows2 "msbuild.exe protoc.vcxproj -p:Platform=x64 -maxCpuCount -nologo -v:q /clp:ErrorsOnly -p:Configuration" protoc.exe release;
-		cp Release/libprotoc.dll $REPO_BASH/jde/Public/stage/Release/libprotoc.dll;
-		#msbuild.exe libprotobuf.vcxproj -p:Configuration=Debug -p:Platform=x64 -maxCpuCount -nologo -v:q /clp:ErrorsOnly;
-		#cp Debug/libprotobufd.dll $REPO_BASH/jde/Public/stage/Debug/libprotobufd.dll;
-	#fi;
-	# if [ ! -f Release/libprotobuf.dll ]; then
-	# 	msbuild.exe libprotobuf.vcxproj -p:Configuration=Release -p:Platform=x64 -maxCpuCount -nologo -v:q /clp:ErrorsOnly;
-	# 	cp Release/libprotobuf.dll $REPO_BASH/jde/Public/stage/Release/libprotobuf.dll;
-	# fi;
-	# if [ ! -f Release/protoc.exe ]; then
-	# 	msbuild.exe protoc.vcxproj -p:Configuration=Release -p:Platform=x64 -maxCpuCount -nologo -v:q /clp:ErrorsOnly;
-	# 	cp Release/protoc.exe $REPO_BASH/jde/Public/stage/Release/protoc.exe;
-	# fi;
+	baseCmd="msbuild.exe libprotobuf.vcxproj -p:Platform=x64 -maxCpuCount -nologo -v:q /clp:ErrorsOnly -p:Configuration"
+	buildWindows2 "$baseCmd" libprotobuf.dll release;
+	buildWindows2 "$baseCmd" libprotobufd.dll debug;
+	buildWindows2 "msbuild.exe protoc.vcxproj -p:Platform=x64 -maxCpuCount -nologo -v:q /clp:ErrorsOnly -p:Configuration" protoc.exe release;
+	cp Release/libprotoc.dll $REPO_BASH/jde/Public/stage/Release/libprotoc.dll;
 }
 function protocBuildLinux
 {
@@ -198,14 +156,9 @@ if [ $buildProto -eq 1 ]; then
 	moveToDir build;
 	if windows; then protocBuildWin; else protocBuildLinux; fi;
 fi;
-#protobufInclude=`pwd`/vcpkg/installed/x64-windows/include
-#findExecutable protoc.exe `pwd`/vcpkg/installed/x64-windows/tools/protobuf 1
-#echo $REPO_DIR;
-#echo $REPO_BASH;
-#exit 1;
+
 protobufInclude=$REPO_DIR/protobuf/src;
 if windows; then findExecutable protoc.exe $REPO_BASH/jde/Public/stage/release; fi;
-#echo findExecutable protoc.exe; exit 1;
 
 cd $baseDir/$jdeRoot;
 if windows; then
@@ -232,7 +185,6 @@ function frameworkProtoc
 			sed -i 's/PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT RequestStringDefaultTypeInternal _RequestString_default_instance_;/PROTOBUF_ATTRIBUTE_NO_DESTROY RequestStringDefaultTypeInternal _RequestString_default_instance_;/' messages.pb.cc;
 			sed -i 's/PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT CustomMessageDefaultTypeInternal _CustomMessage_default_instance_;/PROTOBUF_ATTRIBUTE_NO_DESTROY CustomMessageDefaultTypeInternal _CustomMessage_default_instance_;/' messages.pb.cc;
 			sed -i 's/PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT GenericFromServerDefaultTypeInternal _GenericFromServer_default_instance_;/PROTOBUF_ATTRIBUTE_NO_DESTROY GenericFromServerDefaultTypeInternal _GenericFromServer_default_instance_;/' messages.pb.cc;
-			#sed -i 's/class Fundamentals_ValuesEntry_DoNotUse/class JDE_MARKETS_EXPORT Fundamentals_ValuesEntry_DoNotUse/' results.pb.h;
 		fi;
 	fi;
 	cd ../../..;
