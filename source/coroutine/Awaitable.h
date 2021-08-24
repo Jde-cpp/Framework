@@ -1,12 +1,12 @@
 ﻿#pragma once
-#include <jde/Exports.h> 
+#include <jde/Exports.h>
 #include <jde/coroutine/Task.h>
 #include "Coroutine.h"
 
 namespace Jde::Coroutine
 {
 	using ClientHandle = uint;
-
+	using HCoroutine = coroutine_handle<Task2::promise_type>;
 	template<class TTask=Task2>
 	struct TAwaitable
 	{
@@ -15,11 +15,10 @@ namespace Jde::Coroutine
 		using THandle=coroutine_handle<TPromise>;
 		TAwaitable()noexcept=default;
 		TAwaitable( str name )noexcept:_name{name}{};
-		//virtual ~TAwaitable()=0;
 
 		virtual α await_ready()noexcept->bool{ return false; }
 		virtual TResult await_resume()noexcept=0;
-		inline virtual void await_suspend( std::coroutine_handle<Task2::promise_type> /*h*/ )noexcept{ OriginalThreadParamPtr = { Threading::GetThreadDescription(), Threading::GetAppThreadHandle() }; }
+		inline virtual void await_suspend( coroutine_handle<Task2::promise_type> /*h*/ )noexcept{ OriginalThreadParamPtr = { Threading::GetThreadDescription(), Threading::GetAppThreadHandle() }; }
 		inline void AwaitResume()noexcept
 		{
 			if( _name.size() )
@@ -33,7 +32,6 @@ namespace Jde::Coroutine
 		string ThreadName;
 		const string _name;
 	};
-	//template<class T> TAwaitable<T>::~TAwaitable(){}
 
 	struct IAwaitable /*abstract*/ : TAwaitable<Task2>
 	{
@@ -50,21 +48,51 @@ namespace Jde::Coroutine
 
 	struct AsyncAwaitable final : IAwaitable
 	{
-		using base=IAwaitable;
 		AsyncAwaitable( function<sp<void>()> fnctn )noexcept:_fnctn{fnctn}{};
-		void await_suspend( typename base::THandle h )noexcept override;
+		void await_suspend( IAwaitable::THandle h )noexcept override{ base::await_suspend(h); CoroutinePool::Resume( move(h) ); }
+
+		TaskResult await_resume()noexcept override;
 	private:
 		function<sp<void>()> _fnctn;
 	};
 
-	struct FunctionAwaitable final : IAwaitable //TODO try FunctionType like InteruptableThread
+	struct FunctionAwaitable final : IAwaitable
 	{
 		using base=IAwaitable;
 		FunctionAwaitable( function<Task2(typename base::THandle)> fnctn, str name={} )noexcept:base{name}, _fnctn2{fnctn}{};
 
 		void await_suspend( typename base::THandle h )noexcept override{ base::await_suspend( h ); _fnctn2( move(h) ); }
 	private:
-		function<Task2(typename base::THandle)> _fnctn2;
+		function<Task2(HCoroutine)> _fnctn2;
+	};
+	template<class T>
+	struct Promise : std::promise<T>
+	{
+		~Promise(){ DBG("~Promise"sv); }
+	};
+	ⓣ CallAwaitable( up<Promise<sp<T>>> pPromise, IAwaitable&& a )->Task2
+	{
+		TaskResult r = co_await a;
+		if( r.HasValue() )
+			pPromise->set_value( r.Get<T>() );
+		else
+			pPromise->set_exception( r.Error() );
+	}
+	ⓣ Future( IAwaitable&& a )->std::future<sp<T>>
+	{
+		auto p = make_unique<Promise<sp<T>>>();
+		std::future<sp<T>> f = p->get_future();
+		CallAwaitable( move(p), move(a) );
+		return f;
+	}
+	struct AWrapper final : IAwaitable
+	{
+		using base=IAwaitable;
+		AWrapper( function<Task2(HCoroutine h)> fnctn, str name={} )noexcept:base{name}, _fnctn{fnctn}{};
+
+		void await_suspend( HCoroutine h )noexcept override{ base::await_suspend( h ); _fnctn( move(h) ); }
+	private:
+		function<Task2(HCoroutine h)> _fnctn;
 	};
 
 	template<class T>
@@ -77,25 +105,16 @@ namespace Jde::Coroutine
 	};
 	template<class T> CancelAwaitable<T>::~CancelAwaitable(){}
 
-	inline void AsyncAwaitable::await_suspend( typename base::THandle h )noexcept
+	inline TaskResult AsyncAwaitable::await_resume()noexcept
 	{
-		base::await_suspend( h );
-		std::thread( [this,h2=move(h)]()mutable//TODO move to thread pool
+		AwaitResume();
+		try
 		{
-			try
-			{
-				sp<void> x = _fnctn();
-				h2.promise().get_return_object().SetResult( x );
-				DBG( "Awaitable - Calling resume()."sv );
-				Coroutine::CoroutinePool::Resume( move(h2) );//TODO after moving to thread pool decide if this will get run by the current pool or Coroutine::CoroutinePool.
-			}
-			catch( const std::exception& e )
-			{
-				auto p = std::make_exception_ptr( e );
-				h2.promise().get_return_object().SetResult( p );
-				DBG( "Awaitable - Calling resume() with error."sv );
-				Coroutine::CoroutinePool::Resume( move(h2) );
-			}
-		}).detach();
+			return TaskResult{ _fnctn() };
+		}
+		catch( const std::exception& e )
+		{
+			return TaskResult{ std::make_exception_ptr(e) };
+		}
 	}
 }

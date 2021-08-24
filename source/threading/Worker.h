@@ -3,37 +3,51 @@
 #include <jde/App.h>
 #include "./jthread.h"
 #include "./Mutex.h"
-#include "../Collections/Queue.h"
+#include "../collections/Queue.h"
 #include "InterruptibleThread.h"
 
 namespace Jde::Threading
 {
+	#define var const auto
 #ifdef _MSC_VER
 	using std::stop_token;
 #else
 	using Jde::stop_token;
 #endif
-	struct JDE_NATIVE_VISIBILITY IWorker /*abstract*/: IShutdown, std::enable_shared_from_this<IWorker>
+	/*handle signals, configuration*/
+	struct JDE_NATIVE_VISIBILITY IWorker /*final*/: IShutdown, std::enable_shared_from_this<IWorker>
 	{
 		IWorker( sv name )noexcept;//:_name{name}{ DBG("IWorker::IWorker({})"sv, _name); }
 		virtual ~IWorker()=0;
+		virtual void Initialize()noexcept;
 		void Shutdown()noexcept override;
+		bool HasThread()noexcept{ return _pThread!=nullptr; }
+		virtual void Run( stop_token st )noexcept;
+		sv Name;
+		const uint8 ThreadCount;
 	protected:
-		α Run( stop_token st )noexcept->void;
-		virtual bool Poll()noexcept=0;
-
-		static sp<IWorker> _pInstance;
-		sv _name;
+		void StartThread()noexcept;
+		optional<Settings::Container> Settings(){ return Settings::TryGetSubcontainer<Settings::Container>( "workers", Name ); }
 		up<jthread> _pThread;
 		static std::atomic<bool> _mutex;
-	private:
-		TimePoint _lastRequest{ Clock::now() };
 	};
-	
-	template<class T>
-	struct TWorker /*abstract*/: IWorker
+	struct JDE_NATIVE_VISIBILITY IPollWorker /*abstract*/ : IWorker, IPollster
 	{
-		TWorker( sv name )noexcept:IWorker{ name }{}
+		IPollWorker( sv name )noexcept:IWorker{ name }{}
+		virtual optional<bool> Poll()noexcept=0;
+		void WakeUp()noexcept override;
+		void Sleep()noexcept override;
+	protected:
+		void Run( stop_token st )noexcept override;
+	private:
+		atomic<uint> _calls{0};
+		atomic<TimePoint> _lastRequest{ Clock::now() };
+	};
+
+	template<class T>
+	struct TWorker /*abstract*/: IPollWorker
+	{
+		TWorker( sv name )noexcept:IPollWorker{ name }{}
 	protected:
 		Ω Start()noexcept->sp<IWorker>;
 	};
@@ -52,7 +66,8 @@ namespace Jde::Threading
 		QueueMove<TArg> _queue;
 	};
 
-	ⓣ TWorker<T>::Start()noexcept->sp<IWorker>
+
+/*	ⓣ TWorker<T>::Start()noexcept->sp<IWorker>
 	{
 		if( IApplication::ShuttingDown() )
 			return nullptr;
@@ -61,17 +76,25 @@ namespace Jde::Threading
 		{
 			_pInstance = make_shared<T>();
 			IApplication::AddShutdown( _pInstance );
+			var pSettings = Settings::TryGetSubcontainer<Settings::Container>( "workers", _pInstance->Name );
+			if( pSettings && pSettings->Get2<uint8>("threads") )
+				_pInstance->StartThread();
+			else
+				throw "not implemented";
 			//_pInstance->_pThread = make_unique<jthread>([&]( stop_token st ){_pInstance->Run( st );} );
 		}
 		return _pInstance;
 	}
-
-	TARG α IQueueWorker<TArg,TDerived>::Push( TArg&& x )noexcept->void 
+*/
+	TARG α IQueueWorker<TArg,TDerived>::Push( TArg&& x )noexcept->void
 	{
 		if( auto p=Start(); p )
 		{
-			x.SetWorker( p );
 			p->_queue.Push( move(x) );
+			if( p->HasThread() )
+				x.SetWorker( p );
+			else
+				IApplication::AddActiveWorker( p );
 		}
 	}
 	TARG α IQueueWorker<TArg,TDerived>::Poll()noexcept->bool
@@ -85,4 +108,5 @@ namespace Jde::Threading
 		return handled;
 	}
 #undef TARG
+#undef var
 }

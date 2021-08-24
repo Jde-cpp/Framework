@@ -4,6 +4,7 @@
 #include "../source/coroutine/Coroutine.h"
 #include "../source/threading/Mutex.h"
 #include "../source/log/server/ServerSink.h"
+#include <jde/io/File.h>
 #ifdef _MSC_VER
 	#include "../../Windows/source/WindowsDrive.h"
 #endif
@@ -19,8 +20,6 @@ namespace Jde::Coroutine
 		void SetUp() override {}
 		void TearDown() override {}
 	public:
-//		α CallPool()->Coroutine::Task2;
-//		α CallThrow()->Coroutine::Task2;
 	};
 
 	uint Count{0};
@@ -174,11 +173,10 @@ namespace Jde::Coroutine
 		cv.wait( l );
 	}
 	*/
-#ifdef _MSC_VER
+
 	α Write( path path, sp<vector<char>> pBuffer )->Task2
 	{
-		auto p = make_shared<IO::Drive::WindowsDrive>();
-		co_await p->Write( fs::path{path}, pBuffer );
+		co_await IO::Write( fs::path{path}, pBuffer );
 		std::shared_lock l{ mtx };
 		cv.notify_one();
 	}
@@ -186,18 +184,19 @@ namespace Jde::Coroutine
 	sp<vector<char>> _pRead;
 	α Read( path path )->Task2
 	{
-		auto p = make_shared<IO::Drive::WindowsDrive>();
-		_pRead = ( co_await p->Read( fs::path{path} ) ).Get<vector<char>>();
+		_pRead = ( co_await IO::Read( fs::path{path} ) ).Get<vector<char>>();
 		std::shared_lock l{ mtx2 };
 		cv.notify_one();
 	}
 
 	TEST_F(CoroutineTests, File)
 	{
-		var chunksize=4096;
-		var threadSize=5;
+		auto pSettings = Settings::TryGetSubcontainer<Settings::Container>( "workers", "DriveWorker" );
+		var chunkSize = pSettings->Get2<uint>( "chunkSize" ).value_or( IO::DriveWorker::ChunkSize );
+		var threadSize = pSettings->Get2<uint8>( "threadSize" ).value_or( IO::DriveWorker::ThreadSize );
 		constexpr uint itemSize = sizeof( double );
-		var itemCount = chunksize*threadSize*2.5/itemSize;
+		var itemCount = chunkSize*threadSize*2.5/itemSize;
+		//var itemCount = chunkSize*threadSize/itemSize;
 		var totalSize = (itemCount+1)*itemSize;
 		auto pBuffer = make_shared<vector<char>>( (size_t)totalSize );
 		std::uniform_real_distribution<double> unif( 0, std::numeric_limits<double>::max() );
@@ -207,15 +206,14 @@ namespace Jde::Coroutine
 		   double v = unif( re );
 			memcpy( pBuffer->data()+i*itemSize, &v, itemSize );
 		}
-		var path = fs::path( "c:\\temp\\test.dat" );
+		var path = fs::path( fs::temp_directory_path()/"test.dat" );
+		INFO( "Writing {}."sv, path.string() );
 		Write( path, pBuffer );
 		std::shared_lock l{ mtx };
 		cv.wait( l );
-//		std::this_thread::sleep_for( 60s );
 		Read( path );
 		std::shared_lock l2{ mtx2 };
 		cv.wait( l2 );
 		ASSERT_TRUE( *pBuffer==*_pRead );
 	}
-#endif
 }

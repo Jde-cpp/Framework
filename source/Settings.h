@@ -66,7 +66,7 @@ namespace Jde::Settings
 		return  result;
 	}
 
-	template<> inline α 
+	template<> inline α
 	Container::Get2<fs::path>( sv path )const noexcept->optional<fs::path>
 	{
 		var p = Get2<string>( path );
@@ -118,31 +118,25 @@ namespace Jde::Settings
 	}
 
 
-	JDE_NATIVE_VISIBILITY Container& Global()noexcept;
-	JDE_NATIVE_VISIBILITY sp<Container> GlobalPtr()noexcept;
-	JDE_NATIVE_VISIBILITY void SetGlobal( sp<Container> container )noexcept;
+	🚪 Global()noexcept->Container&;
+	//JDE_NATIVE_VISIBILITY sp<Container> GlobalPtr()noexcept;
+	//JDE_NATIVE_VISIBILITY void SetGlobal( sp<Container> container )noexcept;
 
 	ⓣ Get( sv path )noexcept{ return Global().Get2<T>( path ); }
 
 	ⓣ TryGetSubcontainer( sv container, sv path )noexcept->optional<T>
 	{
 		optional<T> v;
-		if( auto p=Settings::GlobalPtr(); p )
-		{
-			if( auto pSub=p->TrySubContainer( container ); pSub )
+			if( auto pSub=Global().TrySubContainer( container ); pSub )
 				v = pSub->Get2<T>( path );
-		}
 		return v;
 	}
-	
+
 	template<> inline auto TryGetSubcontainer<Container>( sv container, sv path )noexcept->optional<Container>
 	{
 		optional<Container> v;
-		if( auto p=Settings::GlobalPtr(); p )
-		{
-			if( auto pSub=p->TrySubContainer( container ); pSub )
+			if( auto pSub=Global().TrySubContainer( container ); pSub )
 				v = pSub->TrySubContainer( path );
-		}
 		return v;
 	}
 

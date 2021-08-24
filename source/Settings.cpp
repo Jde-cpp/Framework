@@ -1,14 +1,41 @@
 #include "Settings.h"
+#include <jde/App.h>
 #include <fstream>
 
 #define var const auto
 
 namespace Jde::Settings
 {
-	sp<Container> _pGlobal;
-	Container& Global()noexcept{ ASSERT(_pGlobal); return *_pGlobal;}
-	sp<Container> GlobalPtr()noexcept{return _pGlobal;}
-	void SetGlobal( sp<Container> settings )noexcept{ _pGlobal = settings; }
+	up<Container> _pGlobal;
+	fs::path SettingsPath()noexcept
+	{
+#ifdef _MSC_VER
+		var base = OSApp::Executable().stem().string();
+#else
+		var base = OSApp::Executable().extension().string().substr(1);
+#endif
+		var fileName = fs::path{ format("{}.json", base) };
+		fs::path settingsPath{ fileName };
+		if( !fs::exists(settingsPath) )
+		{
+			var settingsPathB = fs::path{".."}/fileName;
+			settingsPath = fs::exists( settingsPathB ) ? settingsPathB : OSApp::ApplicationDataFolder()/fileName;
+		}
+		return settingsPath;
+	}
+	Container& Global()noexcept
+	{
+		if( !_pGlobal )
+		{
+			var settingsPath = SettingsPath();
+			_pGlobal = fs::exists(settingsPath) ? std::make_unique<Jde::Settings::Container>( settingsPath ) : std::make_unique<Jde::Settings::Container>( nlohmann::json{} );
+		}
+		return *_pGlobal;
+		//ASSERT(_pGlobal); return *_pGlobal;
+	}
+
+	//sp<Container> GlobalPtr()noexcept{return _pGlobal;}
+	//void SetGlobal( sp<Container> settings )noexcept{ _pGlobal = settings; }
 
 	Container::Container( path jsonFile )noexcept(false):
 		_pJson{ make_unique<nlohmann::json>() }

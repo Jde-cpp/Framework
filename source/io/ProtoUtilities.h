@@ -4,18 +4,14 @@
 
 namespace Jde::IO::Proto
 {
-	template<typename T>
-	up<T> Load( path path )noexcept(false);
-	template<typename T>
-	up<T> TryLoad( path path )noexcept;
-	template<typename T>
-	void Load( path path, T& p )noexcept(false);
+	ⓣ Load( path path )noexcept(false)->up<T>;
+	ⓣ TryLoad( path path )noexcept->up<T>;
+	ⓣ Load( path path, T& p )noexcept(false)->void;
+	ⓣ LoadXZ( path path )noexcept(false)->AWrapper;//sp<T>
 
-	template<typename T>
-	up<T> Deserialize( const vector<char>& data )noexcept(false);
+	ⓣ Deserialize( const vector<char>& data )noexcept(false)->up<T>;
 
-	template<typename T>
-	vector<T> ToVector( const google::protobuf::RepeatedPtrField<T>& x )noexcept;
+	ⓣ ToVector( const google::protobuf::RepeatedPtrField<T>& x )noexcept->vector<T>;
 
 	void Save( const google::protobuf::MessageLite& msg, path path )noexcept(false);
 	string ToString( const google::protobuf::MessageLite& msg )noexcept(false);
@@ -42,8 +38,7 @@ namespace Jde::IO
 	void Deserialize2( const vector<char>& data, T& proto )noexcept(false)
 	{
 		google::protobuf::io::CodedInputStream input{ (const uint8*)data.data(), (int)data.size() };
-		if( !proto.MergePartialFromCodedStream(&input) )
-			THROW( IOException("MergePartialFromCodedStream returned false.") );
+		THROW_IFX( !proto.MergePartialFromCodedStream(&input), IOException("MergePartialFromCodedStream returned false.") );
 	}
 
 	template<typename T>

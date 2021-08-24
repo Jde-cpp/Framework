@@ -39,7 +39,7 @@ namespace Jde::Coroutine
 		static ELogLevel LogLevel()noexcept
 		{
 			if( _level==ELogLevel::None && _pSettings )
-				_level = _pSettings->Get2<ELogLevel>( "LogLevel" ).value_or( ELogLevel::Trace );
+				_level = _pSettings->Get2<ELogLevel>( "logLevel" ).value_or( ELogLevel::Trace );
 			return _level;
 		}
 	private:

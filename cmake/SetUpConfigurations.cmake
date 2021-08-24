@@ -34,7 +34,7 @@ if(MSVC)
 	add_definitions( -DBOOST_ALL_DYN_LINK )
 else()
 	string(APPEND DEBUG " -O0 -g -D_GLIBCXX_DEBUG")
-	string(APPEND DEBUG " -Wall -Wno-unknown-pragmas -Wno-empty-body -Wno-return-type-c-linkage -Wno-#pragma-messages")
+	string(APPEND DEBUG " -Wall -Wno-unknown-pragmas -Wno-empty-body -Wno-return-type-c-linkage -Wno-exceptions -Wno-#pragma-messages")
 endif()
 
 string(APPEND CMAKE_CXX_FLAGS_RELEASE ${RELEASE} )

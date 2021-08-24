@@ -1,11 +1,13 @@
 #pragma once
 #include <jde/Exports.h>
 #include "../threading/InterruptibleThread.h"
+#include "../coroutine/Awaitable.h"
 #include <shared_mutex>
 struct inotify_event;
 struct pollfd;
 namespace Jde::IO
 {
+	using namespace Coroutine;
 #pragma region DiskWatcherEvents
 
 	enum class EDiskWatcherEvents : uint32_t
@@ -110,6 +112,7 @@ namespace Jde::IO
 		TimePoint ModifiedTime;
 	};
 	typedef sp<const IDirEntry> IDirEntryPtr;
+
 	struct IDrive : std::enable_shared_from_this<IDrive>
 	{
 		virtual map<string,IDirEntryPtr> Recursive( path path )noexcept(false)=0;

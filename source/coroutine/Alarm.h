@@ -13,9 +13,9 @@ namespace Jde::Threading
 	struct JDE_NATIVE_VISIBILITY AlarmAwaitable final : CancelAwaitable<Task2>
 	{
 		AlarmAwaitable( TimePoint& alarm, Handle& handle )noexcept:CancelAwaitable{handle}, _alarm{alarm}{}
-		~AlarmAwaitable(){ /*DBG("({})AlarmAwaitable::~Awaitable"sv, std::this_thread::get_id());*/ }
-		bool await_ready()noexcept{ return _alarm<Clock::now(); }
-		void await_suspend( std::coroutine_handle<Task2::promise_type> h )noexcept;
+		//~AlarmAwaitable(){ /*DBG("({})AlarmAwaitable::~Awaitable"sv, std::this_thread::get_id());*/ }
+		bool await_ready()noexcept override{ return _alarm<Clock::now(); }
+		void await_suspend( coroutine_handle<Task2::promise_type> h )noexcept override;
 		TaskResult await_resume()noexcept override{ DBG("({})AlarmAwaitable::await_resume"sv, std::this_thread::get_id()); return {}; }//returns the result value for co_await expression.
 	private:
 		TimePoint _alarm;
@@ -26,12 +26,11 @@ namespace Jde::Threading
 		using base=Threading::TWorker<Alarm>;
 		Alarm():base{"Alarm"sv}{};
 		~Alarm(){ if( GetDefaultLogger() ) DBG("Alarm::~Alarm"sv); }
-		static auto Wait( TimePoint t, Handle& handle )noexcept{return AlarmAwaitable{t, handle};}
+		static auto Wait( TimePoint t, Handle& handle )noexcept{ return AlarmAwaitable{t, handle}; }
 		static void Cancel( Handle handle )noexcept;
 	private:
 		void Shutdown()noexcept override;
-		bool Poll()noexcept override;
-		static sp<Alarm> Instance()noexcept;
+		optional<bool> Poll()noexcept override;
 		optional<TimePoint> Next()noexcept;
 		static void Add( TimePoint t, AlarmAwaitable::THandle h, Handle myHandle )noexcept;
 		void Add2( TimePoint t, AlarmAwaitable::THandle h, Handle myHandle )noexcept;

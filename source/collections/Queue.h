@@ -46,7 +46,7 @@ namespace Jde
 	std::shared_ptr<T> Queue<T>::WaitAndPop()
 	{
 		std::unique_lock<std::mutex> lk( _mtx );
-		_cv.wait_for( lk, [this]{return !_queue.empty();} );
+		_cv.wait_for( lk, Duration::max(), [this]{return !_queue.empty();} );
 		auto pItem = _queue.front();
 		_queue.pop();
 		return pItem;
@@ -247,13 +247,13 @@ namespace Jde
 	{
 		LOCK;
 		var hasSize = !_queue.empty();
-		optional<T> p = hasSize ? move( _queue.front() ) : optional<T>{};
+		optional<T> p = hasSize ? optional<T>{ move(_queue.front()) } : std::nullopt;
 		if( p )
 			_queue.pop();
 		return p;
 	}
-	
-	ⓣ QueueMove<T>::PopAll()noexcept->vector<T> 
+
+	ⓣ QueueMove<T>::PopAll()noexcept->vector<T>
 	{
 		LOCK;
 		vector<T> results; results.reserve( _queue.size() );

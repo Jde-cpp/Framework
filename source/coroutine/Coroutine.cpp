@@ -40,7 +40,7 @@ namespace Jde::Coroutine
 						continue;
 					}
 				}
-				LOG( CoroutinePool::LogLevel(), "({})CoroutineThread call resume"sv, index );
+				LOG( CoroutinePool::LogLevel(), "({}:{})CoroutineThread call resume"sv, index, _param->CoHandle.address() );
 				_param->CoHandle.resume();
 				LOG( CoroutinePool::LogLevel(), "({})CoroutineThread finish resume"sv, index );
 				SetThreadInfo( ThreadParam );
@@ -65,6 +65,8 @@ namespace Jde::Coroutine
 	}
 	optional<CoroutineParam> ResumeThread::Resume( CoroutineParam&& param )noexcept
 	{
+		ASSERT( param.CoHandle.address() );
+		LOG( CoroutinePool::LogLevel(), "({})ResumeThread::Resume"sv, param.CoHandle.address() );
 		unique_lock l{ _paramMutex };
 		bool haveParam = _param.has_value();
 		bool done = Done();

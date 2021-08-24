@@ -1,10 +1,11 @@
 #include "Alarm.h"
 
-#define IntancePtr if( auto p=Instance(); p ) p
+//#define IntancePtr if( auto p=Instance(); p ) p
 #define var const auto
 
 namespace Jde::Threading
 {
+	Alarm _instance;
 	void AlarmAwaitable::await_suspend( AlarmAwaitable::THandle h )noexcept
 	{
 		Alarm::Add( _alarm, h, _hClient );
@@ -12,7 +13,7 @@ namespace Jde::Threading
 
 	void Alarm::Add( TimePoint t, AlarmAwaitable::THandle h, Coroutine::Handle myHandle )noexcept
 	{
-		IntancePtr->Add2( t, h, myHandle );
+		_instance.Add2( t, h, myHandle );
 	}
 	void Alarm::Add2( TimePoint t, AlarmAwaitable::THandle h, Coroutine::Handle myHandle )noexcept
 	{
@@ -30,7 +31,7 @@ namespace Jde::Threading
 
 	void Alarm::Cancel( Coroutine::Handle h )noexcept
 	{
-		IntancePtr->Cancel2( h );
+		_instance.Cancel2( h );
 	}
 
 	void Alarm::Cancel2( Coroutine::Handle h )noexcept
@@ -51,7 +52,7 @@ namespace Jde::Threading
 		unique_lock l{ _coroutineMutex };//only shared
 		return _coroutines.size() ? _coroutines.begin()->first : optional<TimePoint>{};
 	}
-	bool Alarm::Poll()noexcept
+	optional<bool> Alarm::Poll()noexcept
 	{
 		static uint i=0;
 		{
@@ -65,9 +66,13 @@ namespace Jde::Threading
 			/*var status =*/ _cv.wait_for( lk, until-now );
 		}
 		unique_lock l{ _coroutineMutex };
+		bool processed = false;
 		for( auto p=_coroutines.begin(); p!=_coroutines.end() && p->first<Clock::now(); p = _coroutines.erase(p) )
+		{
+			processed = true;
 			Coroutine::CoroutinePool::Resume( move(get<1>(p->second)) );
-		return _coroutines.size();
+		}
+		return _coroutines.empty() ? std::nullopt : optional<bool>{ processed };
 	}
 	void Alarm::Shutdown()noexcept
 	{
@@ -75,19 +80,5 @@ namespace Jde::Threading
 		std::unique_lock<std::mutex> lk( _mtx );
 		_cv.notify_one();
 		base::Shutdown();
-	}
-	std::once_flag _singleThread;
-	sp<Alarm> Alarm::Instance()noexcept//TODO move to base.
-	{
-		auto pInstance = static_pointer_cast<Alarm>(_pInstance);
-		if( !pInstance && !IApplication::ShuttingDown() )
-		{
-			std::call_once( _singleThread, [&pInstance]()mutable
-			{
-				pInstance = make_shared<Alarm>();
-				pInstance->Start();
-			});
-		}
-		return pInstance;
 	}
 }

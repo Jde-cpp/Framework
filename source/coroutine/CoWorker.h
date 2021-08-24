@@ -27,26 +27,10 @@ namespace Jde::Coroutine
 	{
 		TCoWorker( sv name )noexcept:CoWorker{name}{};
 		template<typename TAwaitable2=TAwaitable>
-		struct Handles{ typename coroutine_handle<Task2::promise_type> HCoroutine; Coroutine::ClientHandle HClient; };
+		struct Handles{ coroutine_handle<Task2::promise_type> HCoroutine; Coroutine::ClientHandle HClient; };
 		virtual ~TCoWorker()noexcept{ DBG("TCoWorker::~TCoWorker({})"sv, _name); }
 		static sp<TDerived> Instance()noexcept{ return std::static_pointer_cast<TDerived>(_pInstance); }
 	protected:
-//		static sp<TDerived> _pInstance; no cpp to put it in.
 		static constexpr Duration WakeDuration{5s};
 	};
-/*	template<typename TDerived,typename TAwaitable>
-	sp<TDerived> TCoWorker<TDerived,TAwaitable>::Instance()noexcept
-	{
-		auto pInstance = static_pointer_cast<TDerived>( _pInstance );
-		//sp<TDerived> pInstance;// = _pInstance;
-		if( !pInstance && !IApplication::ShuttingDown() )
-		{
-			std::call_once( _singleThread, [&pInstance]()mutable
-			{
-				pInstance = make_shared<TDerived>();
-				pInstance->Start();
-			});
-		}
-		return pInstance;
-	}*/
 }

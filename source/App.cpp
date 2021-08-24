@@ -4,6 +4,7 @@
 #include <stdexcept>
 
 #include "Cache.h"
+#include <jde/io/File.h>
 #include "log/server/ServerSink.h"
 #include "Settings.h"
 #include "threading/InterruptibleThread.h"
@@ -12,7 +13,6 @@ namespace Jde
 {
 	sp<IApplication> IApplication::_pInstance;
 	unique_ptr<string> IApplication::_pApplicationName;
-	unique_ptr<string> IApplication::_pCompanyName;
 
 	mutex IApplication::_threadMutex;
 	bool IApplication::_shuttingDown{false};
@@ -36,10 +36,10 @@ namespace Jde
 //		if( HaveLogger() )
 //			DBG( "IApplication::~IApplication"sv );
 	}
-	set<string> IApplication::BaseStartup( int argc, char** argv, sv appName, string serviceDescription, sv companyName )noexcept(false)//no config file
+	IO::DriveWorker _driveWorker;
+	set<string> IApplication::BaseStartup( int argc, char** argv, sv appName, string serviceDescription/*, sv companyName*/ )noexcept(false)//no config file
 	{
 		_pApplicationName = std::make_unique<string>( appName );
-		_pCompanyName = std::make_unique<string>( companyName );
 
 		bool console = false;
 		const string arg0{ argv[0] };
@@ -74,31 +74,87 @@ namespace Jde
 			SetConsoleTitle( appName );
 		else
 			AsService();
-		var fileName = std::filesystem::path{ format("{}.json", appName) };
-		std::filesystem::path settingsPath{ fileName };
-		if( !fs::exists(settingsPath) )
-		{
-			var settingsPathB = std::filesystem::path{".."}/fileName;
-			settingsPath = fs::exists(settingsPathB) ? settingsPathB : ApplicationDataFolder()/fileName;
-		}
-		Settings::SetGlobal( std::make_shared<Jde::Settings::Container>(settingsPath) );
 		InitializeLogger( appName );
 		Threading::SetThreadDscrptn( appName );
-		INFO( "{}, settings='{}' cwd='{}' Running as console='{}'"sv, arg0, settingsPath, fs::current_path(), console );
+		//INFO( "{}, settings='{}' cwd='{}' Running as console='{}'"sv, arg0, settingsPath, fs::current_path(), console );
 
 		Cache::CreateInstance();
+		_driveWorker.Initialize();
+		_pInstance->AddSignals();
 		return values;
+	}
+
+	vector<Threading::IPollWorker*> _activeWorkers; atomic<bool> _activeWorkersMutex;
+	std::condition_variable _workerCondition; std::mutex _workerConditionMutex;
+	int _exitReason{0};
+	void IApplication::Exit( int reason )noexcept
+	{
+		_exitReason = reason;
+		std::unique_lock<std::mutex> lk( _workerConditionMutex );
+		_workerCondition.notify_one();
+	}
+	void IApplication::AddActiveWorker( Threading::IPollWorker* p )noexcept
+	{
+		Threading::AtomicGuard l{ _activeWorkersMutex };
+		if( find(_activeWorkers.begin(), _activeWorkers.end(), p)==_activeWorkers.end() )
+		{
+			_activeWorkers.push_back( p );
+			if( _activeWorkers.size()==1 )
+			{
+				std::unique_lock<std::mutex> lk( _workerConditionMutex );
+				l.unlock();
+				_workerCondition.notify_one();
+			}
+		}
+	}
+	void IApplication::RemoveActiveWorker( Threading::IPollWorker* p )noexcept
+	{
+		Threading::AtomicGuard l{ _activeWorkersMutex };
+		_activeWorkers.erase( remove(_activeWorkers.begin(), _activeWorkers.end(), p), _activeWorkers.end() );
 	}
 	void IApplication::Pause()noexcept
 	{
-		_pInstance->AddSignals();
-		_pInstance->OSPause();
+		INFO( "Pausing main thread. {}"sv, OSApp::ProcessId() );
+		while( !_exitReason )
+		{
+			Threading::AtomicGuard l{ _activeWorkersMutex };
+			uint size = _activeWorkers.size();
+			if( size )
+			{
+				l.unlock();
+				bool processed = false;
+				for( uint i=0; i<size; ++i )
+				{
+					Threading::AtomicGuard l2{ _activeWorkersMutex };
+					auto p = i<_activeWorkers.size() ? _activeWorkers[i] : nullptr; if( !p ) break;
+					l2.unlock();
+					if( var pWorkerProcessed = p->Poll();  pWorkerProcessed )
+						processed = *pWorkerProcessed || processed;
+					else
+						RemoveActiveWorker( p );
+				}
+				if( !processed )
+					std::this_thread::yield();
+			}
+			else
+			{
+				std::unique_lock<std::mutex> lk( _workerConditionMutex );
+				l.unlock();
+				_workerCondition.wait( lk );
+			}
+		}
+		//TODO wait for signal
+		INFO( "Pause returned - {}."sv, _exitReason );
+		lock_guard l{_threadMutex};
+		for( auto& pThread : *_pBackgroundThreads )
+			pThread->Interrupt();
+		IApplication::Shutdown();
 	}
 
-	void IApplication::Wait()noexcept
+	void IApplication::Shutdown()noexcept
 	{
 		_shuttingDown = true;
-		INFO( "Waiting for process to complete. {}"sv, ProcessId() );
+		INFO( "Waiting for process to complete. {}"sv, OSApp::ProcessId() );
 		GarbageCollect();
 		{
 			lock_guard l{ObjectMutex};
@@ -129,10 +185,8 @@ namespace Jde
 			}
 			std::this_thread::yield(); //std::this_thread::sleep_for( 2s );
 		}
-		Settings::SetGlobal( nullptr );
 		DBG( "Leaving Application::Wait"sv );
 	}
-
 	void IApplication::AddThread( sp<Threading::InterruptibleThread> pThread )noexcept
 	{
 		TRACE( "Adding Backgound thread"sv );
@@ -215,7 +269,6 @@ namespace Jde
 			GetServerSink()->Destroy();
 		Jde::DestroyLogger();
 		_pApplicationName = nullptr;
-		_pCompanyName = nullptr;
 		_pInstance = nullptr;
 		_pShutdownFunctions = nullptr;
 #ifdef _MSC_VER

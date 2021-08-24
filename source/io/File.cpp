@@ -27,17 +27,6 @@ namespace Jde::IO
 			return items;
 		}
 
-		// set<fs::directory_entry> GetDirectoryRecursive( path directory, set<fs::directory_entry>& values )noexcept
-		// {
-		// 	for( const auto& entry : fs::directory_iterator(path) )
-		// 	{
-		// 		values.emplace( item );
-		// 		if( fs::is_directory(item) )
-		// 			GetDirectoryRecursive( item.path(), value );
-		// 	};
-		// 	Jde::IO::FileUtilities::ForEachItem( directory, func );
-		// 	return pItems;
-		// }
 		std::unique_ptr<std::set<fs::directory_entry>> GetDirectories( path directory, std::unique_ptr<std::set<fs::directory_entry>> pItems )
 		{
 			if( !pItems )
@@ -68,9 +57,7 @@ namespace Jde::IO
 			if( f.fail() )
 				THROW( IOException("Could not open file '{}'", path.string()) );
 
-			//auto pResult = make_unique<vector<char>>(); pResult->reserve( size );
 			return make_unique<vector<char>>( (std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>() );  //vexing parse
-			//return move(pResult);
 		}
 		string Load( path path )noexcept(false)
 		{
@@ -136,10 +123,6 @@ namespace Jde::IO
 			auto compressedFile = path;
 			return compressedFile.replace_extension( format("{}{}", path.extension().string(),Extension()) );
 		}
-// find . -depth -name '*.zip' -execdir /usr/bin/unzip -n {} \; -delete
-// sudo find . -type d -exec chmod 777 {} \;
-// sudo find . -type f -exec chmod 666 {} \;
-
 		void Compression::Extract( path path )noexcept(false)
 		{
 			auto destination = string( path.parent_path().string() );
@@ -166,9 +149,7 @@ namespace Jde::IO
 			for( ; i<std::min(original.size(), newData.size()) && original[i]!=newData[i]; ++i );
 			os.seekp( start );
 			os.write( newData.data()+start, i-start ); //CHECK( os.good() );
-			//memcpy( original.data()+start, newData.data()+start, i-start );
 			size+=i-start;
-			//--i;
 		}
 		if( newData.size()>original.size() )
 		{
@@ -191,7 +172,6 @@ namespace Jde::IO
 			if( p->at(i)!=newData[i] )
 				DBG( "{}"sv, i );
 		}
-		//ASSERT( original==newData );
 		return size;
 	}
 
@@ -315,10 +295,6 @@ namespace Jde::IO
 		vector<string> tokens;
 
 		size_t lineIndex = 0;
-		//unique_ptr<Stopwatch> swForLoop( new Stopwatch(pStopwatch, StopwatchTypes::ReadFile, String("forLoop")) );
-		//unordered_set<size_t> columnIndexes2;
-		//for( auto i : columnIndexes )
-		//	columnIndexes2.insert(i);
 		vector<uint_fast8_t> columnIndexes3;
 		size_t found=0;
 
@@ -330,39 +306,21 @@ namespace Jde::IO
 			if( exists )
 				++found;
 		}
-		//const size_t columnIndexes3Size = columnIndexes3.size();
 		uint_fast8_t* pColumnIndexes3 = columnIndexes3.data();
 		do
 		{
-			//swForLoop->Finish();
-			//Stopwatch swRead( pStopwatch, StopwatchTypes::ReadFile, String("ifstream") );
 			file.read( rgBuffer.data(), chunkSize );
-			//swRead.Finish();
-			//swForLoop = unique_ptr<Stopwatch>( new Stopwatch( pStopwatch, StopwatchTypes::ReadFile, String("forLoop") ) );
 			const size_t charactersRead = file.gcount();
-			//auto pLastIndex = columnIndexes.begin();
 			for( size_t i=0, start=0, tokenIndex=0, columnIndex=0; i<charactersRead; ++i )
 			{
-				//swForLoop->Finish();
-				//Stopwatch swReadBuffer( pStopwatch, StopwatchTypes::ReadFile, String("rgBuffer[i]") );
 				char ch = rgBuffer[i];
 				const bool newLineStart = ch=='\r' || ch=='\n' || (i==charactersRead-1 && file.eof());
 				if( ch!=',' && !newLineStart )
-				{
-					//swReadBuffer.Finish();
-					//swForLoop = unique_ptr<Stopwatch>( new Stopwatch( pStopwatch, StopwatchTypes::ReadFile, String("forLoop") ) );
 					continue;
-				}
-				//swReadBuffer.Finish();
-				//swForLoop->Finish();
-				//Stopwatch find( pStopwatch, StopwatchTypes::ReadFile, String("columnIndexes.find") );
+
 				const uint_fast8_t getToken = pColumnIndexes3[columnIndex];
-				//find.Finish();
-				//Stopwatch find2( pStopwatch, StopwatchTypes::ReadFile, String("columnIndexes.find2") );
-				//find2.Finish();
 				if( getToken )
 				{
-					//Stopwatch createToken( pStopwatch, StopwatchTypes::ReadFile, String("createToken") );
 					std::string token(&rgBuffer[start], i-start);
 					if( tokens.size()<=tokenIndex )
 						tokens.push_back( token );
@@ -371,20 +329,14 @@ namespace Jde::IO
 					++tokenIndex;
 				}
 
-				//swForLoop = unique_ptr<Stopwatch>( new Stopwatch( pStopwatch, StopwatchTypes::ReadFile, String("forLoop") ) );
 				++columnIndex;
 				if( newLineStart )
 				{
 					if( lineIndex>=startLine )
 					{
 						while( tokens.size()>tokenIndex )
-						{
 							tokens.pop_back();
-							//tokens.shrink_to_fit();
-						}
-						//swForLoop->Finish();
 						function(tokens, lineIndex);
-						//swForLoop = unique_ptr<Stopwatch>( new Stopwatch( pStopwatch, StopwatchTypes::ReadFile, String("forLoop") ) );
 					}
 					tokenIndex=columnIndex=0;
 					if( ++lineIndex>lineCount )
@@ -424,14 +376,10 @@ namespace Jde::IO
 		}
 		uint_fast8_t* pColumnIndexes3 = columnIndexes3.data();
 		unique_ptr<std::thread> pThread(nullptr);
-		//bool first = true;
 		do
 		{
 			file.read( rgBuffer.data(), chunkSize );
 			const size_t charactersRead = file.gcount();
-			//auto pLastIndex = columnIndexes.begin();
-				//Stopwatch swSub( sw, StopwatchTypes::Calculate, L"getToken", false );  Stopwatch swSW( sw, StopwatchTypes::Calculate, L"Stopwatch", false ); swSW.Finish();// 7.6/15.35
-			//24 seconds getting every float allocating rgTest.
 			if( false )
 			{
 				Stopwatch swStrDupThrough( "strDupThrough" /*, false*/ );
@@ -441,18 +389,11 @@ namespace Jde::IO
 				char* pStart = &rgBuffer[0];
 				for( ; lineIndex2<startLine; ++lineIndex2 )
 					pStart = strchr( &rgBuffer[0], '\n' );
-				//int iVector=0;
 
 				while( size_t(pStart-&rgBuffer[0])<charactersRead )
 				{
-					//if(  )
-					//	rgTest.push_back( strtod( pStart+1, &pStart ) );
 					if( *(pStart+1)=='\n' )//1156=next line
-					{
-						//rgTest.push_back( 0.0 );
-						//rgTest.clear();
 						++lineIndex2;
-					}
 				}
 			}
 			for( size_t i=0, start=0, tokenIndex=0, columnIndex=0; i<charactersRead; ++i )
@@ -465,13 +406,7 @@ namespace Jde::IO
 				const uint_fast8_t getToken = pColumnIndexes3[columnIndex];
 				if( getToken && lineIndex>=startLine )
 				{
-					//Stopwatch swSub( sw, StopwatchTypes::Calculate, L"getToken", false );  Stopwatch swSW( sw, StopwatchTypes::Calculate, L"Stopwatch", false ); swSW.Finish();// 7.6/15.35
-					//Stopwatch swSW( sw, StopwatchTypes::Calculate, L"Stopwatch", false ); swSW.Finish();
-					//Stopwatch swConvert( sw, StopwatchTypes::Calculate, L"strtod", false );  	// 9.0/4:00:00
-					//if( tokenIndex==1154 )
-						//pLogger->debug( "new line" );
 					double value = ch=='\n' ? 0.0 : strtod( &rgBuffer[start], nullptr );
-					//swConvert.Finish();
 					if( tokens.size()<=tokenIndex )
 						tokens.push_back( value );
 					else
@@ -492,7 +427,6 @@ namespace Jde::IO
 						};
 						if( pThread )
 							pThread->join();
-						//pThread = unique_ptr<std::thread>(new thread(threadStart) );
 						threadStart();
 					}
 					tokenIndex=columnIndex=0;
@@ -537,8 +471,6 @@ namespace Jde::IO
 
 		size_t tokenIndex=0;
 		long columnIndex=0;
-		//bool newLineStart = false;
-		//TODO:  Make so it goes through multiple reads
 		do
 		{
 			file.read( rgBuffer.data(), size_t(chunkSize2)/**/ );
@@ -643,18 +575,6 @@ namespace Jde::IO
 		IO::File::ForEachLine( string(csvFileName), columnNameFunction, 1 );
 		return make_pair( columnNames, columnIndexes );
 	}
-
-	size_t File::GetFileSize( std::ifstream& file )
-	{
-		file.clear();   //  Since ignore will have set eof.
-		file.seekg( 0, std::ios_base::beg );
-		file.ignore( std::numeric_limits<std::streamsize>::max() );
-		auto fileSize = file.gcount();
-		file.clear();   //  Since ignore will have set eof.
-		file.seekg( 0, std::ios_base::beg );
-		return fileSize;
-	}
-
 	std::string FileUtilities::DateFileName( uint16 year, uint8 month, uint8 day )noexcept
 	{
 		auto path = std::to_string(year);

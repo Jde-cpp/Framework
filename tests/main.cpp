@@ -11,7 +11,7 @@ namespace Jde
  	void Startup( int argc, char **argv )noexcept
 	{
 		var appName = "Tests.Framework"sv;
-		OSApp::Startup( argc, argv, appName );
+		OSApp::Startup( argc, argv, appName, "Unit Tests description" );
 	}
 }
 
@@ -22,7 +22,7 @@ int main( int argc, char **argv )
 	Startup( argc, argv );
 	auto result = EXIT_FAILURE;
 	{
-		::testing::GTEST_FLAG(filter) = "CoroutineTests.CoLock";//QLTests.DefTestsFetch
+		::testing::GTEST_FLAG(filter) = "CoroutineTests.File";//QLTests.DefTestsFetch
 	   result = RUN_ALL_TESTS();
 		IApplication::Instance().Wait();
 		IApplication::CleanUp();

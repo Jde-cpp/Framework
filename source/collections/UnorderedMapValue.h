@@ -21,7 +21,7 @@ namespace Jde
 		bool Has( const TKey& key )const noexcept;
 		template<class... Args > bool emplace( Args&&... args )noexcept;
 		void Replace( const TKey& id, const TValue& value )noexcept;
-		bool MoveIn( const TKey& id, const TValue& v )noexcept{ return base::emplace(id,move(v)).second; }
+		bool MoveIn( const TKey& id, TValue v )noexcept{ return base::emplace(id,move(v)).second; }
 		optional<TValue> MoveOut( const TKey& item )noexcept;
 
 		//std::unique_lock<std::shared_mutex> UniqueLock()noexcept{return std::unique_lock<std::shared_mutex>{_mutex};}

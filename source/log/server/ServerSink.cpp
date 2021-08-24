@@ -91,7 +91,7 @@ namespace Jde::Logging
 				_applicationName = IApplication::ApplicationName();//Path().stem().string()=="Jde" ? IApplication::Path().extension().string().substr(1) : IApplication::Path().stem().string();
 				pInstance->set_applicationname( _applicationName );
 				pInstance->set_hostname( IApplication::HostName() );
-				pInstance->set_processid( (int32)IApplication::ProcessId() );
+				pInstance->set_processid( (int32)OSApp::ProcessId() );
 				pInstance->set_starttime( (google::protobuf::uint32)Clock::to_time_t(Logging::StartTime()) );
 
 				pTransmission->add_messages()->set_allocated_instance( pInstance );
