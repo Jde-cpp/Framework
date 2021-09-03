@@ -16,7 +16,7 @@ if (( $clean == 1 )) || [ ! -f CMakeCache.txt ]; then
 	cmake -DCMAKE_BUILD_TYPE=$type $dir > /dev/null;
 	make clean;
 fi
-make -j7;
+make -j;
 result=$?;
 cd $cwd;
 exit $result;

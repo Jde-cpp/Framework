@@ -59,7 +59,7 @@ namespace Jde::Threading
 			_pSharedLock{nullptr},
 			_description( format("{}.{} - line={}, thread={}", instance, name, lineNumber, Threading::GetThreadDescription()) )
 		{
-			LOG( _logLevel, "unique lock - {}"sv, _description );
+			LOG( _logLevel, "unique lock - {}", _description );
 			_pUniqueLock = make_unique<std::unique_lock<std::mutex>>( mutex );
 		}
 		MyLock( std::shared_mutex& mutex, sv instance, sv name, size_t lineNumber, bool shared = false ):
@@ -70,12 +70,12 @@ namespace Jde::Threading
 		{
 			if( shared )
 			{
-				LOG( _logLevel, "shared lock - {}"sv, _description );
+				LOG( _logLevel, "shared lock - {}", _description );
 				_pSharedLock = make_unique<std::shared_lock<std::shared_mutex>>( mutex );
 			}
 			else
 			{
-				LOG( _logLevel, "unique lock - {}"sv, _description );
+				LOG( _logLevel, "unique lock - {}", _description );
 				_pUniqueSharedLock = make_unique<std::unique_lock<std::shared_mutex>>( mutex );
 			}
 		}
@@ -87,12 +87,12 @@ namespace Jde::Threading
 				_pUniqueSharedLock->unlock();
 			else if( _pSharedLock )
 				_pSharedLock->unlock();
-			_unlocked=true; LOG( _logLevel, "release - {}"sv, _description );
+			_unlocked=true; LOG( _logLevel, "release - {}", _description );
 		}
 		~MyLock()
 		{
 			if( !_unlocked )
-				LOG( _logLevel, "release - {}"sv, _description );
+				LOG( _logLevel, "release - {}", _description );
 		}
 		JDE_NATIVE_VISIBILITY static void SetDefaultLogLevel( ELogLevel logLevel )noexcept;//{ _defaultLogLevel=logLevel; }
 		JDE_NATIVE_VISIBILITY static ELogLevel GetDefaultLogLevel()noexcept;

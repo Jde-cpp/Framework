@@ -13,9 +13,9 @@
 
 namespace Jde
 {
-	//using NanoSecs = std::chrono::duration<size_t, std::chrono::nanoseconds::period>;
+	//using NanoSecs = duration<size_t, nanoseconds::period>;
 	using namespace std::chrono;
-	//using std::chrono::duration_cast;
+	//using duration_cast;
 
 	SDuration Stopwatch::_minimumToLog = 1s;
 	//map<string,SDuration> Stopwatch::_accumulations;
@@ -50,7 +50,7 @@ namespace Jde
 		if( index==0 )
 			index = 1;
 		var elapsed = Elapsed();
-		std::ostringstream os;
+		ostringstream os;
 		string result;
 		if( force || elapsed-_previousProgressElapsed>_minimumToLog )
 		{
@@ -110,7 +110,7 @@ namespace Jde
 		var elapsed = Elapsed();
 		Pause();
 		if( _pParent  )
-			_pParent->_children.emplace( _what, std::chrono::nanoseconds(0) ).first->second += elapsed;
+			_pParent->_children.emplace( _what, nanoseconds(0) ).first->second += elapsed;
 		var delta = elapsed-_previousProgressElapsed;
 		if( delta>_minimumToLog || _children.size()>0 )
 		{
@@ -127,7 +127,7 @@ namespace Jde
 
 /*	void Stopwatch::UpdateChild( const Stopwatch& sw )
 	{
-		auto pChild = _children.emplace( sw._what, std::chrono::nanoseconds(0) ).first;
+		auto pChild = _children.emplace( sw._what, nanoseconds(0) ).first;
 		pChild->second += sw.Elapsed();
 	}
 */
@@ -136,34 +136,34 @@ namespace Jde
 		StopwatchNS::Context=context;
 	}
 */
-	std::string Stopwatch::FormatSeconds( const SDuration& duration )
+	string Stopwatch::FormatSeconds( const SDuration& duration )
 	{
-		double seconds = duration_cast<std::chrono::milliseconds>(duration).count()/1000.0; //;
-		string format;
+		double seconds = duration_cast<milliseconds>(duration).count()/1000.0; //;
+		string fmt;
 		if( seconds < 60.0 )
-			format = fmt::format( "{:.1f}", seconds );
+			fmt = format( "{:.1f}"sv, seconds );
 		else
 		{
 			var wholeSeconds = Math::URound(seconds);
 			if( wholeSeconds < 60*60 )
-				format = fmt::format( "{:0>2}:{:0>2}", (wholeSeconds/60), (wholeSeconds%60) );
+				fmt = format( "{:0>2}:{:0>2}", (wholeSeconds/60), (wholeSeconds%60) );
 			else if( wholeSeconds < 60*60*24 )
-				format = fmt::format( "{:0>2}:{:0>2}:{:0>2}",  (wholeSeconds/(60*60)),  (wholeSeconds%(60*60)/60),  (wholeSeconds%60) );
+				fmt = format( "{:0>2}:{:0>2}:{:0>2}",  (wholeSeconds/(60*60)),  (wholeSeconds%(60*60)/60),  (wholeSeconds%60) );
 			else
-				format = fmt::format( "{}:{:0>2}:{:0>2}:{:0>2}", (wholeSeconds/(60*60*24)), (wholeSeconds%(60*60*24)/(60*60)), (wholeSeconds%(60*60)/60), (wholeSeconds%60) );
+				fmt = format( "{}:{:0>2}:{:0>2}:{:0>2}", (wholeSeconds/(60*60*24)), (wholeSeconds%(60*60*24)/(60*60)), (wholeSeconds%(60*60)/60), (wholeSeconds%60) );
 		}
-		return format;
+		return fmt;
 	}
 
-	std::string Stopwatch::FormatCount( double count )
+	string Stopwatch::FormatCount( double count )
 	{
-		std::string fmt;
+		string fmt;
 		if( count > 100000.0 )
-			fmt = fmt::format( "{0,p1}M", count/=1000000.0 );
+			fmt = format( "{0}M"sv, count/=1000000.0 );
 		else if( count > 1000.0 )
-			fmt = fmt::format( "{0}k", count/=1000.0 );
+			fmt = format( "{0}k", count/=1000.0 );
 		else
-			fmt = fmt::format( "{0}", count );
+			fmt = format( "{0}", count );
 		return fmt;
 	}
 /*
@@ -206,7 +206,7 @@ namespace Jde
 			name = "Server Call";
 			break;
 		default:
-			THROW( Exception(fmt::format("enum:  '{0}', not implemented.", int(type)).c_str()) );
+			THROW( Exception(format("enum:  '{0}', not implemented.", int(type)).c_str()) );
 		}
 		return name;
 	}

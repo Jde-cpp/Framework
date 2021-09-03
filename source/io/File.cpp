@@ -107,17 +107,17 @@ namespace Jde::IO
 				fs::remove( compressedPath );
 			else
 				fs::remove( uncompressedFile );
-			GetDefaultLogger()->trace( "removed {}.", (leaveUncompressed ? compressedPath.string() : uncompressedFile.string()) );
+			TRACE( "removed {}."sv, (leaveUncompressed ? compressedPath.string() : uncompressedFile.string()) );
 			return pResult;
 		}
 		fs::path Compression::Compress( path path, bool deleteAfter )noexcept(false)
 		{
 			var command = CompressCommand( path );
-			GetDefaultLogger()->trace( command );
+			//LOGS( ELogLevel::Trace, command );
 			THROW_IF( system(command.c_str())==-1, "{} failed.", command );
 			if( deleteAfter && !CompressAutoDeletes() )
 			{
-				GetDefaultLogger()->trace( "removed {}.", path.string() );
+				TRACE( "removed {}."sv, path.string() );
 				VERIFY( fs::remove(path) );
 			}
 			auto compressedFile = path;
@@ -131,15 +131,14 @@ namespace Jde::IO
 				compressedFile.replace_extension( format("{}{}", compressedFile.extension().string(),Extension()) );
 
 			auto command = ExtractCommand( compressedFile, destination );// -y -bsp0 -bso0
-			GetDefaultLogger()->trace( command.c_str() );
 			if( system(command.c_str())==-1 )
-				THROW( IOException(format("{} failed.", command)) );
+				THROWX( IOException(format("{} failed.", command)) );
 		}
 	}
 
 	uint File::Merge( path file, const vector<char>& original, const vector<char>& newData )noexcept(false)
 	{
-		DBG( file.string() );
+		//DBG( file.string() );
 		std::fstream os{ file, std::ios::binary }; //CHECK( os );
 		uint size = 0;
 		for( uint i=0; i<std::min(original.size(), newData.size()); ++i )

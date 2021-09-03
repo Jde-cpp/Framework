@@ -14,8 +14,8 @@ namespace Jde::IO
 		var pSettings = IWorker::Settings();
 		if( pSettings )
 		{
-			ChunkSize = pSettings->Get2<uint32>("chunkSize").value_or( DriveWorker::ChunkSize );
-			ThreadSize = pSettings->Get2<uint8>("threadSize").value_or( DriveWorker::ThreadSize );
+			ChunkSize = pSettings->TryGet<uint32>("chunkSize").value_or( DriveWorker::ChunkSize );
+			ThreadSize = pSettings->TryGet<uint8>("threadSize").value_or( DriveWorker::ThreadSize );
 		}
 	}
 /*	void FileIOArg::Send( coroutine_handle<Task2::promise_type>&& h )noexcept

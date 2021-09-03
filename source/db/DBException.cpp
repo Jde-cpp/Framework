@@ -35,10 +35,10 @@ namespace Jde::DB
 		return RuntimeException::what();
 	}
 
-	void DBException::Log( sv /*pszAdditionalInformation*/, ELogLevel level )const noexcept
+	void DBException::Log( sv /*pszAdditionalInformation*/, optional<ELogLevel> pLevel )const noexcept
 	{
 		if( Sql.find("log_message_insert")==string::npos )
-			DB::Log( Sql, Parameters.size() ? &Parameters : nullptr, _fileName, _functionName, _line, level, _pInner ? string{_pInner->what()} : what() );
+			DB::Log( Sql, Parameters.size() ? &Parameters : nullptr, _fileName, _functionName, _line, pLevel ? *pLevel : _level, _pInner ? string{_pInner->what()} : what() );
 		else
 			ERRX( "log_message_insert sql='{}'"sv, Sql );
 	}

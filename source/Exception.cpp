@@ -11,12 +11,12 @@
 
 namespace Jde
 {
-	void catch_exception( sv pszFunction, sv pszFile, long line, sv pszAdditional, const std::exception* pException )
+/*	void catch_exception( sv pszFunction, sv pszFile, long line, sv pszAdditional, const std::exception* pException )
 	{
-		GetDefaultLogger()->warn( "{} - ({}){}({}) - {}", pException ? pException->what() : "Unknown", pszFunction, pszFile, line, pszAdditional );
+		WARN( "{} - ({}){}({}) - {}", pException ? pException->what() : "Unknown", pszFunction, pszFile, line, pszAdditional );
 	}
-
-	Exception::Exception( ELogLevel level, sv value, sv function, sv file, long line )noexcept:
+*/
+	Exception::Exception( ELogLevel level, sv value, sv function, sv file, int line )noexcept:
 		std::exception(),
 		_functionName{function},
 		_fileName{file},
@@ -45,18 +45,19 @@ namespace Jde
 	Exception::~Exception()
 	{}
 
-	void Exception::Log( sv additionalInformation, ELogLevel level )const noexcept
+	void Exception::Log( sv additionalInformation, optional<ELogLevel> pLevel )const noexcept
 	{
 		std::ostringstream os;
-		os << "[" << _fileName << "." << _line << "] ";
+		os << "[" << _fileName << ":" << _line << "] ";
 		if( additionalInformation.size() )
 			os << "[" << additionalInformation << "] ";
 		os << what();
 		if( HaveLogger() )
 		{
-			GetDefaultLogger()->log( (spdlog::level::level_enum)level, os.str() );
-			if( GetServerSink() )
-				LogServer( Logging::Messages::Message{level, os.str(), _fileName, _functionName, (uint32)_line, _args} );
+			var level = pLevel ? *pLevel : _level;
+			_logger.log( spdlog::source_loc{FileName(_fileName).c_str(),_line,_functionName.data()}, (spdlog::level::level_enum)level, os.str() );
+			if( _pServerSink )
+				LogServer( Logging::Messages::Message{Logging::Message2{level, os.str(), _fileName, _functionName, _line}, vector<string>{_args}} );
 		}
 		else
 			std::cerr << os.str() << endl;
@@ -72,12 +73,16 @@ namespace Jde
 		return _what.c_str();
 	}
 
-	CodeException::CodeException( sv value, const std::error_code& code, ELogLevel level ):
+	CodeException::CodeException( sv value, std::error_code&& code, ELogLevel level ):
 		RuntimeException{ value },
-		_pErrorCode{ std::make_shared<std::error_code>(code) }
+		_errorCode{ move(code) }
 	{
 		_level = level;
 	}
+
+	CodeException::CodeException( std::error_code&& code, ELogLevel level ):
+		CodeException( sv{}, move(code), level )
+	{}
 
 	BoostCodeException::BoostCodeException( const boost::system::error_code& errorCode, sv msg )noexcept:
 		RuntimeException{ string{msg} },

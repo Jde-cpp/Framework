@@ -15,6 +15,9 @@ namespace Jde
 	using boost::container::flat_map;
 	using nlohmann::json;
 	using nlohmann::ordered_json;
+
+	//ELogLevel _dbLogLevel{ ELogLevel::Information };
+
 	string DB::Message( sv sql, const std::vector<DataValue>* pParameters, sv error )noexcept
 	{
 		const auto size = pParameters ? pParameters->size() : 0;
@@ -31,9 +34,9 @@ namespace Jde
 			os << sql.substr( prevIndex );
 		return os.str();
 	}
-	void DB::Log( sv sql, const std::vector<DataValue>* pParameters, sv file, sv fnctn, uint line, ELogLevel level, sv error )noexcept
+	void DB::Log( sv sql, const std::vector<DataValue>* pParameters, sv file, sv fnctn, int line, ELogLevel level, sv error )noexcept
 	{
-		Logging::Log( Logging::MessageBase(level, Message(sql, pParameters, error), file, fnctn, line) );
+		Logging::Log( Logging::Message2(level, Message(sql, pParameters, error), file, fnctn, line) );
 	};
 
 	class DataSourceApi
@@ -100,7 +103,7 @@ namespace Jde
 	{
 		if( !_pSyntax )
 		{
-			_pSyntax = Settings::Global().Get<string>("dbDriver")=="Jde.DB.Odbc.dll"
+			_pSyntax = Settings::Get<string>("db/driver")=="Jde.DB.Odbc.dll"
 				? make_shared<Syntax>()
 				: make_shared<MySqlSyntax>();
 		}
@@ -119,8 +122,8 @@ namespace Jde
 	{
 		if( !_pDefault )
 		{
-			Initialize( Settings::Global().Get<string>("dbDriver") );
-			var cs = Settings::Global().Get<string>( "connectionString" );
+			Initialize( Settings::Get<string>("db/driver") );
+			var cs = Settings::Get<string>( "db/connectionString" );
 			var env = cs.find( '=' )==string::npos ? IApplication::Instance().GetEnvironmentVariable( cs ) : string{};
 			_pDefault->SetConnectionString( env.empty() ? cs : env );
 		}

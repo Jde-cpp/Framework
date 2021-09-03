@@ -12,7 +12,7 @@ namespace Jde::Threading
 	std::atomic<bool> IWorker::_mutex;
 	IWorker::IWorker( sv name )noexcept:
 		Name{ name },
-		ThreadCount{ (Settings() ? Settings()->Get2<uint8>( "threads" ) : std::nullopt).value_or(0) }
+		ThreadCount{ (Settings() ? Settings()->TryGet<uint8>( "threads" ) : std::nullopt).value_or(0) }
 	{
 	}
 	void IWorker::Initialize()noexcept
@@ -61,7 +61,7 @@ namespace Jde::Threading
 	{
 		Threading::SetThreadDscrptn( Name );
 		sp<IWorker> pKeepAlive;
-		var keepAlive = Settings::Get<Duration>( "WorkerkeepAlive" ).value_or( 5s );
+		var keepAlive = Settings::TryGet<Duration>( "WorkerkeepAlive" ).value_or( 5s );
 		DBG( "{} - Starting"sv, Name );
 		while( !st.stop_requested() )
 		{

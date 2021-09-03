@@ -1,4 +1,5 @@
 #pragma once
+#include "../../threading/jthread.h"
 #include <boost/asio.hpp>
 #include <boost/asio/io_context.hpp>
 #include <jde/Exports.h>
@@ -10,29 +11,34 @@ namespace Jde::Threading{ struct InterruptibleThread; }
 namespace Jde::IO::Sockets
 {
 	namespace basio=boost::asio;
-	struct JDE_NATIVE_VISIBILITY AsyncSocket : public IShutdown
+	struct JDE_NATIVE_VISIBILITY AsyncSocket //: public IShutdown
 	{
-		virtual ~AsyncSocket();
+		virtual ~AsyncSocket()=0;
 	protected:
-		AsyncSocket()noexcept;
+		AsyncSocket( sv clientThreadName, str settingsPath, PortType defaultPort )noexcept(false);
 		basio::io_context _asyncHelper;
-		void Join();
-		void RunAsyncHelper( sv clientThreadName )noexcept;
-		void Close()noexcept;
-		virtual void OnClose()noexcept{};
-		void Shutdown()noexcept;
+		//void Join();
+		//void RunAsyncHelper( sv clientThreadName )noexcept;
+		//void Close()noexcept;
+		//virtual void OnClose()noexcept{};
+		const string ClientThreadName;
+		const string Host;
+		const PortType Port;
+	protected:
+		atomic<bool> _initialized{false};
 	private:
+		AsyncSocket( PortType port, sv clientThreadName, sv host )noexcept(false);
 		void Run()noexcept;
-		sp<Threading::InterruptibleThread> _pThread;
-		string _threadName;
+		std::thread _thread;
 	};
 
-	class PerpetualAsyncSocket : protected AsyncSocket
+	struct PerpetualAsyncSocket : protected AsyncSocket
 	{
-	public:
+		//PerpetualAsyncSocket( sv clientThreadName, str settingsPath )noexcept(false);
+		PerpetualAsyncSocket( sv clientThreadName, str settingsPath, PortType defaultPort )noexcept(false);
 		virtual ~PerpetualAsyncSocket()=default;
 	protected:
-		PerpetualAsyncSocket()noexcept;
+		//PerpetualAsyncSocket()noexcept;
 		basio::executor_work_guard<boost::asio::io_context::executor_type> _keepAlive;
 	};
 }

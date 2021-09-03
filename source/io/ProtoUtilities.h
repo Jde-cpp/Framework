@@ -1,7 +1,9 @@
 #pragma once
 #include <google/protobuf/message.h>
+#include <google/protobuf/timestamp.pb.h>
 #include <jde/io/File.h>
 
+#define var const auto
 namespace Jde::IO::Proto
 {
 	ⓣ Load( path path )noexcept(false)->up<T>;
@@ -10,11 +12,22 @@ namespace Jde::IO::Proto
 	ⓣ LoadXZ( path path )noexcept(false)->AWrapper;//sp<T>
 
 	ⓣ Deserialize( const vector<char>& data )noexcept(false)->up<T>;
+	ⓣ Deserialize( google::protobuf::uint8* p, int size )noexcept(false)->T;
 
 	ⓣ ToVector( const google::protobuf::RepeatedPtrField<T>& x )noexcept->vector<T>;
 
-	void Save( const google::protobuf::MessageLite& msg, path path )noexcept(false);
-	string ToString( const google::protobuf::MessageLite& msg )noexcept(false);
+	α Save( const google::protobuf::MessageLite& msg, path path )noexcept(false)->void;
+	α ToString( const google::protobuf::MessageLite& msg )noexcept(false)->string;
+	α SizePrefixed( const google::protobuf::MessageLite& m )noexcept(false)->tuple<unique_ptr<google::protobuf::uint8[]>,uint>;
+	α ToTimestamp( TimePoint t )->up<google::protobuf::Timestamp>;
+	namespace Internal
+	{
+		ⓣ Deserialize( google::protobuf::uint8* p, int size, T& proto )noexcept(false)->void
+		{
+			google::protobuf::io::CodedInputStream input{ (const uint8*)p, (int)size };
+			THROW_IFX( !proto.MergePartialFromCodedStream(&input), IOException("MergePartialFromCodedStream returned false.") );
+		}
+	}
 }
 
 
@@ -27,6 +40,18 @@ namespace Jde::IO
 		return output;
 	}
 
+	inline tuple<unique_ptr<google::protobuf::uint8[]>,uint> Proto::SizePrefixed( const google::protobuf::MessageLite& m )noexcept(false)
+	{
+		const uint32_t length = (uint32_t)m.ByteSizeLong();
+		var size = length+4;
+		up<google::protobuf::uint8[]> pData{ new google::protobuf::uint8[size] };
+		auto pDestination = pData.get();
+		const char* pLength = reinterpret_cast<const char*>( &length )+3;
+		for( auto i=0; i<4; ++i )
+			*pDestination++ = *pLength--;
+		var result = m.SerializeToArray( pDestination, (int)length ); THROW_IF( !result, Exception("Could not serialize to an array") );
+		return make_tuple( move(pData), size );
+	}
 	inline void Proto::Save( const google::protobuf::MessageLite& msg, path path )noexcept(false)
 	{
 		string output;
@@ -34,49 +59,45 @@ namespace Jde::IO
 		FileUtilities::SaveBinary( path, output );
 	}
 
-	template<typename T>
-	void Deserialize2( const vector<char>& data, T& proto )noexcept(false)
-	{
-		google::protobuf::io::CodedInputStream input{ (const uint8*)data.data(), (int)data.size() };
-		THROW_IFX( !proto.MergePartialFromCodedStream(&input), IOException("MergePartialFromCodedStream returned false.") );
-	}
-
-	template<typename T>
-	up<T> Proto::Deserialize( const vector<char>& data )noexcept(false)
+	ⓣ Proto::Deserialize( const vector<char>& data )noexcept(false)->up<T>
 	{
 		auto p = make_unique<T>();
-		Deserialize2<T>( data, *p );
+		Internal::Deserialize<T>( (google::protobuf::uint8*)data.data(), data.size(), *p );
 		return p;
 	}
-	template<typename T>
-	void Proto::Load( path path, T& proto )noexcept(false)
+	ⓣ Proto::Deserialize( google::protobuf::uint8* p, int size )noexcept(false)->T
+	{
+		T y;
+		Internal::Deserialize<T>( p, size, y );
+		return y;
+	}
+	ⓣ Proto::Load( path path, T& proto )noexcept(false)->void
 	{
 		up<vector<char>> pBytes;
 		try
 		{
 			pBytes = IO::FileUtilities::LoadBinary( path );
 		}
-		catch( const fs::filesystem_error& e )
+		catch( fs::filesystem_error& e )
 		{
-			THROW( IOException(e) );
+			THROWX( IOException(move(e)) );
 		}
 		if( !pBytes )
 		{
 			fs::remove( path );
-			THROW( IOException(path, "has 0 bytes. Removed") );
+			THROWX( IOException(path, "has 0 bytes. Removed") );
 		}
-		Deserialize2( *pBytes, proto );
+		Internal::Deserialize( (google::protobuf::uint8*)pBytes->data(), pBytes->size(), proto );
 	}
 
-	template<typename T>
-	up<T> Proto::Load( path path )noexcept(false)
+	ⓣ Proto::Load( path path )noexcept(false)->up<T>
 	{
 		auto p = make_unique<T>();
 		Load( path, *p );
 		return p;
 	}
-	template<typename T>
-	up<T> Proto::TryLoad( path path )noexcept
+
+	ⓣ Proto::TryLoad( path path )noexcept->up<T>
 	{
 		up<T> pValue{};
 		if( fs::exists(path) )
@@ -92,12 +113,22 @@ namespace Jde::IO
 		}
 		return pValue;
 	}
-	template<typename T>
-	vector<T> Proto::ToVector( const google::protobuf::RepeatedPtrField<T>& x )noexcept
+
+	ⓣ Proto::ToVector( const google::protobuf::RepeatedPtrField<T>& x )noexcept->vector<T>
 	{
 		vector<T> y;
 		for_each( x.begin(), x.end(), [&y]( auto item ){ y.push_back(item); } );
 		return y;
 	}
-}
 
+	inline α Proto::ToTimestamp( TimePoint t )->up<google::protobuf::Timestamp>
+	{
+		auto pTime = make_unique<google::protobuf::Timestamp>();
+		var seconds = Clock::to_time_t( t );
+		var nanos = std::chrono::duration_cast<std::chrono::nanoseconds>( t-TimePoint{} )-std::chrono::duration_cast<std::chrono::nanoseconds>( std::chrono::seconds(seconds) );
+		pTime->set_seconds( seconds );
+		pTime->set_nanos( (int)nanos.count() );
+		return pTime;
+	}
+}
+#undef var

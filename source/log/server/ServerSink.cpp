@@ -1,43 +1,34 @@
 #include "ServerSink.h"
-//#include "ReceivedMessages.h"
 #include "../../threading/Thread.h"
 #include "../../DateTime.h"
 #define var const auto
 
 namespace Jde::Logging
 {
-	shared_ptr<IServerSink> _pInstance;
+	ELogLevel _sinkLogLevel = Settings::TryGet<ELogLevel>( "logging/server/diagnosticsLevel" ).value_or( ELogLevel::Trace );
 	IServerSink::~IServerSink()
 	{
-		DBGX( "{}"sv, "~IServerSink~" );
+		DBGX( "{}"sv, "~IServerSink" );
 		SetServerSink( nullptr );
 		DBGX( "{}"sv, "_pServerSink = nullptr" );
 	}
 	void IServerSink::Destroy()noexcept
 	{
 		DBGX( "{}"sv, "IServerSink::Destroy" );
-		_pInstance = nullptr;
+		SetServerSink( nullptr );
+		//_pInstance = nullptr;
 	}
-	sp<IServerSink> IServerSink::GetInstnace()noexcept
+/*	sp<IServerSink> IServerSink::GetInstnace()noexcept
 	{
 		return _pInstance;
 	}
-
-	sp<ServerSink> ServerSink::Create( sv host, uint16 port )noexcept(false)
-	{
-		ASSERT( !_pInstance );
-		auto pInstance = sp<ServerSink>( new ServerSink{host, port} );
-		_pInstance = pInstance;
-		pInstance->UnPause();
-		return pInstance;
-	}
-
-	ServerSink::ServerSink( sv host, uint16 port )noexcept:
+*/
+	ServerSink::ServerSink()noexcept(false):
 		Interrupt{ "AppServerSend", 1s, true },
-		ProtoBase{ host, port, "ServerSocket" },
+		ProtoBase{ "LogClient", "logging/server", 0 },//don't wan't default port
 		_messages{}
 	{
-		Startup( "AppServerReceive" );
+	//	Startup( "AppServerReceive" );
 	}
 
 	void ServerSink::Destroy()noexcept
@@ -64,14 +55,16 @@ namespace Jde::Logging
 		_connected = false;
 	}
 
-	void ServerSink::OnReceive( std::shared_ptr<Proto::FromServer> pFromServer )noexcept
+	void ServerSink::OnReceive( Proto::FromServer& transmission )noexcept
 	{
-		DBG( "ServerSink::OnReceive - count='{}'"sv, pFromServer->messages_size() );
-		for( var& item : pFromServer->messages() )
+		//DBG( "ServerSink::OnReceive - count='{}'"sv, transmission.messages_size() );
+		for( uint i=0; i<transmission.messages_size(); ++i )
 		{
+			auto& item = *transmission.mutable_messages( i );
 			if( item.has_strings() )
 			{
 				var& strings = item.strings();
+				LOG( _sinkLogLevel, "received '{}' strings", strings.messages_size()+strings.files_size()+strings.functions_size()+strings.threads_size() );
 				for( auto i=0; i<strings.messages_size(); ++i )
 					_messagesSent.emplace( strings.messages(i) );
 				for( auto i=0; i<strings.files_size(); ++i )
@@ -86,16 +79,16 @@ namespace Jde::Logging
 			{
 				var& ack = item.acknowledgement();
 				DBGX( "Acknowledged - instance id={}"sv, ack.instanceid() );
-				auto pTransmission = make_shared<Proto::ToServer>();
-				auto pInstance = new Proto::Instance();
-				_applicationName = IApplication::ApplicationName();//Path().stem().string()=="Jde" ? IApplication::Path().extension().string().substr(1) : IApplication::Path().stem().string();
+				Proto::ToServer transmission;
+				auto pInstance = make_unique<Proto::Instance>();
+				_applicationName = IApplication::ApplicationName();
 				pInstance->set_applicationname( _applicationName );
 				pInstance->set_hostname( IApplication::HostName() );
 				pInstance->set_processid( (int32)OSApp::ProcessId() );
 				pInstance->set_starttime( (google::protobuf::uint32)Clock::to_time_t(Logging::StartTime()) );
 
-				pTransmission->add_messages()->set_allocated_instance( pInstance );
-				Write( pTransmission );
+				transmission.add_messages()->set_allocated_instance( pInstance.release() );
+				Write( move(transmission) );
 				_instanceId = ack.instanceid();
 			}
 			else if( item.has_loglevels() )
@@ -103,41 +96,36 @@ namespace Jde::Logging
 				var& levels = item.loglevels();
 				Logging::SetLogLevel( (ELogLevel)levels.client(), (ELogLevel)levels.server() );
 				INFO_ONCE( "'{}' started at '{}'"sv, _applicationName, ToIsoString(Logging::StartTime()) );
-				DBG( "'{}' started at '{}'"sv, _applicationName, ToIsoString(Logging::StartTime()) );
+				//DBG( "'{}' started at '{}'"sv, _applicationName, ToIsoString(Logging::StartTime()) );
 			}
 			else if( item.has_custom() )
 			{
 				if( _customFunction )
-				{
-					var custom = item.custom();
-					var requestId = custom.requestid();
-					var bytes = make_shared<string>( custom.message() );
-					std::thread( [&,requestId,bytes](){_customFunction(requestId, bytes);} ).detach(); //
-				}
+					_customFunction( item.mutable_custom()->requestid(), move(*item.mutable_custom()->mutable_message()) );
 				else
-					ERR0_ONCE( "No custom function set"sv );
+					ERR_ONCE( "No custom function set" );
 			}
 		}
 	}
 
 
-	void ServerSink::Log( const MessageBase& message )noexcept
+	void ServerSink::Log( MessageBase&& message )noexcept
 	{
-		_messages.Push( Messages::Message(message) );
+		_messages.Push( Messages::Message(move(message)) );
 	}
-	void ServerSink::Log( const Messages::Message& message )noexcept
+	void ServerSink::Log( Messages::Message&& message )noexcept
 	{
-		_messages.Push( message );
-	}
-
-	void ServerSink::Log( const MessageBase& message, const vector<string>& values )noexcept
-	{
-		_messages.Push( Messages::Message(message, values) );
+		_messages.Push( move(message) );
 	}
 
-	Proto::RequestString* ToRequestString( Proto::EFields field, uint32 id, sv text )
+	void ServerSink::Log( MessageBase message, vector<string> values )noexcept
 	{
-		auto pResult = new Proto::RequestString();
+		_messages.Push( Messages::Message(move(message), move(values)) );
+	}
+
+	up<Proto::RequestString> ToRequestString( Proto::EFields field, uint32 id, sv text )
+	{
+		auto pResult = make_unique<Proto::RequestString>();
 		pResult->set_field( field );
 		pResult->set_id( id );
 		pResult->set_value( text.data(), text.size() );
@@ -146,95 +134,106 @@ namespace Jde::Logging
 	}
 	void ServerSink::SendCustom( uint32 requestId, const std::string& bytes )noexcept
 	{
-		auto pCustom = new Proto::CustomMessage();
+		auto pCustom = make_unique<Proto::CustomMessage>();
 		pCustom->set_requestid( requestId );
 		pCustom->set_message( bytes );
 
-		auto pTransmission = make_shared<Proto::ToServer>();
-		pTransmission->add_messages()->set_allocated_custom( pCustom );
-		Write( pTransmission );
+		Proto::ToServer t;
+		t.add_messages()->set_allocated_custom( pCustom.release() );
+		Write( t );
 	}
-	void ServerSink::OnTimeout()/*noexcept*/
+	void ServerSink::OnTimeout()noexcept
 	{
-		if( !_connected )
-		{
-			if( Clock::now()>_lastConnectionCheck+10s )
-			{
-				Connect();
-				_lastConnectionCheck = Clock::now();
-			}
-			else
-				return;
-		}
-		if( (!_messages.size() && !SendStatus) || !_stringsLoaded )
+		bool haveWork = (!_messages.size() && !SendStatus) || !_stringsLoaded;
+		if( !haveWork || (!_connected && (Clock::now()<_lastConnectionCheck+10s || !Try([this]{ _lastConnectionCheck = Clock::now(); Connect(); }))) )
 			return;
-		auto pTransmission = make_shared<Proto::ToServer>();
-		std::function<void(Messages::Message&)> func = [&](const Messages::Message& message)
+
+		Proto::ToServer t;
+		auto messages = _messages.PopAll();
+		for( auto&& message : messages )
 		{
-			auto pProto = new Proto::Message();
-			var seconds = Clock::to_time_t( message.Timestamp );
-			var nanos = std::chrono::duration_cast<std::chrono::nanoseconds>( message.Timestamp-TimePoint{} )-std::chrono::duration_cast<std::chrono::nanoseconds>( std::chrono::seconds(seconds) );
-			auto pTime = new google::protobuf::Timestamp();
-			pTime->set_seconds( seconds );
-			pTime->set_nanos( (int)nanos.count() );
-			pProto->set_allocated_time( pTime );
+			auto pProto = make_unique<Proto::Message>();
+			pProto->set_allocated_time( IO::Proto::ToTimestamp(message.Timestamp).release() );
 
 			pProto->set_level( (Proto::ELogLevel)message.Level );
 			pProto->set_messageid( (uint32)message.MessageId );
 			if( _messagesSent.emplace(message.MessageId) )
-				pTransmission->add_messages()->set_allocated_string( ToRequestString(Proto::EFields::MessageId, (uint32)message.MessageId, message.MessageView) );
+				t.add_messages()->set_allocated_string( ToRequestString(Proto::EFields::MessageId, (uint32)message.MessageId, move(message.MessageView)).release() );
 
 			pProto->set_fileid( (uint32)message.FileId );
 			if( _filesSent.emplace(message.FileId) )
-				pTransmission->add_messages()->set_allocated_string( ToRequestString(Proto::EFields::FileId, (uint32)message.FileId, message.File) );
+				t.add_messages()->set_allocated_string( ToRequestString(Proto::EFields::FileId, (uint32)message.FileId, message.File).release() );
 
 			pProto->set_functionid( (uint32)message.FunctionId );
 			if( _functionsSent.emplace(message.FunctionId) )
-				pTransmission->add_messages()->set_allocated_string( ToRequestString(Proto::EFields::FunctionId, (uint32)message.FunctionId, message.Function) );
+				t.add_messages()->set_allocated_string( ToRequestString(Proto::EFields::FunctionId, (uint32)message.FunctionId, message.Function).release() );
 			pProto->set_linenumber( (uint32)message.LineNumber );
 			pProto->set_userid( (uint32)message.UserId );
 			pProto->set_threadid( message.ThreadId );
 			for( var& variable : message.Variables )
 				pProto->add_variables( variable );
-			pTransmission->add_messages()->set_allocated_message( pProto );
+			t.add_messages()->set_allocated_message( pProto.release() );
 		};
-		_messages.ForEach( func );
 		if( SendStatus )
 		{
-			pTransmission->add_messages()->set_allocated_status( GetAllocatedStatus() );
+			t.add_messages()->set_allocated_status( GetStatus().release() );
 			SendStatus = false;
 		}
-		if( _connected )
-			Write( pTransmission );
+		Write( t );
 	}
 
 	namespace Messages
 	{
-		Message::Message(const MessageBase& base, const vector<string>& values)noexcept:
-			MessageBase{ base },
+		Message::Message( const MessageBase& base, vector<string> values )noexcept:
+			Message2{ base },
 			Timestamp{ Clock::now() },
-			Variables{ values }
+			Variables{ move(values) }
 		{
 			ThreadId = Threading::GetThreadId();
 			Fields |= EFields::Timestamp | EFields::ThreadId | EFields::Thread;
 		}
-		Message::Message( ELogLevel level, sv message, sv file, sv function, uint line, const vector<string>& values )noexcept:
-			MessageBase{ level, make_shared<string>(message), file, function, line },
+
+
+/*		Message::Message( MessageBase&& base, vector<string>&& values )noexcept:
+			Message2{ move(base) },
 			Timestamp{ Clock::now() },
-			Variables{ values }
+			Variables{ move(values) }
+		{
+			std::cout << base.GetType()  << endl;
+			ThreadId = Threading::GetThreadId();
+			Fields |= EFields::Timestamp | EFields::ThreadId | EFields::Thread;
+		}
+*/
+		Message::Message( const Message& rhs ):
+			Message2{ rhs },
+			Timestamp{ rhs.Timestamp },
+			Variables{ rhs.Variables },
+			//_pFile{ rhs._pFile ? make_unique<string>(*rhs._pFile) : nullptr },
+			_pFunction{ rhs._pFunction ? make_unique<string>(*rhs._pFunction) : nullptr }
+		{
+			//ASSERT( _pFile && _pFunction );
+			//if( _pFile )
+			//	File = *_pFile;
+			if( _pFunction )
+				Function = *_pFunction;
+		}
+/*		Message::Message( ELogLevel level, sv message, sv file, sv function, int line, vector<string>&& values )noexcept:
+			Message2{ message, level, file, function, line },
+			Timestamp{ Clock::now() },
+			Variables{ move(values) }
 		{
 			Fields |= EFields::Timestamp | EFields::ThreadId | EFields::Thread;
 		}
-		Message::Message( ELogLevel level, sv message, const std::string& file, const std::string& function, uint line, const vector<string>& values )noexcept:
-			MessageBase{ level, make_shared<string>(message), file, function, line },
+		Message::Message( ELogLevel level, string&& message, string&& file, string&& function, int line, vector<string>&& values )noexcept:
+			Message2{ level, move(message), file, function, line },
 			Timestamp{ Clock::now() },
-			Variables{ values },
-			_pFile{ make_shared<string>(file) },
-			_pFunction{ make_shared<string>(function) }
+			Variables{ move(values) },
+			_pFile{ make_unique<string>(move(file)) },
+			_pFunction{ make_unique<string>(move(function)) }
 		{
 			File = *_pFile;
 			Function = *_pFunction;
 			Fields |= EFields::Timestamp | EFields::ThreadId | EFields::Thread;
-		}
+		}*/
 	}
 }

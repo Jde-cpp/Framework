@@ -33,12 +33,16 @@ namespace Jde
 
 	IApplication::~IApplication()
 	{
-//		if( HaveLogger() )
-//			DBG( "IApplication::~IApplication"sv );
 	}
 	IO::DriveWorker _driveWorker;
 	set<string> IApplication::BaseStartup( int argc, char** argv, sv appName, string serviceDescription/*, sv companyName*/ )noexcept(false)//no config file
 	{
+		{
+			ostringstream os;
+			for( uint i=0; i<argc; ++i )
+				os << argv[i] << " ";
+			_logger.log( spdlog::source_loc{FileName(MY_FILE).c_str(),__LINE__,__func__}, (spdlog::level::level_enum)ELogLevel::Information, os.str() );
+		}
 		_pApplicationName = std::make_unique<string>( appName );
 
 		bool console = false;
@@ -58,12 +62,12 @@ namespace Jde
 			else if( string(argv[i])=="-install" )
 			{
 				Install( serviceDescription );
-				THROW( Exception( ELogLevel::Trace, "successfully installed.") );
+				THROWX( Exception(ELogLevel::Trace, "successfully installed.") );
 			}
 			else if( string(argv[i])=="-uninstall" )
 			{
 				Uninstall();
-				THROW( Exception( ELogLevel::Trace, "successfully uninstalled.") );
+				THROWX( Exception(ELogLevel::Trace, "successfully uninstalled.") );
 			}
 			else
 				values.emplace( argv[i] );
@@ -74,7 +78,7 @@ namespace Jde
 			SetConsoleTitle( appName );
 		else
 			AsService();
-		InitializeLogger( appName );
+		InitializeLogger();
 		Threading::SetThreadDscrptn( appName );
 		//INFO( "{}, settings='{}' cwd='{}' Running as console='{}'"sv, arg0, settingsPath, fs::current_path(), console );
 
@@ -265,24 +269,20 @@ namespace Jde
 		for( var& shutdown : *_pShutdownFunctions )
 			shutdown();
 		INFO( "Clearing Logger"sv );
-		if( GetServerSink() )
-			GetServerSink()->Destroy();
+		if( _pServerSink )
+			_pServerSink->Destroy();
 		Jde::DestroyLogger();
 		_pApplicationName = nullptr;
 		_pInstance = nullptr;
 		_pShutdownFunctions = nullptr;
-#ifdef _MSC_VER
-		_CrtDumpMemoryLeaks();
-#endif
 	}
-	fs::path IApplication::ApplicationDataFolder()noexcept
+	α IApplication::ApplicationDataFolder()noexcept->fs::path
 	{
-#ifdef _MSC_VER
-		sv company = CompanyName();
-#else
-		const string company{ format(".{}"sv, CompanyName()) };
-#endif
 		auto p=_pInstance;
-		return p ? p->ProgramDataFolder()/company/ApplicationName() : ".app";
+		return p ? p->ProgramDataFolder()/OSApp::CompanyRootDir()/ApplicationName() : ".app";
+	}
+	α IApplication::IsConsole()noexcept->bool
+	{
+		return OSApp::Args().find("-c")!=OSApp::Args().end();
 	}
 }

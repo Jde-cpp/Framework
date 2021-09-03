@@ -7,10 +7,11 @@ namespace Jde::IO::Sockets
 {
 	ProtoClientSession::ProtoClientSession( boost::asio::io_context& context ):
 		//_pSocket{ make_unique<basio::ip::tcp::socket>(context) }
-		_pSocket{ new basio::ip::tcp::socket{context} }
+		_socket{ context }
 	{
+
 	}
-	VectorPtr<google::protobuf::uint8> ProtoClientSession::ToBuffer( const google::protobuf::MessageLite& message )noexcept(false)
+	/*VectorPtr<google::protobuf::uint8> ProtoClientSession::ToBuffer( const google::protobuf::MessageLite& message )noexcept(false)
 	{
 		const uint32_t length = (uint32_t)message.ByteSizeLong();
 		auto pData = make_shared<vector<google::protobuf::uint8>>( length+4 );
@@ -24,7 +25,8 @@ namespace Jde::IO::Sockets
 		//DBGX( "result={}", result );
 		return pData;
 	}
-	void ProtoClientSession::Disconnect()noexcept
+*/
+/*	void ProtoClientSession::Disconnect()noexcept
 	{
 		if( _pSocket )
 		{
@@ -34,7 +36,7 @@ namespace Jde::IO::Sockets
 			_pSocket = nullptr;
 		}
 		//OnDisconnect(); called in destructor
-	}
+	}*/
 	uint32 ProtoClientSession::MessageLength( char* readMessageSize )noexcept
 	{
 		uint32_t length;
@@ -45,104 +47,73 @@ namespace Jde::IO::Sockets
 	}
 	void ProtoClientSession::ReadHeader()noexcept
 	{
-		auto onComplete = [this]( std::error_code ec, std::size_t headerLength )
+		basio::async_read( _socket, basio::buffer(static_cast<void*>(_readMessageSize), sizeof(_readMessageSize)), [this]( std::error_code ec, std::size_t headerLength )
 		{
 			if( ec )
 			{
 				_connected = false;
 				if( ec.value()==125 )
-					TRACE( "Client::ReadHeader closing - '{}'"sv, CodeException::ToString(ec) );
+					LOG( _logLevel, "Client::ReadHeader closing - '{}'", CodeException::ToString(ec) );
 				else
 					ERR( "Client::ReadHeader Failed - '{}' closing"sv, ec.value() );
-					//ERR( "Client::ReadHeader Failed - '{}' closing", CodeException::ToString(ec) );crashes for some reason.
-				Disconnect();
 			}
 			else if( !headerLength )
 				ERR( "Failed no length"sv );
 			else
 			{
 				var messageLength = MessageLength( _readMessageSize );
-				TRACE( "'{}' bytes"sv, messageLength );
+				LOG( _logLevel, "bodyLength='{:L}'", messageLength );
 				ReadBody( messageLength );
 			}
-		};
-		basio::async_read( *_pSocket, basio::buffer(static_cast<void*>(_readMessageSize), sizeof(_readMessageSize)), onComplete );
+		});
 	}
 
 	void ProtoClientSession::ReadBody( uint messageLength )noexcept
 	{
-		auto onRead = [this, messageLength]( std::error_code ec, std::size_t length )
+		google::protobuf::uint8 buffer[4096];
+		up<google::protobuf::uint8[]> pData;
+		var useHeap = messageLength>sizeof(buffer);
+		if( useHeap )
+			pData = up<google::protobuf::uint8[]>{ new google::protobuf::uint8[messageLength] };
+		auto pBuffer = useHeap ? pData.get() : buffer;
+		boost::system::error_code ec;
+		std::size_t length = basio::read( _socket, basio::buffer(reinterpret_cast<void*>(pBuffer), messageLength), ec );
+		if( ec || length!=messageLength )
 		{
-			if( ec )
-			{
-				ERR( "Read Body Failed - {}"sv, ec.value() );
-				_pSocket->close();
-				//delete _pSocket;
-				_pSocket = nullptr;
-			}
+			ERR_IF( length!=messageLength, "'{}' read!='{}' expected", length, messageLength );
 			else
-			{
-				if( length==messageLength )
-					TRACE( "'{}' bytes read==expecting"sv, length );
-				else
-					ERR( "'{}' read!='{}' expected"sv, length, messageLength );
-				Process( _message.data(), std::min<size_t>(length,messageLength) );
-				ReadHeader();
-			}
-		};
-		if( _message.size()<messageLength )
-			_message.resize( messageLength, 0 );
-		basio::async_read( *_pSocket, basio::buffer(reinterpret_cast<void*>(_message.data()), messageLength), onRead );
+				ERR( "Read Body Failed - {}"sv, ec.value() );
+			_socket.close();
+		}
+		else
+		{
+			Process( pBuffer, messageLength );
+			ReadHeader();
+		}
 	}
 /////////////////////////////////////////////////////////////////////////////////////
-	ProtoClient::ProtoClient( sv host, uint16 port, sv name )noexcept:
-		ProtoClientSession{ _asyncHelper },
-		Name{ name },
-		_host{host},
-		_port{port}
-	{}
-
-	void ProtoClient::Startup( sv clientThreadName )noexcept
+	ProtoClient::ProtoClient( sv clientThreadName, str settingsPath, PortType defaultPort )noexcept(false):
+		PerpetualAsyncSocket{ clientThreadName, settingsPath, defaultPort },
+		ProtoClientSession{ _asyncHelper }
 	{
 		Connect();
-		RunAsyncHelper( clientThreadName );
 	}
-	void ProtoClient::Connect()noexcept
+
+	void ProtoClient::Connect()noexcept(false)
 	{
+		_initialized = true;
 		basio::ip::tcp::resolver resolver( _asyncHelper );
-		auto endpoints = resolver.resolve( _host, std::to_string(_port).c_str() );
+		auto endpoints = resolver.resolve( Host, std::to_string(Port).c_str() );
 		try
 		{
-			Connect( endpoints );
-		}
-		catch( const Exception& /*e*/ )
-		{}
-	}
-	void ProtoClient::Connect( const basio::ip::tcp::resolver::results_type& endpoints )noexcept(false)
-	{
-		auto onConnect = [this](std::error_code ec, basio::ip::tcp::endpoint)
-		{
-			if( ec )
-				ERR( "Connect Failed - {}"sv, ec.value() );
-			else
-			{
-				_connected = true;
-				ReadHeader();
-			}
-		};
-		//basio::async_connect( _socket, endpoints, onConnect );
-		try
-		{
-			if( !_pSocket )
-				_pSocket = make_unique<basio::ip::tcp::socket>( _asyncHelper );//_pSocket = make_unique<basio::ip::tcp::socket>( _asyncHelper );
-			auto result = basio::connect( *_pSocket, endpoints );
-			TRACE( "Client::Connect"sv );
-			onConnect( std::error_code(), result );
+			basio::connect( _socket, endpoints );
+			INFO( "({}) connected to '{}:{}' "sv, ClientThreadName, Host, Port );
+			_connected = true;
+			ReadHeader();
 		}
 		catch( const boost::system::system_error& e )
 		{
-			//ERR0( e.what() );
-			THROW( Exception( "Could not connect {}", e.what()) );
+			THROW( "Could not connect {}", e.what() );
 		}
 	}
 }

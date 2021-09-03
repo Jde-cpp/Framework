@@ -7,7 +7,7 @@
 namespace Jde
 {
 
-	α ci_char_traits::compare( const char* s1, const char* s2, size_t n )noexcept->int 
+	α ci_char_traits::compare( const char* s1, const char* s2, size_t n )noexcept->int
 	{
 		while( n-- != 0 )
 		{
@@ -17,7 +17,7 @@ namespace Jde
 		}
 		return 0;
 	}
-	α ci_char_traits::find( const char* s, size_t n, char a )noexcept->const char* 
+	α ci_char_traits::find( const char* s, size_t n, char a )noexcept->const char*
 	{
 		while( n-- > 0 && toupper(*s) != toupper(a) )
 			++s;
@@ -38,7 +38,7 @@ namespace Jde
 		vector<sv> tokens;
 		uint i=0;
 		for( uint next = s.find(delim); next!=string::npos; i=next+delim.size(), next = s.find(delim, i) )
-			tokens.push_back( s.substr(i, next) );
+			tokens.push_back( s.substr(i, next-i) );
 		if( i<s.size() )
 			tokens.push_back( s.substr(i) );
 		return tokens;
@@ -83,7 +83,7 @@ namespace Jde
 
 		return os.str();
 	}
-	α Str::Replace( sv source, char find, char replace )noexcept->string 
+	α Str::Replace( sv source, char find, char replace )noexcept->string
 	{
 		string result{ source };
 		for( char* pFrom=(char*)source.data(), *pTo=(char*)result.data(); pFrom<source.data()+source.size(); ++pFrom, ++pTo )

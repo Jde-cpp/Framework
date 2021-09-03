@@ -9,16 +9,16 @@ namespace Jde::DB
 	#define 🚪 JDE_NATIVE_VISIBILITY auto
 	struct IDataSource; struct Syntax; //struct DataValue;
 	string Message( sv sql, const std::vector<DataValue>* pParameters, sv error={} )noexcept;
-	void Log( sv sql, const std::vector<DataValue>* pParameters, sv file, sv fnctn, uint line, ELogLevel level=ELogLevel::Debug, sv error={} )noexcept;
-	JDE_NATIVE_VISIBILITY sp<Syntax> DefaultSyntax()noexcept;
-	JDE_NATIVE_VISIBILITY sp<IDataSource> DataSource()noexcept(false);
-	JDE_NATIVE_VISIBILITY sp<IDataSource> DataSource( path libraryName, sv connectionString )noexcept(false);
-	JDE_NATIVE_VISIBILITY void CreateSchema()noexcept(false);
-	JDE_NATIVE_VISIBILITY void CleanDataSources()noexcept;
-	JDE_NATIVE_VISIBILITY void ShutdownClean( function<void()>& shutdown )noexcept;
+	void Log( sv sql, const std::vector<DataValue>* pParameters, sv file, sv fnctn, int line, ELogLevel level=ELogLevel::Trace, sv error={} )noexcept;
+	🚪 DefaultSyntax()noexcept->sp<Syntax>;
+	🚪 DataSource()noexcept(false)->sp<IDataSource>;
+	🚪 DataSource( path libraryName, sv connectionString )noexcept(false)->sp<IDataSource>;
+	🚪 CreateSchema()noexcept(false)->void;
+	🚪 CleanDataSources()noexcept->void;
+	🚪 ShutdownClean( function<void()>& shutdown )noexcept->void;
 
-	JDE_NATIVE_VISIBILITY uint ExecuteProc( sv sql, std::vector<DataValue>&& parameters )noexcept(false);
-	JDE_NATIVE_VISIBILITY uint Execute( sv sql, std::vector<DataValue>&& parameters )noexcept(false);
+	🚪 ExecuteProc( sv sql, std::vector<DataValue>&& parameters )noexcept(false)->uint;
+	🚪 Execute( sv sql, std::vector<DataValue>&& parameters )noexcept(false)->uint;
 
 	ⓣ TryScaler( sv sql, const vector<DataValue>& parameters )noexcept->optional<T>;
 	ⓣ Scaler( sv sql, const vector<DataValue>& parameters )noexcept(false)->optional<T>;

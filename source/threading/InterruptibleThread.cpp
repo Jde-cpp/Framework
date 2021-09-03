@@ -31,8 +31,7 @@ namespace Jde::Threading
 	}
 	InterruptibleThread::~InterruptibleThread()
 	{
-		if( GetDefaultLogger() )
-			DBG( "~InterruptibleThread({})"sv, Name );
+		DBG( "~InterruptibleThread({})"sv, Name );
 		if( ShouldJoin )
 			Join();
 	}

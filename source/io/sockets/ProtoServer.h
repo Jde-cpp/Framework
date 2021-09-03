@@ -3,6 +3,7 @@
 //#include "Socket.h"
 #include "ProtoClient.h"
 #include "google/protobuf/message.h"
+#include "../ProtoUtilities.h"
 #include "../../collections/Map.h"
 
 #define var const auto
@@ -12,116 +13,91 @@ namespace Jde::IO::Sockets
 	typedef uint32 SessionPK;
 	struct ProtoSession;
 
-	//template<typename T>
-	//struct ISession
-	//{
-	//	virtual void OnReceive( sp<T> pValue )noexcept(false)=0;
-	//};
-
-	struct ProtoServer : public AsyncSocket
+	#define 🚪 JDE_NATIVE_VISIBILITY auto
+	struct ProtoServer : public PerpetualAsyncSocket
 	{
-		JDE_NATIVE_VISIBILITY ProtoServer( PortType port )noexcept(false);
+		JDE_NATIVE_VISIBILITY ProtoServer( sv clientThreadName, str settingsPath, PortType defaultPort )noexcept(false);
 		JDE_NATIVE_VISIBILITY virtual ~ProtoServer();
-		JDE_NATIVE_VISIBILITY void Close()noexcept;
-		virtual sp<ProtoSession> CreateSession( basio::ip::tcp::socket socket, SessionPK id )noexcept=0;
-		void RemoveSession( SessionPK id )noexcept{ _sessions.erase(id); }
+		//🚪 Close()noexcept->void;
+		virtual up<ProtoSession> CreateSession( basio::ip::tcp::socket&& socket, SessionPK id )noexcept=0;
+		void RemoveSession( SessionPK id )noexcept{ unique_lock l{_mutex}; _sessions.erase(id); }
+
 	protected:
-		JDE_NATIVE_VISIBILITY void Accept()noexcept;
+		🚪 Accept()noexcept->void;
 		std::atomic<SessionPK> _id{0};
-		unique_ptr<basio::ip::tcp::acceptor> _pAcceptor;
-		Map<SessionPK,ProtoSession> _sessions;
+		basio::ip::tcp::acceptor _acceptor;
+		flat_map<SessionPK,up<ProtoSession>> _sessions; std::shared_mutex _mutex;
 	private:
 		void Run()noexcept;
 	};
 
-	//template<typename T>
-/*	struct TProtoServer : public ProtoServer
+	struct JDE_NATIVE_VISIBILITY ProtoSession
 	{
-		TProtoServer( PortType port )noexcept(false):
-			ProtoServer{port}
-		{
-			Accept();
-		}
-		//virtual std::shared_ptr<ISession<T>> OnSessionStart( SessionPK id )noexcept=0;
-	protected:
-	};
-	*/
-	struct JDE_NATIVE_VISIBILITY ProtoSession//: public Session, public std::enable_shared_from_this<ServerSession>
-	{
-		ProtoSession( basio::ip::tcp::socket& socket, SessionPK id )noexcept;
+		ProtoSession( basio::ip::tcp::socket&& socket, SessionPK id )noexcept;
+		virtual ~ProtoSession()=default;
 		SessionPK Id;
 		//virtual void Start()noexcept=0;
 		virtual void OnDisconnect()noexcept=0;
 	protected:
 		void ReadHeader()noexcept;
-		basio::ip::tcp::socket _socket2;
+		basio::ip::tcp::socket _socket;
+		ELogLevel _logLevel{ ELogLevel::Debug };
 	private:
 		virtual void ReadBody( uint messageLength )noexcept=0;
 		char _readMessageSize[4];
 	};
 
 #pragma region TProtoSession
-	template<typename TToServer, typename TFromServer>
-	struct TProtoSession: public ProtoSession//, public std::enable_shared_from_this<ServerSession>
+#define $ template<class TToServer, class TFromServer> auto TProtoSession<TToServer,TFromServer>::
+	template<class TToServer, class TFromServer>
+	struct TProtoSession: public ProtoSession
 	{
-		TProtoSession( basio::ip::tcp::socket& socket, SessionPK id )noexcept:
-			ProtoSession{ socket, id }
+		TProtoSession( basio::ip::tcp::socket&& socket, SessionPK id )noexcept:
+			ProtoSession{ move(socket), id }
 		{}
 
 	protected:
-		//void Write( sp<TFromServer> pMessage )noexcept;
-		virtual void OnReceive( sp<TToServer> pValue )noexcept(false)=0;
+		virtual void OnReceive( TToServer&& pValue )noexcept(false)=0;
 		void ReadBody( uint messageLength )noexcept override;
 		void Write( const TFromServer& message )noexcept;
 		vector<google::protobuf::uint8> _message;
 	};
 
-	template<typename TToServer, typename TFromServer>
-	void TProtoSession<TToServer,TFromServer>::ReadBody( uint messageLength )noexcept
+//TODO consolidate with ProtoClientSession::ReadBody
+	$ ReadBody( uint messageLength )noexcept->void
 	{
-		auto onDone = [&, messageLength]( std::error_code ec, std::size_t length )
+		google::protobuf::uint8 buffer[4096];
+		var useHeap = messageLength>sizeof(buffer);
+		var pData = useHeap ? up<google::protobuf::uint8[]>{ new google::protobuf::uint8[messageLength] } : up<google::protobuf::uint8[]>{};
+		auto pBuffer = useHeap ? pData.get() : buffer;
+		try
 		{
-			try
-			{
-				if( ec )
-					THROW( IOException("Read Body Failed - '{}'", ec.value()) );
-				if( length!=messageLength )
-					THROW( IOException("Read Body read '{}' expected '{}'", length, messageLength) );
-
-				TRACE( "ServerSession::ReadBody '{}' bytes"sv, length );
-				google::protobuf::io::CodedInputStream input( _message.data(), (int)std::min(length,_message.size()) );
-				auto pTransmission = make_shared<TToServer>();
-				if( !pTransmission->MergePartialFromCodedStream(&input) )
-					THROW( IOException("MergePartialFromCodedStream returned false, length={}", length) );
-				OnReceive( pTransmission );
-			}
-			catch( const IOException& e )
-			{
-				ERR( "ReadBody failed - {}"sv, e.what() );
-			}
+			var length = basio::read( _socket, basio::buffer(reinterpret_cast<void*>(pBuffer), messageLength) ); THROW_IF( length!=messageLength, "'{}' read!='{}' expected", length, messageLength );
+			OnReceive( Proto::Deserialize<TToServer>(pBuffer, length) );
 			ReadHeader();
-		};
-		if( _message.size()<messageLength )
-			_message.resize( messageLength );
-		void* pData = static_cast<void*>( _message.data() );
-		basio::async_read( _socket2, basio::buffer(pData, messageLength), onDone );
+		}
+		catch( boost::system::system_error& e )
+		{
+			ERR( "Read Body Failed - {}"sv, e.what() );
+			_socket.close();
+		}
+		catch( const Exception& )
+		{}
 	}
 
-	template<typename TToServer, typename TFromServer>
-	void TProtoSession<TToServer,TFromServer>::Write( const TFromServer& message )noexcept
+	$ Write( const TFromServer& value )noexcept->void
 	{
-		auto pData = ProtoClientSession::ToBuffer( message );
-		auto onDone = [id=Id,pData]( std::error_code ec, std::size_t length )
+		auto [p,size] = IO::Proto::SizePrefixed( value );
+		basio::async_write( _socket, basio::buffer(p.get(), size), [x=move(p)]( std::error_code ec, std::size_t length )
 		{
 			if( ec )
-				DBG( "({})Write message returned '{}'."sv, id, ec.value() );
+				DBG( "({})Write message returned '{}'."sv, 5, ec.value() );
 			else
 				TRACE( "Session::Write length:  '{}'."sv, length );
-		};
-		basio::async_write( _socket2, basio::buffer( pData->data(), pData->size() ), onDone );
+		});
 	}
 
 #pragma endregion
-	//template<typename T>
-
+#undef 🚪
+#undef $
 }

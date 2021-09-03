@@ -592,8 +592,6 @@ namespace DB
 			for( var& childTable : table2.Tables )
 			{
 				var childDbName = childTable->DBName();
-				if( childDbName=="apis" )
-					DBG( childDbName );
 				var pPKTable = _schema.FindTableSuffix( childDbName ); THROW_IF( !pPKTable, Exception("Could not find table '{}' in schema", childDbName) );
 				if( pSubsequentJoin )
 				{
@@ -732,7 +730,7 @@ namespace DB
 		{
 			for( var& pQLTable : tables )
 			{
-				DBG( pQLTable->DBName() );
+				//DBG( pQLTable->DBName() );
 				auto pSubTable = _schema.FindTableSuffix( pQLTable->DBName() ); THROW_IF( !pSubTable, Exception("Could not find table '{}' in schema", pQLTable->DBName()) );
 				sp<const DB::Table> pDefTable;
 				if( pSubTable->IsMap() )//for RolePermissions, subTable=Permissions, defTable=RolePermissions
@@ -797,7 +795,7 @@ namespace DB
 					}
 					rows.emplace( get<uint>(row[0]), jSubRow );
 				};
-				DBG( subSql.str() );
+				//DBG( subSql.str() );
 				_pDataSource->Select( subSql.str(), forEachRow, parameters );
 			}
 		};
@@ -868,7 +866,7 @@ namespace DB
 
 	json DB::Query( sv query, UserPK userId )noexcept(false)
 	{
-		DBG( query );
+		//DBG( query );
 		var qlType = ParseQL( query );
 		vector<DB::TableQL> tableQueries;
 		json j;

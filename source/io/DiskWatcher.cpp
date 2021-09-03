@@ -314,21 +314,21 @@ namespace Jde::IO
 */
 	void IDriveChange::OnAccess( path path, const NotifyEvent& event )noexcept
 	{
-		LOG( _logLevel, "IDriveChange::OnAccess( {}, {} )"sv, path.string(), event );
+		LOG( _logLevel, "IDriveChange::OnAccess( {}, {} )", path.string(), event );
 		//Logging::Log( Logging::MessageBase(_logLevel, "IDriveChange::OnAccess( {}, {} )", "__FILE__", "__func__", 201), path.string(), event );
 	}
-	void IDriveChange::OnModify( path path, const NotifyEvent& event )noexcept{ LOG( _logLevel, "IDriveChange::OnModify( {}, {} )"sv, path.string(), event ); }
-	void IDriveChange::OnAttribute( path path, const NotifyEvent& event )noexcept{ LOG( _logLevel, "IDriveChange::OnAttribute( {}, {} )"sv, path.string(), event ); }
-	void IDriveChange::OnCloseWrite( path path, const NotifyEvent& event )noexcept{ LOG( _logLevel, "IDriveChange::OnCloseWrite( {}, {} )"sv, path.string(), event ); }
-	void IDriveChange::OnCloseNoWrite( path path, const NotifyEvent& event )noexcept{ LOG( _logLevel, "IDriveChange::OnCloseNoWrite( {}, {} )"sv, path.string(), event ); }
-	void IDriveChange::OnOpen( path path, const NotifyEvent& event )noexcept{ LOG( _logLevel, "IDriveChange::OnOpen( {}, {} )"sv, path.string(), event ); }
-	void IDriveChange::OnMovedFrom( path path, const NotifyEvent& event )noexcept{ LOG( _logLevel, "IDriveChange::OnMovedFrom( {}, {} )"sv, path.string(), event ); }
-	void IDriveChange::OnMovedTo( path path, const NotifyEvent& event )noexcept{ LOG( _logLevel, "IDriveChange::OnMovedTo( {}, {} )"sv, path.string(), event ); }
-	void IDriveChange::OnCreate( path path, const NotifyEvent& event )noexcept{ LOG( _logLevel, "IDriveChange::OnCreate( {}, {} )"sv, path.string(), event ); }
-	void IDriveChange::OnDelete( path path, const NotifyEvent& event )noexcept{ LOG( _logLevel, "IDriveChange::OnDelete( {}, {} )"sv, path.string(), event ); }
-	void IDriveChange::OnDeleteSelf( path path, const NotifyEvent& event )noexcept{ LOG( _logLevel, "IDriveChange::OnDeleteSelf( {}, {} )"sv, path.string(), event ); }
-	void IDriveChange::OnMoveSelf( path path, const NotifyEvent& event )noexcept{ LOG( _logLevel, "IDriveChange::OnMoveSelf( {}, {} )"sv, path.string(), event ); }
-	void IDriveChange::OnUnmount( path path, const NotifyEvent& event )noexcept{ LOG( _logLevel, "IDriveChange::OnUnmount( {}, {} )"sv, path.string(), event ); }
-	void IDriveChange::OnQOverflow( path path, const NotifyEvent& event )noexcept{ LOG( _logLevel, "IDriveChange::OnQOverflow( {}, {} )"sv, path.string(), event ); }
-	void IDriveChange::OnIgnored( path path, const NotifyEvent& event )noexcept{ LOG( _logLevel, "IDriveChange::OnIgnored( {}, {} )"sv, path.string(), event ); }
+	void IDriveChange::OnModify( path path, const NotifyEvent& event )noexcept{ LOG( _logLevel, "IDriveChange::OnModify( {}, {} )", path.string(), event ); }
+	void IDriveChange::OnAttribute( path path, const NotifyEvent& event )noexcept{ LOG( _logLevel, "IDriveChange::OnAttribute( {}, {} )", path.string(), event ); }
+	void IDriveChange::OnCloseWrite( path path, const NotifyEvent& event )noexcept{ LOG( _logLevel, "IDriveChange::OnCloseWrite( {}, {} )", path.string(), event ); }
+	void IDriveChange::OnCloseNoWrite( path path, const NotifyEvent& event )noexcept{ LOG( _logLevel, "IDriveChange::OnCloseNoWrite( {}, {} )", path.string(), event ); }
+	void IDriveChange::OnOpen( path path, const NotifyEvent& event )noexcept{ LOG( _logLevel, "IDriveChange::OnOpen( {}, {} )", path.string(), event ); }
+	void IDriveChange::OnMovedFrom( path path, const NotifyEvent& event )noexcept{ LOG( _logLevel, "IDriveChange::OnMovedFrom( {}, {} )", path.string(), event ); }
+	void IDriveChange::OnMovedTo( path path, const NotifyEvent& event )noexcept{ LOG( _logLevel, "IDriveChange::OnMovedTo( {}, {} )", path.string(), event ); }
+	void IDriveChange::OnCreate( path path, const NotifyEvent& event )noexcept{ LOG( _logLevel, "IDriveChange::OnCreate( {}, {} )", path.string(), event ); }
+	void IDriveChange::OnDelete( path path, const NotifyEvent& event )noexcept{ LOG( _logLevel, "IDriveChange::OnDelete( {}, {} )", path.string(), event ); }
+	void IDriveChange::OnDeleteSelf( path path, const NotifyEvent& event )noexcept{ LOG( _logLevel, "IDriveChange::OnDeleteSelf( {}, {} )", path.string(), event ); }
+	void IDriveChange::OnMoveSelf( path path, const NotifyEvent& event )noexcept{ LOG( _logLevel, "IDriveChange::OnMoveSelf( {}, {} )", path.string(), event ); }
+	void IDriveChange::OnUnmount( path path, const NotifyEvent& event )noexcept{ LOG( _logLevel, "IDriveChange::OnUnmount( {}, {} )", path.string(), event ); }
+	void IDriveChange::OnQOverflow( path path, const NotifyEvent& event )noexcept{ LOG( _logLevel, "IDriveChange::OnQOverflow( {}, {} )", path.string(), event ); }
+	void IDriveChange::OnIgnored( path path, const NotifyEvent& event )noexcept{ LOG( _logLevel, "IDriveChange::OnIgnored( {}, {} )", path.string(), event ); }
 }

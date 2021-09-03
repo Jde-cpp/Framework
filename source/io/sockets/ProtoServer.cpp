@@ -1,13 +1,17 @@
 #include "ProtoServer.h"
 #include "../../threading/Thread.h"
 #include "../../threading/InterruptibleThread.h"
+#include "../../Settings.h"
 
+#define var const auto
 namespace Jde::IO::Sockets
 {
-	ProtoServer::ProtoServer( PortType port )noexcept(false)
+	ProtoServer::ProtoServer( sv clientThreadName, str settingsPath, PortType defaultPort )noexcept(false):
+		PerpetualAsyncSocket{ clientThreadName, settingsPath, defaultPort },
+		_acceptor{ _asyncHelper, basio::ip::tcp::endpoint{basio::ip::tcp::v4(), AsyncSocket::Port } }
 	{
-		auto endpoint = basio::ip::tcp::endpoint( basio::ip::tcp::v4(), port );
-		_pAcceptor = make_unique<basio::ip::tcp::acceptor>( _asyncHelper, endpoint ); //"bind: Address already in use
+		LOG_MEMORY( ELogLevel::Information, string{"({}) Accepting on port '{}'"}, ClientThreadName, Port );
+		_initialized = true;
 	}
 
 	ProtoServer::~ProtoServer()
@@ -28,98 +32,64 @@ namespace Jde::IO::Sockets
 		//_pAcceptor->get_io_service().post( onClose ); boost 1_71 https://github.com/rstudio/rstudio/issues/4636
 	}
 
-	void ProtoServer::Close()noexcept
+/*	void ProtoServer::Close()noexcept
 	{
-		_pAcceptor->close();
+		_acceptor.close();
 		AsyncSocket::Close();
 	}
-
-	vector<google::protobuf::uint8> data{4,0};
-	void Test( basio::ip::tcp::socket socket )
-	{
-		auto onDone = [&]( std::error_code ec, std::size_t length )
-		{
-			if( ec )
-				ERR( CodeException::ToString(ec) );
-			else
-				DBG("length={}"sv, length);
-		};
-		basio::async_write( socket, basio::buffer(data.data(), data.size()), onDone );
-	}
+*/
 	void ProtoServer::Accept()noexcept
 	{
-		auto onAccept = [this]( std::error_code ec, basio::ip::tcp::socket socket )
+		_acceptor.async_accept( [this]( std::error_code ec, basio::ip::tcp::socket socket )noexcept
 		{
-			if( ec )
+			try
 			{
-				if( ec.value()==125 )
-					Jde::GetDefaultLogger()->info( "Sever shutting down - {}", CodeException::ToString(ec) );
-				else
-					Jde::GetDefaultLogger()->error( "Accepted Failed - {}", CodeException::ToString(ec) );
-			}
-			else
-			{
-				// auto onDone = [&]( std::error_code ec, std::size_t length )
-				// {
-				// 	if( ec )
-				// 		ERR0( CodeException::ToString(ec) );
-				// 	else
-				// 		DBG("length={}", length);
-				// };
-
+				THROW_IFX( ec, CodeException(ec.value()==125 ? "Sever shutting down"sv : "Accept Failed"sv, move(ec), ec.value()==125 ? ELogLevel::Information : ELogLevel::Error) );
 				var id = ++_id;
-				TRACE( "Accepted Connection - {}"sv, id );
-//				basio::async_write( socket, basio::buffer(data.data(), data.size()), onDone );
-				//Test( std::move(socket) );
-				auto pSession = CreateSession( std::move(socket), id );
-				if( pSession )
-					_sessions.emplace( id, pSession );
+				DBG( "({})Accepted Connection"sv, id );
+				unique_lock l{ _mutex };
+				_sessions.emplace( id, CreateSession(std::move(socket), id) );
 				Accept();
 			}
-		};
-		_pAcceptor->async_accept( onAccept );
+			catch( const Exception& ){}
+		});
 	}
 
 	//	virtual ISession OnSessionStart( SessionPK id )noexcept=0;
-	void ProtoServer::Run()noexcept
+/*	void ProtoServer::Run()noexcept
 	{
 		Threading::SetThreadDscrptn( "ProtoServer::Run" );
 		DBG( "ProtoServer::Run"sv );
 		_asyncHelper.run();
 		DBG( "ProtoServer::Run Exit"sv );
 	}
-
-	ProtoSession::ProtoSession( basio::ip::tcp::socket& socket, SessionPK id )noexcept:
+*/
+	ProtoSession::ProtoSession( basio::ip::tcp::socket&& socket, SessionPK id )noexcept:
 		Id{ id },
-		_socket2( std::move(socket) )
+		_socket( std::move(socket) )
 	{
 		ReadHeader();
 	}
 
 	void ProtoSession::ReadHeader()noexcept
 	{
-		auto onComplete = [&]( std::error_code ec, uint headerLength )
+		LOG( _logLevel, "ProtoSession::ReadHeader" );
+		basio::async_read( _socket, basio::buffer(static_cast<void*>(_readMessageSize), sizeof(_readMessageSize)), [&]( std::error_code ec, uint headerLength )
 		{
-			if( ec )
+			try
 			{
-				if( ec.value()==2 || ec.value()==10054 )
-				{
-					TRACE( "disconnection - '{}'"sv, CodeException::ToString(ec) );
-					OnDisconnect();
-				}
-				else
-					ERR( "({})Read Header Failed - {}"sv, Id, CodeException::ToString(ec) );
-			}
-			else if( headerLength!=4 )
-				ERR( "only read '{}'"sv, headerLength );
-			else
-			{
+				THROW_IFX( ec, CodeException(move(ec), ec.value()==2 || ec.value()==10054 || ec.value()==104 ? _logLevel : ELogLevel::Error) );
+				THROW_IF( headerLength!=4, "only read '{}'"sv, headerLength );
+
 				var messageLength = ProtoClientSession::MessageLength( _readMessageSize );
-				TRACE( "messageLength: {}"sv, messageLength );
+				LOG( _logLevel, "messageLength: {}", messageLength );
 				ReadBody( messageLength );
 			}
-		};
-		TRACE( "Server::Session::ReadHeader"sv );
-		basio::async_read( _socket2, basio::buffer(static_cast<void*>(_readMessageSize), sizeof(_readMessageSize)), onComplete );
+			catch( const Exception& e )
+			{
+				if( e.GetLevel()<ELogLevel::Error )
+					OnDisconnect();
+			}
+		});
 	}
 }

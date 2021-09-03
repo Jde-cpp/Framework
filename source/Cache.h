@@ -49,9 +49,7 @@ namespace Jde
 	template<class T>
 	sp<T> Cache::Get( str name )noexcept(false)
 	{
-		auto pInstance = GetInstance();
-		if( !pInstance )
-			THROW2( Exception("no cache instance.") );
+		auto pInstance = GetInstance(); THROW_IF( !pInstance, "no cache instance." );
 		return pInstance->InstanceGet<T>( name );
 	}
 	//non-null return TODO change name/pass in default args.

@@ -25,7 +25,7 @@ namespace Jde::Threading
 	{
 		using base=Threading::TWorker<Alarm>;
 		Alarm():base{"Alarm"sv}{};
-		~Alarm(){ if( GetDefaultLogger() ) DBG("Alarm::~Alarm"sv); }
+		~Alarm(){  DBG("Alarm::~Alarm"sv); }
 		static auto Wait( TimePoint t, Handle& handle )noexcept{ return AlarmAwaitable{t, handle}; }
 		static void Cancel( Handle handle )noexcept;
 	private:

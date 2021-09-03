@@ -35,11 +35,11 @@ namespace Jde::Coroutine
 		static void Resume( coroutine_handle<>&& h )noexcept;
 		void Shutdown()noexcept;
 
-#define SETTINGS(T,n,dflt) optional<T> v; if( _pSettings ) v=_pSettings->Get2<T>(n); return v.value_or(dflt)
+#define SETTINGS(T,n,dflt) optional<T> v; if( _pSettings ) v=_pSettings->TryGet<T>(n); return v.value_or(dflt)
 		static ELogLevel LogLevel()noexcept
 		{
 			if( _level==ELogLevel::None && _pSettings )
-				_level = _pSettings->Get2<ELogLevel>( "logLevel" ).value_or( ELogLevel::Trace );
+				_level = _pSettings->TryGet<ELogLevel>( "logLevel" ).value_or( ELogLevel::Trace );
 			return _level;
 		}
 	private:
@@ -54,7 +54,7 @@ namespace Jde::Coroutine
 		static sp<CoroutinePool> _pInstance;
 
 		static uint MaxThreadCount()noexcept{ SETTINGS(uint, "maxThreadCount", 100); }//max number of threads pool can hold
-		static Duration WakeDuration()noexcept{ return Settings::Global().Get2<Duration>("wakeDuration").value_or(5s); };//wake up to check for shutdown
+		static Duration WakeDuration()noexcept{ return Settings::Global().TryGet<Duration>("wakeDuration").value_or(5s); };//wake up to check for shutdown
 		static Duration ThreadDuration()noexcept{ SETTINGS(Duration, "threadDuration", 5s); }//keep alive after buffer queue empties.
 		static Duration PoolIdleThreshold()noexcept{ SETTINGS(Duration, "poolIdleThreshold", 60s); }//keep alive for idle pool members.
 
