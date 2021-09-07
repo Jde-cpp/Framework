@@ -12,30 +12,31 @@ namespace Jde::Logging
 		SetServerSink( nullptr );
 		DBGX( "{}"sv, "_pServerSink = nullptr" );
 	}
-	void IServerSink::Destroy()noexcept
+/*	void IServerSink::Destroy()noexcept
 	{
 		DBGX( "{}"sv, "IServerSink::Destroy" );
 		SetServerSink( nullptr );
 		//_pInstance = nullptr;
 	}
+	*/
 /*	sp<IServerSink> IServerSink::GetInstnace()noexcept
 	{
 		return _pInstance;
 	}
 */
 	ServerSink::ServerSink()noexcept(false):
-		Interrupt{ "AppServerSend", 1s, true },
-		ProtoBase{ "LogClient", "logging/server", 0 },//don't wan't default port
-		_messages{}
+		//Interrupt{ "AppServerSend", 1s, true },
+		ProtoBase{ "LogClient", "logging/server", 0 }//,don't wan't default port
 	{
 	//	Startup( "AppServerReceive" );
 	}
 
-	void ServerSink::Destroy()noexcept
+/*	void ServerSink::Destroy()noexcept
 	{
 		std::this_thread::sleep_for( 1s );//flush messages.
 		IServerSink::Destroy();
 	}
+*/
 	void ServerSink::OnConnected()noexcept
 	{
 		_connected = true;
@@ -51,7 +52,7 @@ namespace Jde::Logging
 		_usersSent.clear();
 		_threadsSent.clear();
 		_instanceId = 0;
-		_lastConnectionCheck = Clock::now();
+		//_lastConnectionCheck = Clock::now();
 		_connected = false;
 	}
 
@@ -79,7 +80,7 @@ namespace Jde::Logging
 			{
 				var& ack = item.acknowledgement();
 				DBGX( "Acknowledged - instance id={}"sv, ack.instanceid() );
-				Proto::ToServer transmission;
+				Proto::ToServer t;
 				auto pInstance = make_unique<Proto::Instance>();
 				_applicationName = IApplication::ApplicationName();
 				pInstance->set_applicationname( _applicationName );
@@ -87,8 +88,8 @@ namespace Jde::Logging
 				pInstance->set_processid( (int32)OSApp::ProcessId() );
 				pInstance->set_starttime( (google::protobuf::uint32)Clock::to_time_t(Logging::StartTime()) );
 
-				transmission.add_messages()->set_allocated_instance( pInstance.release() );
-				Write( move(transmission) );
+				t.add_messages()->set_allocated_instance( pInstance.release() );
+				base::Write( move(t) );
 				_instanceId = ack.instanceid();
 			}
 			else if( item.has_loglevels() )
@@ -108,21 +109,6 @@ namespace Jde::Logging
 		}
 	}
 
-
-	void ServerSink::Log( MessageBase&& message )noexcept
-	{
-		_messages.Push( Messages::Message(move(message)) );
-	}
-	void ServerSink::Log( Messages::Message&& message )noexcept
-	{
-		_messages.Push( move(message) );
-	}
-
-	void ServerSink::Log( MessageBase message, vector<string> values )noexcept
-	{
-		_messages.Push( Messages::Message(move(message), move(values)) );
-	}
-
 	up<Proto::RequestString> ToRequestString( Proto::EFields field, uint32 id, sv text )
 	{
 		auto pResult = make_unique<Proto::RequestString>();
@@ -140,9 +126,72 @@ namespace Jde::Logging
 
 		Proto::ToServer t;
 		t.add_messages()->set_allocated_custom( pCustom.release() );
-		Write( t );
+		base::Write( t );
 	}
-	void ServerSink::OnTimeout()noexcept
+
+	void ServerSink::Write( const MessageBase& m, TimePoint time, vector<string>* pValues )noexcept
+	{
+		auto pProto = make_unique<Proto::Message>();
+		pProto->set_allocated_time( IO::Proto::ToTimestamp(time).release() );
+		pProto->set_level( (Proto::ELogLevel)m.Level );
+		pProto->set_messageid( (uint32)m.MessageId );
+		pProto->set_fileid( (uint32)m.FileId );
+		pProto->set_functionid( (uint32)m.FunctionId );
+		pProto->set_linenumber( (uint32)m.LineNumber );
+		pProto->set_userid( (uint32)m.UserId );
+		pProto->set_threadid( m.ThreadId );
+		if( pValues )
+		{
+			for( auto& value : *pValues )
+				pProto->add_variables( move(value) );
+		}
+		auto processMessage = [&m, this]( Proto::ToServer& t )
+		{
+			if( _messagesSent.emplace(m.MessageId) )
+				t.add_messages()->set_allocated_string( ToRequestString(Proto::EFields::MessageId, (uint32)m.MessageId, m.MessageView).release() );
+			if( _filesSent.emplace(m.FileId) )
+				t.add_messages()->set_allocated_string( ToRequestString(Proto::EFields::FileId, (uint32)m.FileId, m.File).release() );
+			if( _functionsSent.emplace(m.FunctionId) )
+				t.add_messages()->set_allocated_string( ToRequestString(Proto::EFields::FunctionId, (uint32)m.FunctionId, m.Function).release() );
+		};
+
+		if( _stringsLoaded )
+		{
+			Proto::ToServer t;
+			{
+				Threading::AtomicGuard l{ _bufferMutex };
+				if( _buffer.messages_size() )
+				{
+					for( uint i=0; i<_buffer.messages_size(); ++i )
+					{
+						auto pMessage = _buffer.mutable_messages( i );
+						if( pMessage->has_message() )
+							t.add_messages()->set_allocated_message( pMessage->release_message() );
+						else if( pMessage->has_string() )
+						{
+							auto pString = up<Logging::Proto::RequestString>( pMessage->release_string() );
+							UnorderedSet<uint>& set = pString->field()==Proto::EFields::MessageId ? _messagesSent : pString->field()==Proto::EFields::FileId ? _filesSent : _functionsSent;
+							if( !set.contains(pString->id()) )
+								t.add_messages()->set_allocated_string( pString.release() );
+						}
+					}
+					_buffer = Proto::ToServer{};
+				}
+			}
+			processMessage( t );
+			t.add_messages()->set_allocated_message( pProto.release() );
+			if( SendStatus.exchange(false) )
+				t.add_messages()->set_allocated_status( GetStatus().release() );
+			base::Write( t );
+		}
+		else
+		{
+			Threading::AtomicGuard l{ _bufferMutex };
+			_buffer.add_messages()->set_allocated_message( pProto.release() );;
+			processMessage( _buffer );
+		}
+	}
+/*	void ServerSink::OnTimeout()noexcept
 	{
 		bool haveWork = (!_messages.size() && !SendStatus) || !_stringsLoaded;
 		if( !haveWork || (!_connected && (Clock::now()<_lastConnectionCheck+10s || !Try([this]{ _lastConnectionCheck = Clock::now(); Connect(); }))) )
@@ -181,7 +230,7 @@ namespace Jde::Logging
 		}
 		Write( t );
 	}
-
+*/
 	namespace Messages
 	{
 		Message::Message( const MessageBase& base, vector<string> values )noexcept:

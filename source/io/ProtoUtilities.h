@@ -12,7 +12,7 @@ namespace Jde::IO::Proto
 	ⓣ LoadXZ( path path )noexcept(false)->AWrapper;//sp<T>
 
 	ⓣ Deserialize( const vector<char>& data )noexcept(false)->up<T>;
-	ⓣ Deserialize( google::protobuf::uint8* p, int size )noexcept(false)->T;
+	ⓣ Deserialize( const google::protobuf::uint8* p, int size )noexcept(false)->T;
 
 	ⓣ ToVector( const google::protobuf::RepeatedPtrField<T>& x )noexcept->vector<T>;
 
@@ -22,9 +22,9 @@ namespace Jde::IO::Proto
 	α ToTimestamp( TimePoint t )->up<google::protobuf::Timestamp>;
 	namespace Internal
 	{
-		ⓣ Deserialize( google::protobuf::uint8* p, int size, T& proto )noexcept(false)->void
+		ⓣ Deserialize( const google::protobuf::uint8* p, int size, T& proto )noexcept(false)->void
 		{
-			google::protobuf::io::CodedInputStream input{ (const uint8*)p, (int)size };
+			google::protobuf::io::CodedInputStream input{ p, (int)size };
 			THROW_IFX( !proto.MergePartialFromCodedStream(&input), IOException("MergePartialFromCodedStream returned false.") );
 		}
 	}
@@ -65,7 +65,7 @@ namespace Jde::IO
 		Internal::Deserialize<T>( (google::protobuf::uint8*)data.data(), data.size(), *p );
 		return p;
 	}
-	ⓣ Proto::Deserialize( google::protobuf::uint8* p, int size )noexcept(false)->T
+	ⓣ Proto::Deserialize( const google::protobuf::uint8* p, int size )noexcept(false)->T
 	{
 		T y;
 		Internal::Deserialize<T>( p, size, y );

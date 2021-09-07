@@ -17,9 +17,9 @@ namespace Jde
 namespace Collections
 {
 	template<typename TKey, typename TValue>
-	class UnorderedMap : std::unordered_map<TKey,std::shared_ptr<TValue>>
+	class UnorderedMap : std::unordered_map<TKey,sp<TValue>>
 	{
-		typedef std::unordered_map<TKey,std::shared_ptr<TValue>> BaseClass;
+		typedef std::unordered_map<TKey,sp<TValue>> BaseClass;
 	public:
 		UnorderedMap( )=default;
 		UnorderedMap( const UnorderedMap& copy );
@@ -44,7 +44,7 @@ namespace Collections
 		void Where( const TKey& key, function<void(const TValue&)> func );
 		template<class... Args >
 		void AddOrUpdate( TKey key, function<sp<TValue>()> add, function<void(TValue&)> update );
-		std::shared_ptr<std::forward_list<std::shared_ptr<TValue>>> Values()const;
+		sp<std::forward_list<sp<TValue>>> Values()const;
 		//bool Set( const TKey& key, const TValue& value )noexcept;
 		bool Set( const TKey& key, sp<TValue> pValue )noexcept;
 		std::unique_lock<std::shared_mutex> Lock()noexcept{ return std::unique_lock<std::shared_mutex>{_mutex}; }
@@ -52,7 +52,7 @@ namespace Collections
 		mutable std::shared_mutex _mutex;
 	};
 
-	template<class TKey, class TValue> using UnorderedMapPtr = std::shared_ptr<UnorderedMap<TKey,TValue>>;
+	template<class TKey, class TValue> using UnorderedMapPtr = sp<UnorderedMap<TKey,TValue>>;
 
 	template<typename TKey, typename TValue>
 	UnorderedMap<TKey,TValue>::UnorderedMap( const UnorderedMap& copy )
@@ -170,7 +170,7 @@ namespace Collections
 		return isNone;
 	}
 	template<typename TKey, typename TValue>
-	std::shared_ptr<TValue> UnorderedMap<TKey,TValue>::Find( const TKey& key )const noexcept
+	sp<TValue> UnorderedMap<TKey,TValue>::Find( const TKey& key )const noexcept
 	{
  		shared_lock<std::shared_mutex> l(_mutex);
 		const auto pItem = BaseClass::find( key );
@@ -225,10 +225,10 @@ namespace Collections
 	}
 #pragma endregion
 	template<typename TKey, typename TValue>
-	std::shared_ptr<std::forward_list<std::shared_ptr<TValue>>> UnorderedMap<TKey,TValue>::Values()const
+	sp<std::forward_list<sp<TValue>>> UnorderedMap<TKey,TValue>::Values()const
 	{
  		shared_lock<std::shared_mutex> l(_mutex);
-		auto values = make_shared<std::forward_list<std::shared_ptr<TValue>>>();
+		auto values = make_shared<std::forward_list<sp<TValue>>>();
 		for( typename BaseClass::const_iterator ppValue = BaseClass::begin();  ppValue != BaseClass::end(); ++ppValue )
 			values->push_front( ppValue->second );
 		return values;

@@ -78,6 +78,7 @@ namespace Jde::Threading
 				else
 					OnAwake();
 			}
+			DBG( "Interrupt::Worker - Test Logging" );
 			if( _refreshRate>0ns )
 				status = _cvWait.wait_until( lk, std::chrono::steady_clock::now()+_refreshRate );
 			else

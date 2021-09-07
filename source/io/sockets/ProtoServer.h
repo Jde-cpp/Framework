@@ -14,18 +14,18 @@ namespace Jde::IO::Sockets
 	struct ProtoSession;
 
 	#define 🚪 JDE_NATIVE_VISIBILITY auto
-	struct ProtoServer : public PerpetualAsyncSocket
+	struct ProtoServer : public ISocket
 	{
-		JDE_NATIVE_VISIBILITY ProtoServer( sv clientThreadName, str settingsPath, PortType defaultPort )noexcept(false);
+		JDE_NATIVE_VISIBILITY ProtoServer( PortType defaultPort )noexcept;
 		JDE_NATIVE_VISIBILITY virtual ~ProtoServer();
 		//🚪 Close()noexcept->void;
-		virtual up<ProtoSession> CreateSession( basio::ip::tcp::socket&& socket, SessionPK id )noexcept=0;
+		virtual up<ProtoSession> CreateSession( tcp::socket&& socket, SessionPK id )noexcept=0;
 		void RemoveSession( SessionPK id )noexcept{ unique_lock l{_mutex}; _sessions.erase(id); }
 
 	protected:
 		🚪 Accept()noexcept->void;
 		std::atomic<SessionPK> _id{0};
-		basio::ip::tcp::acceptor _acceptor;
+		tcp::acceptor _acceptor;
 		flat_map<SessionPK,up<ProtoSession>> _sessions; std::shared_mutex _mutex;
 	private:
 		void Run()noexcept;
@@ -33,14 +33,14 @@ namespace Jde::IO::Sockets
 
 	struct JDE_NATIVE_VISIBILITY ProtoSession
 	{
-		ProtoSession( basio::ip::tcp::socket&& socket, SessionPK id )noexcept;
+		ProtoSession( tcp::socket&& socket, SessionPK id )noexcept;
 		virtual ~ProtoSession()=default;
 		SessionPK Id;
 		//virtual void Start()noexcept=0;
 		virtual void OnDisconnect()noexcept=0;
 	protected:
 		void ReadHeader()noexcept;
-		basio::ip::tcp::socket _socket;
+		tcp::socket _socket;
 		ELogLevel _logLevel{ ELogLevel::Debug };
 	private:
 		virtual void ReadBody( uint messageLength )noexcept=0;
@@ -52,7 +52,7 @@ namespace Jde::IO::Sockets
 	template<class TToServer, class TFromServer>
 	struct TProtoSession: public ProtoSession
 	{
-		TProtoSession( basio::ip::tcp::socket&& socket, SessionPK id )noexcept:
+		TProtoSession( tcp::socket&& socket, SessionPK id )noexcept:
 			ProtoSession{ move(socket), id }
 		{}
 
@@ -72,7 +72,7 @@ namespace Jde::IO::Sockets
 		auto pBuffer = useHeap ? pData.get() : buffer;
 		try
 		{
-			var length = basio::read( _socket, basio::buffer(reinterpret_cast<void*>(pBuffer), messageLength) ); THROW_IF( length!=messageLength, "'{}' read!='{}' expected", length, messageLength );
+			var length = net::read( _socket, net::buffer(reinterpret_cast<void*>(pBuffer), messageLength) ); THROW_IF( length!=messageLength, "'{}' read!='{}' expected", length, messageLength );
 			OnReceive( Proto::Deserialize<TToServer>(pBuffer, length) );
 			ReadHeader();
 		}
@@ -88,7 +88,7 @@ namespace Jde::IO::Sockets
 	$ Write( const TFromServer& value )noexcept->void
 	{
 		auto [p,size] = IO::Proto::SizePrefixed( value );
-		basio::async_write( _socket, basio::buffer(p.get(), size), [x=move(p)]( std::error_code ec, std::size_t length )
+		net::async_write( _socket, net::buffer(p.get(), size), [x=move(p)]( std::error_code ec, std::size_t length )
 		{
 			if( ec )
 				DBG( "({})Write message returned '{}'."sv, 5, ec.value() );

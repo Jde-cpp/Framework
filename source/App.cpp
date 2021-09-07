@@ -269,8 +269,8 @@ namespace Jde
 		for( var& shutdown : *_pShutdownFunctions )
 			shutdown();
 		INFO( "Clearing Logger"sv );
-		if( _pServerSink )
-			_pServerSink->Destroy();
+		//if( _pServerSink )
+		//	_pServerSink->Destroy();
 		Jde::DestroyLogger();
 		_pApplicationName = nullptr;
 		_pInstance = nullptr;
@@ -283,6 +283,6 @@ namespace Jde
 	}
 	α IApplication::IsConsole()noexcept->bool
 	{
-		return OSApp::Args().find("-c")!=OSApp::Args().end();
+		return OSApp::Args().find( "-c" )!=OSApp::Args().end();
 	}
 }

@@ -6,12 +6,12 @@
 #define var const auto
 namespace Jde::IO::Sockets
 {
-	ProtoServer::ProtoServer( sv clientThreadName, str settingsPath, PortType defaultPort )noexcept(false):
-		PerpetualAsyncSocket{ clientThreadName, settingsPath, defaultPort },
-		_acceptor{ _asyncHelper, basio::ip::tcp::endpoint{basio::ip::tcp::v4(), AsyncSocket::Port } }
+	ProtoServer::ProtoServer( PortType port )noexcept:
+		ISocket{ port },
+		_acceptor{ IOContextThread::GetContext(), tcp::endpoint{tcp::v4(), port} }
 	{
-		LOG_MEMORY( ELogLevel::Information, string{"({}) Accepting on port '{}'"}, ClientThreadName, Port );
-		_initialized = true;
+		//LOG_MEMORY( ELogLevel::Information, string{"({}) Accepting on port '{}'"}, Port );
+		//_initialized = true;
 	}
 
 	ProtoServer::~ProtoServer()
@@ -40,7 +40,7 @@ namespace Jde::IO::Sockets
 */
 	void ProtoServer::Accept()noexcept
 	{
-		_acceptor.async_accept( [this]( std::error_code ec, basio::ip::tcp::socket socket )noexcept
+		_acceptor.async_accept( [this]( std::error_code ec, tcp::socket socket )noexcept
 		{
 			try
 			{
@@ -64,7 +64,7 @@ namespace Jde::IO::Sockets
 		DBG( "ProtoServer::Run Exit"sv );
 	}
 */
-	ProtoSession::ProtoSession( basio::ip::tcp::socket&& socket, SessionPK id )noexcept:
+	ProtoSession::ProtoSession( tcp::socket&& socket, SessionPK id )noexcept:
 		Id{ id },
 		_socket( std::move(socket) )
 	{
@@ -74,7 +74,7 @@ namespace Jde::IO::Sockets
 	void ProtoSession::ReadHeader()noexcept
 	{
 		LOG( _logLevel, "ProtoSession::ReadHeader" );
-		basio::async_read( _socket, basio::buffer(static_cast<void*>(_readMessageSize), sizeof(_readMessageSize)), [&]( std::error_code ec, uint headerLength )
+		net::async_read( _socket, net::buffer(static_cast<void*>(_readMessageSize), sizeof(_readMessageSize)), [&]( std::error_code ec, uint headerLength )
 		{
 			try
 			{

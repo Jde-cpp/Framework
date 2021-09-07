@@ -5,12 +5,10 @@
 
 namespace Jde::IO::Sockets
 {
-	ProtoClientSession::ProtoClientSession( boost::asio::io_context& context ):
-		//_pSocket{ make_unique<basio::ip::tcp::socket>(context) }
-		_socket{ context }
-	{
-
-	}
+	ProtoClientSession::ProtoClientSession( /*boost::asio::io_context& context*/ ):
+		//_pSocket{ make_unique<tcp::socket>(context) }
+		_socket{ IOContextThread::GetContext() }
+	{}
 	/*VectorPtr<google::protobuf::uint8> ProtoClientSession::ToBuffer( const google::protobuf::MessageLite& message )noexcept(false)
 	{
 		const uint32_t length = (uint32_t)message.ByteSizeLong();
@@ -47,13 +45,13 @@ namespace Jde::IO::Sockets
 	}
 	void ProtoClientSession::ReadHeader()noexcept
 	{
-		basio::async_read( _socket, basio::buffer(static_cast<void*>(_readMessageSize), sizeof(_readMessageSize)), [this]( std::error_code ec, std::size_t headerLength )
+		net::async_read( _socket, net::buffer(static_cast<void*>(_readMessageSize), sizeof(_readMessageSize)), [this]( std::error_code ec, std::size_t headerLength )
 		{
 			if( ec )
 			{
 				_connected = false;
 				if( ec.value()==125 )
-					LOG( _logLevel, "Client::ReadHeader closing - '{}'", CodeException::ToString(ec) );
+					LOG( LogLevel(), "Client::ReadHeader closing - '{}'", CodeException::ToString(ec) );
 				else
 					ERR( "Client::ReadHeader Failed - '{}' closing"sv, ec.value() );
 			}
@@ -62,7 +60,7 @@ namespace Jde::IO::Sockets
 			else
 			{
 				var messageLength = MessageLength( _readMessageSize );
-				LOG( _logLevel, "bodyLength='{:L}'", messageLength );
+				LOGX( LogLevel(), "bodyLength='{:L}'", messageLength );
 				ReadBody( messageLength );
 			}
 		});
@@ -77,7 +75,7 @@ namespace Jde::IO::Sockets
 			pData = up<google::protobuf::uint8[]>{ new google::protobuf::uint8[messageLength] };
 		auto pBuffer = useHeap ? pData.get() : buffer;
 		boost::system::error_code ec;
-		std::size_t length = basio::read( _socket, basio::buffer(reinterpret_cast<void*>(pBuffer), messageLength), ec );
+		std::size_t length = net::read( _socket, net::buffer(reinterpret_cast<void*>(pBuffer), messageLength), ec );
 		if( ec || length!=messageLength )
 		{
 			ERR_IF( length!=messageLength, "'{}' read!='{}' expected", length, messageLength );
@@ -93,21 +91,20 @@ namespace Jde::IO::Sockets
 	}
 /////////////////////////////////////////////////////////////////////////////////////
 	ProtoClient::ProtoClient( sv clientThreadName, str settingsPath, PortType defaultPort )noexcept(false):
-		PerpetualAsyncSocket{ clientThreadName, settingsPath, defaultPort },
-		ProtoClientSession{ _asyncHelper }
+		IClientSocket{ settingsPath, defaultPort }
 	{
 		Connect();
 	}
 
 	void ProtoClient::Connect()noexcept(false)
 	{
-		_initialized = true;
-		basio::ip::tcp::resolver resolver( _asyncHelper );
+		//_initialized = true;
+		tcp::resolver resolver( IOContextThread::GetContext() );
 		auto endpoints = resolver.resolve( Host, std::to_string(Port).c_str() );
 		try
 		{
-			basio::connect( _socket, endpoints );
-			INFO( "({}) connected to '{}:{}' "sv, ClientThreadName, Host, Port );
+			net::connect( _socket, endpoints );
+			//INFO( "Connected to '{}:{}' "sv, Host, Port );
 			_connected = true;
 			ReadHeader();
 		}

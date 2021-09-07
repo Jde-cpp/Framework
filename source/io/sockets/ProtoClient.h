@@ -11,38 +11,36 @@ ENABLE_WARNINGS
 
 namespace Jde::IO::Sockets
 {
-	namespace basio = boost::asio;
+	namespace net = boost::asio;
+	using tcp = net::ip::tcp;
+
 	struct ProtoClientSession
 	{
-		ProtoClientSession( boost::asio::io_context& context );
+		ProtoClientSession( /*boost::asio::io_context& context*/ );
 		virtual ~ProtoClientSession(){ DBGX( "~{}"sv, "ProtoClientSession" ); };
 		void Close( std::condition_variable* pCvClient=nullptr )noexcept;
 		virtual void OnClose()noexcept{};
 		virtual void OnConnected()noexcept{};
-		//JDE_NATIVE_VISIBILITY static VectorPtr<google::protobuf::uint8> ToBuffer( const google::protobuf::MessageLite& msg )noexcept(false);
 		static uint32 MessageLength( char* readMessageSize )noexcept;
 	protected:
-		//void Disconnect()noexcept;
 		virtual void OnDisconnect()noexcept=0;
 		void ReadHeader()noexcept;
 		void ReadBody( uint messageLength )noexcept;
 		virtual void Process( google::protobuf::uint8* pData, int size )noexcept=0;
 
 		std::atomic<bool> _connected{false};
-		basio::ip::tcp::socket _socket;
+		tcp::socket _socket;
 		char _readMessageSize[4];
-		//vector<google::protobuf::uint8> _message;
-		ELogLevel _logLevel{ ELogLevel::Debug };
 	};
 #pragma warning(push)
 #pragma warning( disable : 4459 )
-	struct ProtoClient : PerpetualAsyncSocket, ProtoClientSession
+	struct ProtoClient : IClientSocket, ProtoClientSession
 	{
 		ProtoClient( sv clientThreadName, str settingsPath, PortType defaultPort )noexcept(false);
 		virtual ~ProtoClient()=0;
 		void Connect()noexcept(false);
-	private:
-		void Run( sv name )noexcept;
+	//private:
+		//void Run( sv name )noexcept;
 	};
 	inline ProtoClient::~ProtoClient(){}
 #pragma warning(pop)
@@ -77,7 +75,7 @@ namespace Jde::IO::Sockets
 	{
 		auto data = IO::Proto::SizePrefixed( msg );
 		auto pBuffer = move( get<0>(data) ); var bufferSize = get<1>( data );
-		basio::async_write( _socket, basio::buffer(pBuffer.get(), bufferSize), [this, _=move(pBuffer), bufferSize]( std::error_code ec, uint length )
+		net::async_write( _socket, net::buffer(pBuffer.get(), bufferSize), [this, _=move(pBuffer), bufferSize]( std::error_code ec, uint length )
 		{
 			ASSERT( bufferSize==length );
 			if( ec )
@@ -92,7 +90,7 @@ namespace Jde::IO::Sockets
 	{
 		//TRACEX( "Writing:  {}"sv, s.size() );
 		auto pBuffer = move( get<0>(data) );
-		basio::async_write( _socket, basio::buffer(pBuffer, get<1>(data.get())), [this, _=move(pBuffer)](std::error_code ec, std::size_t / *length* /)
+		net::async_write( _socket, net::buffer(pBuffer, get<1>(data.get())), [this, _=move(pBuffer)](std::error_code ec, std::size_t / *length* /)
 		{
 			if( ec )
 			{

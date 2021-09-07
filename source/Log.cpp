@@ -123,6 +123,7 @@ namespace Jde
 		_logger.flush_on( (spdlog::level::level_enum)flushOn );
 		if( var p = Settings::TryGet<PortType>("logging/server/port"); p && *p )
 			Try( []{ SetServerSink(make_unique<Logging::ServerSink>()); } );
+		auto pServer = static_cast<Logging::ServerSink*>( _pServerSink.get() );
 		for( var& m : *Logging::_pMemoryLog )
 		{
  			using ctx = fmt::format_context;
@@ -137,8 +138,8 @@ namespace Jde
 			{
 				ERR( "{} - {}", m.MessageView, e.what() );
 			}
-			if( auto pServer=_pServerSink.get(); pServer && _serverLogLevel<=m.Level )
-				pServer->Log( m, m.Variables );
+			if( pServer && _serverLogLevel<=m.Level )
+				pServer->Log( Logging::Messages::Message{m} );
 		}
 		if( !(Logging::_logMemory=Settings::TryGet<bool>("logging/memory").value_or(false)) )
 			ClearMemoryLog();
@@ -147,20 +148,20 @@ namespace Jde
 		INFO( "log  minLevel='{}' flushOn='{}'", ELogLevelStrings[minLevel], ELogLevelStrings[(uint8)flushOn] );
 	}
 
-	void Logging::LogServer( Logging::MessageBase&& messageBase )noexcept
+	void Logging::LogServer( const MessageBase& m )noexcept
 	{
 		ASSERT( _pServerSink );
-		_pServerSink->Log( move(messageBase) );
+		_pServerSink->Log( m );
 	}
-	void Logging::LogServer( Logging::MessageBase&& messageBase, vector<string>&& values )noexcept
+	void Logging::LogServer( const MessageBase& m, vector<string>& values )noexcept
 	{
 		ASSERT( _pServerSink );
-		_pServerSink->Log( move(messageBase), move(values) );
+		_pServerSink->Log( m, values );
 	}
-	void Logging::LogServer( Logging::Messages::Message&& message )noexcept
+	void Logging::LogServer( Messages::Message& m )noexcept
 	{
 		ASSERT( _pServerSink );
-		_pServerSink->Log( move(message) );
+		_pServerSink->Log( m );
 	}
 
 /*		void LogEtw( const Logging::MessageBase& messageBase )

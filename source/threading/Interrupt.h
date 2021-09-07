@@ -42,6 +42,6 @@ namespace Jde::Threading
 		const string _threadName;
 		std::atomic<bool> _paused{false};
 		std::chrono::nanoseconds _refreshRate;
-		const ELogLevel _logLevel{ELogLevel::Trace};
+		const ELogLevel _logLevel{ELogLevel::Debug};
 	};
 }

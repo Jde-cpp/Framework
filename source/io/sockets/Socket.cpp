@@ -8,33 +8,71 @@
 
 namespace Jde::IO::Sockets
 {
+	ELogLevel _logLevel{ ELogLevel::Debug };
+	ELogLevel LogLevel()noexcept{ return _logLevel; }
+	up<IOContextThread> _pInstance;
+	net::io_context& IOContextThread::GetContext()noexcept
+	{
+		if( !_pInstance )
+			_pInstance = make_unique<IOContextThread>();
+		return _pInstance->_ioc;
+	}
+
+	IOContextThread::IOContextThread()noexcept:
+		_ioc{1},
+		_keepAlive{ net::make_work_guard(_ioc) },
+		_thread{ [&](){Run();} }
+	{
+		LOG( LogLevel(), "IOContextThread::IOContextThread" );
+	}
+
+/*	void IOContextThread::Shutdown()noexcept
+	{
+		DBG( "({}) - Shutdown.", ThreadName );
+		_ioc.stop();
+		DBG( "({}) - ~Shutdown.", ThreadName );
+	}*/
+
+	void IOContextThread::Run()noexcept
+	{
+		Threading::SetThreadDscrptn( ThreadName );
+		LOG( LogLevel(), "({})Thread - Entering."sv, ThreadName );
+		boost::system::error_code ec;
+		_ioc.run( ec );
+		LOG( LogLevel(), "({})Thread - Leaving - {} - {}."sv, ThreadName, ec.value(), ec.message() );
+	}
+
 	using std::system_error;
-	AsyncSocket::AsyncSocket( sv clientThreadName, str settingsPath, PortType defaultPort )noexcept(false):
-		AsyncSocket( Settings::TryGet<PortType>(settingsPath+"/port").value_or(defaultPort), clientThreadName, Settings::TryGet<string>(settingsPath+"/host").value_or("localhost") )
-	{}
-/*	AsyncSocket::AsyncSocket( sv clientThreadName, str settingsPath )noexcept(false):
-		AsyncSocket( Settings::Get<PortType>(settingsPath+"/port"), clientThreadName, Settings::TryGet<string>(settingsPath+"/host").value_or("localhost") )
-	{}*/
 	PortType CheckPort( PortType v )noexcept(false)
 	{
 		THROW_IF( !v, "port==0" );
 		return v;
 	}
-	AsyncSocket::AsyncSocket( PortType port, sv clientThreadName, sv host )noexcept(false):
-		ClientThreadName{ clientThreadName },
-		Host{ host },
-		Port{ CheckPort(port) },
-		_thread{ [&](){Run();} }
-	{}
 
-	AsyncSocket::~AsyncSocket()
+	ISocket::ISocket( str settingsPath, PortType defaultPort )noexcept(false):
+		Port{ CheckPort(Settings::TryGet<PortType>(settingsPath+"/port").value_or(defaultPort)) }
 	{
-		TRACEX( "{}"sv, "~AsyncSocket"sv );
-		_asyncHelper.stop();
-		_thread.join();
+//		LOG( LogLevel(), "IClientSocket::IClientSocket( path='{}', Port='{}' )", settingsPath, Port );
 	}
 
-	void AsyncSocket::Run()noexcept
+	IClientSocket::IClientSocket( str settingsPath, PortType defaultPort )noexcept(false):
+		ISocket{ settingsPath, defaultPort },
+		Host{ Settings::TryGet<string>(settingsPath+"/host").value_or("localhost") }
+	{
+		LOG( LogLevel(), "IClientSocket::IClientSocket( path='{}', Host='{}', Port='{}' )", settingsPath, Host, Port );
+	}
+/*	ISocket::ISocket( sv clientThreadName, str settingsPath )noexcept(false):
+		ISocket( Settings::Get<PortType>(settingsPath+"/port"), clientThreadName, Settings::TryGet<string>(settingsPath+"/host").value_or("localhost") )
+	{}*/
+
+	IClientSocket::~IClientSocket()
+	{
+		LOG( LogLevel(), "IClientSocket::~IClientSocket" );
+//		_asyncHelper.stop();
+//		_thread.join();
+	}
+
+/*	void AsyncSocket::Run()noexcept
 	{
 		while( !_initialized )
 			std::this_thread::yield();
@@ -44,7 +82,7 @@ namespace Jde::IO::Sockets
 		DBG( "({})Thread - Leaving."sv, ClientThreadName );
 		//OnClose();
 	}
-
+*/
 /*	void AsyncSocket::Shutdown()noexcept
 	{
 		_asyncHelper.stop();
@@ -66,9 +104,10 @@ namespace Jde::IO::Sockets
 		AsyncSocket{ clientThreadName, settingsPath },
 		_keepAlive{ boost::asio::make_work_guard(_asyncHelper) }
 	{}
-*/
+
 	PerpetualAsyncSocket::PerpetualAsyncSocket( sv clientThreadName, str settingsPath, PortType defaultPort )noexcept(false):
 		AsyncSocket{ clientThreadName, settingsPath, defaultPort },
 		_keepAlive{ boost::asio::make_work_guard(_asyncHelper) }
 	{}
+*/
 }

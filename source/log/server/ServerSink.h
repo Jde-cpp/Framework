@@ -25,11 +25,11 @@ namespace Logging
 		//IServerSink( ELogLevel serverLevel )noexcept:_level{serverLevel}{}
 		virtual ~IServerSink();
 
-		virtual void Destroy()noexcept;
+		//virtual void Destroy()noexcept;
 
-		virtual void Log( Messages::Message&& message )noexcept=0;
-		virtual void Log( MessageBase&& messageBase )noexcept=0;
-		virtual void Log( MessageBase messageBase, vector<string> values )noexcept=0;
+		virtual void Log( Messages::Message& message )noexcept=0;
+		virtual void Log( const MessageBase& messageBase )noexcept=0;
+		virtual void Log( const MessageBase& messageBase, vector<string>& values )noexcept=0;
 
 		//ELogLevel GetLogLevel()const noexcept; void SetLogLevel(ELogLevel level)noexcept;
 
@@ -38,10 +38,10 @@ namespace Logging
 		bool ShouldSendFunction( uint messageId )noexcept{ return _functionsSent.emplace(messageId); }
 		bool ShouldSendUser( uint messageId )noexcept{ return _usersSent.emplace(messageId); }
 		bool ShouldSendThread( uint messageId )noexcept{ return _threadsSent.emplace(messageId); }
-		virtual void SendCustom( uint32 /*requestId*/, const std::string& /*bytes*/ )noexcept{ CRITICAL("SendCustom not implemented"sv); }
+		virtual void SendCustom( uint32 /*requestId*/, str /*bytes*/ )noexcept{ CRITICAL("SendCustom not implemented"sv); }
 		std::atomic<bool> SendStatus{false};
 	protected:
-		sp<IServerSink> GetInstnace()noexcept;
+		//sp<IServerSink> GetInstnace()noexcept;
 		UnorderedSet<uint> _messagesSent;
 		UnorderedSet<uint> _filesSent;
 		UnorderedSet<uint> _functionsSent;
@@ -78,29 +78,32 @@ namespace Logging
 		};
 	}
 	typedef IO::Sockets::TProtoClient<Logging::Proto::ToServer,Logging::Proto::FromServer> ProtoBase;
-	struct ServerSink final: IServerSink, Threading::Interrupt, ProtoBase
+	struct ServerSink final: IServerSink, ProtoBase //, Threading::Interrupt
 	{
+		using base=ProtoBase;
 		ServerSink()noexcept(false);
 		//static JDE_NATIVE_VISIBILITY sp<ServerSink> Create( sv host, uint16 port )noexcept(false);
 		~ServerSink(){DBGX("{}"sv, "~ServerSink");}
-		void Log( Messages::Message&& message )noexcept override;
-		void Log( MessageBase&& messageBase )noexcept override;
-		void Log( MessageBase messageBase, vector<string> values )noexcept override;
+		void Log( Messages::Message& m )noexcept override{ Write( m, m.Timestamp, &m.Variables ); }
+		void Log( const MessageBase& m )noexcept override{ Write( m, Clock::now() ); }
+		void Log( const MessageBase& m, vector<string>& values )noexcept override{ Write( m, Clock::now(), &values ); };
 
-		void OnTimeout()noexcept override;
-		void OnAwake()noexcept override{OnTimeout();}//not expecting...
+		//void OnTimeout()noexcept override;
+		//void OnAwake()noexcept override{OnTimeout();}//not expecting...
 		void OnDisconnect()noexcept override;
 		void OnConnected()noexcept override;
-		void Destroy()noexcept override;
-		void SendCustom( uint32 requestId, const std::string& bytes )noexcept override;
+		//void Destroy()noexcept override;
+		void SendCustom( uint32 requestId, str bytes )noexcept override;
 		void SetCustomFunction( function<Coroutine::Task2(uint32,string&&)>&& fnctn )noexcept{_customFunction=fnctn;}
 	private:
+		void Write( const MessageBase& message, TimePoint time, vector<string>* pValues=nullptr )noexcept;
 		void OnReceive( Logging::Proto::FromServer& fromServer )noexcept override;
-		TimePoint _lastConnectionCheck;
-		QueueMove<Messages::Message> _messages;
+		//TimePoint _lastConnectionCheck;
+		//QueueMove<Messages::Message> _messages;
 		uint _instanceId{0};
 		std::atomic<bool> _stringsLoaded{false};
 		string _applicationName;
 		function<Coroutine::Task2(uint32,string&&)> _customFunction;
+		Proto::ToServer _buffer; std::atomic<bool> _bufferMutex;
 	};
 }}
