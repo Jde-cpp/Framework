@@ -16,10 +16,9 @@ namespace Jde::IO::Sockets
 
 	struct ProtoClientSession
 	{
-		ProtoClientSession( /*boost::asio::io_context& context*/ );
-		virtual ~ProtoClientSession(){ DBGX( "~{}"sv, "ProtoClientSession" ); };
+		ProtoClientSession();
+		virtual ~ProtoClientSession(){ DBGX( "~ProtoClientSession -start"); _socket.close(); DBGX( "~ProtoClientSession-end"); };
 		void Close( std::condition_variable* pCvClient=nullptr )noexcept;
-		virtual void OnClose()noexcept{};
 		virtual void OnConnected()noexcept{};
 		static uint32 MessageLength( char* readMessageSize )noexcept;
 	protected:
@@ -28,7 +27,8 @@ namespace Jde::IO::Sockets
 		void ReadBody( uint messageLength )noexcept;
 		virtual void Process( google::protobuf::uint8* pData, int size )noexcept=0;
 
-		std::atomic<bool> _connected{false};
+		std::atomic<bool> _connected{ false };
+		sp<IOContextThread> _pIOContext;
 		tcp::socket _socket;
 		char _readMessageSize[4];
 	};
@@ -36,11 +36,9 @@ namespace Jde::IO::Sockets
 #pragma warning( disable : 4459 )
 	struct ProtoClient : IClientSocket, ProtoClientSession
 	{
-		ProtoClient( sv clientThreadName, str settingsPath, PortType defaultPort )noexcept(false);
+		ProtoClient( str settingsPath, PortType defaultPort )noexcept(false);
 		virtual ~ProtoClient()=0;
 		void Connect()noexcept(false);
-	//private:
-		//void Run( sv name )noexcept;
 	};
 	inline ProtoClient::~ProtoClient(){}
 #pragma warning(pop)
@@ -48,16 +46,14 @@ namespace Jde::IO::Sockets
 	template<typename TOut, typename TIn>
 	struct TProtoClient : ProtoClient
 	{
-		TProtoClient( sv clientThreadName, str settingsPath, PortType defaultPort )noexcept(false):
-			ProtoClient{ clientThreadName, settingsPath, defaultPort }
+		TProtoClient( str settingsPath, PortType defaultPort )noexcept(false):
+			ProtoClient{ settingsPath, defaultPort }
 		{}
 
    	virtual ~TProtoClient()=default;
 		void Process( google::protobuf::uint8* pData, int size )noexcept override;
 		void Write( const TOut& message )noexcept;
 		virtual void OnReceive( TIn& pIn )noexcept=0;
-	//private:
-//		void Write( tuple<unique_ptr<google::protobuf::uint8[]>,uint>&& s )noexcept(false);
 	};
 #define var const auto
 	$::Process( google::protobuf::uint8* pData, int size )noexcept->void
@@ -77,29 +73,16 @@ namespace Jde::IO::Sockets
 		auto pBuffer = move( get<0>(data) ); var bufferSize = get<1>( data );
 		net::async_write( _socket, net::buffer(pBuffer.get(), bufferSize), [this, _=move(pBuffer), bufferSize]( std::error_code ec, uint length )
 		{
-			ASSERT( bufferSize==length );
 			if( ec )
 			{
 				ERR( "async_write Failed - {}"sv, ec.value() );
 				_socket.close();
+				_pIOContext = nullptr;
 			}
+			else
+				ASSERT( bufferSize==length );
 		});
 	}
-
-/*	$::Write( tuple<unique_ptr<google::protobuf::uint8[]>,uint>&& data )noexcept(false)->void
-	{
-		//TRACEX( "Writing:  {}"sv, s.size() );
-		auto pBuffer = move( get<0>(data) );
-		net::async_write( _socket, net::buffer(pBuffer, get<1>(data.get())), [this, _=move(pBuffer)](std::error_code ec, std::size_t / *length* /)
-		{
-			if( ec )
-			{
-				ERR( "async_write Failed - {}"sv, ec.value() );
-				_socket.close();
-			}
-		});
-	}
-	*/
+}
 #undef var
 #undef $
-}

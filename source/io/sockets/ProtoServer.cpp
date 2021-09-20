@@ -8,36 +8,13 @@ namespace Jde::IO::Sockets
 {
 	ProtoServer::ProtoServer( PortType port )noexcept:
 		ISocket{ port },
-		_acceptor{ IOContextThread::GetContext(), tcp::endpoint{tcp::v4(), port} }
-	{
-		//LOG_MEMORY( ELogLevel::Information, string{"({}) Accepting on port '{}'"}, Port );
-		//_initialized = true;
-	}
+		_pIOContext{ IOContextThread::Instance() },
+		_acceptor{ _pIOContext->Context(), tcp::endpoint{tcp::v4(), port} }
+	{}
 
 	ProtoServer::~ProtoServer()
-	{
-	/*	TODO
-		auto onClose = [this]()
-		{
-			try
-			{
-				//if( _pAcceptor )
-				//	_pAcceptor->close();
-			}
-			catch( const std::system_error& e )
-			{
-				GetDefaultLogger()->error( "Server::~Server({})", e.what() );
-			}
-		};*/
-		//_pAcceptor->get_io_service().post( onClose ); boost 1_71 https://github.com/rstudio/rstudio/issues/4636
-	}
+	{}
 
-/*	void ProtoServer::Close()noexcept
-	{
-		_acceptor.close();
-		AsyncSocket::Close();
-	}
-*/
 	void ProtoServer::Accept()noexcept
 	{
 		_acceptor.async_accept( [this]( std::error_code ec, tcp::socket socket )noexcept
@@ -55,15 +32,6 @@ namespace Jde::IO::Sockets
 		});
 	}
 
-	//	virtual ISession OnSessionStart( SessionPK id )noexcept=0;
-/*	void ProtoServer::Run()noexcept
-	{
-		Threading::SetThreadDscrptn( "ProtoServer::Run" );
-		DBG( "ProtoServer::Run"sv );
-		_asyncHelper.run();
-		DBG( "ProtoServer::Run Exit"sv );
-	}
-*/
 	ProtoSession::ProtoSession( tcp::socket&& socket, SessionPK id )noexcept:
 		Id{ id },
 		_socket( std::move(socket) )
@@ -73,16 +41,15 @@ namespace Jde::IO::Sockets
 
 	void ProtoSession::ReadHeader()noexcept
 	{
-		LOG( _logLevel, "ProtoSession::ReadHeader" );
 		net::async_read( _socket, net::buffer(static_cast<void*>(_readMessageSize), sizeof(_readMessageSize)), [&]( std::error_code ec, uint headerLength )
 		{
 			try
 			{
-				THROW_IFX( ec, CodeException(move(ec), ec.value()==2 || ec.value()==10054 || ec.value()==104 ? _logLevel : ELogLevel::Error) );
+				THROW_IFX( ec && ec.value()==2, CodeException(fmt::format("({}) - Disconnected", Id), move(ec), _logLevel) );
+				THROW_IFX( ec, CodeException(move(ec), ec.value()==10054 || ec.value()==104 ? _logLevel : ELogLevel::Error) );
 				THROW_IF( headerLength!=4, "only read '{}'"sv, headerLength );
 
 				var messageLength = ProtoClientSession::MessageLength( _readMessageSize );
-				LOG( _logLevel, "messageLength: {}", messageLength );
 				ReadBody( messageLength );
 			}
 			catch( const Exception& e )

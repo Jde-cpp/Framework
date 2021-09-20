@@ -8,7 +8,7 @@
 #include "../coroutine/Awaitable.h"
 
 #define 🚪 JDE_NATIVE_VISIBILITY auto
-namespace Jde{ enum class ELogLevel : uint8; }
+namespace Jde{ enum class ELogLevel : int8; }
 namespace Jde::Threading
 {
 	🚪 UniqueLock( str key )noexcept->std::unique_lock<std::shared_mutex>;

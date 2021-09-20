@@ -3,7 +3,7 @@
 #include <shared_mutex>
 #include <jde/Log.h>
 
-namespace Jde{ enum class ELogLevel : uint8; }
+namespace Jde{ enum class ELogLevel : int8; }
 namespace Jde::Threading
 {
 	using namespace std::literals;
@@ -28,7 +28,6 @@ namespace Jde::Threading
 	JDE_NATIVE_VISIBILITY void SetThreadDscrptn( sv description )noexcept;
 	JDE_NATIVE_VISIBILITY void SetThreadInfo( const ThreadParam& param )noexcept;
 	HThread BumpThreadHandle()noexcept;
-	//JDE_NATIVE_VISIBILITY void SetThreadInfo( ThreadParam& param )noexcept;
 	JDE_NATIVE_VISIBILITY const char* GetThreadDescription()noexcept;
 
 	void Run( const size_t maxWorkerCount, size_t runCount, std::function<void(size_t)> func )noexcept;

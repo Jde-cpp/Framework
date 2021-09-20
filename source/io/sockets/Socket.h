@@ -6,7 +6,6 @@
 #include "../../threading/jthread.h"
 #include "../../collections/UnorderedMap.h"
 
-//namespace boost::asio{ class io_context; class executor_work_guard; class executor_type; }
 namespace Jde::Threading{ struct InterruptibleThread; }
 
 namespace Jde::IO::Sockets
@@ -16,17 +15,16 @@ namespace Jde::IO::Sockets
 	using SessionPK=uint;
 	struct ISession
 	{
-		//void Write( string&& data )noexcept;
 		const SessionPK Id;
-
 	};
 
 	struct JDE_NATIVE_VISIBILITY IOContextThread final //: IShutdown
 	{
-		IOContextThread()noexcept;
-		//void Shutdown()noexcept override;
-		static net::io_context& GetContext()noexcept;
+		static sp<IOContextThread> Instance()noexcept;
+		net::io_context& Context()noexcept{ return _ioc; }
+		~IOContextThread(){ DBG( "~IOContextThread" ); _ioc.stop(); _thread.join(); }
 	private:
+		IOContextThread()noexcept;
 		void Run()noexcept;
 		net::io_context _ioc;
 		net::executor_work_guard<boost::asio::io_context::executor_type> _keepAlive;
@@ -61,23 +59,6 @@ namespace Jde::IO::Sockets
 		virtual ~IClientSocket()=0;
 	protected:
 		IClientSocket( str settingsPath, PortType defaultPort )noexcept(false);
-		//net::io_context _asyncHelper;
-		//const string ClientThreadName;
 		const string Host;
-	//protected:
-	//	atomic<bool> _initialized{false};
-	private:
-	//	AsyncSocket( PortType port, sv clientThreadName, sv host )noexcept(false);
-	//	void Run()noexcept;
-	//	std::thread _thread;
 	};
-
-/*	struct PerpetualAsyncSocket : protected AsyncSocket
-	{
-		PerpetualAsyncSocket( sv clientThreadName, str settingsPath, PortType defaultPort )noexcept(false);
-		virtual ~PerpetualAsyncSocket()=default;
-	protected:
-		net::executor_work_guard<boost::asio::io_context::executor_type> _keepAlive;
-	};
-*/
 }

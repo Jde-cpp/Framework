@@ -5,8 +5,9 @@
 #include <shared_mutex>
 #include <functional>
 #include <jde/TypeDefs.h>
-//#include "../SmartPointer.h"
 
+#define LOCK unique_lock<shared_mutex> l(_mutex)
+#define var const auto
 namespace Jde
 {
 	using std::unordered_map;
@@ -14,30 +15,31 @@ namespace Jde
 	using std::shared_lock;
 	using std::unique_lock;
 	using std::function;
-namespace Collections
+}
+namespace Jde::Collections
 {
 	template<typename TKey, typename TValue>
-	class UnorderedMap : std::unordered_map<TKey,sp<TValue>>
+	struct UnorderedMap : private std::unordered_map<TKey,sp<TValue>>
 	{
-		typedef std::unordered_map<TKey,sp<TValue>> BaseClass;
-	public:
-		UnorderedMap( )=default;
+		typedef std::unordered_map<TKey,sp<TValue>> base;
+		UnorderedMap()=default;
 		UnorderedMap( const UnorderedMap& copy );
+		UnorderedMap& operator=( UnorderedMap&& x ){ LOCK; clear(); for( var& i : x )emplace(i.first,i.second);  x.clear(); return *this; }
 		bool erase( const TKey& item )noexcept;
 		bool eraseIf( const TKey& item, function<bool(const TValue&)> func )noexcept;
 		uint eraseIf( function<bool(const TValue&)> func )noexcept;
-		void clear()noexcept{ unique_lock<std::shared_mutex> l(_mutex); BaseClass::clear(); }
+		void clear()noexcept{ unique_lock<shared_mutex> l(_mutex); base::clear(); }
 		uint size()const noexcept;
 		//shared_ptr<TValue> FindNC( const TKey& key ){ return const_cast<shared_ptr<TValue>>( Find(key) ); }
 		bool IfNone( function<bool(const TKey&,const TValue&)> ifFunction, function<void()> function );
 		sp<TValue> Find( const TKey& key )const noexcept;
-		sp<TValue> FindFirst( std::function<bool(const TValue&)> where );
-		bool ForFirst( std::function<bool(const TKey&, TValue&)> func );
-		uint ForEach( std::function<void(const TKey&, const TValue&)>& )const;
-		uint ForEach( std::function<void(const TKey&, TValue&)>& );
-		template<class... Args >
+		sp<TValue> FindFirst( function<bool(const TValue&)> where );
+		bool ForFirst( function<bool(const TKey&, TValue&)> func );
+		uint ForEach( function<void(const TKey&, const TValue&)> )const;
+		uint ForEach( function<void(const TKey&, TValue&)> );
+		template<class... Args>
 		std::pair<std::pair<TKey,sp<TValue>>,bool> emplace( Args&&... args );
-		template<class... Args >
+		template<class... Args>
 		bool Insert( function<void(TValue&)> afterInsert, Args&&... args );
 		bool TryEmplace( function<void(TValue&)> afterInsert, const TKey& key );
 		void Update( const TKey& key, function<void(TValue&)>& func );
@@ -47,9 +49,9 @@ namespace Collections
 		sp<std::forward_list<sp<TValue>>> Values()const;
 		//bool Set( const TKey& key, const TValue& value )noexcept;
 		bool Set( const TKey& key, sp<TValue> pValue )noexcept;
-		std::unique_lock<std::shared_mutex> Lock()noexcept{ return std::unique_lock<std::shared_mutex>{_mutex}; }
+		std::unique_lock<shared_mutex> Lock()noexcept{ return std::unique_lock<shared_mutex>{_mutex}; }
 	private:
-		mutable std::shared_mutex _mutex;
+		mutable shared_mutex _mutex;
 	};
 
 	template<class TKey, class TValue> using UnorderedMapPtr = sp<UnorderedMap<TKey,TValue>>;
@@ -57,26 +59,26 @@ namespace Collections
 	template<typename TKey, typename TValue>
 	UnorderedMap<TKey,TValue>::UnorderedMap( const UnorderedMap& copy )
 	{
-		std::unique_lock<std::shared_mutex> l( copy._mutex );
+		std::unique_lock<shared_mutex> l( copy._mutex );
 		for( const auto& [key,value] : copy )
-			BaseClass::emplace( key, value );
+			base::emplace( key, value );
 	}
 
 	template<typename TKey, typename TValue>
-	void UnorderedMap<TKey,TValue>::Update( const TKey& key, std::function<void(TValue& value)>& func )
+	void UnorderedMap<TKey,TValue>::Update( const TKey& key, function<void(TValue& value)>& func )
 	{
- 		shared_lock<std::shared_mutex> l(_mutex);
-		auto pItem = BaseClass::find( key );
-		if( pItem!=BaseClass::end() )
+ 		shared_lock<shared_mutex> l(_mutex);
+		auto pItem = base::find( key );
+		if( pItem!=base::end() )
 			func( *pItem->second );
 	}
 
 	template<typename TKey, typename TValue>
 	void UnorderedMap<TKey,TValue>::Where( const TKey& key, function<void(const TValue&)> func )
 	{
-		shared_lock<std::shared_mutex> l(_mutex);
-		auto pItem = BaseClass::find( key );
-		if( pItem!=BaseClass::end() )
+		shared_lock<shared_mutex> l(_mutex);
+		auto pItem = base::find( key );
+		if( pItem!=base::end() )
 			func( *pItem->second );
 	}
 
@@ -84,10 +86,10 @@ namespace Collections
 	template<class... Args >
 	void UnorderedMap<TKey,TValue>::AddOrUpdate( TKey key, function<sp<TValue>()> add, function<void(TValue&)> update )
 	{
- 		unique_lock<std::shared_mutex> l(_mutex);
-		auto pItem = BaseClass::find( key );
-		if( pItem==BaseClass::end() )
-			BaseClass::emplace( key, add() );
+ 		unique_lock<shared_mutex> l(_mutex);
+		auto pItem = base::find( key );
+		if( pItem==base::end() )
+			base::emplace( key, add() );
 		else
 			update( *pItem->second );
 	}
@@ -96,29 +98,29 @@ namespace Collections
 	template<typename TKey, typename TValue>
 	bool UnorderedMap<TKey,TValue>::erase( const TKey& item )noexcept
 	{
-		unique_lock<std::shared_mutex> l( _mutex );
-		return BaseClass::erase( item )>0;
+		unique_lock<shared_mutex> l( _mutex );
+		return base::erase( item )>0;
 	}
 	template<typename TKey, typename TValue>
 	bool UnorderedMap<TKey,TValue>::eraseIf( const TKey& key, function<bool(const TValue&)> func )noexcept
 	{
-		unique_lock<std::shared_mutex> l( _mutex );
-		auto pItem = BaseClass::find( key );
-		bool erase = pItem!=BaseClass::end() && func( *pItem->second );
+		unique_lock<shared_mutex> l( _mutex );
+		auto pItem = base::find( key );
+		bool erase = pItem!=base::end() && func( *pItem->second );
 		if( erase )
-			BaseClass::erase( pItem );
+			base::erase( pItem );
 		return erase;
 	}
 	template<typename TKey, typename TValue>
 	uint UnorderedMap<TKey,TValue>::eraseIf( function<bool(const TValue&)> func )noexcept
 	{
-		unique_lock<std::shared_mutex> l( _mutex );
+		unique_lock<shared_mutex> l( _mutex );
 		uint count = 0;
-		for( auto pItem = BaseClass::begin(); pItem!=BaseClass::end(); )
+		for( auto pItem = base::begin(); pItem!=base::end(); )
 		{
 			if( func(*pItem->second) )
 			{
-				pItem = BaseClass::erase( pItem );
+				pItem = base::erase( pItem );
 				++count;
 			}
 			else
@@ -129,16 +131,16 @@ namespace Collections
 	template<typename TKey, typename TValue>
 	uint UnorderedMap<TKey,TValue>::size()const noexcept
 	{
-		shared_lock<std::shared_mutex> l(_mutex);
-		return BaseClass::size();
+		shared_lock<shared_mutex> l(_mutex);
+		return base::size();
 	}
 
 	template<typename TKey, typename TValue>
 	template<class... Args >
 	std::pair<std::pair<TKey,sp<TValue>>,bool> UnorderedMap<TKey,TValue>::emplace( Args&&... args )
 	{
-		std::unique_lock<std::shared_mutex> l{_mutex};
-		auto result = BaseClass::emplace( args... );
+		std::unique_lock<shared_mutex> l{_mutex};
+		auto result = base::emplace( args... );
 		auto& pRecord = result.first;
 		return make_pair( make_pair(pRecord->first, pRecord->second), result.second );
 	}
@@ -147,15 +149,15 @@ namespace Collections
 	template<class... Args >
 	bool UnorderedMap<TKey,TValue>::Insert( function<void(TValue&)> afterInsert, Args&&... args )
 	{
-		std::unique_lock<std::shared_mutex> l{_mutex};
-		auto result = BaseClass::emplace( args... );
+		std::unique_lock<shared_mutex> l{_mutex};
+		auto result = base::emplace( args... );
 		afterInsert( *result.first->second );
 		return result.second;
 	}
 	template<typename TKey, typename TValue>
 	bool UnorderedMap<TKey,TValue>::TryEmplace( function<void(TValue&)> afterInsert, const TKey& key )
 	{
-		auto iteratorInserted = BaseClass::try_emplace( key );
+		auto iteratorInserted = base::try_emplace( key );
 		afterInsert( iteratorInserted.first->second );
 		return iteratorInserted.second;
 	}
@@ -163,8 +165,8 @@ namespace Collections
 	template<typename TKey, typename TValue>
 	bool UnorderedMap<TKey,TValue>::IfNone( function<bool(const TKey&,const TValue&)> ifFunction, function<void()> func )
 	{
-		auto pValue = std::find_if( BaseClass::begin(), BaseClass::end(), [&ifFunction](const std::pair<TKey,sp<TValue>>& keyValue){ return ifFunction(keyValue.first, *keyValue.second);} );
-		bool isNone = pValue==BaseClass::end();
+		auto pValue = std::find_if( base::begin(), base::end(), [&ifFunction](const std::pair<TKey,sp<TValue>>& keyValue){ return ifFunction(keyValue.first, *keyValue.second);} );
+		bool isNone = pValue==base::end();
 		if( isNone )
 			func();
 		return isNone;
@@ -172,14 +174,14 @@ namespace Collections
 	template<typename TKey, typename TValue>
 	sp<TValue> UnorderedMap<TKey,TValue>::Find( const TKey& key )const noexcept
 	{
- 		shared_lock<std::shared_mutex> l(_mutex);
-		const auto pItem = BaseClass::find( key );
-		return pItem==BaseClass::end() ? nullptr : pItem->second;
+ 		shared_lock<shared_mutex> l(_mutex);
+		const auto pItem = base::find( key );
+		return pItem==base::end() ? nullptr : pItem->second;
 	}
 	template<typename TKey, typename TValue>
-	shared_ptr<TValue> UnorderedMap<TKey,TValue>::FindFirst( std::function<bool(const TValue&)> where )
+	shared_ptr<TValue> UnorderedMap<TKey,TValue>::FindFirst( function<bool(const TValue&)> where )
 	{
- 		shared_lock<std::shared_mutex> l(_mutex);
+ 		shared_lock<shared_mutex> l(_mutex);
 		shared_ptr<TValue> pFound;
 		for( const auto& idValuePtr : *this )
 		{
@@ -192,9 +194,9 @@ namespace Collections
 		return pFound;
 	}
 	template<typename TKey, typename TValue>
-	bool UnorderedMap<TKey,TValue>::ForFirst( std::function<bool(const TKey&, TValue&)> func )
+	bool UnorderedMap<TKey,TValue>::ForFirst( function<bool(const TKey&, TValue&)> func )
 	{
- 		std::unique_lock<std::shared_mutex> l(_mutex);
+ 		std::unique_lock<shared_mutex> l(_mutex);
 		bool found = false;
 		for( const auto& [key, pValue] : *this )
 		{
@@ -206,19 +208,19 @@ namespace Collections
 	}
 #pragma region ForEach
 	template<typename TKey, typename TValue>
-	uint UnorderedMap<TKey,TValue>::ForEach( std::function<void(const TKey&, const TValue&)>& fncn )const
+	uint UnorderedMap<TKey,TValue>::ForEach( function<void(const TKey&, const TValue&)> fncn )const
 	{
- 		shared_lock<std::shared_mutex> l(_mutex);
+ 		shared_lock<shared_mutex> l(_mutex);
 		const auto count = size();
 		for( const auto& [id, pValue] : *this )
 			fncn( id, *pValue );
 		return count;
 	}
 	template<typename TKey, typename TValue>
-	uint UnorderedMap<TKey,TValue>::ForEach( std::function<void(const TKey&, TValue&)>& fncn )
+	uint UnorderedMap<TKey,TValue>::ForEach( function<void(const TKey&, TValue&)> fncn )
 	{
- 		unique_lock<std::shared_mutex> l( _mutex );
-		const auto count = BaseClass::size();
+ 		unique_lock<shared_mutex> l( _mutex );
+		const auto count = base::size();
 		for( const auto& [id, pValue] : *this )
 			fncn( id, *pValue );
 		return count;
@@ -227,26 +229,22 @@ namespace Collections
 	template<typename TKey, typename TValue>
 	sp<std::forward_list<sp<TValue>>> UnorderedMap<TKey,TValue>::Values()const
 	{
- 		shared_lock<std::shared_mutex> l(_mutex);
+ 		shared_lock<shared_mutex> l(_mutex);
 		auto values = make_shared<std::forward_list<sp<TValue>>>();
-		for( typename BaseClass::const_iterator ppValue = BaseClass::begin();  ppValue != BaseClass::end(); ++ppValue )
+		for( typename base::const_iterator ppValue = base::begin();  ppValue != base::end(); ++ppValue )
 			values->push_front( ppValue->second );
 		return values;
 	}
-/*	template<typename TKey, typename TValue>
-	bool UnorderedMap<TKey,TValue>::Set( const TKey& key, const TValue& value )noexcept
-	{
-		return Set()
-		auto newValue = make_shared<TValue>( value );
-	}*/
+
 	template<typename TKey, typename TValue>
 	bool UnorderedMap<TKey,TValue>::Set( const TKey& key, sp<TValue> pValue )noexcept
 	{
-		unique_lock<std::shared_mutex> l( _mutex );
-		auto result = BaseClass::emplace( key, pValue );
+		unique_lock<shared_mutex> l( _mutex );
+		auto result = base::emplace( key, pValue );
 		if( !result.second )
 			result.first->second = pValue;
 		return result.second;
 	}
-
-}}
+}
+#undef LOCK
+#undef var

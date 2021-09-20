@@ -21,16 +21,13 @@ namespace Jde::Settings
 		Container( const json& json )noexcept;
 		Container( path jsonFile )noexcept(false);
 		α TryMembers( sv path )noexcept->flat_map<string,Container>;
-		//bool Bool( sv path, bool dflt )noexcept;
 		bool Have( sv path )noexcept;
-		//string String( sv path )noexcept;
-		//uint16 Uint16( sv path )noexcept;
-
 		α FindPath( sv path )const noexcept->optional<json>;
 		ⓣ TryArray( sv path )noexcept->vector<T>;
 		ⓣ Map( sv path )noexcept->map<string,T>;
 
-		//fs::path Path( sv path, path dflt=fs::path() )const noexcept;
+		α ForEach( sv path, function<void(sv, const nlohmann::json&)> f )noexcept->void;
+
 		sp<Container> SubContainer( sv entry )const noexcept(false);
 		optional<Container> TrySubContainer( sv entry )const noexcept;
 		ⓣ Get( sv path )const noexcept(false)->T;
@@ -63,8 +60,15 @@ namespace Jde::Settings
 	}
 	$ Container::TryGet<ELogLevel>( sv path )const noexcept->optional<ELogLevel>
 	{
-		var pText = TryGet<string>( path );
-		return pText && pText->size() ? Str::ToEnum<ELogLevel,array<sv,7>>(ELogLevelStrings, *pText) : nullopt;
+		optional<ELogLevel> level;
+		if( auto p = FindPath(path); p )
+		{
+			if( p->is_string() )
+				level = Str::ToEnum<ELogLevel,array<sv,7>>( ELogLevelStrings, p->get<string>() );
+			else if( p->is_number() && p->get<uint8>()<ELogLevelStrings.size() )
+				level = (ELogLevel)p->get<int8>();
+		}
+		return level;
 	}
 
 	inline α Container::TryMembers( sv path )noexcept->flat_map<string,Container>
@@ -89,22 +93,15 @@ namespace Jde::Settings
 	ⓣ Container::TryGet( sv path )const noexcept->optional<T>
 	{
 		auto p = FindPath( path );
-		return p ? optional<T>{ p->get<T>() } : nullopt;
-		/*var values = Str::Split( path, "/" );
-		Container container{ *_pJson };
-		optional<T> result;
-		for( uint i=0; i<values.size(); ++i )
+		try
 		{
-			var value = values[i];
-			auto p = container.Json().find( value );
-			if( p == container.Json().end() )
-				break;
-			if( i+1==values.size() )
-				result = p->get<T>();
-			else
-				container = Container{*p};
+			return p ? optional<T>{ p->get<T>() } : nullopt;
 		}
-		return result;*/
+		catch( const nlohmann::detail::type_error& e )
+		{
+			DBG_ONCE( "({}) - {}", path, e.what() );
+			return nullopt;
+		}
 	}
 
 	$ Container::TryArray<Container>( sv path )noexcept->vector<Container>
@@ -117,15 +114,15 @@ namespace Jde::Settings
 		}
 		return values;
 	}
-	ⓣ TryArray( sv path )noexcept{ return Global().TryArray<T>(path); }//vector<Container>
+	ⓣ TryArray( sv path )noexcept{ return Global().TryArray<T>(path); }
 
 	ⓣ Container::TryArray( sv path )noexcept->vector<T>
 	{
 		vector<T> values;
-		if( auto p = _pJson->find(path); p!=_pJson->end() )
+		if( auto p = FindPath(path); p && p->is_array() )
 		{
-			for( auto& element : *p )
-				values.push_back( element.get<T>() );
+			for( var& i : *p )
+				values.push_back( i.get<T>() );
 		}
 		return values;
 	}
@@ -142,29 +139,23 @@ namespace Jde::Settings
 		return values;
 	}
 
-/*	template<>
-	inline fs::path Container::Get( sv path, fs::path defaultValue )const noexcept
+	inline α Container::ForEach( sv path, function<void(sv, const nlohmann::json&)> f )noexcept->void
 	{
-		auto item = _pJson->find( path );
-		return item==_pJson->end() ? defaultValue : fs::path( item->get<string>() );
+
+		if( auto p = FindPath( path ); p && p->is_object() )
+		{
+			for( auto&& i : p->items() )
+				f( i.key(), i.value() );
+		}
 	}
 
-	ⓣ
-	T Container::Get( sv path, T defaultValue )const noexcept
-	{
-		auto item = _pJson->find( path );
-		return item==_pJson->end() ? defaultValue : item->get<T>();
-	}
-*/
 
 	ⓣ Get( sv path )noexcept(false){ return Global().Get<T>( path ); }
 	ⓣ TryGet( sv path )noexcept->optional<T>{ return Global().TryGet<T>( path ); }
 	$ TryGet<Duration>( sv path )noexcept->optional<Duration>{ return Global().TryGet<Duration>( path ); }
 	inline α TryMembers( sv path )noexcept->flat_map<string,Container>{ return Global().TryMembers( path ); }
 	$ TryGet<ELogLevel>( sv path )noexcept->optional<ELogLevel>{ return Global().TryGet<ELogLevel>( path ); }
-
-	//JDE_NATIVE_VISIBILITY sp<Container> GlobalPtr()noexcept;
-	//JDE_NATIVE_VISIBILITY void SetGlobal( sp<Container> container )noexcept;
+	inline α ForEach( sv path, function<void(sv, const nlohmann::json& v)> f )noexcept->void{ return Global().ForEach(path, f); }
 	ⓣ TryGetSubcontainer( sv container, sv path )noexcept->optional<T>
 	{
 		optional<T> v;
@@ -180,16 +171,6 @@ namespace Jde::Settings
 				v = pSub->TrySubContainer( path );
 		return v;
 	}
-/*
-	struct Server
-	{
-		string Name;
-		uint16 Port;
-	};
-
-	JDE_NATIVE_VISIBILITY void to_json( json& j, const Server& server );
-	JDE_NATIVE_VISIBILITY void from_json( const json& j, Server& server );
-*/
 }
 #undef var
 #undef 🚪

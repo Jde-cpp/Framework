@@ -39,7 +39,14 @@ namespace Jde::Coroutine
 		virtual ~IAwaitable()=0;
 
 		IAwaitable( str name={} )noexcept:base{name}{};
-		void await_suspend( typename base::THandle h )noexcept override{ base::await_suspend( h ); _pPromise = &h.promise(); }
+		void await_suspend( typename base::THandle h )noexcept override
+		{
+			base::await_suspend( h );
+			auto& ro = h.promise().get_return_object();
+			if( ro.HasResult() )
+				ro.Clear();
+			_pPromise = &h.promise();
+		}
 		typename base::TResult await_resume()noexcept override{ AwaitResume(); return _pPromise->get_return_object().GetResult(); }
 	protected:
 		typename base::TPromise* _pPromise{ nullptr };
@@ -90,7 +97,11 @@ namespace Jde::Coroutine
 		using base=IAwaitable;
 		AWrapper( function<Task2(HCoroutine h)> fnctn, str name={} )noexcept:base{name}, _fnctn{fnctn}{};
 
-		void await_suspend( HCoroutine h )noexcept override{ base::await_suspend( h ); _fnctn( move(h) ); }
+		void await_suspend( HCoroutine h )noexcept override
+		{
+			base::await_suspend( h );
+			_fnctn( move(h) );
+		}
 	private:
 		function<Task2(HCoroutine h)> _fnctn;
 	};

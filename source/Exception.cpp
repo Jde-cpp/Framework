@@ -17,7 +17,6 @@ namespace Jde
 	}
 */
 	Exception::Exception( ELogLevel level, sv value, sv function, sv file, int line )noexcept:
-		std::exception(),
 		_functionName{function},
 		_fileName{file},
 		_line{line},
@@ -27,7 +26,6 @@ namespace Jde
 	{}
 
 	Exception::Exception( ELogLevel level, sv value )noexcept:
-		std::exception(),
 		_level{ level },
 		_what{ value },
 		_format{ value }
@@ -45,19 +43,20 @@ namespace Jde
 	Exception::~Exception()
 	{}
 
-	void Exception::Log( sv additionalInformation, optional<ELogLevel> pLevel )const noexcept
+	α Exception::Log( sv additionalInformation, optional<ELogLevel> pLevel )const noexcept->void
 	{
 		std::ostringstream os;
-		os << "[" << _fileName << ":" << _line << "] ";
 		if( additionalInformation.size() )
 			os << "[" << additionalInformation << "] ";
 		os << what();
 		if( HaveLogger() )
 		{
+			var fileName = _fileName.empty() ? "{Unknown}\0"sv : _fileName;
+			var functionName = _functionName.empty() ? "{Unknown}\0"sv : _functionName;
 			var level = pLevel ? *pLevel : _level;
-			_logger.log( spdlog::source_loc{FileName(_fileName).c_str(),_line,_functionName.data()}, (spdlog::level::level_enum)level, os.str() );
+			_logger.log( spdlog::source_loc{FileName(fileName).c_str(),_line,functionName.data()}, (spdlog::level::level_enum)level, os.str() );
 			if( _pServerSink )
-				LogServer( Logging::Messages::Message{Logging::Message2{level, os.str(), _fileName, _functionName, _line}, vector<string>{_args}} );
+				LogServer( Logging::Messages::Message{Logging::Message2{level, os.str(), fileName, functionName, _line}, vector<string>{_args}} );
 		}
 		else
 			std::cerr << os.str() << endl;
@@ -81,7 +80,7 @@ namespace Jde
 	}
 
 	CodeException::CodeException( std::error_code&& code, ELogLevel level ):
-		CodeException( sv{}, move(code), level )
+		CodeException( format("{}-{}", code.value(), code.message()), move(code), level )
 	{}
 
 	BoostCodeException::BoostCodeException( const boost::system::error_code& errorCode, sv msg )noexcept:

@@ -50,8 +50,6 @@ namespace Jde::DB
 		var fks = LoadForeignKeys();
 		var procedures = LoadProcs();
 		flat_map<string, Table> parentTables;
-		// flat_map<string, Column> types;
-		// flat_map<string, Table> tables;
 		Schema schema;
 		if( j.contains("$types") )
 		{
@@ -72,19 +70,15 @@ namespace Jde::DB
 		for( var& [key, value] : j.items() )
 		{
 			var name = Schema::FromJson( key );
-//			DBG( name );
 			if( !key.starts_with("$") )
 				schema.Tables.emplace( name, make_shared<Table>(name, value, parentTables, schema.Types, j) );
 			else if( key!="$types" && parentTables.find(key)==parentTables.end() )
 				addTable( key, value );
 		}
-		//json.exception.
 		for( var& [tableName, pTable] : schema.Tables )
 		{
 			if( var pNameDBTable=pDBTables->find(tableName); pNameDBTable!=pDBTables->end() )
 			{
-				//if( tableName=="um_role_permissions" )
-				//	TRACE( "{}"sv, pTable->FindColumn("right_id")->Default );
 				for( auto& column : pTable->Columns )
 				{
 					var& dbTable = pNameDBTable->second;
@@ -106,8 +100,6 @@ namespace Jde::DB
 
 			for( var& index : pTable->Indexes )
 			{
-				//if( index.TableName=="role_permissions" )
-				//	DBG( index.TableName );
 				if( find_if(dbIndexes.begin(), dbIndexes.end(), [&](var& db){ return db.TableName==index.TableName && db.Columns==index.Columns;} )!=dbIndexes.end() )
 					continue;
 				var name = UniqueIndexName( index, *this, pSyntax->UniqueIndexNames(), dbIndexes );
@@ -138,7 +130,16 @@ namespace Jde::DB
 				DBG( "Executing '{}'"sv, path.string() );
 				var queries = Str::Split( text, CIString{"\ngo"sv} );
 				for( var& query : queries )
-					_pDataSource->Execute( query, nullptr, nullptr, false );
+				{
+					ostringstream os;
+					for( uint i=0; i<query.size(); ++i )
+					{
+						if( query[i]=='#' )
+							for( ; i<query.size() && query[i]!='\n'; ++i );
+						os.put( query[i] );
+					}
+					_pDataSource->Execute( os.str(), nullptr, nullptr, false );
+				}
 				DBG( "Finished '{}'"sv, path.string() );
 			}
 		}
@@ -151,86 +152,81 @@ namespace Jde::DB
 			}
 			for( var& jData : pTable->Data )
 			{
-				// if( jData.contains("id") && jData.contains("name") && jData.items().size()==2 )
-				// 	add( jData["id"].get<uint>(), jData["name"].get<string>() );
-				// else
+				vector<DB::DataValue> params;
+
+				ostringstream osSelect{ "select count(*) from ", std::ios::ate }; osSelect << tableName << " where ";
+				vector<DB::DataValue> selectParams;
+				ostringstream osWhere;
+				var set = [&,&table=*pTable]( /*const vector<string>& keys*/ )
 				{
-					vector<DB::DataValue> params;
-
-					ostringstream osSelect{ "select count(*) from ", std::ios::ate }; osSelect << tableName << " where ";
-					vector<DB::DataValue> selectParams;
-					ostringstream osWhere;
-					var set = [&,&table=*pTable]( /*const vector<string>& keys*/ )
+					osWhere.str("");
+					for( var& keyColumn : table.SurrogateKey )
 					{
-						osWhere.str("");
-						for( var& keyColumn : table.SurrogateKey )
-						{
-							if( osWhere.tellp() != std::streampos(0) )
-								osWhere << " and ";
-							osWhere << keyColumn << "=?";
-							if( var pData = jData.find( Schema::ToJson(keyColumn) ); pData!=jData.end() )
-								selectParams.push_back( ToDataValue(table.FindColumn(keyColumn)->Type, *pData, keyColumn) );
-							else
-							{
-								selectParams.clear();
-								break;
-							}
-						}
-						return selectParams.size();
-					};
-					if( !set( /*pTable->SurrogateKey*/) )
-						for( auto p = pTable->NaturalKeys.begin(); p!=pTable->NaturalKeys.end() && !set(/**p*/); ++p );
-					THROW_IF( selectParams.empty(), Exception("Could not find keys in data for '{}'", tableName) );
-					osSelect << osWhere.str();
-
-
-					//ostringstream osInsert{ "insert into ", std::ios::ate }; osInsert << tableName << "(";
-					ostringstream osInsertValues;
-					ostringstream osInsertColumns;
-					uint id = 1;
-					for( var& column : pTable->Columns )
-					{
-						var jsonName = Schema::ToJson( column.Name );
-						var pData = jData.find( jsonName );
-						var haveData = pData!=jData.end();
-						if( !haveData && column.Default.empty() )
-							continue;
-
-						if( params.size() )
-						{
-/*							if( haveData )
-								osSelect << " and ";*/
-							osInsertValues << ",";
-							osInsertColumns << ",";
-						}
-						osInsertColumns << column.Name;
-						if( haveData )
-						{
-							//osSelect << column.Name << "=?";
-							osInsertValues << "?";
-							if( column.Name=="id" && pData->is_number() )
-								id = pData->get<uint>();
-							params.push_back( ToDataValue(column.Type, *pData, column.Name) );
-						}
+						if( osWhere.tellp() != std::streampos(0) )
+							osWhere << " and ";
+						osWhere << keyColumn << "=?";
+						if( var pData = jData.find( Schema::ToJson(keyColumn) ); pData!=jData.end() )
+							selectParams.push_back( ToDataValue(table.FindColumn(keyColumn)->Type, *pData, keyColumn) );
 						else
-							osInsertValues << (column.Default=="$now" ? pSyntax->UtcNow() : column.Default);
-					}
-					if( _pDataSource->Scaler<uint>( osSelect.str(), selectParams)==0 )
-					{
-						ostringstream sql;
-						var haveSequence = pTable->HaveSequence();
-						if( haveSequence )
-							sql << "SET IDENTITY_INSERT " << tableName << " ON;" << endl;
-						sql << format( "insert into {}({})values({})", tableName, osInsertColumns.str(), osInsertValues.str() );
-						if( haveSequence )
-							sql << endl << "SET IDENTITY_INSERT " << tableName << " OFF;";
-						/*if( pTable->HaveSequence() && id==0 && syntax.ZeroSequenceMode().size()  )
 						{
-							_pDataSource->Execute( sql, params );
+							selectParams.clear();
+							break;
 						}
-						else*/
-						_pDataSource->Execute( sql.str(), params );
 					}
+					return selectParams.size();
+				};
+				if( !set( /*pTable->SurrogateKey*/) )
+					for( auto p = pTable->NaturalKeys.begin(); p!=pTable->NaturalKeys.end() && !set(/**p*/); ++p );
+				THROW_IF( selectParams.empty(), Exception("Could not find keys in data for '{}'", tableName) );
+				osSelect << osWhere.str();
+
+
+				//ostringstream osInsert{ "insert into ", std::ios::ate }; osInsert << tableName << "(";
+				ostringstream osInsertValues;
+				ostringstream osInsertColumns;
+				uint id = 1;
+				for( var& column : pTable->Columns )
+				{
+					var jsonName = Schema::ToJson( column.Name );
+					var pData = jData.find( jsonName );
+					var haveData = pData!=jData.end();
+					if( !haveData && column.Default.empty() )
+						continue;
+
+					if( params.size() )
+					{
+/*							if( haveData )
+							osSelect << " and ";*/
+						osInsertValues << ",";
+						osInsertColumns << ",";
+					}
+					osInsertColumns << column.Name;
+					if( haveData )
+					{
+						//osSelect << column.Name << "=?";
+						osInsertValues << "?";
+						if( column.Name=="id" && pData->is_number() )
+							id = pData->get<uint>();
+						params.push_back( ToDataValue(column.Type, *pData, column.Name) );
+					}
+					else
+						osInsertValues << (column.Default=="$now" ? pSyntax->UtcNow() : column.Default);
+				}
+				if( _pDataSource->Scaler<uint>( osSelect.str(), selectParams)==0 )
+				{
+					ostringstream sql;
+					var haveSequence = pTable->HaveSequence();
+					if( haveSequence )
+						sql << "SET IDENTITY_INSERT " << tableName << " ON;" << endl;
+					sql << format( "insert into {}({})values({})", tableName, osInsertColumns.str(), osInsertValues.str() );
+					if( haveSequence )
+						sql << endl << "SET IDENTITY_INSERT " << tableName << " OFF;";
+					/*if( pTable->HaveSequence() && id==0 && syntax.ZeroSequenceMode().size()  )
+					{
+						_pDataSource->Execute( sql, params );
+					}
+					else*/
+					_pDataSource->Execute( sql.str(), params );
 				}
 			}
 		}
@@ -266,60 +262,6 @@ namespace Jde::DB
 		}
 		return schema;
 	}
-			// vector<string> lines;
-			// auto addColumns = [&lines]( const json& tableSchema )
-			// {
-			// 	for( var& [columnName,value] : tableSchema.items() )
-			// 	{
-			// 		if( columnName.starts_with("$") )
-			// 			continue;
-			// 		Column col{ columnName, value };
-					// if( column.starts_with("$") )
-					// 	continue;
-					// //"id":{ "sequence": true },
-					// //"name":{ "type": "name" },
-					// //"create": "dateTime",
-					// string dtString = "uint";
-					// bool sequence{false};
-					// uint length{0};
-					// if( value.is_object() )
-					// {
-					// 	if( value.contains("sequence") )
-					// 		sequence = value.get<bool>( "sequence" );
-					// }
-					// else
-					// 	dtString = value.get<string>();
-					// var nullable = dtString.ends_with( "?" );
-					// if( nullable )
-					// 	dtString = dtString.substr( 0, dtString.size()-1 );
-					// if( auto p = types.find(dtString); p!=types.end() )
-					// {
-					// 	var& typeValue = p->second;
-					// 	if( typeValue.is_object() )
-					// 	{
-					// 		if( value.contains("sequence") )
-
-					// 	}
-					// }
-					// var dt = ToDataType( dtString );
-//					lines.push_back( col.Create() );
-	//			}
-		//	};
-			// function<void( const json& childSchema )> createParent;
-			// createParent = [&]( const json& childSchema )
-			// {
-			// 	auto pParentMember = childSchema.find( "$parent" );
-			// 	if( pParentMember==childSchema.end() )
-			// 		return;
-			// 	const string parentId{ pParentMember->get<string>() };
-			// 	var pParent = definedTypes.find( parentId );
-			// 	THROW_IF( pParent==definedTypes.end(), Exception("Could not find parent '{}'", parentId) );
-
-			// 	createParent( json::parse(pParent->second) );
-			// 	addColumns( json::parse(pParent->second) );
-			// };
-			// createParent( tableDef );
-			// addColumns( tableDef );
 
 	string UniqueIndexName( const DB::Index& index, ISchemaProc& /*dbSchema*/, bool uniqueName, const vector<Index>& indexes )noexcept(false)
 	{

@@ -16,8 +16,6 @@ namespace Jde
 	using nlohmann::json;
 	using nlohmann::ordered_json;
 
-	//ELogLevel _dbLogLevel{ ELogLevel::Information };
-
 	string DB::Message( sv sql, const std::vector<DataValue>* pParameters, sv error )noexcept
 	{
 		const auto size = pParameters ? pParameters->size() : 0;
@@ -159,8 +157,8 @@ namespace Jde
 	CIString DB::SelectName( sv sql, uint id, sv cacheName )noexcept(false)
 	{
 		CIString y;
-		if( cacheName.size() )
-			y = Cache::GetValue<uint,CIString>( cacheName, id ).value_or( CIString{} );
+		if( auto p = cacheName.size() ? Cache::GetValue<uint,CIString>(string{cacheName}, id) : sp<CIString>{}; p )
+			y = CIString{ *p };
 		if( y.empty() )
 			y = Scaler<CIString>( sql, {id} ).value_or( CIString{} );
 		return y;

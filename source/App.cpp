@@ -39,9 +39,10 @@ namespace Jde
 	{
 		{
 			ostringstream os;
+			os << "(" << OSApp::ProcessId() << ")";
 			for( uint i=0; i<argc; ++i )
 				os << argv[i] << " ";
-			_logger.log( spdlog::source_loc{FileName(MY_FILE).c_str(),__LINE__,__func__}, (spdlog::level::level_enum)ELogLevel::Information, os.str() );
+			_logger.log( spdlog::source_loc{FileName(MY_FILE).c_str(),__LINE__,__func__}, (spdlog::level::level_enum)ELogLevel::Information, os.str() ); //TODO add cwd.
 		}
 		_pApplicationName = std::make_unique<string>( appName );
 
@@ -78,11 +79,9 @@ namespace Jde
 			SetConsoleTitle( appName );
 		else
 			AsService();
-		InitializeLogger();
+		Logging::Initialize();
 		Threading::SetThreadDscrptn( appName );
-		//INFO( "{}, settings='{}' cwd='{}' Running as console='{}'"sv, arg0, settingsPath, fs::current_path(), console );
 
-		Cache::CreateInstance();
 		_driveWorker.Initialize();
 		_pInstance->AddSignals();
 		return values;
@@ -94,18 +93,17 @@ namespace Jde
 	void IApplication::Exit( int reason )noexcept
 	{
 		_exitReason = reason;
-		std::unique_lock<std::mutex> lk( _workerConditionMutex );
-		_workerCondition.notify_one();
 	}
 	void IApplication::AddActiveWorker( Threading::IPollWorker* p )noexcept
 	{
+		ASSERT( false );//need to implement signals in linux for _workerCondition.
 		Threading::AtomicGuard l{ _activeWorkersMutex };
 		if( find(_activeWorkers.begin(), _activeWorkers.end(), p)==_activeWorkers.end() )
 		{
 			_activeWorkers.push_back( p );
 			if( _activeWorkers.size()==1 )
 			{
-				std::unique_lock<std::mutex> lk( _workerConditionMutex );
+				unique_lock<std::mutex> lk( _workerConditionMutex );
 				l.unlock();
 				_workerCondition.notify_one();
 			}
@@ -118,7 +116,7 @@ namespace Jde
 	}
 	void IApplication::Pause()noexcept
 	{
-		INFO( "Pausing main thread. {}"sv, OSApp::ProcessId() );
+		INFO( "Pausing main thread." );
 		while( !_exitReason )
 		{
 			Threading::AtomicGuard l{ _activeWorkersMutex };
@@ -142,16 +140,19 @@ namespace Jde
 			}
 			else
 			{
-				std::unique_lock<std::mutex> lk( _workerConditionMutex );
-				l.unlock();
-				_workerCondition.wait( lk );
+				OSApp::Pause();
+				// unique_lock<std::mutex> lk( _workerConditionMutex );
+				// l.unlock();
+				// _workerCondition.wait( lk );
 			}
 		}
 		//TODO wait for signal
 		INFO( "Pause returned - {}."sv, _exitReason );
-		lock_guard l{_threadMutex};
-		for( auto& pThread : *_pBackgroundThreads )
-			pThread->Interrupt();
+		{
+			lock_guard l{_threadMutex};
+			for( auto& pThread : *_pBackgroundThreads )
+				pThread->Interrupt();
+		}
 		IApplication::Shutdown();
 	}
 
@@ -198,11 +199,24 @@ namespace Jde
 		_pBackgroundThreads->push_back( pThread );
 	}
 
-	void IApplication::RemoveThread( sp<Threading::InterruptibleThread> pThread )noexcept
+	α IApplication::RemoveThread( sv name )noexcept->sp<Threading::InterruptibleThread>
 	{
-		TRACE( "RemoveThread"sv );
 		lock_guard l{_threadMutex};
-		_pDeletedThreads->push_back( pThread );//TODO remove from _pBackgroundThreads
+		sp<Threading::InterruptibleThread> p;
+		for( auto ppThread = _pBackgroundThreads->begin(); ppThread!=_pBackgroundThreads->end() && !p; ++ppThread )
+		{
+			if( (*ppThread)->Name!=name )
+				continue;
+
+			p = *ppThread;
+			_pBackgroundThreads->erase( ppThread );
+		}
+		return p;
+	}
+	α IApplication::RemoveThread( sp<Threading::InterruptibleThread> pThread )noexcept->void
+	{
+		lock_guard l{_threadMutex};
+		_pDeletedThreads->push_back( pThread );
 		for( auto ppThread = _pBackgroundThreads->begin(); ppThread!=_pBackgroundThreads->end();  )
 		{
 			if( *ppThread==pThread )
@@ -269,8 +283,6 @@ namespace Jde
 		for( var& shutdown : *_pShutdownFunctions )
 			shutdown();
 		INFO( "Clearing Logger"sv );
-		//if( _pServerSink )
-		//	_pServerSink->Destroy();
 		Jde::DestroyLogger();
 		_pApplicationName = nullptr;
 		_pInstance = nullptr;

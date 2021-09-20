@@ -6,35 +6,9 @@
 namespace Jde::IO::Sockets
 {
 	ProtoClientSession::ProtoClientSession( /*boost::asio::io_context& context*/ ):
-		//_pSocket{ make_unique<tcp::socket>(context) }
-		_socket{ IOContextThread::GetContext() }
+		_pIOContext{ IOContextThread::Instance() },
+		_socket{ _pIOContext->Context() }
 	{}
-	/*VectorPtr<google::protobuf::uint8> ProtoClientSession::ToBuffer( const google::protobuf::MessageLite& message )noexcept(false)
-	{
-		const uint32_t length = (uint32_t)message.ByteSizeLong();
-		auto pData = make_shared<vector<google::protobuf::uint8>>( length+4 );
-		auto pDestination = pData->data();
-		const char* pLength = reinterpret_cast<const char*>( &length )+3;
-		for( auto i=0; i<4; ++i )
-			*pDestination++ = *pLength--;
-		var result = message.SerializeToArray( pData->data()+4, (int)pData->size()-4 );
-		if( !result )
-			THROW( Exception("Could not serialize to an array") );
-		//DBGX( "result={}", result );
-		return pData;
-	}
-*/
-/*	void ProtoClientSession::Disconnect()noexcept
-	{
-		if( _pSocket )
-		{
-			//if( _pSocket->get_executor() )
-			//	_pSocket->close();//_service==null throws...
-			//delete _pSocket;
-			_pSocket = nullptr;
-		}
-		//OnDisconnect(); called in destructor
-	}*/
 	uint32 ProtoClientSession::MessageLength( char* readMessageSize )noexcept
 	{
 		uint32_t length;
@@ -49,9 +23,10 @@ namespace Jde::IO::Sockets
 		{
 			if( ec )
 			{
-				_connected = false;
-				if( ec.value()==125 )
-					LOG( LogLevel(), "Client::ReadHeader closing - '{}'", CodeException::ToString(ec) );
+				if( ec.value()==2 )
+					LOG( LogLevel(), "ProtoClientSession::ReadHeader closing - 2 '{}'", CodeException::ToString(ec) );
+				else if( ec.value()==125 )
+					LOG( LogLevel(), "_socket.close() ec='{}'", CodeException::ToString(ec) );
 				else
 					ERR( "Client::ReadHeader Failed - '{}' closing"sv, ec.value() );
 			}
@@ -60,7 +35,6 @@ namespace Jde::IO::Sockets
 			else
 			{
 				var messageLength = MessageLength( _readMessageSize );
-				LOGX( LogLevel(), "bodyLength='{:L}'", messageLength );
 				ReadBody( messageLength );
 			}
 		});
@@ -90,7 +64,7 @@ namespace Jde::IO::Sockets
 		}
 	}
 /////////////////////////////////////////////////////////////////////////////////////
-	ProtoClient::ProtoClient( sv clientThreadName, str settingsPath, PortType defaultPort )noexcept(false):
+	ProtoClient::ProtoClient( str settingsPath, PortType defaultPort )noexcept(false):
 		IClientSocket{ settingsPath, defaultPort }
 	{
 		Connect();
@@ -98,13 +72,14 @@ namespace Jde::IO::Sockets
 
 	void ProtoClient::Connect()noexcept(false)
 	{
-		//_initialized = true;
-		tcp::resolver resolver( IOContextThread::GetContext() );
+		if( !_pIOContext )
+			_pIOContext = IOContextThread::Instance();
+
+		tcp::resolver resolver( _pIOContext->Context() );
 		auto endpoints = resolver.resolve( Host, std::to_string(Port).c_str() );
 		try
 		{
 			net::connect( _socket, endpoints );
-			//INFO( "Connected to '{}:{}' "sv, Host, Port );
 			_connected = true;
 			ReadHeader();
 		}

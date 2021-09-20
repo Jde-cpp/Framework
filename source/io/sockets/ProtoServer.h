@@ -18,13 +18,13 @@ namespace Jde::IO::Sockets
 	{
 		JDE_NATIVE_VISIBILITY ProtoServer( PortType defaultPort )noexcept;
 		JDE_NATIVE_VISIBILITY virtual ~ProtoServer();
-		//🚪 Close()noexcept->void;
 		virtual up<ProtoSession> CreateSession( tcp::socket&& socket, SessionPK id )noexcept=0;
 		void RemoveSession( SessionPK id )noexcept{ unique_lock l{_mutex}; _sessions.erase(id); }
 
 	protected:
 		🚪 Accept()noexcept->void;
 		std::atomic<SessionPK> _id{0};
+		sp<IOContextThread> _pIOContext;
 		tcp::acceptor _acceptor;
 		flat_map<SessionPK,up<ProtoSession>> _sessions; std::shared_mutex _mutex;
 	private:
@@ -36,7 +36,6 @@ namespace Jde::IO::Sockets
 		ProtoSession( tcp::socket&& socket, SessionPK id )noexcept;
 		virtual ~ProtoSession()=default;
 		SessionPK Id;
-		//virtual void Start()noexcept=0;
 		virtual void OnDisconnect()noexcept=0;
 	protected:
 		void ReadHeader()noexcept;

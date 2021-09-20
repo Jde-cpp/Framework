@@ -31,15 +31,15 @@ namespace Jde::Threading
 	}
 	InterruptibleThread::~InterruptibleThread()
 	{
-		DBG( "~InterruptibleThread({})"sv, Name );
 		if( ShouldJoin )
 			Join();
+		TAG( "threads", "~InterruptibleThread({})", Name );
 	}
 	void InterruptibleThread::Interrupt()noexcept
 	{
 		if( _pFlag && !_pFlag->IsSet() )
 		{
-			DBG( "{} - Interrupt _pFlag={}"sv, Name, _pFlag!=nullptr );
+			DBG( "{} - Interrupt _pFlag={}", Name, _pFlag!=nullptr );
 			_pFlag->Set();
 		}
 
@@ -51,7 +51,7 @@ namespace Jde::Threading
 	}
 	void InterruptibleThread::Shutdown()noexcept
 	{
-		DBG("{} - Shutdown"sv, Name);
+		DBG( "{} - Shutdown", Name );
 		Interrupt();
 	};
 }

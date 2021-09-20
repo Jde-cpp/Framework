@@ -1,6 +1,5 @@
 #include "Mutex.h"
 #include <boost/container/flat_map.hpp>
-namespace Jde{ enum class ELogLevel : uint8; }
 namespace Jde::Threading
 {
 	map<string,std::deque<std::variant<CoLockAwatiable*,coroutine_handle<>>>> _coLocks; atomic<bool> _coLocksLock;

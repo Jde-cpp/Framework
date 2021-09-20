@@ -18,7 +18,7 @@ namespace Jde
 		{
 			std::istringstream is{ string{iso} };
 			if( is.get()!='P' )
-				THROW( Exception("Expected 'P' as first character.") );
+				THROW( "Expected 'P' as first character." );
 			bool parsingTime = false;
 			Duration duration{ Duration::zero() };
 			while( is.good() )
@@ -51,14 +51,6 @@ namespace Jde
 			ostringstream os;
 			os << 'P';
 			#define output(period,suffix) if( d>=period{1} || d<=period{-1} ){ os << duration_cast<period>(d).count() << suffix; d%=period{1}; }
-			/*auto output = [&d,&os]<T>( auto period, sv suffix )
-			{
-				if( d>period )
-				{
-					os << duration_cast<years>(d).count() << suffix;
-					d%=period;
-				}
-			};*/
 #ifdef _MSC_VER
 			var year = hours(24 * 365);
 			if( d >= year || d <= -year )
@@ -234,7 +226,6 @@ namespace Jde
 		auto pLocal = make_unique<std::tm>();
 #ifdef _WINDOWS
 		_localtime64_s( pLocal.get(), &time );
-		//localtime_s( pLocal.get(), &time );
 #else
 		localtime_r( &time, pLocal.get() );
 #endif
@@ -288,16 +279,6 @@ namespace Jde
 		var month = months[Month()-1];
 		return string{ (char)std::toupper(month[0]),month[1],month[2] };
 	}
-
-	// inline TimePoint ToTimePoint( fs::file_time_type fileTime )noexcept
-	// {
-	// 	var fileTimeT = fs::file_time_type::clock::to_time_t( fileTime );
-	// 	var fractional = fileTime-fs::file_time_type::clock::from_time_t( fileTimeT );
-	// 	TimePoint point = Clock::from_time_t( fileTimeT );
-	// 	Duration d = milliseconds( duration_cast<milliseconds>(fractional) );
-	// 	point += d;
-	// 	return point;
-	// }
 
 	namespace Timezone
 	{

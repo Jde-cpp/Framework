@@ -5,9 +5,6 @@
 	#include <spdlog/spdlog.h>
 	#include <spdlog/fmt/ostr.h>
 	#include <spdlog/sinks/msvc_sink.h>
-	//#include "server/EtwSink.h"
-#else
-//	#include "Lttng.h"
 #endif
 #include <boost/lexical_cast.hpp>
 #include "log/server/ServerSink.h"
@@ -23,18 +20,32 @@ namespace Jde
 
 	namespace Logging
 	{
+		array<Tag_,20> _tags;
+		array<Tag_,20> _serverTags;
+
+		α Tags()noexcept->const array<Tag_,20>&{return _tags;}
+		α ServerTags()noexcept->const array<Tag_,20>&{return _serverTags;}
 		bool _logMemory{true};
 		up<vector<Logging::Messages::Message>> _pMemoryLog; shared_mutex MemoryLogMutex;
 		auto _pOnceMessages = make_unique<flat_map<uint,set<string>>>(); std::shared_mutex OnceMessageMutex;
+
+		flat_map<sv,vector<function<void(ELogLevel)>>> _tagCallbacks;
+		α TagLevel( sv tag )noexcept->ELogLevel
+		{
+			return (ELogLevel)std::max( (int8)Internal::TagLevel(tag,_tags), (int8)Internal::TagLevel(tag,_serverTags) );
+		}
+		α TagLevel( sv tag, function<void(ELogLevel)> onChange, ELogLevel dflt )noexcept->ELogLevel
+		{
+			_tagCallbacks.try_emplace( tag ).first->second.emplace_back( onChange );
+			ELogLevel l = TagLevel(tag);
+			return l==ELogLevel::NoLog ? dflt : l;
+		}
 	}
 
 	void DestroyLogger()
 	{
 		TRACE( "Destroying Logger"sv );
-		// {
-		// 	unique_lock l{ Logging::MemoryLogMutex };
-		// 	Logging::_pMemoryLog = nullptr;
-		// }
+
 		Logging::_pOnceMessages = nullptr;
 		_pServerSink = nullptr;
 	};
@@ -53,19 +64,16 @@ namespace Jde
 	α Logging::LogMemory( Logging::Message2&& m, vector<string> values )noexcept->void
 	{
 		PREFIX
-		//std::cout << m.GetType() << endl;
 		_pMemoryLog->emplace_back( move(m), move(values) );
 	}
 	α Logging::LogMemory( Logging::MessageBase&& m, vector<string> values )noexcept->void
 	{
 		PREFIX
-		//std::cout << m.GetType() << endl;
 		_pMemoryLog->emplace_back( move(m), move(values) );
 	}
 	α Logging::LogMemory( const Logging::MessageBase& m, vector<string> values )noexcept->void
 	{
 		PREFIX
-		//Logging::Message x{ m, move(vector<string>{values}) };
 		_pMemoryLog->emplace_back( m, move(values) );
 	}
 
@@ -94,37 +102,77 @@ namespace Jde
 			}
 			else
 				continue;
-			var pattern = sink.TryGet<string>( "pattern" ).value_or( "%H:%M:%S.%e %g:%# [%^%l%$] %v" );
+			var pattern = sink.TryGet<string>( "pattern" ).value_or( "%^%3!l%$-%H:%M:%S.%e %-64@ %v" );
 			pSink->set_pattern( pattern );
 			var level = sink.TryGet<ELogLevel>( "level" ).value_or( ELogLevel::Debug );
 			pSink->set_level( (spdlog::level::level_enum)level );
-			LOG_MEMORY( ELogLevel::Information, "({})Sink - level='{}' pattern='{}'{}", name, ToString(level), pattern, additional );
+			LOG_MEMORY( ELogLevel::Information, "({})level='{}' pattern='{}'{}", name, ToString(level), pattern, additional );
 			sinks.push_back( pSink );
 		}
 		return sinks;
 	}
 	vector<spdlog::sink_ptr> _sinks = LoadSinks();
-	// vector<spdlog::sink_ptr>::iterator StartIter(){ return LoadSinks().begin(); }
-	// vector<spdlog::sink_ptr>::iterator EndIter(){ return LoadSinks().end(); }
-	//spdlog::sink_ptr ConsolePtr()noexcept{ return make_shared<spdlog::sinks::stdout_color_sink_mt>(); }
-	//spdlog::sink_ptr FilePtr()noexcept{ return make_shared<spdlog::sinks::basic_file_sink_mt>(GetLogPath().string(), true); }
 
+	α AddTags( array<Tag_,20>& tags, sv path )noexcept->void
+	{
+		auto l = ELogLevel::Debug;
+		var settings = Settings::TryArray<string>( path );
+		for( var& tag : settings )
+		{
+			bool change = false;
+			if( auto p = find_if(tags.begin(), tags.end(), [tag](var x){return x.Id[0]==0 || tag==x.Id.data();}); p!=tags.end() && p->Id[0]!=0 )
+			{
+				if( l!=ELogLevel::None )
+				{
+					change = p->Level!=l;
+					p->Level=l;
+				}
+				else
+				{
+					for( auto prev=p, next=std::next(p); next!=tags.end() && !prev->Empty(); ++next, ++prev )
+					{
+						memcpy( prev->Id.data(), next->Id.data(), next->Id.size() );
+						prev->Level = next->Level;
+					}
+				}
+			}
+			else if( (change = l!=ELogLevel::None) )
+			{
+				auto p = find_if( tags.begin(), tags.end(), [](var x){return x.Empty();} );
+				if( p==tags.end() )
+					--p;
+				memcpy( p->Id.data(), tag.data(), std::min(tag.size(), p->Id.size()) );
+				if( tag.size()<p->Id.size() )
+					p->Id[tag.size()] = '\0';
+				p->Level=l;
+			}
+			if( change )
+			{
+				if( auto pCallback=Logging::_tagCallbacks.find(tag); pCallback!=Logging::_tagCallbacks.end() )
+				{
+					for( auto&& c : pCallback->second )
+						c( l );
+				}
+			}
+		}
+	}
 
-	//spdlog::logger _logger{ GetLogPath().empty() ? spdlog::logger{ "my_logger", ConsolePtr() } : spdlog::logger{ "my_logger", {ConsolePtr(), FilePtr()} } };
 	spdlog::logger _logger{ "my_logger", _sinks.begin(), _sinks.end() };
 
-	α InitializeLogger()noexcept->void
+	α Logging::Initialize()noexcept->void
 	{
+		AddTags( _tags, "logging/tags" );
 		_status.set_starttime( (google::protobuf::uint32)Clock::to_time_t(_startTime) );
 
+		_logMemory = Settings::TryGet<bool>("logging/memory").value_or( false );
 		var minLevel = std::accumulate( _sinks.begin(), _sinks.end(), (uint8)ELogLevel::None, [](uint8 min, auto& p){return std::min((uint8)p->level(),min);} );
 		_logger.set_level( (spdlog::level::level_enum)minLevel );
 		var flushOn = Settings::TryGet<ELogLevel>( "logging/flushOn" ).value_or( ELogLevel::Information );
 		_logger.flush_on( (spdlog::level::level_enum)flushOn );
-		if( var p = Settings::TryGet<PortType>("logging/server/port"); p && *p )
-			Try( []{ SetServerSink(make_unique<Logging::ServerSink>()); } );
-		auto pServer = static_cast<Logging::ServerSink*>( _pServerSink.get() );
-		for( var& m : *Logging::_pMemoryLog )
+		auto pServer = IServerSink::Enabled() ? ServerSink::Create() : nullptr;
+		if( pServer )
+			AddTags( _tags, "logging/server/tags" );
+		for( var& m : *_pMemoryLog )
 		{
  			using ctx = fmt::format_context;
     		vector<fmt::basic_format_arg<ctx>> args;
@@ -139,13 +187,13 @@ namespace Jde
 				ERR( "{} - {}", m.MessageView, e.what() );
 			}
 			if( pServer && _serverLogLevel<=m.Level )
-				pServer->Log( Logging::Messages::Message{m} );
+				pServer->Log( Messages::Message{m} );
 		}
-		if( !(Logging::_logMemory=Settings::TryGet<bool>("logging/memory").value_or(false)) )
+		if( !_logMemory )
 			ClearMemoryLog();
 
-		INFO( "settings path='{}'", Settings::Path() );
-		INFO( "log  minLevel='{}' flushOn='{}'", ELogLevelStrings[minLevel], ELogLevelStrings[(uint8)flushOn] );
+		INFO( "settings path={}", Settings::Path() );
+		INFO( "log minLevel='{}' flushOn='{}'", ELogLevelStrings[minLevel], ELogLevelStrings[(uint8)flushOn] );//TODO add flushon to Server
 	}
 
 	void Logging::LogServer( const MessageBase& m )noexcept
@@ -164,23 +212,6 @@ namespace Jde
 		_pServerSink->Log( m );
 	}
 
-/*		void LogEtw( const Logging::MessageBase& messageBase )
-		{
-#ifdef _MSC_VER
-			//_pEtwSink->Log( messageBase );
-#else
-//			_pLttng->Log( messageBase );
-#endif
-		}
-		void LogEtw( const Logging::MessageBase& messageBase, const vector<string>& values )
-		{
-#ifdef _MSC_VER
-			//_pEtwSink->Log( messageBase, values );
-#else
-//			_pLttng->Log( messageBase, values );
-#endif
-		}
-*/
 	TimePoint Logging::StartTime()noexcept{ return _startTime;}
 	void SendStatus()noexcept
 	{
@@ -199,13 +230,17 @@ namespace Jde
 	}
 	void Logging::SetLogLevel( ELogLevel client, ELogLevel server )noexcept
 	{
-		_logger.set_level( (spdlog::level::level_enum)client );
+		if( _logger.level()!=(spdlog::level::level_enum)client )
+		{
+			INFO( "Setting log level from '{}' to '{}'", Str::FromEnum(ELogLevelStrings, _logger.level()), Str::FromEnum(ELogLevelStrings, client) );
+			//TODO remvoe comment _logger.set_level( (spdlog::level::level_enum)client );
+		}
 		if( _pServerSink )
 			_serverLogLevel = server;
 		{
 			lock_guard l{_statusMutex};
 			_status.set_serverloglevel( (Proto::ELogLevel)server );
-			_status.set_clientloglevel( (Proto::ELogLevel)client );
+			_status.set_clientloglevel( (Proto::ELogLevel)_logger.level() );
 		}
 		SendStatus();
 	}
@@ -227,13 +262,13 @@ namespace Jde
 		return make_unique<Proto::Status>( _status );
 	}
 
-	bool Logging::ShouldLogOnce( const Logging::MessageBase& messageBase )
+	bool Logging::ShouldLogOnce( const Logging::MessageBase& messageBase )noexcept
 	{
 		std::unique_lock l( OnceMessageMutex );
 		auto& messages = _pOnceMessages->emplace( messageBase.FileId, set<string>{} ).first->second;
 		return messages.emplace(messageBase.MessageView).second;
 	}
-	void Logging::LogOnce( Logging::MessageBase&& messageBase )
+	void Logging::LogOnce( Logging::MessageBase&& messageBase )noexcept
 	{
 		if( ShouldLogOnce(messageBase) )
 			Log( move(messageBase) );
@@ -253,10 +288,7 @@ namespace Jde
 		return pLogger;
 	}
 	inline Logging::IServerSink* Logging::GetServerSink()noexcept{ return _pServerSink.get(); }
-/*	void SetServerSink( Logging::IServerSink* p )noexcept
-	{
-		_pServerSink = p;
-	}*/
+
 #endif
 	void ClearMemoryLog()noexcept
 	{
@@ -272,12 +304,7 @@ namespace Jde
 		return results;
 	}
 
-/*	std::ostream& operator<<( std::ostream& os, const ELogLevel& value )
-	{
-		os << (spdlog::level::level_enum)value;
-		return os;
-	}
-*/
+
 	namespace Logging
 	{
 		MessageBase::MessageBase( sv message, ELogLevel level, sv file, sv function, int line )noexcept:
@@ -318,13 +345,3 @@ namespace Jde
 		}
 	}
 }
-
-/*std::ostream& operator<<( std::ostream& os, const std::optional<double>& value )
-{
-	if( value.has_value() )
-		os << value.value();
-	else
-		os << "null";
-	return os;
-}
-*/

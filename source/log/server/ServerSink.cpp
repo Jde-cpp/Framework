@@ -5,6 +5,8 @@
 
 namespace Jde::Logging
 {
+	bool IServerSink::_enabled{ Settings::TryGet<PortType>("logging/server/port").value_or(0)!=0 };
+
 	ELogLevel _sinkLogLevel = Settings::TryGet<ELogLevel>( "logging/server/diagnosticsLevel" ).value_or( ELogLevel::Trace );
 	IServerSink::~IServerSink()
 	{
@@ -12,31 +14,26 @@ namespace Jde::Logging
 		SetServerSink( nullptr );
 		DBGX( "{}"sv, "_pServerSink = nullptr" );
 	}
-/*	void IServerSink::Destroy()noexcept
+
+	α ServerSink::Create()noexcept->Logging::ServerSink*
 	{
-		DBGX( "{}"sv, "IServerSink::Destroy" );
-		SetServerSink( nullptr );
-		//_pInstance = nullptr;
-	}
-	*/
-/*	sp<IServerSink> IServerSink::GetInstnace()noexcept
-	{
-		return _pInstance;
-	}
-*/
-	ServerSink::ServerSink()noexcept(false):
-		//Interrupt{ "AppServerSend", 1s, true },
-		ProtoBase{ "LogClient", "logging/server", 0 }//,don't wan't default port
-	{
-	//	Startup( "AppServerReceive" );
+		try
+		{
+			SetServerSink( make_unique<Logging::ServerSink>() );
+		}
+		catch(const Exception& e)
+		{
+			e.Log("ServerSink", ELogLevel::Error);
+		}
+		return (Logging::ServerSink*)_pServerSink.get();
 	}
 
-/*	void ServerSink::Destroy()noexcept
+	ServerSink::ServerSink()noexcept(false):
+		ProtoBase{ "logging/server", 0 }//,don't wan't default port
 	{
-		std::this_thread::sleep_for( 1s );//flush messages.
-		IServerSink::Destroy();
+		INFO( "ServerSink::ServerSink( path='{}', Host='{}', Port='{}' )", "logging/server", Host, Port );
 	}
-*/
+
 	void ServerSink::OnConnected()noexcept
 	{
 		_connected = true;
@@ -52,13 +49,11 @@ namespace Jde::Logging
 		_usersSent.clear();
 		_threadsSent.clear();
 		_instanceId = 0;
-		//_lastConnectionCheck = Clock::now();
 		_connected = false;
 	}
 
 	void ServerSink::OnReceive( Proto::FromServer& transmission )noexcept
 	{
-		//DBG( "ServerSink::OnReceive - count='{}'"sv, transmission.messages_size() );
 		for( uint i=0; i<transmission.messages_size(); ++i )
 		{
 			auto& item = *transmission.mutable_messages( i );
@@ -97,7 +92,6 @@ namespace Jde::Logging
 				var& levels = item.loglevels();
 				Logging::SetLogLevel( (ELogLevel)levels.client(), (ELogLevel)levels.server() );
 				INFO_ONCE( "'{}' started at '{}'"sv, _applicationName, ToIsoString(Logging::StartTime()) );
-				//DBG( "'{}' started at '{}'"sv, _applicationName, ToIsoString(Logging::StartTime()) );
 			}
 			else if( item.has_custom() )
 			{
@@ -191,46 +185,6 @@ namespace Jde::Logging
 			processMessage( _buffer );
 		}
 	}
-/*	void ServerSink::OnTimeout()noexcept
-	{
-		bool haveWork = (!_messages.size() && !SendStatus) || !_stringsLoaded;
-		if( !haveWork || (!_connected && (Clock::now()<_lastConnectionCheck+10s || !Try([this]{ _lastConnectionCheck = Clock::now(); Connect(); }))) )
-			return;
-
-		Proto::ToServer t;
-		auto messages = _messages.PopAll();
-		for( auto&& message : messages )
-		{
-			auto pProto = make_unique<Proto::Message>();
-			pProto->set_allocated_time( IO::Proto::ToTimestamp(message.Timestamp).release() );
-
-			pProto->set_level( (Proto::ELogLevel)message.Level );
-			pProto->set_messageid( (uint32)message.MessageId );
-			if( _messagesSent.emplace(message.MessageId) )
-				t.add_messages()->set_allocated_string( ToRequestString(Proto::EFields::MessageId, (uint32)message.MessageId, move(message.MessageView)).release() );
-
-			pProto->set_fileid( (uint32)message.FileId );
-			if( _filesSent.emplace(message.FileId) )
-				t.add_messages()->set_allocated_string( ToRequestString(Proto::EFields::FileId, (uint32)message.FileId, message.File).release() );
-
-			pProto->set_functionid( (uint32)message.FunctionId );
-			if( _functionsSent.emplace(message.FunctionId) )
-				t.add_messages()->set_allocated_string( ToRequestString(Proto::EFields::FunctionId, (uint32)message.FunctionId, message.Function).release() );
-			pProto->set_linenumber( (uint32)message.LineNumber );
-			pProto->set_userid( (uint32)message.UserId );
-			pProto->set_threadid( message.ThreadId );
-			for( var& variable : message.Variables )
-				pProto->add_variables( variable );
-			t.add_messages()->set_allocated_message( pProto.release() );
-		};
-		if( SendStatus )
-		{
-			t.add_messages()->set_allocated_status( GetStatus().release() );
-			SendStatus = false;
-		}
-		Write( t );
-	}
-*/
 	namespace Messages
 	{
 		Message::Message( const MessageBase& base, vector<string> values )noexcept:
@@ -242,17 +196,6 @@ namespace Jde::Logging
 			Fields |= EFields::Timestamp | EFields::ThreadId | EFields::Thread;
 		}
 
-
-/*		Message::Message( MessageBase&& base, vector<string>&& values )noexcept:
-			Message2{ move(base) },
-			Timestamp{ Clock::now() },
-			Variables{ move(values) }
-		{
-			std::cout << base.GetType()  << endl;
-			ThreadId = Threading::GetThreadId();
-			Fields |= EFields::Timestamp | EFields::ThreadId | EFields::Thread;
-		}
-*/
 		Message::Message( const Message& rhs ):
 			Message2{ rhs },
 			Timestamp{ rhs.Timestamp },
@@ -260,29 +203,10 @@ namespace Jde::Logging
 			//_pFile{ rhs._pFile ? make_unique<string>(*rhs._pFile) : nullptr },
 			_pFunction{ rhs._pFunction ? make_unique<string>(*rhs._pFunction) : nullptr }
 		{
-			//ASSERT( _pFile && _pFunction );
 			//if( _pFile )
 			//	File = *_pFile;
 			if( _pFunction )
 				Function = *_pFunction;
 		}
-/*		Message::Message( ELogLevel level, sv message, sv file, sv function, int line, vector<string>&& values )noexcept:
-			Message2{ message, level, file, function, line },
-			Timestamp{ Clock::now() },
-			Variables{ move(values) }
-		{
-			Fields |= EFields::Timestamp | EFields::ThreadId | EFields::Thread;
-		}
-		Message::Message( ELogLevel level, string&& message, string&& file, string&& function, int line, vector<string>&& values )noexcept:
-			Message2{ level, move(message), file, function, line },
-			Timestamp{ Clock::now() },
-			Variables{ move(values) },
-			_pFile{ make_unique<string>(move(file)) },
-			_pFunction{ make_unique<string>(move(function)) }
-		{
-			File = *_pFile;
-			Function = *_pFunction;
-			Fields |= EFields::Timestamp | EFields::ThreadId | EFields::Thread;
-		}*/
 	}
 }
