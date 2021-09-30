@@ -45,21 +45,17 @@ namespace Jde
 
 	α Exception::Log( sv additionalInformation, optional<ELogLevel> pLevel )const noexcept->void
 	{
+		var level = pLevel ? *pLevel : _level;
+		if( level==ELogLevel::NoLog ) return;
 		std::ostringstream os;
 		if( additionalInformation.size() )
 			os << "[" << additionalInformation << "] ";
 		os << what();
-		if( HaveLogger() )
-		{
-			var fileName = _fileName.empty() ? "{Unknown}\0"sv : _fileName;
-			var functionName = _functionName.empty() ? "{Unknown}\0"sv : _functionName;
-			var level = pLevel ? *pLevel : _level;
-			_logger.log( spdlog::source_loc{FileName(fileName).c_str(),_line,functionName.data()}, (spdlog::level::level_enum)level, os.str() );
-			if( _pServerSink )
-				LogServer( Logging::Messages::Message{Logging::Message2{level, os.str(), fileName, functionName, _line}, vector<string>{_args}} );
-		}
-		else
-			std::cerr << os.str() << endl;
+		var fileName = _fileName.empty() ? "{Unknown}\0"sv : _fileName;
+		var functionName = _functionName.empty() ? "{Unknown}\0"sv : _functionName;
+		_logger.log( spdlog::source_loc{FileName(fileName).c_str(),_line,functionName.data()}, (spdlog::level::level_enum)level, os.str() );
+		if( _pServerSink )
+			LogServer( Logging::Messages::Message{Logging::Message2{level, os.str(), fileName, functionName, _line}, vector<string>{_args}} );
 	}
 	std::ostream& operator<<( std::ostream& os, const Exception& e )
 	{

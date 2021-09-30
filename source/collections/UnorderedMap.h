@@ -24,7 +24,7 @@ namespace Jde::Collections
 		typedef std::unordered_map<TKey,sp<TValue>> base;
 		UnorderedMap()=default;
 		UnorderedMap( const UnorderedMap& copy );
-		UnorderedMap& operator=( UnorderedMap&& x ){ LOCK; clear(); for( var& i : x )emplace(i.first,i.second);  x.clear(); return *this; }
+		α operator=( UnorderedMap&& x )->UnorderedMap&;
 		bool erase( const TKey& item )noexcept;
 		bool eraseIf( const TKey& item, function<bool(const TValue&)> func )noexcept;
 		uint eraseIf( function<bool(const TValue&)> func )noexcept;
@@ -62,6 +62,17 @@ namespace Jde::Collections
 		std::unique_lock<shared_mutex> l( copy._mutex );
 		for( const auto& [key,value] : copy )
 			base::emplace( key, value );
+	}
+
+	ẗ UnorderedMap<K,V>::operator=( UnorderedMap&& x )->UnorderedMap&
+	{
+		LOCK;
+		base::clear();
+		unique_lock<shared_mutex> l2{ x._mutex };
+		for( var& i : x )
+			base::emplace( i.first, i.second );
+		((base&)x).clear();
+		return *this;
 	}
 
 	template<typename TKey, typename TValue>

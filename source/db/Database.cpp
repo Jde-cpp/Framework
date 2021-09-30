@@ -18,7 +18,7 @@ namespace Jde
 
 	string DB::Message( sv sql, const std::vector<DataValue>* pParameters, sv error )noexcept
 	{
-		const auto size = pParameters ? pParameters->size() : 0;
+		var size = pParameters ? pParameters->size() : 0;
 		ostringstream os;
 		if( error.size() )
 			os << error << "\n";

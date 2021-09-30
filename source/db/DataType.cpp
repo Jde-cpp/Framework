@@ -27,7 +27,13 @@ namespace Jde
 		case EDataValue::StringPtr:
 		{
 			var& pValue = get<sp<string>>(parameter);
-			os << pValue ? *pValue : nullString;
+			if( pValue )
+			{
+				var str = *pValue;
+				os << str;
+			}
+			else
+				os << nullString;
 		}
 		break;
 		case EDataValue::Bool:

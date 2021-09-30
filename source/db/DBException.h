@@ -19,7 +19,7 @@ namespace Jde::DB
 			RuntimeException( value, args... ),
 			ErrorCode{0}
 		{
-		//	DBG( string{what()} );
+			_level = ELogLevel::Error;
 		}
 		const char* what() const noexcept override;
 		const string Sql;

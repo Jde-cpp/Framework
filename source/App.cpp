@@ -15,7 +15,6 @@ namespace Jde
 	unique_ptr<string> IApplication::_pApplicationName;
 
 	mutex IApplication::_threadMutex;
-	bool IApplication::_shuttingDown{false};
 	VectorPtr<sp<Threading::InterruptibleThread>> IApplication::_pBackgroundThreads{ make_shared<std::vector<sp<Threading::InterruptibleThread>>>() };
 	std::function<void()> OnExit;
 
@@ -90,11 +89,10 @@ namespace Jde
 	vector<Threading::IPollWorker*> _activeWorkers; atomic<bool> _activeWorkersMutex;
 	std::condition_variable _workerCondition; std::mutex _workerConditionMutex;
 	int _exitReason{0};
-	void IApplication::Exit( int reason )noexcept
-	{
-		_exitReason = reason;
-	}
-	void IApplication::AddActiveWorker( Threading::IPollWorker* p )noexcept
+	α IApplication::Exit( int reason )noexcept->void{ _exitReason = reason; }
+	α IApplication::ShuttingDown()noexcept->bool{ return _exitReason; }
+
+	α IApplication::AddActiveWorker( Threading::IPollWorker* p )noexcept->void
 	{
 		ASSERT( false );//need to implement signals in linux for _workerCondition.
 		Threading::AtomicGuard l{ _activeWorkersMutex };
@@ -147,7 +145,7 @@ namespace Jde
 			}
 		}
 		//TODO wait for signal
-		INFO( "Pause returned - {}."sv, _exitReason );
+		INFO( "Pause returned - {}.", _exitReason );
 		{
 			lock_guard l{_threadMutex};
 			for( auto& pThread : *_pBackgroundThreads )
@@ -158,7 +156,6 @@ namespace Jde
 
 	void IApplication::Shutdown()noexcept
 	{
-		_shuttingDown = true;
 		INFO( "Waiting for process to complete. {}"sv, OSApp::ProcessId() );
 		GarbageCollect();
 		{

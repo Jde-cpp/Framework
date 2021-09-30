@@ -75,12 +75,12 @@ namespace Jde::IO::Sockets
 		{
 			if( ec )
 			{
-				ERR( "async_write Failed - {}"sv, ec.value() );
+				ERRX( "async_write Failed - {}"sv, ec.value() );
 				_socket.close();
 				_pIOContext = nullptr;
 			}
-			else
-				ASSERT( bufferSize==length );
+			else if( bufferSize!=length )
+				ERRX( "bufferSize!=length" );
 		});
 	}
 }

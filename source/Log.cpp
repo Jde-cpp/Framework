@@ -198,17 +198,17 @@ namespace Jde
 
 	void Logging::LogServer( const MessageBase& m )noexcept
 	{
-		ASSERT( _pServerSink );
+		ASSERT( _pServerSink && m.Level!=ELogLevel::NoLog );
 		_pServerSink->Log( m );
 	}
 	void Logging::LogServer( const MessageBase& m, vector<string>& values )noexcept
 	{
-		ASSERT( _pServerSink );
+		ASSERT( _pServerSink && m.Level!=ELogLevel::NoLog );
 		_pServerSink->Log( m, values );
 	}
 	void Logging::LogServer( Messages::Message& m )noexcept
 	{
-		ASSERT( _pServerSink );
+		ASSERT( _pServerSink && m.Level!=ELogLevel::NoLog );
 		_pServerSink->Log( m );
 	}
 
