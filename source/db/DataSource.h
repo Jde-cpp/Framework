@@ -34,7 +34,7 @@ namespace Jde::DB
 		void Select( sv sql, std::function<void(const IRow&)> f, const std::vector<DataValue>& parameters, bool log=true )noexcept(false);
 		void Select( sv sql, std::function<void(const IRow&)> f )noexcept(false);
 		virtual uint Select( sv sql, std::function<void(const IRow&)> f, const vector<DataValue>* pValues, bool log )noexcept(false)=0;
-		virtual AsyncAwaitable SelectCo( string&& sql, std::function<void(const IRow&)> f, const std::vector<DataValue>&& parameters, bool log )noexcept=0;//[[noreturn]]{ throw Exception("Not implemented"); }//return FunctionAwaitable{ []( coroutine_handle<Task2::promise_type> ){} }; }//
+		virtual α SelectCo( string&& sql, std::function<void(const IRow&)> f, const std::vector<DataValue>&& parameters, bool log )noexcept->up<IAwaitable> = 0;//[[noreturn]]{ throw Exception("Not implemented"); }//return FunctionAwaitable{ []( coroutine_handle<Task2::promise_type> ){} }; }//
 		bool TrySelect( sv sql, std::function<void(const IRow&)> f )noexcept;
 		template<class K,class V> sp<flat_map<K,V>> SelectMap( sv sql )noexcept(false);
 		string Catalog( sv sql )noexcept(false);

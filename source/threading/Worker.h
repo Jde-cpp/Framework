@@ -19,15 +19,16 @@ namespace Jde::Threading
 	{
 		IWorker( sv name )noexcept;//:_name{name}{ DBG("IWorker::IWorker({})"sv, _name); }
 		virtual ~IWorker()=0;
-		virtual void Initialize()noexcept;
-		void Shutdown()noexcept override;
-		bool HasThread()noexcept{ return _pThread!=nullptr; }
+		β Initialize()noexcept->void;
+		α Shutdown()noexcept->void override;
+		α HasThread()noexcept->bool{ return _pThread!=nullptr; }
 		virtual void Run( stop_token st )noexcept;
 		sv Name;
 		const uint8 ThreadCount;
+		α StartThread()noexcept->void;
 	protected:
-		void StartThread()noexcept;
-		optional<Settings::Container> Settings(){ return Settings::TryGetSubcontainer<Settings::Container>( "workers", Name ); }
+		α Settings()->optional<Settings::Container>{ return Settings::TryGetSubcontainer<Settings::Container>( "workers", Name ); }
+		static sp<IWorker> _pInstance;
 		up<jthread> _pThread;
 		static std::atomic<bool> _mutex;
 	};
@@ -52,32 +53,34 @@ namespace Jde::Threading
 		Ω Start()noexcept->sp<IWorker>;
 	};
 
-	#define TARG template<class TArg, class TDerived>
-	TARG struct IQueueWorker /*abstract*/: TWorker<TDerived>
+	template<class TArg, class TDerived>
+	struct IQueueWorker /*abstract*/: TWorker<TDerived>
 	{
 		using base=TWorker<TDerived>; using Class=IQueueWorker<TArg,TDerived>;
 		IQueueWorker( sv threadName ):base{ threadName }{}
 		Ω Push( TArg&& x )noexcept->void;
-		virtual void HandleRequest( TArg&& x )noexcept=0;
+		virtual α HandleRequest( TArg&& x )noexcept->void=0;
+		virtual α SetWorker( TArg& x )noexcept->void=0;
 	protected:
-		bool Poll()noexcept override;
+		α Poll()noexcept->optional<bool>  override;
+		α Queue()noexcept->QueueMove<TArg>&{ return _queue;}
 	private:
 		static sp<TDerived> Start()noexcept{ return dynamic_pointer_cast<TDerived>(base::Start()); }
 		QueueMove<TArg> _queue;
 	};
 
-
-/*	ⓣ TWorker<T>::Start()noexcept->sp<IWorker>
+	
+	ⓣ TWorker<T>::Start()noexcept->sp<IWorker>
 	{
 		if( IApplication::ShuttingDown() )
-			return nullptr;
+			return {};
 		Threading::AtomicGuard l{ _mutex };
 		if( !_pInstance )
 		{
 			_pInstance = make_shared<T>();
 			IApplication::AddShutdown( _pInstance );
 			var pSettings = Settings::TryGetSubcontainer<Settings::Container>( "workers", _pInstance->Name );
-			if( pSettings && pSettings->Get2<uint8>("threads") )
+			if( pSettings && pSettings->TryGet<uint8>("threads") )
 				_pInstance->StartThread();
 			else
 				throw "not implemented";
@@ -85,19 +88,20 @@ namespace Jde::Threading
 		}
 		return _pInstance;
 	}
-*/
-	TARG α IQueueWorker<TArg,TDerived>::Push( TArg&& x )noexcept->void
+
+#define $ template<class TArg, class TDerived> α IQueueWorker<TArg,TDerived>
+	$::Push( TArg&& x )noexcept->void
 	{
 		if( auto p=Start(); p )
 		{
-			p->_queue.Push( move(x) );
 			if( p->HasThread() )
-				x.SetWorker( p );
+				p->SetWorker( x );
 			else
-				IApplication::AddActiveWorker( p );
+				IApplication::AddActiveWorker( p.get() );
+			p->Queue().Push( move(x) );
 		}
 	}
-	TARG α IQueueWorker<TArg,TDerived>::Poll()noexcept->bool
+	$::Poll()noexcept->optional<bool>
 	{
 		bool handled = false;
 		if( auto p = _queue.Pop(); p )
@@ -109,4 +113,5 @@ namespace Jde::Threading
 	}
 #undef TARG
 #undef var
+#undef $
 }

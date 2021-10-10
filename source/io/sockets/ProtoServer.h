@@ -10,7 +10,7 @@
 
 namespace Jde::IO::Sockets
 {
-	typedef uint32 SessionPK;
+	using SessionPK=uint32;
 	struct ProtoSession;
 
 	#define 🚪 JDE_NATIVE_VISIBILITY auto
@@ -72,7 +72,7 @@ namespace Jde::IO::Sockets
 		try
 		{
 			var length = net::read( _socket, net::buffer(reinterpret_cast<void*>(pBuffer), messageLength) ); THROW_IF( length!=messageLength, "'{}' read!='{}' expected", length, messageLength );
-			OnReceive( Proto::Deserialize<TToServer>(pBuffer, length) );
+			OnReceive( Proto::Deserialize<TToServer>(pBuffer, (int)length) );
 			ReadHeader();
 		}
 		catch( boost::system::system_error& e )

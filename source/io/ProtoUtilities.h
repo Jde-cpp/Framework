@@ -1,6 +1,11 @@
-#pragma once
+﻿#pragma once
+#pragma warning(push)
+#pragma warning( disable : 4127 )
+#pragma warning( disable : 5054 )
 #include <google/protobuf/message.h>
 #include <google/protobuf/timestamp.pb.h>
+#pragma warning(pop)
+
 #include <jde/io/File.h>
 
 #define var const auto
@@ -62,7 +67,7 @@ namespace Jde::IO
 	ⓣ Proto::Deserialize( const vector<char>& data )noexcept(false)->up<T>
 	{
 		auto p = make_unique<T>();
-		Internal::Deserialize<T>( (google::protobuf::uint8*)data.data(), data.size(), *p );
+		Internal::Deserialize<T>( (google::protobuf::uint8*)data.data(), (uint32)data.size(), *p );
 		return p;
 	}
 	ⓣ Proto::Deserialize( const google::protobuf::uint8* p, int size )noexcept(false)->T
@@ -87,7 +92,7 @@ namespace Jde::IO
 			fs::remove( path );
 			THROWX( IOException(path, "has 0 bytes. Removed") );
 		}
-		Internal::Deserialize( (google::protobuf::uint8*)pBytes->data(), pBytes->size(), proto );
+		Internal::Deserialize( (google::protobuf::uint8*)pBytes->data(), (uint32)pBytes->size(), proto );
 	}
 
 	ⓣ Proto::Load( path path )noexcept(false)->up<T>

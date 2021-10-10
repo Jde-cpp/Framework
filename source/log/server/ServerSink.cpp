@@ -1,31 +1,44 @@
-#include "ServerSink.h"
+﻿#include "ServerSink.h"
 #include "../../threading/Thread.h"
 #include "../../DateTime.h"
 #define var const auto
 
 namespace Jde::Logging
 {
-	bool IServerSink::_enabled{ Settings::TryGet<PortType>("logging/server/port").value_or(0)!=0 };
-
+	ELogLevel _serverLogLevel{ ELogLevel::None };
+	up<Logging::IServerSink> _pServerSink;
 	ELogLevel _sinkLogLevel = Settings::TryGet<ELogLevel>( "logging/server/diagnosticsLevel" ).value_or( ELogLevel::Trace );
+}
+
+namespace Jde
+{
+	α Logging::Server()noexcept->up<Logging::IServerSink>&{ return _pServerSink; }
+	α Logging::SetServer( up<Logging::IServerSink> p )noexcept->void{ _pServerSink=move(p); if( _pServerSink ) _serverLogLevel=Settings::TryGet<ELogLevel>("logging/server/level").value_or(ELogLevel::Error); }
+	α Logging::ServerLevel()noexcept->ELogLevel{ return _serverLogLevel; }
+	α Logging::SetServerLevel( ELogLevel serverLevel )noexcept->void{ _serverLogLevel=serverLevel; }
+}
+
+namespace Jde::Logging
+{
+	bool IServerSink::_enabled{ Settings::TryGet<PortType>("logging/server/port").value_or(0)!=0 };
 	IServerSink::~IServerSink()
 	{
 		DBGX( "{}"sv, "~IServerSink" );
-		SetServerSink( nullptr );
+		SetServer( nullptr );
 		DBGX( "{}"sv, "_pServerSink = nullptr" );
 	}
 
-	α ServerSink::Create()noexcept->Logging::ServerSink*
+	α ServerSink::Create()noexcept->ServerSink*
 	{
 		try
 		{
-			SetServerSink( make_unique<Logging::ServerSink>() );
+			SetServer( make_unique<ServerSink>() );
 		}
 		catch(const Exception& e)
 		{
 			e.Log("ServerSink", ELogLevel::Error);
 		}
-		return (Logging::ServerSink*)_pServerSink.get();
+		return (ServerSink*)_pServerSink.get();
 	}
 
 	ServerSink::ServerSink()noexcept(false):
@@ -34,13 +47,10 @@ namespace Jde::Logging
 		INFO( "ServerSink::ServerSink( path='{}', Host='{}', Port='{}' )", "logging/server", Host, Port );
 	}
 
-	void ServerSink::OnConnected()noexcept
-	{
-		_connected = true;
-	}
+	α ServerSink::OnConnected()noexcept->void{ _connected = true; }
 
 
-	void ServerSink::OnDisconnect()noexcept
+	α ServerSink::OnDisconnect()noexcept->void
 	{
 		DBG( "Disconnected from LogServer."sv );
 		_messagesSent.clear();
@@ -52,11 +62,11 @@ namespace Jde::Logging
 		_connected = false;
 	}
 
-	void ServerSink::OnReceive( Proto::FromServer& transmission )noexcept
+	α ServerSink::OnReceive( Proto::FromServer& transmission )noexcept->void
 	{
-		for( uint i=0; i<transmission.messages_size(); ++i )
+		for( auto i2=0; i2<transmission.messages_size(); ++i2 )
 		{
-			auto& item = *transmission.mutable_messages( i );
+			auto& item = *transmission.mutable_messages( i2 );
 			if( item.has_strings() )
 			{
 				var& strings = item.strings();
@@ -112,7 +122,7 @@ namespace Jde::Logging
 
 		return pResult;
 	}
-	void ServerSink::SendCustom( uint32 requestId, const std::string& bytes )noexcept
+	α ServerSink::SendCustom( uint32 requestId, const std::string& bytes )noexcept->void
 	{
 		auto pCustom = make_unique<Proto::CustomMessage>();
 		pCustom->set_requestid( requestId );
@@ -123,7 +133,7 @@ namespace Jde::Logging
 		base::Write( t );
 	}
 
-	void ServerSink::Write( const MessageBase& m, TimePoint time, vector<string>* pValues )noexcept
+	α ServerSink::Write( const MessageBase& m, TimePoint time, vector<string>* pValues )noexcept->void
 	{
 		auto pProto = make_unique<Proto::Message>();
 		pProto->set_allocated_time( IO::Proto::ToTimestamp(time).release() );
@@ -156,7 +166,7 @@ namespace Jde::Logging
 				Threading::AtomicGuard l{ _bufferMutex };
 				if( _buffer.messages_size() )
 				{
-					for( uint i=0; i<_buffer.messages_size(); ++i )
+					for( auto i=0; i<_buffer.messages_size(); ++i )
 					{
 						auto pMessage = _buffer.mutable_messages( i );
 						if( pMessage->has_message() )

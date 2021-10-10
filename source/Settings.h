@@ -39,7 +39,7 @@ namespace Jde::Settings
 
 	🚪 Global()noexcept->Container&;
 
-	string FileStem()noexcept;
+	α FileStem()noexcept->string;
 	#define $ template<> inline α
 	$ Container::Get<TimePoint>( sv path )const noexcept(false)->TimePoint{ return DateTime{ Get<string>(path) }.GetTimePoint(); }
 	$ Container::Get<fs::path>( sv path )const noexcept(false)->fs::path{ var p = TryGet<string>(path); return p.has_value() ? fs::path{*p} : fs::path{}; }
@@ -75,11 +75,11 @@ namespace Jde::Settings
 	{
 		flat_map<string,Container> members;
 		auto j = FindPath( path );
-		if( j->is_object() )
+		if( j && j->is_object() )
 		{
 			auto obj = j->get<json::object_t>();
-			for( auto& [name,j] : obj )
-				members.emplace( name, Container{j} );
+			for( auto& [name,j2] : obj )
+				members.emplace( name, Container{ j2 } );
 		}
 		return members;
 	}

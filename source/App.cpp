@@ -1,4 +1,4 @@
-#include <jde/App.h>
+﻿#include <jde/App.h>
 #include <signal.h>
 #include <sys/types.h>
 #include <stdexcept>
@@ -33,7 +33,7 @@ namespace Jde
 	IApplication::~IApplication()
 	{
 	}
-	IO::DriveWorker _driveWorker;
+	//IO::DriveWorker _driveWorker;
 	set<string> IApplication::BaseStartup( int argc, char** argv, sv appName, string serviceDescription/*, sv companyName*/ )noexcept(false)//no config file
 	{
 		{
@@ -41,7 +41,7 @@ namespace Jde
 			os << "(" << OSApp::ProcessId() << ")";
 			for( uint i=0; i<argc; ++i )
 				os << argv[i] << " ";
-			_logger.log( spdlog::source_loc{FileName(MY_FILE).c_str(),__LINE__,__func__}, (spdlog::level::level_enum)ELogLevel::Information, os.str() ); //TODO add cwd.
+			Logging::Default().log( spdlog::source_loc{FileName(MY_FILE).c_str(),__LINE__,__func__}, (spdlog::level::level_enum)ELogLevel::Information, os.str() ); //TODO add cwd.
 		}
 		_pApplicationName = std::make_unique<string>( appName );
 
@@ -81,7 +81,7 @@ namespace Jde
 		Logging::Initialize();
 		Threading::SetThreadDscrptn( appName );
 
-		_driveWorker.Initialize();
+		//_driveWorker.Initialize();
 		_pInstance->AddSignals();
 		return values;
 	}
@@ -199,15 +199,10 @@ namespace Jde
 	α IApplication::RemoveThread( sv name )noexcept->sp<Threading::InterruptibleThread>
 	{
 		lock_guard l{_threadMutex};
-		sp<Threading::InterruptibleThread> p;
-		for( auto ppThread = _pBackgroundThreads->begin(); ppThread!=_pBackgroundThreads->end() && !p; ++ppThread )
-		{
-			if( (*ppThread)->Name!=name )
-				continue;
-
-			p = *ppThread;
+		auto ppThread = std::find_if( _pBackgroundThreads->begin(), _pBackgroundThreads->end(), [name](var& p){ return p->Name==name;} );
+		auto p = ppThread==_pBackgroundThreads->end() ? sp<Threading::InterruptibleThread>{} : *ppThread;
+		if( ppThread!=_pBackgroundThreads->end() )
 			_pBackgroundThreads->erase( ppThread );
-		}
 		return p;
 	}
 	α IApplication::RemoveThread( sp<Threading::InterruptibleThread> pThread )noexcept->void
@@ -280,7 +275,7 @@ namespace Jde
 		for( var& shutdown : *_pShutdownFunctions )
 			shutdown();
 		INFO( "Clearing Logger"sv );
-		Jde::DestroyLogger();
+		Logging::DestroyLogger();
 		_pApplicationName = nullptr;
 		_pInstance = nullptr;
 		_pShutdownFunctions = nullptr;

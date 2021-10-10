@@ -1,4 +1,4 @@
-#include "ProtoClient.h"
+﻿#include "ProtoClient.h"
 #include "../../threading/Thread.h"
 #include "../../threading/InterruptibleThread.h"
 #define var const auto
@@ -40,7 +40,7 @@ namespace Jde::IO::Sockets
 		});
 	}
 
-	void ProtoClientSession::ReadBody( uint messageLength )noexcept
+	α ProtoClientSession::ReadBody( int messageLength )noexcept->void
 	{
 		google::protobuf::uint8 buffer[4096];
 		up<google::protobuf::uint8[]> pData;
@@ -70,7 +70,7 @@ namespace Jde::IO::Sockets
 		Connect();
 	}
 
-	void ProtoClient::Connect()noexcept(false)
+	α ProtoClient::Connect()noexcept(false)->void 
 	{
 		if( !_pIOContext )
 			_pIOContext = IOContextThread::Instance();

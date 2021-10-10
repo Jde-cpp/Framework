@@ -167,3 +167,36 @@ function linkFile
 		ln -s $original $link;
 	fi;
 }
+
+function removeJson
+{
+	echo start;
+	local file=$1;
+	local test=$2;
+	local update=$3;
+	echo test=${test//\"/\\\"};
+	echo file=$file;
+	items=$(eval jq \"${test//\"/\\\"}\" $file;)
+	echo items=$items;
+	if [ ! -z "$items" ]; then
+		#echo update=${update//\"/\\\"};
+		(eval "jq \"${update//\"/\\\"}\" $file") > temp.json; if [ $? -ne 0 ]; then echo `pwd`; echo jq \"${update//\"/\\\"}\" $file $file; exit 1; fi;
+		mv temp.json $file;
+	fi;
+}
+
+function addJson
+{
+	echo start;
+	local file=$1;
+	local test=$2;
+	local update=$3;
+	echo test=${test//\"/\\\"};
+	echo file=$file;
+	items=$(eval jq \"${test//\"/\\\"}\" $file;)
+	echo items=$items;
+	if [ -z "$items" ]; then
+		(eval "jq \"${update//\"/\\\"}\" $file") > temp.json; if [ $? -ne 0 ]; then echo `pwd`; echo jq \"${update//\"/\\\"}\" $file $file; fi;#exit 1; fi;
+		mv temp.json $file;
+	fi;
+}

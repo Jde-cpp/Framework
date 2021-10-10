@@ -1,4 +1,4 @@
-#include <jde/coroutine/Task.h>
+﻿#include <jde/coroutine/Task.h>
 
 namespace Jde::Coroutine
 {
@@ -43,5 +43,4 @@ namespace Jde::Coroutine
 			ERR( "unhandled_exception"sv );
 		}
 	}
-
 }

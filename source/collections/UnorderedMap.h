@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <set>
 #include <unordered_map>
 #include <forward_list>
@@ -28,7 +28,7 @@ namespace Jde::Collections
 		bool erase( const TKey& item )noexcept;
 		bool eraseIf( const TKey& item, function<bool(const TValue&)> func )noexcept;
 		uint eraseIf( function<bool(const TValue&)> func )noexcept;
-		void clear()noexcept{ unique_lock<shared_mutex> l(_mutex); base::clear(); }
+		α clear()noexcept{ unique_lock<shared_mutex> l(_mutex); base::clear(); }
 		uint size()const noexcept;
 		//shared_ptr<TValue> FindNC( const TKey& key ){ return const_cast<shared_ptr<TValue>>( Find(key) ); }
 		bool IfNone( function<bool(const TKey&,const TValue&)> ifFunction, function<void()> function );
@@ -42,10 +42,10 @@ namespace Jde::Collections
 		template<class... Args>
 		bool Insert( function<void(TValue&)> afterInsert, Args&&... args );
 		bool TryEmplace( function<void(TValue&)> afterInsert, const TKey& key );
-		void Update( const TKey& key, function<void(TValue&)>& func );
-		void Where( const TKey& key, function<void(const TValue&)> func );
+		α Update( const TKey& key, function<void(TValue&)>& func )->void;
+		α Where( const TKey& key, function<void(const TValue&)> func )->void;
 		template<class... Args >
-		void AddOrUpdate( TKey key, function<sp<TValue>()> add, function<void(TValue&)> update );
+		α AddOrUpdate( TKey key, function<sp<TValue>()> add, function<void(TValue&)> update )->void;
 		sp<std::forward_list<sp<TValue>>> Values()const;
 		//bool Set( const TKey& key, const TValue& value )noexcept;
 		bool Set( const TKey& key, sp<TValue> pValue )noexcept;
@@ -76,7 +76,7 @@ namespace Jde::Collections
 	}
 
 	template<typename TKey, typename TValue>
-	void UnorderedMap<TKey,TValue>::Update( const TKey& key, function<void(TValue& value)>& func )
+	α UnorderedMap<TKey,TValue>::Update( const TKey& key, function<void(TValue& value)>& func )->void
 	{
  		shared_lock<shared_mutex> l(_mutex);
 		auto pItem = base::find( key );
@@ -85,7 +85,7 @@ namespace Jde::Collections
 	}
 
 	template<typename TKey, typename TValue>
-	void UnorderedMap<TKey,TValue>::Where( const TKey& key, function<void(const TValue&)> func )
+	α UnorderedMap<TKey,TValue>::Where( const TKey& key, function<void(const TValue&)> func )->void
 	{
 		shared_lock<shared_mutex> l(_mutex);
 		auto pItem = base::find( key );
@@ -95,7 +95,7 @@ namespace Jde::Collections
 
 	template<typename TKey, typename TValue>
 	template<class... Args >
-	void UnorderedMap<TKey,TValue>::AddOrUpdate( TKey key, function<sp<TValue>()> add, function<void(TValue&)> update )
+	α UnorderedMap<TKey,TValue>::AddOrUpdate( TKey key, function<sp<TValue>()> add, function<void(TValue&)> update )->void
 	{
  		unique_lock<shared_mutex> l(_mutex);
 		auto pItem = base::find( key );

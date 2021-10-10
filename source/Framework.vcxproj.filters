@@ -133,6 +133,9 @@
     <ClCompile Include="..\..\Windows\source\WindowsWorker.cpp">
       <Filter>Source\windows</Filter>
     </ClCompile>
+    <ClCompile Include="io\FileCo.cpp">
+      <Filter>Source\io</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Stopwatch.h">
@@ -149,9 +152,6 @@
     </ClInclude>
     <ClInclude Include="io\sockets\Socket.h">
       <Filter>Headers\io\sockets</Filter>
-    </ClInclude>
-    <ClInclude Include="log\Logging.h">
-      <Filter>Headers\log</Filter>
     </ClInclude>
     <ClInclude Include="math\EMatrix.h">
       <Filter>Headers\math</Filter>
@@ -359,6 +359,12 @@
     </ClInclude>
     <ClInclude Include="..\..\Windows\source\WindowsTimezone.h">
       <Filter>Headers\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="io\ProtoUtilities.h">
+      <Filter>Headers\io</Filter>
+    </ClInclude>
+    <ClInclude Include="io\FileCo.h">
+      <Filter>Headers\io</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

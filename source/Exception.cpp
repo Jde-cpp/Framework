@@ -1,4 +1,4 @@
-#include <jde/Exception.h>
+﻿#include <jde/Exception.h>
 #include <iostream>
 #include <spdlog/spdlog.h>
 #include <spdlog/fmt/ostr.h>
@@ -53,9 +53,9 @@ namespace Jde
 		os << what();
 		var fileName = _fileName.empty() ? "{Unknown}\0"sv : _fileName;
 		var functionName = _functionName.empty() ? "{Unknown}\0"sv : _functionName;
-		_logger.log( spdlog::source_loc{FileName(fileName).c_str(),_line,functionName.data()}, (spdlog::level::level_enum)level, os.str() );
-		if( _pServerSink )
-			LogServer( Logging::Messages::Message{Logging::Message2{level, os.str(), fileName, functionName, _line}, vector<string>{_args}} );
+		Logging::Default().log( spdlog::source_loc{FileName(fileName).c_str(),_line,functionName.data()}, (spdlog::level::level_enum)level, os.str() );
+		if( Logging::Server() )
+			Logging::LogServer( Logging::Messages::Message{Logging::Message2{level, os.str(), fileName, functionName, _line}, vector<string>{_args}} );
 	}
 	std::ostream& operator<<( std::ostream& os, const Exception& e )
 	{

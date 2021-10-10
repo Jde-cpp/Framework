@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "../../threading/Interrupt.h"
 #include "../../collections/Queue.h"
 #include "../../collections/UnorderedSet.h"
@@ -10,15 +10,13 @@
 	#include "./proto/messages.pb.h"
 #pragma warning(pop)
 
-namespace Jde
+#define 🚪 JDE_NATIVE_VISIBILITY auto
+
+namespace Jde::Logging
 {
-	namespace IO
-	{
-		class IncomingMessage;
-		namespace Sockets{ class Client; }
-	}
-namespace Logging
-{
+	🚪 Server()noexcept->up<Logging::IServerSink>&; 🚪 SetServer( up<Logging::IServerSink> p )noexcept->void;
+	🚪 ServerLevel()noexcept->ELogLevel; 🚪 SetServerLevel( ELogLevel serverLevel )noexcept->void;
+
 	struct JDE_NATIVE_VISIBILITY IServerSink
 	{
 		IServerSink()=default;
@@ -64,11 +62,12 @@ namespace Logging
 			unique_ptr<string> _pFunction;
 		};
 	}
+
 	typedef IO::Sockets::TProtoClient<Logging::Proto::ToServer,Logging::Proto::FromServer> ProtoBase;
 	struct ServerSink final: IServerSink, ProtoBase
 	{
 		using base=ProtoBase;
-		static α Create()noexcept->Logging::ServerSink*;
+		static α Create()noexcept->ServerSink*;
 		ServerSink()noexcept(false);
 		~ServerSink(){DBGX("{}"sv, "~ServerSink");}
 		α Log( Messages::Message& m )noexcept->void override{ Write( m, m.Timestamp, &m.Variables ); }
@@ -88,4 +87,6 @@ namespace Logging
 		function<Coroutine::Task2(uint32,string&&)> _customFunction;
 		Proto::ToServer _buffer; atomic<bool> _bufferMutex;
 	};
-}}
+	//α Server()noexcept->ServerSink*;
+}
+#undef 🚪

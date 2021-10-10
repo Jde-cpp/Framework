@@ -22,9 +22,10 @@ int main( int argc, char **argv )
 	Startup( argc, argv );
 	auto result = EXIT_FAILURE;
 	{
-		::testing::GTEST_FLAG(filter) = "CoroutineTests.File";//QLTests.DefTestsFetch
+		if( var p=Settings::TryGet<string>("testing/tests"); p )
+			::testing::GTEST_FLAG( filter ) = *p;  //"QLTests.*";//QLTests.DefTestsFetch
 	   result = RUN_ALL_TESTS();
-		IApplication::Instance().Wait();
+		//IApplication::Instance().Wait();
 		IApplication::CleanUp();
 	}
 	return result;

@@ -2,13 +2,13 @@
 #include "Thread.h"
 #include "InterruptibleThread.h"
 #include "../io/FileCo.h"
-#include <signal.h>
-#include "../../../Linux/source/LinuxDrive.h"
+//#include <signal.h>
+//#include "../../../Linux/source/LinuxDrive.h"
 
 #define var const auto
 namespace Jde::Threading
 {
-	//sp<IWorker> IWorker::_pInstance;
+	sp<IWorker> IWorker::_pInstance;
 	std::atomic<bool> IWorker::_mutex;
 	IWorker::IWorker( sv name )noexcept:
 		Name{ name },
@@ -20,12 +20,12 @@ namespace Jde::Threading
 	}
 	IWorker::~IWorker(){}//abstract
 
-	void IWorker::StartThread()noexcept
+	α IWorker::StartThread()noexcept->void
 	{
 		_pThread = make_unique<jthread>( [&]( stop_token st ){ Run( st );} );
 	}
 
-	void IWorker::Run( stop_token /*st*/ )noexcept
+	α IWorker::Run( stop_token /*st*/ )noexcept->void
 	{
 	}
 
@@ -65,7 +65,7 @@ namespace Jde::Threading
 		DBG( "{} - Starting"sv, Name );
 		while( !st.stop_requested() )
 		{
-			if( Poll() )
+			if( var p = Poll(); !p || *p )
 				continue;
 			TimePoint lastRequest = _lastRequest;
 			if( !_calls && Clock::now()>lastRequest+keepAlive )

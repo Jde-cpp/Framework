@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <jde/App.h>
 #include <jde/Log.h>
 #include <jde/Str.h>

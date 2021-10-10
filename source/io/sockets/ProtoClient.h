@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Socket.h"
 #include "../../collections/Queue.h"
 #include "../ProtoUtilities.h"
@@ -23,8 +23,8 @@ namespace Jde::IO::Sockets
 		static uint32 MessageLength( char* readMessageSize )noexcept;
 	protected:
 		virtual void OnDisconnect()noexcept=0;
-		void ReadHeader()noexcept;
-		void ReadBody( uint messageLength )noexcept;
+		α ReadHeader()noexcept->void;
+		α ReadBody( int messageLength )noexcept->void;
 		virtual void Process( google::protobuf::uint8* pData, int size )noexcept=0;
 
 		std::atomic<bool> _connected{ false };
@@ -63,7 +63,7 @@ namespace Jde::IO::Sockets
 			auto transmission = Proto::Deserialize<TIn>( pData, size );
 			OnReceive( transmission );
 		}
-		catch( const Exception& e )
+		catch( const Exception& )
 		{}
 	}
 

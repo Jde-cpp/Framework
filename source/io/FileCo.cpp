@@ -1,23 +1,40 @@
-#include "FileCo.h"
+﻿#include "FileCo.h"
 #include <signal.h>
 
 #define var const auto
 namespace Jde::IO
 {
-	uint IFileChunkArg::Index{0};
-	uint32 DriveWorker::ChunkSize{ 1 << 19 };
-	uint8 DriveWorker::ThreadSize{ 5 };
-	uint DriveWorker::Signal{ SIGUSR1+1 };
+	α IFileChunkArg::Handle()noexcept->HFile&{ return _fileIOArg.Handle; }
+	uint32 _chunkSize=0;
+	α DriveWorker::ChunkSize()noexcept->uint32{ return _chunkSize==0 ? (_chunkSize=Settings::TryGet<uint32>("workers/drive/chunkSize").value_or(1 << 19)) : _chunkSize; }
+
+	uint8 _threadSize=0;
+	α DriveWorker::ThreadSize()noexcept->uint8{ return _threadSize==0 ? (_threadSize=Settings::TryGet<uint8>("workers/drive/threadSize").value_or(5)) : _threadSize; }
+
+	//uint DriveWorker::Signal{ SIGUSR1+1 };
 	void DriveWorker::Initialize()noexcept
 	{
 		IWorker::Initialize();
-		var pSettings = IWorker::Settings();
-		if( pSettings )
-		{
-			ChunkSize = pSettings->TryGet<uint32>("chunkSize").value_or( DriveWorker::ChunkSize );
-			ThreadSize = pSettings->TryGet<uint8>("threadSize").value_or( DriveWorker::ThreadSize );
-		}
 	}
+
+	FileIOArg::FileIOArg( path path, bool vec )noexcept:
+		IsRead{ true },
+		Path{ path }
+	{
+		if( vec )
+			Buffer = make_shared<vector<char>>();
+		else
+			Buffer = make_shared<string>();
+	}
+	FileIOArg::FileIOArg( path path, sp<vector<char>> pVec )noexcept:
+		Path{ path }, 
+		Buffer{ pVec }
+	{}
+	FileIOArg::FileIOArg( path path, sp<string> pData )noexcept:
+		Path{ path }, 
+		Buffer{ pData }
+	{}
+
 /*	void FileIOArg::Send( coroutine_handle<Task2::promise_type>&& h )noexcept
 	{
 //		DBG( "FileIOArg::Send max={}"sv, _SC_AIO_LISTIO_MAX );
@@ -63,7 +80,7 @@ namespace Jde::IO
 		return !pNextChunk && !additional;
 	}
 
-	bool DriveAwaitable::await_ready()noexcept
+	α DriveAwaitable::await_ready()noexcept->bool
 	{
 		try
 		{
@@ -75,15 +92,14 @@ namespace Jde::IO
 		}
 		return ExceptionPtr!=nullptr;
 	}
-/*	void DriveAwaitable::await_suspend( typename base::THandle h )noexcept
+	α DriveAwaitable::await_suspend( typename base::THandle h )noexcept->void
 	{
 		base::await_suspend( h );
 		_arg.Send( move(h) );
 	}
-	TaskResult DriveAwaitable::await_resume()noexcept
+	α DriveAwaitable::await_resume()noexcept->TaskResult
 	{
 		base::AwaitResume();
 		return _pPromise ? TaskResult{ _pPromise->get_return_object().GetResult() } : TaskResult{ ExceptionPtr };
 	}
-*/
 }

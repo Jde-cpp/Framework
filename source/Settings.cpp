@@ -1,4 +1,4 @@
-#include "Settings.h"
+﻿#include "Settings.h"
 #include <jde/App.h>
 #include <fstream>
 
@@ -56,16 +56,17 @@ namespace Jde
 			return result;
 		}
 	}
-	string Settings::FileStem()noexcept
+	α Settings::FileStem()noexcept->string 
 	{
-#ifdef _MSC_VER
-		return OSApp::Executable().stem().string();
-#else
 		var executable = OSApp::Executable().filename();
-		return executable.filename().string().starts_with( "Tests." ) ? executable.filename().string() : OSApp::Executable().extension().string().substr( 1 );
+#ifdef _MSC_VER
+		var stem = executable.string().starts_with( "Jde." ) ? OSApp::Executable().stem().extension().string().substr(1) : OSApp::Executable().stem().string();
+		return stem;
+#else
+		return executable.string().starts_with( "Tests." ) ? executable.string() : OSApp::Executable().extension().string().substr( 1 );
 #endif
 	}
-	fs::path Settings::Path()noexcept
+	α Settings::Path()noexcept->fs::path
 	{
 		var fileName = fs::path{ format("{}.json", FileStem()) };
 		fs::path settingsPath{ fileName };
@@ -76,7 +77,7 @@ namespace Jde
 		}
 		return settingsPath;
 	}
-	Settings::Container& Settings::Global()noexcept
+	α Settings::Global()noexcept->Settings::Container&
 	{
 		if( !_pGlobal )
 		{

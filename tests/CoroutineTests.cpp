@@ -191,9 +191,8 @@ namespace Jde::Coroutine
 
 	TEST_F(CoroutineTests, File)
 	{
-		auto pSettings = Settings::TryGetSubcontainer<Settings::Container>( "workers", "DriveWorker" );
-		var chunkSize = pSettings->Get2<uint>( "chunkSize" ).value_or( IO::DriveWorker::ChunkSize );
-		var threadSize = pSettings->Get2<uint8>( "threadSize" ).value_or( IO::DriveWorker::ThreadSize );
+		var chunkSize = IO::DriveWorker::ChunkSize();
+		var threadSize = IO::DriveWorker::ThreadSize();
 		constexpr uint itemSize = sizeof( double );
 		var itemCount = chunkSize*threadSize*2.5/itemSize;
 		//var itemCount = chunkSize*threadSize/itemSize;
@@ -214,6 +213,7 @@ namespace Jde::Coroutine
 		Read( path );
 		std::shared_lock l2{ mtx2 };
 		cv.wait( l2 );
-		ASSERT_TRUE( *pBuffer==*_pRead );
+		bool equal = *pBuffer==*_pRead;
+		ASSERT_TRUE( equal );
 	}
 }

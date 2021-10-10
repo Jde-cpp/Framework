@@ -7,7 +7,6 @@ namespace Jde::DB
 {
 	struct IRow
 	{
-		//virtual DataValue operator[]( uint value )const=0;
 		virtual DataValue operator[]( uint value )const=0;
 		virtual bool GetBit( uint position )const=0;
 		virtual std::string GetString( uint position )const=0;

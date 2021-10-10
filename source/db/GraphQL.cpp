@@ -1,4 +1,4 @@
-#include "GraphQL.h"
+﻿#include "GraphQL.h"
 #include "SchemaProc.h"
 #include "Row.h"
 #include "Database.h"
@@ -30,7 +30,6 @@ namespace Jde
 		for( var& [name,v] : schema.Types )
 			_schema.Types.emplace( name, v );
 		for( var& [name,v] : schema.Tables )
-
 			_schema.Tables.emplace( name, v );
 	}
 	nlohmann::json InputParam2( sv name, const nlohmann::json& input )noexcept(false)
@@ -167,7 +166,7 @@ namespace DB
 		ostringstream sql{ "update ", std::ios::ate }; sql << table.Name << " set deleted=" << DB::DefaultSyntax()->UtcNow() << " where id=?";
 		return _pDataSource->Execute( sql.str(), parameters );
 	}
-	uint Restore( const DB::Table& table, const DB::MutationQL& m )
+	α Restore( const DB::Table& table, const DB::MutationQL& m )->uint
 	{
 		var pId = m.Args.find( "id" ); THROW_IF( pId==m.Args.end(), "Could not find id argument. {}", m.Args.dump() );
 		var pColumn = find_if( table.Columns.begin(), table.Columns.end(), []( var& c ){ return c.Name=="deleted"; } ); THROW_IF( pColumn==table.Columns.end(), "Could not find 'deleted' column" );
@@ -176,7 +175,7 @@ namespace DB
 		ostringstream sql{ "update ", std::ios::ate }; sql << table.Name << " set deleted=null where id=?";
 		return _pDataSource->Execute( sql.str(), parameters );
 	}
-	uint Purge( sv tableName, const DB::MutationQL& m )
+	α Purge( sv tableName, const DB::MutationQL& m )->uint
 	{
 		var pId = m.Args.find( "id" ); THROW_IF( pId==m.Args.end(), "Could not find id argument. {}", m.Args.dump() );
 		std::vector<DB::DataValue> parameters;
@@ -192,7 +191,7 @@ namespace DB
 		parameters.push_back( ToDataValue(DataType::ULong, InputParam2(parentId, input), parentId) );
 		return parameters;
 	};
-	uint Add( const DB::Table& table, const json& input )
+	α Add( const DB::Table& table, const json& input )->uint
 	{
 		ostringstream sql{ "insert into ", std::ios::ate }; sql << table.Name << "(" << table.ChildId() << "," << table.ParentId();
 		var childId = DB::Schema::ToJson( table.ChildId() );
@@ -213,14 +212,14 @@ namespace DB
 		sql << ")values( " << values.str() << ")";
 		return _pDataSource->Execute( sql.str(), parameters );
 	}
-	uint Remove( const DB::Table& table, const json& input )
+	α Remove( const DB::Table& table, const json& input )->uint
 	{
 		ostringstream sql{ "delete from ", std::ios::ate }; sql << table.Name << " where " << table.ChildId() << "=? and " << table.ParentId() << "=?";
 
 		return _pDataSource->Execute( sql.str(), ChildParentParams(DB::Schema::ToJson(table.ChildId()), DB::Schema::ToJson(table.ParentId()), input) );
 	}
 
-	uint Mutation( const DB::MutationQL& m, UserPK userId )noexcept(false)
+	α Mutation( const DB::MutationQL& m, UserPK userId )noexcept(false)->uint
 	{
 		var pSyntax = DB::DefaultSyntax();
 		var pSchemaTable = _schema.FindTableSuffix( m.TableSuffix() ); THROW_IF( !pSchemaTable, "Could not find table suffixed with '{}' in schema", m.TableSuffix() );
@@ -505,7 +504,7 @@ namespace DB
 		jData["__schema"] = jmutationType;
 
 	}
-	void QueryTable( const DB::TableQL& table, uint userId, json& jData )noexcept(false)
+	α QueryTable( const DB::TableQL& table, uint userId, json& jData )noexcept(false)->void
 	{
 		TEST_ACCESS( "Read", table.DBName(), userId ); //TODO implement.
 		if( table.JsonName=="__type" )
@@ -649,8 +648,6 @@ namespace DB
 				member = get<sv>( value );
 			else if( index==EDataValue::Bool )
 				member = get<bool>( value );
-			else if( index==EDataValue::Int )
-				member = get<int>( value );
 			else if( index==EDataValue::Int64 )
 			{
 				var intValue = get<_int>( value );
@@ -659,12 +656,12 @@ namespace DB
 				else
 					member = get<_int>( value );
 			}
-			else if( index==EDataValue::Uint )
+			else if( index==EDataValue::Uint || index==EDataValue::Int )
 			{
 				if( var pFlagValues = flagValues.find(iColumn); pFlagValues!=flagValues.end() )
 				{
 					member = json::array();
-					uint remainingFlags = get<uint>( value );
+					uint remainingFlags = index==EDataValue::Uint ? get<uint>( value ) : get<int>( value );
 					for( uint iFlag=0x1; remainingFlags!=0; iFlag <<= 1 )
 					{
 						if( (remainingFlags & iFlag)==0 )
@@ -676,8 +673,10 @@ namespace DB
 						remainingFlags -= iFlag;
 					}
 				}
-				else
+				else if( index==EDataValue::Uint )
 					member = get<uint>( value );
+				else
+					member = get<int>( value );
 			}
 			else if( index==EDataValue::Decimal2 )
 				member = (float)get<Decimal2>( value );
@@ -761,7 +760,7 @@ namespace DB
 							jSubRow[childTable->JsonName] = jChildTable;
 						}
 					}
-					rows.emplace( get<uint>(row[0]), jSubRow );
+					rows.emplace( row.GetUInt(0), jSubRow );
 				};
 				_pDataSource->Select( subSql.str(), forEachRow, parameters );
 			}
@@ -822,7 +821,7 @@ namespace DB
 		}
 	}
 
-	json QueryTables( const vector<DB::TableQL>& tables, uint userId )noexcept(false)
+	α QueryTables( const vector<DB::TableQL>& tables, uint userId )noexcept(false)->json
 	{
 		json data;
 		for( var& table : tables )
@@ -858,7 +857,8 @@ namespace DB
 			sv result = _peekValue;
 			if( result.empty() )
 			{
-				for( auto ch = _text[i]; i<_text.size() && isspace(ch); ch = i<_text.size()-1 ? _text[++i] : _text[i++] );
+				if( i<_text.size() )
+					for( auto ch = _text[i]; i<_text.size() && isspace(ch); ch = i<_text.size()-1 ? _text[++i] : _text[i++] );
 				if( i<_text.size() )
 				{
 					uint start=i;

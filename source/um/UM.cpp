@@ -1,47 +1,41 @@
-#include "UM.h"
+﻿#include "UM.h"
 #include <boost/container/flat_set.hpp>
-#include "../Settings.h"
 #include <jde/Str.h>
+#include <jde/io/File.h>
+#include "../Settings.h"
 #include "../db/DataSource.h"
 #include "../db/Database.h"
 #include "../db/GraphQL.h"
 #include "../db/Syntax.h"
-#include <jde/io/File.h>
 
 #define var const auto
 namespace Jde
 {
+	using nlohmann::json;
 	using boost::container::flat_set;
 	namespace UM
 	{
-		typedef uint GroupPK;
-		typedef uint PermissionPK;
-		typedef uint RolePK;
+		using GroupPK=uint;
+		using PermissionPK=uint;
+		using RolePK=uint;
 	}
 	struct UMSettings
 	{
 		CIString Target{ "/UM/"sv };
-		bool Use{false};
+		bool Use{ true };
 		string LibraryName{"Jde.DB.Odbc.dll"};
 		string ConnectionString;
 		fs::path MetaDataPath;
 	};
-	using nlohmann::json;
-	void from_json( const json& j, UMSettings& settings );
+	α from_json( const json& j, UMSettings& settings )->void;
 	sp<UMSettings> _pSettings;
-	//flat_map<string,uint> _apis;
 	flat_map<string,UM::PermissionPK> _tablePermissions;
 	flat_map<UserPK,flat_set<UM::GroupPK>> _userGroups; shared_mutex _userGroupMutex;
 	flat_map<UM::GroupPK,flat_set<UM::RolePK>> _groupRoles; shared_mutex _groupRoleMutex;
-	//flat_map<UM::ApiPK,flat_map<string,UM::PermissionPK>> _permissions; shared_mutex _permissionMutex;
-
 	flat_map<UM::RolePK,flat_map<UM::PermissionPK,UM::EAccess>> _rolePermissions; shared_mutex _rolePermissionMutex;
-	//update _rolePermissions
-	//for each role group, reassign user.
-
-
 	flat_map<UserPK, flat_map<UM::PermissionPK,UM::EAccess>> _userAccess; shared_mutex _userAccessMutex;
-	void AssignUser( UserPK userId, const flat_set<UM::GroupPK>& groupIds )
+
+	α AssignUser( UserPK userId, const flat_set<UM::GroupPK>& groupIds )->void
 	{
 		for( var groupId : groupIds )
 		{
@@ -55,7 +49,7 @@ namespace Jde
 			}
 		}
 	}
-	void AssignUserGroups( UserPK userId=0 )noexcept(false)
+	α AssignUserGroups( UserPK userId=0 )noexcept(false)->void
 	{
 		ostringstream sql{ "select user_id, group_id from um_user_groups g join um_users u on g.user_id=u.id and u.deleted is null", std::ios::ate };
 		vector<DB::DataValue> params;
@@ -70,7 +64,7 @@ namespace Jde
 			_userGroups.try_emplace(r.GetUInt(0)).first->second.emplace( r.GetUInt(1) );
 		}, params );
 	}
-	void UM::Configure()noexcept(false)
+	α UM::Configure()noexcept(false)->void
 	{
 		var& globalSettings = Settings::Global().Json();
 		_pSettings = make_shared<UMSettings>();
@@ -103,21 +97,21 @@ namespace Jde
 		for( var& [userId,groupIds] : _userGroups )
 			AssignUser( userId, groupIds );
 	}
-	bool IsTarget( sv url )noexcept{ return CIString{url}.starts_with(UMSettings().Target); }
-	void UM::TestAccess( EAccess access, UserPK userId, PermissionPK permissionId )noexcept(false)
+	α IsTarget( sv url )noexcept{ return CIString{url}.starts_with(UMSettings().Target); }
+	α UM::TestAccess( EAccess access, UserPK userId, PermissionPK permissionId )noexcept(false)->void
 	{
 		shared_lock l{ _userAccessMutex };
 		var pUser = _userAccess.find( userId ); THROW_IF( pUser==_userAccess.end(), Exception("User '{}' not found.",userId) );
 		var pAccess = pUser->second.find( permissionId ); THROW_IF( pAccess==pUser->second.end(), Exception("User '{}' does not have api '{}' access.", userId, permissionId) );
 		THROW_IF( (pAccess->second & access)==EAccess::None, Exception("User '{}' api '{}' access is limited to:  '{}'. requested:  '{}'.", userId, permissionId, (uint8)pAccess->second, (uint8)access) );
 	}
-	void UM::TestAccess( EAccess access, UserPK userId, sv tableName )noexcept(false)
+	α UM::TestAccess( EAccess access, UserPK userId, sv tableName )noexcept(false)->void
 	{
 		var pTable = _tablePermissions.find(string{tableName}); THROW_IF( pTable==_tablePermissions.end(), Exception("Could not find table '{}'", tableName) );
 		TestAccess( access, userId, pTable->second );
 	}
 
-	void UM::ApplyMutation( const DB::MutationQL& m, PK id )noexcept(false)
+	α UM::ApplyMutation( const DB::MutationQL& m, PK id )noexcept(false)->void
 	{
 		if( m.JsonName=="user" )
 		{
@@ -191,16 +185,8 @@ namespace Jde
 			}
 		}
 	}
-/*
-#define TEST_ACCESS(a,b,c) DBG( "TEST_ACCESS({},{},{})"sv, a, b, c )
-	string Get( sv url, UserPK userId )noexcept(false)
-	{
-		TEST_ACCESS( "Get", url, userId ); //TODO implement.
-		//throw "not implemented";
-		return {};
-	}
-*/
-	void from_json( const json& j, UMSettings& settings )
+
+	α from_json( const json& j, UMSettings& settings )->void
 	{
 		if( j.find("target")!=j.end() )
 			j.at("target").get_to( settings.Target );

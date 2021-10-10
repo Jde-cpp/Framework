@@ -57,3 +57,4 @@ tests/Tests.Framework.sln
 tests/Debug/*
 tests/packages/*
 Tests.Framework.log
+*.aps

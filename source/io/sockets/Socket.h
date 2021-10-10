@@ -11,8 +11,8 @@ namespace Jde::Threading{ struct InterruptibleThread; }
 namespace Jde::IO::Sockets
 {
 	namespace net=boost::asio;
-	ELogLevel LogLevel()noexcept;
-	using SessionPK=uint;
+	JDE_NATIVE_VISIBILITY ELogLevel LogLevel()noexcept;
+	using SessionPK=uint32;
 	struct ISession
 	{
 		const SessionPK Id;
