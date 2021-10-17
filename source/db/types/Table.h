@@ -55,10 +55,11 @@ namespace Jde::DB
 		string Create( const Syntax& syntax )const noexcept;
 		string InsertProcName()const noexcept;
 		string InsertProcText( const Syntax& syntax )const noexcept;
-		const Column* FindColumn( sv name )const noexcept;
+		α FindColumn( sv name )const noexcept->const Column*;
 
-		bool IsFlags()const noexcept{ return /*Columns.size()==2 && Columns[0].Name=="id" && Columns[1].Name=="name" &&*/ FlagsData.size(); }
-		string NameWithoutType()const noexcept;//users in um_users.
+		α IsFlags()const noexcept->bool{ return FlagsData.size(); }
+		α IsEnum()const noexcept->bool{ return Data.size(); }//GraphQL attribute
+		α NameWithoutType()const noexcept->string;//users in um_users.
 		string Prefix()const noexcept;//um in um_users.
 		string JsonTypeName()const noexcept;
 		string FKName()const noexcept;
@@ -67,7 +68,7 @@ namespace Jde::DB
 		string ParentId()const noexcept(false);
 		sp<const Table> ChildTable( const DB::Schema& schema )const noexcept(false);
 		sp<const Table> ParentTable( const DB::Schema& schema )const noexcept(false);
-		
+
 		bool HaveSequence()const noexcept{ return std::find_if( Columns.begin(), Columns.end(), [](const auto& c){return c.IsIdentity;} )!=Columns.end(); }
 		string Schema;
 		string Name;

@@ -230,7 +230,7 @@ namespace Collections
 		}
 		return in;
 	}
-
+/*
 	inline uint32 Crc( const vector<string> values )noexcept
 	{
 		//boost::crc_32_type result;
@@ -245,6 +245,7 @@ namespace Collections
 		//assert( checksum==IO::Crc::Calc32(os.str()) );
 		return IO::Crc::Calc32( os.str() );
 	}
+*/
 	inline std::vector<uint> Indexes( const std::vector<string>& population, const std::vector<string>& subset )noexcept
 	{
 		std::vector<uint> results; results.reserve( subset.size() );

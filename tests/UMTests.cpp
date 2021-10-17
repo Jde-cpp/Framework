@@ -26,26 +26,26 @@ namespace Jde::UM
 
 	uint Crud( sv service, sv name, sv target, sv description, sv suffix={} )
 	{
-		var frmt = "{{ mutation {{ create{}(\"input\":{{ \"name\": \"{}\", \"target\": \"{}\", \"description\": \"{}\"{}}}){{ id }} }} }}";
+		constexpr sv frmt = "{{ mutation {{ create{}(\"input\":{{ \"name\": \"{}\", \"target\": \"{}\", \"description\": \"{}\"{}}}){{ id }} }} }}"sv;
 		var query = format( frmt, service, name, target, description, suffix );
 		var items = DB::Query( query, 0 );
-		DBG( items.dump() );
+		LOG( ELogLevel::Debug, items.dump() );
 		uint id = items["data"][DB::Schema::ToJson(service)]["id"].get<uint>();
 
-		var updateFormat = "{{ mutation {{ update{}(\"id\":{}, \"input\":{{ \"description\": \"{} update\"}}) }} }}";
+		constexpr sv updateFormat = "{{ mutation {{ update{}(\"id\":{}, \"input\":{{ \"description\": \"{} update\"}}) }} }}";
 		var updateQuery = format( updateFormat, service, id, description );
 		var updateResult = DB::Query( updateQuery, 0 );
 
-		var deleteFormat = "{{ mutation {{ delete{}(\"id\":{}) }} }}";
+		constexpr sv deleteFormat = "{{ mutation {{ delete{}(\"id\":{}) }} }}";
 		var deleteQuery = format( deleteFormat, service, id );
-		DBG( deleteQuery );
+		LOG( ELogLevel::Debug, deleteQuery );
 		var deleteResult = DB::Query( deleteQuery, 0 );
 
 		return id;
 	}
 	void Purge( sv service, uint id )
 	{
-		var purgeFormat = "{{ mutation {{ purge{}(\"id\":{}) }} }}";
+		constexpr sv purgeFormat = "{{ mutation {{ purge{}(\"id\":{}) }} }}";
 		var purgeQuery = format( purgeFormat, service, id );
 		//DBG( purgeQuery );
 		var purgeResult = DB::Query( purgeQuery, 0 );
@@ -54,16 +54,16 @@ namespace Jde::UM
 	}
 	void AddRemove( sv service, sv childMember, sv parentMember, uint childId, uint parentId, sv suffix={} )
 	{
-		var frmt = "{{ mutation {{ {}(\"input\":{{ \"{}\": {}, \"{}\": {}{}}} ) }} }}";
+		constexpr sv frmt = "{{ mutation {{ {}(\"input\":{{ \"{}\": {}, \"{}\": {}{}}} ) }} }}";
 		var query = format( frmt, service, childMember, childId, parentMember, parentId, suffix );
 		DB::Query( query, 0 );
 	}
 	uint Query( sv service, sv name )
 	{
-		var frmt = "{{query {}(\"name\": \"{}\") {{ id }} }}";
+		constexpr sv frmt = "{{query {}(\"name\": \"{}\") {{ id }} }}";
 		var query = format( frmt, service, name );
 		json j = DB::Query( query, 0 );
-		DBG( j.dump() );
+		LOG( ELogLevel::Debug, j.dump() );
 		var data = j["data"];
 		var obj = j["data"][string{service}];
 		//THROW_IF( obj.is_null(), Exception("Could not find '{}' - '{}'- {}", service, name, j.dump()) );
@@ -77,14 +77,14 @@ namespace Jde::UM
 		//bool create = true;
 
 		json j1 = DB::Query( "query{ role(filter:{id:{eq:8}}){ rolePermissions{api{ id name } id name rights } } }", 0 );
-		DBG( j1.dump() );
+		LOG( ELogLevel::Debug, j1.dump() );
 		json jx = DB::Query( "query{ authenticators{ id name }, users{ id name target description authenticatorId attributes created updated deleted } }", 0 );
-		DBG( jx.dump() );
+		LOG( ELogLevel::Debug, jx.dump() );
 		auto adminUserId = Query( "user", "JohnSmith@google.com" ); if( !adminUserId ) adminUserId = Crud( "User", "JohnSmith@google.com", "jsmith", "Unit Test User", ",\"authenticatorId\": 1" );
 		auto authenticatedUserId = Query( "user", "low-user@google.com" ); if( !authenticatedUserId ) authenticatedUserId = Crud( "User", "low-user@google.com", "low-user", "Unit Test User2", ",\"authenticatorId\": 1" );
 
 		json j = DB::Query( "query{ authenticators{ id name }, users{ id name target description authenticatorId attributes created updated deleted } }", 0 );
-		DBG( j.dump() );
+		LOG( ELogLevel::Debug, j.dump() );
 
 		auto administersId = Query( "group", "UnitTestAdminGroup" ); if( !administersId ) administersId = Crud( "Group", "UnitTestAdminGroup", "UnitTestAdminGroup", "UnitTestAdminGroup desc" );
 		auto readUMRoleId = Query( "role", "UnitTestRole" ); if( !readUMRoleId ) readUMRoleId = Crud( "Role", "UnitTestRole", "unittest_role_1", "unittest1 role desc" );
@@ -101,7 +101,7 @@ namespace Jde::UM
 		auto permissionId = Query( "permission", permissionName );
 		if( !permissionId )
 		{
-			var frmt = "{{ mutation {{ create{}(\"input\":{{ \"name\": \"{}\", \"apiId\": {}}}){{ id }} }} }}";
+			constexpr sv frmt = "{{ mutation {{ create{}(\"input\":{{ \"name\": \"{}\", \"apiId\": {}}}){{ id }} }} }}";
 			var query = format( frmt, "Permission", permissionName, twsApiId );
 			var items = DB::Query( query, 0 );
 			permissionId = items["data"]["permission"]["id"].get<uint>();

@@ -30,7 +30,6 @@ namespace Jde::DB
 			}
 			return word.size()>2 && os.str().size()<word.size()-1 ? os.str() : word;
 		};
-		//var original = Schema::FromJson( schemaName );
 		var splits = Str::Split( DB::Schema::ToSingular(schemaName), '_' );
 		ostringstream name;
 		for( uint i=1; i<splits.size(); ++i )
@@ -157,7 +156,7 @@ namespace Jde::DB
 				ostringstream osSelect{ "select count(*) from ", std::ios::ate }; osSelect << tableName << " where ";
 				vector<DB::DataValue> selectParams;
 				ostringstream osWhere;
-				var set = [&,&table=*pTable]( /*const vector<string>& keys*/ )
+				var set = [&,&table=*pTable]()
 				{
 					osWhere.str("");
 					for( var& keyColumn : table.SurrogateKey )
@@ -175,16 +174,14 @@ namespace Jde::DB
 					}
 					return selectParams.size();
 				};
-				if( !set( /*pTable->SurrogateKey*/) )
+				if( !set() )
 					for( auto p = pTable->NaturalKeys.begin(); p!=pTable->NaturalKeys.end() && !set(/**p*/); ++p );
 				THROW_IF( selectParams.empty(), Exception("Could not find keys in data for '{}'", tableName) );
 				osSelect << osWhere.str();
 
 
-				//ostringstream osInsert{ "insert into ", std::ios::ate }; osInsert << tableName << "(";
 				ostringstream osInsertValues;
 				ostringstream osInsertColumns;
-				uint id = 1;
 				for( var& column : pTable->Columns )
 				{
 					var jsonName = Schema::ToJson( column.Name );
@@ -195,18 +192,13 @@ namespace Jde::DB
 
 					if( params.size() )
 					{
-/*							if( haveData )
-							osSelect << " and ";*/
 						osInsertValues << ",";
 						osInsertColumns << ",";
 					}
 					osInsertColumns << column.Name;
 					if( haveData )
 					{
-						//osSelect << column.Name << "=?";
 						osInsertValues << "?";
-						if( column.Name=="id" && pData->is_number() )
-							id = pData->get<uint>();
 						params.push_back( ToDataValue(column.Type, *pData, column.Name) );
 					}
 					else
@@ -221,11 +213,6 @@ namespace Jde::DB
 					sql << format( "insert into {}({})values({})", tableName, osInsertColumns.str(), osInsertValues.str() );
 					if( haveSequence )
 						sql << endl << "SET IDENTITY_INSERT " << tableName << " OFF;";
-					/*if( pTable->HaveSequence() && id==0 && syntax.ZeroSequenceMode().size()  )
-					{
-						_pDataSource->Execute( sql, params );
-					}
-					else*/
 					_pDataSource->Execute( sql.str(), params );
 				}
 			}
@@ -254,7 +241,6 @@ namespace Jde::DB
 					for( ; fks.find(name)!=fks.end(); name = getName(i++) );
 
 					var createStatement = ForeignKey::Create( name, column.Name, *pPKTable->second, tableName );
-					//DBG( createStatement );
 					_pDataSource->Execute( createStatement );
 					DBG( "Created fk '{}'."sv, name );
 				}

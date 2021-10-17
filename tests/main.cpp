@@ -2,12 +2,12 @@
 #include "../../Framework/source/Settings.h"
 #include "../../Framework/source/Cache.h"
 #define var const auto
-template<class T> using sp = std::shared_ptr<T>;
-template<typename T>
-constexpr auto ms = std::make_shared<T>;
 
 namespace Jde
 {
+#ifndef MSC_VER
+	string OSApp::CompanyName()noexcept{ return "Jde-Cpp"; }
+#endif
  	void Startup( int argc, char **argv )noexcept
 	{
 		var appName = "Tests.Framework"sv;
@@ -23,9 +23,8 @@ int main( int argc, char **argv )
 	auto result = EXIT_FAILURE;
 	{
 		if( var p=Settings::TryGet<string>("testing/tests"); p )
-			::testing::GTEST_FLAG( filter ) = *p;  //"QLTests.*";//QLTests.DefTestsFetch
+			::testing::GTEST_FLAG( filter ) = *p;
 	   result = RUN_ALL_TESTS();
-		//IApplication::Instance().Wait();
 		IApplication::CleanUp();
 	}
 	return result;

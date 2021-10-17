@@ -15,8 +15,9 @@ namespace Jde
 	using boost::container::flat_map;
 	using nlohmann::json;
 	using nlohmann::ordered_json;
+	ELogLevel _level = Logging::TagLevel( "sql", [](α l){_level=l;} );
 
-	string DB::Message( sv sql, const std::vector<DataValue>* pParameters, sv error )noexcept
+	α DB::Message( sv sql, const std::vector<DataValue>* pParameters, sv error )noexcept->string
 	{
 		var size = pParameters ? pParameters->size() : 0;
 		ostringstream os;
@@ -32,10 +33,16 @@ namespace Jde
 			os << sql.substr( prevIndex );
 		return os.str();
 	}
-	void DB::Log( sv sql, const std::vector<DataValue>* pParameters, sv file, sv fnctn, int line, ELogLevel level, sv error )noexcept
+
+	α DB::Log( sv sql, const std::vector<DataValue>* pParameters, sv file, sv fnctn, int line )noexcept->void
 	{
-		Logging::Log( Logging::Message2(level, Message(sql, pParameters, error), file, fnctn, line) );
-	};
+		Logging::Log( Logging::Message2{_level, Message(sql, pParameters, {}), file, fnctn, line} );
+	}
+
+	α DB::Log( sv sql, const std::vector<DataValue>* pParameters, sv file, sv fnctn, int line, ELogLevel level, sv error )noexcept->void
+	{
+		Logging::Log( Logging::Message2{level, Message(sql, pParameters, error), file, fnctn, line} );
+	}
 
 	class DataSourceApi
 	{

@@ -193,17 +193,17 @@ namespace Jde
 
 	void Logging::LogServer( const MessageBase& m )noexcept
 	{
-		ASSERT( Server() && m.Level!=ELogLevel::NoLog );
+		ASSERTX( Server() && m.Level!=ELogLevel::NoLog );
 		Server()->Log( m );
 	}
 	void Logging::LogServer( const MessageBase& m, vector<string>& values )noexcept
 	{
-		ASSERT( Server() && m.Level!=ELogLevel::NoLog );
+		ASSERTX( Server() && m.Level!=ELogLevel::NoLog );
 		Server()->Log( m, values );
 	}
 	void Logging::LogServer( Messages::Message& m )noexcept
 	{
-		ASSERT( Server() && m.Level!=ELogLevel::NoLog );
+		ASSERTX( Server() && m.Level!=ELogLevel::NoLog );
 		Server()->Log( m );
 	}
 
@@ -292,11 +292,11 @@ namespace Jde
 	{
 		MessageBase::MessageBase( sv message, ELogLevel level, sv file, sv function, int line )noexcept:
 			Level{level},
-			MessageId{ IO::Crc::Calc32(message) },//{IO::Crc::Calc32(message)},
+			MessageId{ Calc32RunTime(message) },//{IO::Crc::Calc32(message)},
 			MessageView{ message },
-			FileId{ IO::Crc::Calc32(file) },
+			FileId{ Calc32RunTime(file) },
 			File{ file },
-			FunctionId{ IO::Crc::Calc32(function) },
+			FunctionId{ Calc32RunTime(function) },
 			Function{ function },
 			LineNumber{ line }
 		{

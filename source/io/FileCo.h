@@ -41,35 +41,32 @@ namespace Jde::IO
 		FileIOArg( path path, sp<vector<char>> pVec )noexcept;
 		FileIOArg( path path, sp<string> pData )noexcept;
 		~FileIOArg(){ DBG("FileIOArg::~FileIOArg"sv); }
-		//up<IFileChunkArg> CreateChunk( uint startIndex, uint endIndex )noexcept;
 		α Open()noexcept(false)->void;
-		//HFile Handle()noexcept;
-		//HFile SubsequentHandle()noexcept;
 		α HandleChunkComplete( IFileChunkArg* pChunkArg )noexcept->bool;
 		α Send( coroutine_handle<Task2::promise_type>&& h )noexcept->void;
-		//void SendNext()noexcept;
 		α SetWorker( sp<Threading::IWorker> p ){ _pWorkerKeepAlive=p; }
 		α Data()noexcept{ return std::visit( [](auto&& x){return x->data();}, Buffer ); }
 		α Size()const noexcept{ return std::visit( [](auto&& x){return x->size();}, Buffer ); }
 
-		/*const*/ bool IsRead{false};
+		/*const*/ bool IsRead{ false };
 		fs::path Path;
 		std::variant<sp<vector<char>>,sp<string>> Buffer;
 
 		vector<up<IFileChunkArg>> Chunks;
 		coroutine_handle<Task2::promise_type> CoHandle;
 		HFile Handle{0};
-
 	private:
+		//α CreateChunk( uint index )noexcept->up<IFileChunkArg>;
+		//α OSSend()noexcept->void;
 		sp<Threading::IWorker> _pWorkerKeepAlive;
 	};
 
 	struct JDE_NATIVE_VISIBILITY DriveAwaitable : IAwaitable
 	{
 		using base=IAwaitable;
-		DriveAwaitable( path path, bool vector )noexcept:_arg{ path, vector }{ DBG("DriveAwaitable::Read"sv); }
-		DriveAwaitable( path path, sp<vector<char>> data )noexcept:_arg{ path, data }{ DBG("DriveAwaitable::Write"sv); }
-		DriveAwaitable( path path, sp<string> data )noexcept:_arg{ path, data }{ DBG("here"sv); }
+		DriveAwaitable( path path, bool vector )noexcept:_arg{ path, vector }{}
+		DriveAwaitable( path path, sp<vector<char>> data )noexcept:_arg{ path, data }{}
+		DriveAwaitable( path path, sp<string> data )noexcept:_arg{ path, data }{}
 		α await_ready()noexcept->bool override;
 		α await_suspend( typename base::THandle h )noexcept->void override;//{ base::await_suspend( h ); _pPromise = &h.promise(); }
 		α await_resume()noexcept->TaskResult override;

@@ -6,9 +6,14 @@
 namespace Jde::DB
 {
 	struct Schema; struct IDataSource; struct Syntax; struct Column;
-	void AppendQLSchema( const Schema& schema )noexcept;
-	void SetQLDataSource( sp<IDataSource> p )noexcept;
-	void ClearQLDataSource()noexcept;
+	namespace GraphQL
+	{
+		α Schema()noexcept->Schema&;
+		α DataSource()noexcept->sp<IDataSource>;
+	}
+	α AppendQLSchema( const Schema& schema )noexcept->void;
+	α SetQLDataSource( sp<IDataSource> p )noexcept->void;
+	α ClearQLDataSource()noexcept->void;
 	enum class QLFieldKind : uint8
 	{
 		Scalar=0,

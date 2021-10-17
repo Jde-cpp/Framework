@@ -4,12 +4,13 @@
 #include "../Cache.h"
 
 #define QUERY if( var pDS = Jde::DB::DataSource(); pDS ) (*pDS)
+#define 🚪 JDE_NATIVE_VISIBILITY auto
 namespace Jde::DB
 {
-	#define 🚪 JDE_NATIVE_VISIBILITY auto
 	struct IDataSource; struct Syntax; //struct DataValue;
-	string Message( sv sql, const std::vector<DataValue>* pParameters, sv error={} )noexcept;
-	void Log( sv sql, const std::vector<DataValue>* pParameters, sv file, sv fnctn, int line, ELogLevel level=ELogLevel::Trace, sv error={} )noexcept;
+	α Message( sv sql, const std::vector<DataValue>* pParameters, sv error={} )noexcept->string;
+	α Log( sv sql, const std::vector<DataValue>* pParameters, sv file, sv fnctn, int line )noexcept->void;
+	α Log( sv sql, const std::vector<DataValue>* pParameters, sv file, sv fnctn, int line, ELogLevel level, sv error )noexcept->void;
 	🚪 DefaultSyntax()noexcept->sp<Syntax>;
 	🚪 DataSource()noexcept(false)->sp<IDataSource>;
 	🚪 DataSource( path libraryName, sv connectionString )noexcept(false)->sp<IDataSource>;

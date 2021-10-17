@@ -27,31 +27,14 @@ namespace Jde::IO
 			Buffer = make_shared<string>();
 	}
 	FileIOArg::FileIOArg( path path, sp<vector<char>> pVec )noexcept:
-		Path{ path }, 
+		Path{ path },
 		Buffer{ pVec }
 	{}
 	FileIOArg::FileIOArg( path path, sp<string> pData )noexcept:
-		Path{ path }, 
+		Path{ path },
 		Buffer{ pData }
 	{}
 
-/*	void FileIOArg::Send( coroutine_handle<Task2::promise_type>&& h )noexcept
-	{
-//		DBG( "FileIOArg::Send max={}"sv, _SC_AIO_LISTIO_MAX );
-		CoHandle = move( h );
-		var size = std::visit( [](auto&& x){return x->size();}, Buffer );
-		var chunkSize = DriveWorker::ChunkSize;
-		Chunks.reserve( size/chunkSize+1 );
-		for( uint32 i=0; i<size; i+=chunkSize )
-			Chunks.push_back( CreateChunk(i, std::min(chunkSize, size)) );
-		for( uint8 i=0; i<Chunks.size() && i<DriveWorker::ThreadSize; ++i )
-			Chunks[i]->Sent = true;
-		for( uint8 i=0; i<Chunks.size() && i<DriveWorker::ThreadSize; ++i )
-			Chunks[i]->Process();
-//		DBG( "~FileIOArg::Send"sv );
-	}
-*/
-	//atomic<bool> _mutex;
 	bool FileIOArg::HandleChunkComplete( IFileChunkArg* pChunkArg )noexcept
 	{
 		//Threading::AtomicGuard l{ _mutex };
@@ -79,6 +62,13 @@ namespace Jde::IO
 		}
 		return !pNextChunk && !additional;
 	}
+	// α FileIOArg::Send( coroutine_handle<Task2::promise_type>&& h )noexcept->void
+	// {
+	// 	CoHandle = move( h );
+	// 	for( uint i=0; i*DriveWorker::ChunkSize()<Size(); ++i )
+	// 		Chunks.emplace_back( CreateChunk(i) );
+	// 	OSSend();
+	// }
 
 	α DriveAwaitable::await_ready()noexcept->bool
 	{
@@ -97,9 +87,10 @@ namespace Jde::IO
 		base::await_suspend( h );
 		_arg.Send( move(h) );
 	}
-	α DriveAwaitable::await_resume()noexcept->TaskResult
+/*	α DriveAwaitable::await_resume()noexcept->TaskResult
 	{
 		base::AwaitResume();
 		return _pPromise ? TaskResult{ _pPromise->get_return_object().GetResult() } : TaskResult{ ExceptionPtr };
 	}
+*/
 }

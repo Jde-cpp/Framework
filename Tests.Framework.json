@@ -2,8 +2,10 @@
 	"wakeDuration": "PT5S",
 	"db":
 	{
-		"driver": "Jde.DB.Odbc.dll",
-		"connectionString": "DSN=Jde_TWS_Connection",
+		"driverx": "Jde.DB.Odbc.dll",
+		"connectionStringx": "DSN=Jde_TWS_Connection",
+		"driver": "libJde.MySql.so",
+		"connectionString": "Jde_UM_Connection",
 		"meta": "../../TwsWebSocket/meta.json"
 	},
 	"logging":
@@ -27,16 +29,16 @@
 	{
 		"use": true
 	},
-	"workers": 
+	"workers":
 	{
-		"drive": 
+		"drive":
 		{
 			"chunkSize": 512,
 			"threads": 1
 		}
 	},
-	"testing": 
+	"testing":
 	{
-		"testsx":  "QLTests.IntrospectionSchema"
+		"tests":  "QLTests.*"
 	}
 }
