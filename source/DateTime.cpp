@@ -140,9 +140,7 @@ namespace Jde
 
 	DateTime::DateTime( sv iso  )noexcept(false)
 	{
-		if( iso.size()<19 )
-			THROW( RuntimeException("ISO Date '{}' expected at least 19 characters vs '{}'", iso, iso.size()) );
-
+		THROW_IF( iso.size()<19, "ISO Date '{}' expected at least 19 characters vs '{}'", iso, iso.size() );
 		std::tm tm;
 		tm.tm_year = stoi( string(iso.substr(0,4)) )-1900;
 		tm.tm_mon = stoi( string(iso.substr(5,2)) )-1;
@@ -270,8 +268,7 @@ namespace Jde
 	uint8 DateTime::ParseMonth( sv month )noexcept(false)
 	{
 		var index = find( months.begin(), months.end(), Str::ToLower(string(month)) )-months.begin();
-		if( index>=(int)months.size() )
-			THROW( ArgumentException("Could not parse month '{}'", month) );
+		THROW_IF( index>=(int)months.size(), "Could not parse month '{}'", month );
 		return (uint8)index+1;
 	}
 	string DateTime::MonthAbbrev()const noexcept
@@ -288,7 +285,7 @@ namespace Jde
 			{
 				return GetGmtOffset( name, utc );
 			}
-			catch( const Exception& )
+			catch( const IException& )
 			{}
 			return Duration{};
 		}

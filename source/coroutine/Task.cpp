@@ -30,10 +30,8 @@ namespace Jde::Coroutine
 			else
 				ERR( "unhandled_exception - no exception"sv );
 		}
-		catch( const Exception& e )
-		{
-			e.Log();
-		}
+		catch( const IException& )
+		{}
 		catch( const std::exception& e )
 		{
 			ERR( "unhandled_exception ->{}"sv, e.what() );

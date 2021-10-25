@@ -82,9 +82,18 @@ namespace Jde
 		if( !_pGlobal )
 		{
 			var settingsPath = Path();
-			_pGlobal = fs::exists(settingsPath) ? std::make_unique<Jde::Settings::Container>( settingsPath ) : std::make_unique<Jde::Settings::Container>( nlohmann::json{} );
+			try
+			{
+				CHECK_FILE_EXISTS( settingsPath );
+				_pGlobal = make_unique<Jde::Settings::Container>( settingsPath );
+			}
+			catch( const std::exception& e )
+			{
+				Logging::MessageBase m{ "({})Could not load settings - {}"sv, ELogLevel::Critical, source_location::current() };
+				Logging::LogMemory( m, {settingsPath.string(), e.what()} );
+				_pGlobal = std::make_unique<Jde::Settings::Container>( nlohmann::json{} );
+			}
 		}
 		return *_pGlobal;
 	}
-
 }

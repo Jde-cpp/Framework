@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <string_view>
 #include <shared_mutex>
 #include <jde/Log.h>
@@ -22,13 +22,13 @@ namespace Jde::Threading
 
 	};
 
-	JDE_NATIVE_VISIBILITY uint GetThreadId()noexcept;
-	JDE_NATIVE_VISIBILITY uint GetAppThreadHandle()noexcept;
-	JDE_NATIVE_VISIBILITY void SetThreadDscrptn( std::thread& thread, sv description )noexcept;
-	JDE_NATIVE_VISIBILITY void SetThreadDscrptn( sv description )noexcept;
-	JDE_NATIVE_VISIBILITY void SetThreadInfo( const ThreadParam& param )noexcept;
+	Γ uint GetThreadId()noexcept;
+	Γ uint GetAppThreadHandle()noexcept;
+	Γ void SetThreadDscrptn( std::thread& thread, sv description )noexcept;
+	Γ void SetThreadDscrptn( sv description )noexcept;
+	Γ void SetThreadInfo( const ThreadParam& param )noexcept;
 	HThread BumpThreadHandle()noexcept;
-	JDE_NATIVE_VISIBILITY const char* GetThreadDescription()noexcept;
+	Γ const char* GetThreadDescription()noexcept;
 
 	void Run( const size_t maxWorkerCount, size_t runCount, std::function<void(size_t)> func )noexcept;
 	//taken from https://livebook.manning.com/#!/book/c-plus-plus-concurrency-in-action-second-edition/chapter-8/v-7/1

@@ -10,14 +10,14 @@
 	#include "./proto/messages.pb.h"
 #pragma warning(pop)
 
-#define 🚪 JDE_NATIVE_VISIBILITY auto
+#define 🚪 Γ auto
 
 namespace Jde::Logging
 {
 	🚪 Server()noexcept->up<Logging::IServerSink>&; 🚪 SetServer( up<Logging::IServerSink> p )noexcept->void;
 	🚪 ServerLevel()noexcept->ELogLevel; 🚪 SetServerLevel( ELogLevel serverLevel )noexcept->void;
 
-	struct JDE_NATIVE_VISIBILITY IServerSink
+	struct Γ IServerSink : private boost::noncopyable
 	{
 		IServerSink()=default;
 		virtual ~IServerSink();
@@ -45,7 +45,7 @@ namespace Jde::Logging
 	};
 	namespace Messages
 	{
-		struct JDE_NATIVE_VISIBILITY Message final : Message2
+		struct Γ Message final : Message2
 		{
 			Message( const MessageBase& base )noexcept:
 				Message2{ base }
@@ -87,6 +87,5 @@ namespace Jde::Logging
 		function<Coroutine::Task2(uint32,string&&)> _customFunction;
 		Proto::ToServer _buffer; atomic<bool> _bufferMutex;
 	};
-	//α Server()noexcept->ServerSink*;
 }
 #undef 🚪

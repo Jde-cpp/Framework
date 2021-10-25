@@ -11,14 +11,16 @@ namespace Jde::Threading
 	sp<IWorker> IWorker::_pInstance;
 	std::atomic<bool> IWorker::_mutex;
 	IWorker::IWorker( sv name )noexcept:
-		Name{ name },
-		ThreadCount{ (Settings() ? Settings()->TryGet<uint8>( "threads" ) : std::nullopt).value_or(0) }
-	{
-	}
-	void IWorker::Initialize()noexcept
-	{
-	}
+		//Name{ name },
+		ThreadCount{ Settings::TryGet<uint8>(format("workers/{}/threads", name)).value_or(0) }
+	{}
+
 	IWorker::~IWorker(){}//abstract
+
+	α IWorker::Initialize()noexcept->void
+	{
+	}
+	
 
 	α IWorker::StartThread()noexcept->void
 	{
@@ -39,7 +41,7 @@ namespace Jde::Threading
 			_pThread = nullptr;
 		}
 	}
-	void IPollWorker::WakeUp()noexcept
+	α IPollWorker::WakeUp()noexcept->void
 	{
 		Threading::AtomicGuard l{ _mutex };
 		++_calls;
@@ -48,7 +50,7 @@ namespace Jde::Threading
 		else if( !ThreadCount && _calls==1 )
 			IApplication::AddActiveWorker( this );
 	}
-	void IPollWorker::Sleep()noexcept
+	α IPollWorker::Sleep()noexcept->void
 	{
 		Threading::AtomicGuard l{ _mutex };
 		--_calls;
@@ -57,12 +59,12 @@ namespace Jde::Threading
 			IApplication::RemoveActiveWorker( this );
 	}
 
-	void IPollWorker::Run( stop_token st )noexcept
+	α IPollWorker::Run( stop_token st )noexcept->void
 	{
-		Threading::SetThreadDscrptn( Name );
+		Threading::SetThreadDscrptn( NameInstance );
 		sp<IWorker> pKeepAlive;
 		var keepAlive = Settings::TryGet<Duration>( "WorkerkeepAlive" ).value_or( 5s );
-		DBG( "{} - Starting"sv, Name );
+		DBG( "({})Starting Thread", NameInstance );
 		while( !st.stop_requested() )
 		{
 			if( var p = Poll(); !p || *p )
@@ -78,6 +80,6 @@ namespace Jde::Threading
 			else
 				std::this_thread::yield();
 		}
-		DBG( "{} - Ending"sv, Name );
+		DBG( "({})Ending Thread", NameInstance );
 	}
 }

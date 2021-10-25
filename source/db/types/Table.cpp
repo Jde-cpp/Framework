@@ -33,6 +33,8 @@ namespace Jde::DB
 	{
 		auto getType = [this,&commonColumns, &schema, &parents]( sv typeName )
 		{
+			//if( typeName=="umAuthenticators?" )
+			//	__debugbreak();
 			IsNullable = typeName.ends_with( "?" );
 			if( IsNullable )
 				typeName = typeName.substr( 0, typeName.size()-1 );
@@ -48,14 +50,12 @@ namespace Jde::DB
 				Type = ToDataType( typeName );
 				if( Type==DataType::None )
 				{
-					if( schema.contains(string{typeName}) )
+					if( var pPKTable = schema.find(string{typeName}); pPKTable!=schema.end() )
 					{
-						Table table{ typeName, *schema.find(string{typeName}), parents, commonColumns, schema };
-						if( table.SurrogateKey.size()==1 )
-						{
-							if( var pColumn = table.FindColumn(table.SurrogateKey.front()); pColumn )
-								Type = pColumn->Type;
-						}
+						Table table{ typeName, *pPKTable, parents, commonColumns, schema };
+						if( var pColumn = table.SurrogateKey.size()==1 ? table.FindColumn(table.SurrogateKey.front()) : nullptr; pColumn )
+							Type = pColumn->Type;
+						IsEnum = table.Data.size();
 					}
 					if( Type==DataType::None )
 						Type = DataType::UInt;
@@ -112,7 +112,7 @@ namespace Jde::DB
 			if( columnName=="$parent" )
 			{
 				var name2 = value.get<string>();
-				var pParent = parents.find( j.find("$parent")->get<string>() ); THROW_IF( pParent==parents.end(), Exception("Could not find parent '{}'", j.find("$parent")->get<string>()) );
+				var pParent = parents.find( j.find("$parent")->get<string>() ); THROW_IF( pParent==parents.end(), "Could not find parent '{}'", j.find("$parent")->get<string>() );
 				for( var& column : pParent->second.Columns )
 					Columns.push_back( column );
 				for( var& index : pParent->second.Indexes )

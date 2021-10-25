@@ -34,10 +34,8 @@ namespace Jde::Logging
 		{
 			SetServer( make_unique<ServerSink>() );
 		}
-		catch(const Exception& e)
-		{
-			e.Log("ServerSink", ELogLevel::Error);
-		}
+		catch( const IException& )
+		{}
 		return (ServerSink*)_pServerSink.get();
 	}
 

@@ -136,6 +136,9 @@
     <ClCompile Include="io\FileCo.cpp">
       <Filter>Source\io</Filter>
     </ClCompile>
+    <ClCompile Include="db\GraphQuery.cpp">
+      <Filter>Source\db</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Stopwatch.h">

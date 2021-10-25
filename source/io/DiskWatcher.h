@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <jde/Exports.h>
 #include "../threading/InterruptibleThread.h"
 #include "../coroutine/Awaitable.h"
@@ -54,7 +54,7 @@ namespace Jde::IO
 #pragma endregion
 #pragma region	IDriveChange
 //#ifndef _MSC_VER
-	struct JDE_NATIVE_VISIBILITY IDriveChange
+	struct Γ IDriveChange
 	{
 		virtual void OnAccess( path path, const NotifyEvent& event )noexcept;
 		virtual void OnModify( path path, const NotifyEvent& event )noexcept;
@@ -128,7 +128,7 @@ namespace Jde::IO
 	};
 
 #pragma region DiskWatcher
-	struct JDE_NATIVE_VISIBILITY DiskWatcher : std::enable_shared_from_this<DiskWatcher>
+	struct Γ DiskWatcher : std::enable_shared_from_this<DiskWatcher>
 	{
 		DiskWatcher( path path, EDiskWatcherEvents events/*=DefaultEvents*/ )noexcept(false);
 		virtual ~DiskWatcher();

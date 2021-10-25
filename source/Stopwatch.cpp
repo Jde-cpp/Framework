@@ -13,12 +13,9 @@
 
 namespace Jde
 {
-	//using NanoSecs = duration<size_t, nanoseconds::period>;
 	using namespace std::chrono;
-	//using duration_cast;
 
 	SDuration Stopwatch::_minimumToLog = 1s;
-	//map<string,SDuration> Stopwatch::_accumulations;
 
 	Stopwatch::Stopwatch( sv what, bool started )noexcept:
 		_what{ what },
@@ -26,7 +23,7 @@ namespace Jde
 	{}
 
 	Stopwatch::Stopwatch( Stopwatch* pParent, sv what, sv instance, bool started )noexcept:
-		_what{ what },//what.length()==0 ? StopwatchNS::Context :
+		_what{ what },
 		_instance{instance},
 		_start{ started ? SClock::now() : STimePoint{} },
 		_pParent{ pParent },
@@ -55,7 +52,6 @@ namespace Jde
 		if( force || elapsed-_previousProgressElapsed>_minimumToLog )
 		{
 			os.imbue( std::locale("") );
-			//os << GetTypeName() << "(" << _what.c_str() << ")  ";
 			if( context.length()>0 )
 				os << "[" << context << "]  ";
 			os << std::fixed << index;
@@ -100,8 +96,6 @@ namespace Jde
 	}
 	void Stopwatch::Finish( bool /*remove=true*/ )
 	{
-		//if( remove )
-			//StopwatchNS::Existing.erase( this );
 		Finish( ""sv );
 	}
 
@@ -125,17 +119,6 @@ namespace Jde
 		_finished=true;
 	}
 
-/*	void Stopwatch::UpdateChild( const Stopwatch& sw )
-	{
-		auto pChild = _children.emplace( sw._what, nanoseconds(0) ).first;
-		pChild->second += sw.Elapsed();
-	}
-*/
-/*	void Stopwatch::SetContext( str context )
-	{
-		StopwatchNS::Context=context;
-	}
-*/
 	string Stopwatch::FormatSeconds( const SDuration& duration )
 	{
 		double seconds = duration_cast<milliseconds>(duration).count()/1000.0; //;
@@ -166,51 +149,7 @@ namespace Jde
 			fmt = format( "{0}", count );
 		return fmt;
 	}
-/*
-	const char* Stopwatch::GetTypeName(StopwatchTypes type)
-	{
-		const char* name="";
-		switch( type )
-		{
-		case StopwatchTypes::Other:
-			name = "Other";
-			break;
-		case StopwatchTypes::Calculate:
-			name = "Calculate";
-			break;
-		case StopwatchTypes::ComputeCost:
-			name = "ComputeCost";
-			break;
-		case StopwatchTypes::Convert:
-			name = "Convert";
-			break;
-		case StopwatchTypes::Copy:
-			name = "Copy";
-			break;
-		case StopwatchTypes::Create:
-			name = "Create";
-			break;
-		case StopwatchTypes::GradientDescent:
-			name = "GradientDescent";
-			break;
-		case StopwatchTypes::Prefix:
-			name = "Prefix";
-			break;
-		case StopwatchTypes::ReadFile:
-			name = "Read File";
-			break;
-		case StopwatchTypes::WriteFile:
-			name = "Write File";
-			break;
-		case StopwatchTypes::ServerCall:
-			name = "Server Call";
-			break;
-		default:
-			THROW( Exception(format("enum:  '{0}', not implemented.", int(type)).c_str()) );
-		}
-		return name;
-	}
-*/
+	
 	void Stopwatch::UnPause()
 	{
 		if( _startPause!=STimePoint{} )

@@ -175,7 +175,7 @@ namespace Jde
 					args.push_back( fmt::detail::make_arg<ctx>(a) );
 				try
 				{
-					_logger.log( spdlog::source_loc{m.File.data(),m.LineNumber,m.Function.data()}, (spdlog::level::level_enum)m.Level, fmt::vformat(m.MessageView, fmt::basic_format_args<ctx>{args.data(), (int)args.size()}) );
+					_logger.log( spdlog::source_loc{m.File.data(),(int)m.LineNumber,m.Function.data()}, (spdlog::level::level_enum)m.Level, fmt::vformat(m.MessageView, fmt::basic_format_args<ctx>{args.data(), (int)args.size()}) );
 				}
 				catch( const fmt::v8::format_error& e )
 				{
@@ -271,7 +271,6 @@ namespace Jde
 	bool HaveLogger()noexcept{ return true; }
 
 	spdlog::logger& Logging::Default()noexcept{ return _logger; }
-	//inline Logging::IServerSink* Logging::GetServerSink()noexcept{ return ServerSink(); }
 
 	void ClearMemoryLog()noexcept
 	{
@@ -290,7 +289,7 @@ namespace Jde
 
 	namespace Logging
 	{
-		MessageBase::MessageBase( sv message, ELogLevel level, sv file, sv function, int line )noexcept:
+		MessageBase::MessageBase( sv message, ELogLevel level, sv file, sv function, uint_least32_t line )noexcept:
 			Level{level},
 			MessageId{ Calc32RunTime(message) },//{IO::Crc::Calc32(message)},
 			MessageView{ message },
@@ -312,13 +311,30 @@ namespace Jde
 				Fields |= EFields::LineNumber;
 		}
 
+		MessageBase::MessageBase( sv message, ELogLevel level, const source_location& sl )noexcept:
+			Level{level},
+			MessageId{ Calc32RunTime(message) },//{IO::Crc::Calc32(message)},
+			MessageView{ message },
+			FileId{ Calc32RunTime(sl.file_name()) },
+			File{ sl.file_name() },
+			FunctionId{ Calc32RunTime(sl.function_name()) },
+			Function{ sl.function_name() },
+			LineNumber{ sl.line() }
+		{
+			if( level!=ELogLevel::Trace )
+				Fields |= EFields::Level;
+			if( message.size() )
+				Fields |= EFields::Message | EFields::MessageId;
+			Fields |= EFields::File | EFields::FileId | EFields::Function | EFields::FunctionId | EFields::LineNumber;
+		}
+
 		Message2::Message2( const MessageBase& b )noexcept:
 			MessageBase{ b },
 			_fileName{ FileName(b.File) }
 		{
 			File = _fileName;
 		}
-		Message2::Message2( ELogLevel level, string message, sv file, sv function, int line )noexcept:
+		Message2::Message2( ELogLevel level, string message, sv file, sv function, uint_least32_t line )noexcept:
 			MessageBase( message, level, file, function, line ),
 			_fileName{ FileName(file) }
 		{

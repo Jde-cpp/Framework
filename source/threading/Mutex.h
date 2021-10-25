@@ -7,13 +7,13 @@
 #include <jde/coroutine/Task.h>
 #include "../coroutine/Awaitable.h"
 
-#define 🚪 JDE_NATIVE_VISIBILITY auto
+#define 🚪 Γ auto
 namespace Jde{ enum class ELogLevel : int8; }
 namespace Jde::Threading
 {
 	🚪 UniqueLock( str key )noexcept->std::unique_lock<std::shared_mutex>;
 
-	struct JDE_NATIVE_VISIBILITY AtomicGuard final : boost::noncopyable
+	struct Γ AtomicGuard final : boost::noncopyable
 	{
 		AtomicGuard( atomic<bool>& v )noexcept: _pValue{ &v }
 		{
@@ -26,7 +26,7 @@ namespace Jde::Threading
 		atomic<bool>* _pValue;
 	};
 
-	struct JDE_NATIVE_VISIBILITY CoLockAwatiable : Coroutine::TAwaitable<>
+	struct Γ CoLockAwatiable : Coroutine::TAwaitable<>
 	{
 		CoLockAwatiable( str key )noexcept:Key{key}{}
 		using base=Coroutine::TAwaitable<>;
@@ -94,8 +94,8 @@ namespace Jde::Threading
 			if( !_unlocked )
 				LOG( _logLevel, "release - {}", _description );
 		}
-		JDE_NATIVE_VISIBILITY static void SetDefaultLogLevel( ELogLevel logLevel )noexcept;//{ _defaultLogLevel=logLevel; }
-		JDE_NATIVE_VISIBILITY static ELogLevel GetDefaultLogLevel()noexcept;
+		Γ static void SetDefaultLogLevel( ELogLevel logLevel )noexcept;//{ _defaultLogLevel=logLevel; }
+		Γ static ELogLevel GetDefaultLogLevel()noexcept;
 	private:
 		bool _unlocked{false};
 		std::unique_ptr<std::unique_lock<std::mutex>> _pUniqueLock;

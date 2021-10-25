@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 //adapted from https://livebook.manning.com/#!/book/c-plus-plus-concurrency-in-action-second-edition/chapter-9/v-7/1
 #include <future>
 #include <jde/Exception.h>
@@ -8,7 +8,7 @@
 namespace Jde::Threading  //TODO Reflection remove Threading from public items.
 {
 	void InterruptionPoint()noexcept(false);
-	struct JDE_NATIVE_VISIBILITY InterruptFlag
+	struct Γ InterruptFlag
 	{
 		InterruptFlag()noexcept;
 		void Set()noexcept;
@@ -24,18 +24,18 @@ namespace Jde::Threading  //TODO Reflection remove Threading from public items.
 		std::mutex _setClearMutex;
 	};
 	extern thread_local InterruptFlag ThreadInterruptFlag;
-	JDE_NATIVE_VISIBILITY InterruptFlag& GetThreadInterruptFlag()noexcept;
+	Γ InterruptFlag& GetThreadInterruptFlag()noexcept;
 
 	struct InterruptibleThread : public IShutdown
 	{
 		template<typename FunctionType>
 		InterruptibleThread( sv name, FunctionType f )noexcept;
-		virtual JDE_NATIVE_VISIBILITY ~InterruptibleThread();
-		JDE_NATIVE_VISIBILITY void Interrupt()noexcept;
-		JDE_NATIVE_VISIBILITY void Join();
+		virtual Γ ~InterruptibleThread();
+		Γ void Interrupt()noexcept;
+		Γ void Join();
 		bool IsDone()const noexcept{ return _pFlag && _pFlag->IsDone(); }
 		const string Name;
-		JDE_NATIVE_VISIBILITY void Shutdown()noexcept override;
+		Γ void Shutdown()noexcept override;
 		void Detach()noexcept{ _internalThread.detach(); ShouldJoin = false; }//destructor on same thread.
 	private:
 		std::thread _internalThread;
@@ -94,5 +94,5 @@ namespace Jde::Threading  //TODO Reflection remove Threading from public items.
 		cv.wait( cl );
 		InterruptionPoint();
 	}
-	struct ThreadInterrupted : public Exception{	ThreadInterrupted()noexcept:Exception{ELogLevel::Trace, "interupted"sv}{} };
+	struct ThreadInterrupted : public Exception{ ThreadInterrupted()noexcept:Exception{ELogLevel::Trace, "interupted"}{} };
 }

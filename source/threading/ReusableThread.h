@@ -26,9 +26,7 @@ namespace Jde::Threading
 		std::string _name;
 		std::unique_ptr<std::thread> _pThread{nullptr};
 		std::mutex _queueMutex{}; std::condition_variable _queueCV;  //wait for queue to be added to.
-		//std::unique_lock<std::mutex> _queueEmptyWait{_mutex, std::defer_lock};
 		std::mutex _join{}; std::condition_variable _joinCV; //join wait for processing.
-		//std::unique_lock<std::mutex> _joinWait{_join, std::defer_lock};
 		static constexpr size_t _maxSize=1;
 		std::deque<std::shared_ptr<TArgs>> _argumentStack; std::shared_mutex _argumentStackMutex;
 	};
@@ -52,7 +50,7 @@ namespace Jde::Threading
 			}
 			catch( const std::bad_weak_ptr& )
 			{
-				THROW( Exception("This is not a shared pointer.") );
+				THROW( "This is not a shared pointer." );
 			}
 		}
 		else
@@ -94,7 +92,6 @@ namespace Jde::Threading
 				_queueCV.wait( lk );
 			}
 
-			//std::shared_lock lArgumentStackMutex( _argumentStackMutex );
 			cntn = !_stop /*|| _argumentStack.size()*/;
 		}
 	}

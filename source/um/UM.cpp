@@ -101,13 +101,13 @@ namespace Jde
 	α UM::TestAccess( EAccess access, UserPK userId, PermissionPK permissionId )noexcept(false)->void
 	{
 		shared_lock l{ _userAccessMutex };
-		var pUser = _userAccess.find( userId ); THROW_IF( pUser==_userAccess.end(), Exception("User '{}' not found.",userId) );
-		var pAccess = pUser->second.find( permissionId ); THROW_IF( pAccess==pUser->second.end(), Exception("User '{}' does not have api '{}' access.", userId, permissionId) );
-		THROW_IF( (pAccess->second & access)==EAccess::None, Exception("User '{}' api '{}' access is limited to:  '{}'. requested:  '{}'.", userId, permissionId, (uint8)pAccess->second, (uint8)access) );
+		var pUser = _userAccess.find( userId ); THROW_IF( pUser==_userAccess.end(), "User '{}' not found.", userId );
+		var pAccess = pUser->second.find( permissionId ); THROW_IF( pAccess==pUser->second.end(), "User '{}' does not have api '{}' access.", userId, permissionId );
+		THROW_IF( (pAccess->second & access)==EAccess::None, "User '{}' api '{}' access is limited to:  '{}'. requested:  '{}'.", userId, permissionId, (uint8)pAccess->second, (uint8)access );
 	}
 	α UM::TestAccess( EAccess access, UserPK userId, sv tableName )noexcept(false)->void
 	{
-		var pTable = _tablePermissions.find(string{tableName}); THROW_IF( pTable==_tablePermissions.end(), Exception("Could not find table '{}'", tableName) );
+		var pTable = _tablePermissions.find(string{tableName}); THROW_IF( pTable==_tablePermissions.end(), "Could not find table '{}'", tableName );
 		TestAccess( access, userId, pTable->second );
 	}
 
@@ -144,8 +144,8 @@ namespace Jde
 			uint roleId, permissionId;
 			if( m.Type==DB::EMutationQL::Update )
 			{
-				var pPermissionId = m.Args.find("permissionId"); THROW_IF( pPermissionId==m.Args.end(), Exception("could not find permissionId in mutation") );
-				var pRoleId = m.Args.find("roleId"); THROW_IF( pRoleId==m.Args.end(), Exception("could not find roleId in mutation") );
+				var pPermissionId = m.Args.find("permissionId"); THROW_IF( pPermissionId==m.Args.end(), "could not find permissionId in mutation" );
+				var pRoleId = m.Args.find("roleId"); THROW_IF( pRoleId==m.Args.end(), "could not find roleId in mutation" );
 				roleId = pRoleId->get<uint>();
 				permissionId = pPermissionId->get<uint>();
 			}

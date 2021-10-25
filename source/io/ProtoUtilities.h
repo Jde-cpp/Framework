@@ -30,7 +30,7 @@ namespace Jde::IO::Proto
 		ⓣ Deserialize( const google::protobuf::uint8* p, int size, T& proto )noexcept(false)->void
 		{
 			google::protobuf::io::CodedInputStream input{ p, (int)size };
-			THROW_IFX( !proto.MergePartialFromCodedStream(&input), IOException("MergePartialFromCodedStream returned false.") );
+			THROW_IF( !proto.MergePartialFromCodedStream(&input), "MergePartialFromCodedStream returned false." );
 		}
 	}
 }
@@ -54,7 +54,7 @@ namespace Jde::IO
 		const char* pLength = reinterpret_cast<const char*>( &length )+3;
 		for( auto i=0; i<4; ++i )
 			*pDestination++ = *pLength--;
-		var result = m.SerializeToArray( pDestination, (int)length ); THROW_IF( !result, Exception("Could not serialize to an array") );
+		var result = m.SerializeToArray( pDestination, (int)length ); THROW_IF( !result, "Could not serialize to an array" );
 		return make_tuple( move(pData), size );
 	}
 	inline void Proto::Save( const google::protobuf::MessageLite& msg, path path )noexcept(false)
@@ -111,10 +111,8 @@ namespace Jde::IO
 			{
 				pValue = Load<T>( path );
 			}
-			catch( Jde::Exception& e )
-			{
-				e.Log();
-			}
+			catch( const IException& )
+			{}
 		}
 		return pValue;
 	}

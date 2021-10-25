@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <jde/Exports.h>
 #include "DataType.h"
 #include <jde/Exception.h>
@@ -7,24 +7,26 @@
 #define THROW_DB(sql,params)
 namespace Jde::DB
 {
-	struct JDE_NATIVE_VISIBILITY DBException final: RuntimeException
+	struct Γ DBException final: IException
 	{
-		DBException( uint errorCode, sv sql, const vector<DataValue>* pValues=nullptr )noexcept;
-		DBException( sv sql, const vector<DataValue>* pValues=nullptr )noexcept;
-		DBException( const std::runtime_error& inner, sv sql, const vector<DataValue>* pValues=nullptr, uint errorCode=0 )noexcept;
+		DBException( _int errorCode, sv sql, const vector<DataValue>* pValues=nullptr, string&& what={}, SRCE )noexcept;
+		//DBException( _int errorCode, sv sql, const vector<DataValue>* pValues=nullptr, SRCE )noexcept;
+//		DBException( sv sql, const vector<DataValue>* pValues=nullptr, SRCE )noexcept;
+		//DBException( _int errorCode, sv sql, const vector<DataValue>* pValues, str what, SRCE )noexcept;
 
-		void Log( sv pszAdditionalInformation={}, optional<ELogLevel> level=nullopt )const noexcept override;
+		α Log()const noexcept->void override;
 		template<class... Args>
 		DBException( sv value, Args&&... args ):
-			RuntimeException( value, args... ),
-			ErrorCode{0}
+			IException( value, args... ),
+			ErrorCode{999}
 		{
 			_level = ELogLevel::Error;
 		}
+
 		const char* what() const noexcept override;
 		const string Sql;
 		const vector<DataValue> Parameters;
-		const uint ErrorCode;
+		const _int ErrorCode;
 	private:
 	};
 }

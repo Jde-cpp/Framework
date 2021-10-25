@@ -41,7 +41,7 @@ namespace Jde::DB
 			else
 				_spDataSource->Execute( pStatement->Sql, *pStatement->Parameters, false );
 		}
-		catch( const Exception& e )
+		catch( const IException& e )
 		{
 			ostringstream os;
 			uint iParam = 0;
@@ -75,7 +75,7 @@ namespace Jde::DB
 				else
 					_spDataSource->Execute( pStatement->Sql, *pStatement->Parameters, false );
 			}
-			catch( const Exception& e )
+			catch( const IException& e )
 			{
 				ostringstream os;
 				uint iParam = 0;

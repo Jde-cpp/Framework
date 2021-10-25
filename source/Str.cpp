@@ -111,9 +111,9 @@ namespace Jde
 	sv Str::NextWord( sv x )noexcept
 	{
 		uint iStart = 0;
-		for( ;iStart<x.size() && ::isspace(x[iStart]); ++iStart );
+		for( ;iStart<x.size() && x[iStart]>0 && ::isspace(x[iStart]); ++iStart );//msvc asserts if ch<0
 		uint iEnd=iStart;
-		for( ;iEnd<x.size() && !::isspace(x[iEnd]); ++iEnd );
+		for( ;iEnd<x.size() && (x[iEnd]<0 || !::isspace(x[iEnd])); ++iEnd );
 		return x.substr( iStart, iEnd>iStart ? iEnd-iStart : 0 );
 	}
 }

@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <atomic>
 #include <condition_variable>
 #include <functional>
@@ -15,24 +15,24 @@ namespace Jde::Threading
 	class Interrupt
 	{
 	public:
-		JDE_NATIVE_VISIBILITY Interrupt( sv threadName, Duration duration, bool paused=false );
-		JDE_NATIVE_VISIBILITY virtual ~Interrupt();
+		Γ Interrupt( sv threadName, Duration duration, bool paused=false );
+		Γ virtual ~Interrupt();
 		Interrupt()=delete;
 		Interrupt(const Interrupt &)=delete;
 		Interrupt& operator=(const Interrupt &)=delete;
 
 		//Interrupt( sv threadName, bool paused=false );
-		JDE_NATIVE_VISIBILITY void Wake()noexcept;
-		JDE_NATIVE_VISIBILITY void Stop()noexcept;
+		Γ void Wake()noexcept;
+		Γ void Stop()noexcept;
 
 		bool IsPaused()const noexcept{ return _paused; }
-		JDE_NATIVE_VISIBILITY virtual void Pause()noexcept;
-		JDE_NATIVE_VISIBILITY virtual void UnPause()noexcept;
+		Γ virtual void Pause()noexcept;
+		Γ virtual void UnPause()noexcept;
 
 		virtual void OnTimeout()/*noexcept*/=0;
 		virtual void OnAwake()noexcept=0;
 	private:
-		JDE_NATIVE_VISIBILITY void Start()noexcept;
+		Γ void Start()noexcept;
 		void Start2()noexcept;
 		void Worker();
 		std::once_flag _singleThread;

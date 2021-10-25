@@ -1,4 +1,4 @@
-/*
+﻿/*
 Original code by Lee Thomason (www.grinninglizard.com)
 
 This software is provided 'as-is', without any express or implied
@@ -658,7 +658,7 @@ private:
 
 	@endverbatim
 */
-class JDE_NATIVE_VISIBILITY XMLNode
+class Γ XMLNode
 {
     friend class XMLDocument;
     friend class XMLElement;
@@ -1248,7 +1248,7 @@ private:
 	and can contain other elements, text, comments, and unknowns.
 	Elements also contain an arbitrary number of attributes.
 */
-class JDE_NATIVE_VISIBILITY XMLElement : public XMLNode
+class Γ XMLElement : public XMLNode
 {
     friend class XMLDocument;
 public:
@@ -1716,7 +1716,7 @@ enum Whitespace {
 	All Nodes are connected and allocated to a Document.
 	If the Document is deleted, all its Nodes are also deleted.
 */
-class JDE_NATIVE_VISIBILITY XMLDocument : public XMLNode
+class Γ XMLDocument : public XMLNode
 {
     friend class XMLElement;
     // Gives access to SetError and Push/PopDepth, but over-access for everything else.

@@ -1,4 +1,4 @@
-
+﻿
 #pragma once
 #include <condition_variable>
 #include <deque>
@@ -10,7 +10,7 @@
 
 namespace Jde::Threading
 {
-	struct JDE_NATIVE_VISIBILITY Pool
+	struct Γ Pool
 	{
 		Pool( uint threadCount=0, sv name="Pool" );
 		~Pool();

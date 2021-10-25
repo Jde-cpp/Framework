@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <boost/asio.hpp>
 #include <boost/asio/io_context.hpp>
 #include <jde/Exports.h>
@@ -11,14 +11,14 @@ namespace Jde::Threading{ struct InterruptibleThread; }
 namespace Jde::IO::Sockets
 {
 	namespace net=boost::asio;
-	JDE_NATIVE_VISIBILITY ELogLevel LogLevel()noexcept;
+	Γ ELogLevel LogLevel()noexcept;
 	using SessionPK=uint32;
 	struct ISession
 	{
 		const SessionPK Id;
 	};
 
-	struct JDE_NATIVE_VISIBILITY IOContextThread final //: IShutdown
+	struct Γ IOContextThread final //: IShutdown
 	{
 		static sp<IOContextThread> Instance()noexcept;
 		net::io_context& Context()noexcept{ return _ioc; }
@@ -32,7 +32,7 @@ namespace Jde::IO::Sockets
 		static constexpr sv ThreadName{ "IOContextThread" };
 	};
 
-	struct JDE_NATIVE_VISIBILITY ISocket
+	struct Γ ISocket
 	{
 		virtual ~ISocket()=0;
 	protected:
@@ -42,7 +42,7 @@ namespace Jde::IO::Sockets
 	};
 	inline ISocket::~ISocket(){}
 
-	struct JDE_NATIVE_VISIBILITY IServerSocket : ISocket
+	struct Γ IServerSocket : ISocket
 	{
 		virtual ~IServerSocket()=0;
 		virtual void RemoveSession( SessionPK id )noexcept{ unique_lock l{_sessionMutex}; _sessions.erase( id ); }
@@ -54,7 +54,7 @@ namespace Jde::IO::Sockets
 	};
 	inline IServerSocket::~IServerSocket(){}
 
-	struct JDE_NATIVE_VISIBILITY IClientSocket : ISocket
+	struct Γ IClientSocket : ISocket
 	{
 		virtual ~IClientSocket()=0;
 	protected:

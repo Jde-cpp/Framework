@@ -17,7 +17,7 @@ namespace Jde::UM
 	};
 	inline α operator &( EAccess a, EAccess b ){ return static_cast<EAccess>( static_cast<uint8>(a) & static_cast<uint8>(b) ); }
 
-	JDE_NATIVE_VISIBILITY α Configure()noexcept(false)->void;
+	Γ α Configure()noexcept(false)->void;
 	α IsTarget( sv url )noexcept->bool;
 	α TestAccess( EAccess access, UserPK userId, sv tableName )noexcept(false)->void;
 	α TestAccess( EAccess access, UserPK userId, ApiPK apiId )noexcept(false)->void;

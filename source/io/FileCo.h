@@ -56,12 +56,10 @@ namespace Jde::IO
 		coroutine_handle<Task2::promise_type> CoHandle;
 		HFile Handle{0};
 	private:
-		//α CreateChunk( uint index )noexcept->up<IFileChunkArg>;
-		//α OSSend()noexcept->void;
 		sp<Threading::IWorker> _pWorkerKeepAlive;
 	};
 
-	struct JDE_NATIVE_VISIBILITY DriveAwaitable : IAwaitable
+	struct Γ DriveAwaitable : IAwaitable
 	{
 		using base=IAwaitable;
 		DriveAwaitable( path path, bool vector )noexcept:_arg{ path, vector }{}
@@ -80,8 +78,8 @@ namespace Jde::IO
 		using base=Threading::IPollWorker;
 		DriveWorker():base{"drive"}{}
 		α Initialize()noexcept->void override;
-		JDE_NATIVE_VISIBILITY Ω ChunkSize()noexcept->uint32;
-		JDE_NATIVE_VISIBILITY Ω ThreadSize()noexcept->uint8;
-		JDE_NATIVE_VISIBILITY Ω Signal()noexcept->uint;
+		Γ Ω ChunkSize()noexcept->uint32;
+		Γ Ω ThreadSize()noexcept->uint8;
+		Γ Ω Signal()noexcept->uint;
 	};
 }

@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "DataType.h"
 #include <atomic>
 #include "../collections/Queue.h"
@@ -18,7 +18,7 @@ namespace Jde::DB
 
 	struct IDataSource;
 
-	struct JDE_NATIVE_VISIBILITY DBQueue final : public IShutdown//, std::enable_shared_from_this<DBQueue>
+	struct Γ DBQueue final : public IShutdown//, std::enable_shared_from_this<DBQueue>
 	{
 		DBQueue( sp<IDataSource> spDataSource )noexcept;
 		void Push( sv statement, const VectorPtr<DB::DataValue>& parameters, bool isStoredProc=true )noexcept;

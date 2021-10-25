@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <jde/App.h>
 #include <jde/coroutine/Task.h>
 #include "../threading/Thread.h"
@@ -6,7 +6,7 @@
 namespace Jde::Coroutine
 {
 	typedef uint ClientHandle;
-	struct JDE_NATIVE_VISIBILITY CoWorker /*abstract*/: public IShutdown, std::enable_shared_from_this<CoWorker>
+	struct Γ CoWorker /*abstract*/: public IShutdown, std::enable_shared_from_this<CoWorker>
 	{
 		CoWorker( sv name )noexcept:_name{name}{};
 		void Shutdown()noexcept override;

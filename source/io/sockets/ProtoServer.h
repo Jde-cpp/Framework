@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <jde/Exports.h>
 //#include "Socket.h"
 #include "ProtoClient.h"
@@ -13,11 +13,11 @@ namespace Jde::IO::Sockets
 	using SessionPK=uint32;
 	struct ProtoSession;
 
-	#define 🚪 JDE_NATIVE_VISIBILITY auto
+	#define 🚪 Γ auto
 	struct ProtoServer : public ISocket
 	{
-		JDE_NATIVE_VISIBILITY ProtoServer( PortType defaultPort )noexcept;
-		JDE_NATIVE_VISIBILITY virtual ~ProtoServer();
+		Γ ProtoServer( PortType defaultPort )noexcept;
+		Γ virtual ~ProtoServer();
 		virtual up<ProtoSession> CreateSession( tcp::socket&& socket, SessionPK id )noexcept=0;
 		void RemoveSession( SessionPK id )noexcept{ unique_lock l{_mutex}; _sessions.erase(id); }
 
@@ -31,7 +31,7 @@ namespace Jde::IO::Sockets
 		void Run()noexcept;
 	};
 
-	struct JDE_NATIVE_VISIBILITY ProtoSession
+	struct Γ ProtoSession
 	{
 		ProtoSession( tcp::socket&& socket, SessionPK id )noexcept;
 		virtual ~ProtoSession()=default;
@@ -80,7 +80,7 @@ namespace Jde::IO::Sockets
 			ERR( "Read Body Failed - {}"sv, e.what() );
 			_socket.close();
 		}
-		catch( const Exception& )
+		catch( const IException& )
 		{}
 	}
 

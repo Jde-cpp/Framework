@@ -2162,7 +2162,7 @@ const char* XMLDocument::_errorNames[XML_ERROR_COUNT] = {
 XMLDocument::XMLDocument( std::string_view value )noexcept(false):
 	XMLDocument{}
 {
-	var result = Parse( value.data(), value.size() ); THROW_IF( result, Jde::Exception(ErrorStr()) );
+	var result = Parse( value.data(), value.size() ); THROW_IF( result, ErrorStr() );
 }
 XMLDocument::XMLDocument( bool processEntities, Whitespace whitespaceMode ) :
     XMLNode( 0 ),

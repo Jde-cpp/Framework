@@ -1,4 +1,4 @@
-#include <variant>
+﻿#include <variant>
 #include <nlohmann/json.hpp>
 #include "../um/UM.h"
 
@@ -27,17 +27,17 @@ namespace Jde::DB
 	};
 	constexpr array<sv,8> QLFieldKindStrings = { "SCALAR", "OBJECT", "INTERFACE", "UNION", "ENUM", "INPUT_OBJECT", "LIST", "NON_NULL" };
 
-	JDE_NATIVE_VISIBILITY nlohmann::json Query( sv query, UserPK userId )noexcept(false);
+	Γ α Query( sv query, UserPK userId )noexcept(false)->nlohmann::json;
 	struct ColumnQL final
 	{
 		string JsonName;
 		Column* SchemaColumnPtr{nullptr};
-		static string QLType( const DB::Column& db )noexcept;
+		Ω QLType( const DB::Column& db )noexcept->string;
 	};
 
 	struct TableQL final
 	{
-		string DBName()const noexcept;
+		α DBName()const noexcept->string;
 		bool ContainsColumn( sv jsonName )const noexcept{ return find_if( Columns.begin(), Columns.end(), [&](var& c){return c.JsonName==jsonName;})!=Columns.end(); }
 		sp<const TableQL> FindTable( sv jsonTableName )const noexcept{ auto p = find_if( Tables.begin(), Tables.end(), [&](var t){return t->JsonName==jsonTableName;}); return p==Tables.end() ? sp<const TableQL>{} : *p; }
 		string JsonName;
@@ -59,7 +59,7 @@ namespace Jde::DB
 	struct MutationQL final
 	{
 		MutationQL( sv json, EMutationQL type, const nlohmann::json& args, optional<TableQL> resultPtr/*, sv parent*/ ):JsonName{json}, Type{type}, Args(args), ResultPtr{resultPtr}/*, ParentJsonName{parent}*/{}
-		string TableSuffix()const noexcept;
+		α TableSuffix()const noexcept->string;
 		string JsonName;
 		EMutationQL Type;
 		nlohmann::json Args;
@@ -68,7 +68,6 @@ namespace Jde::DB
 		nlohmann::json InputParam( sv name )const noexcept(false);
 		PK ParentPK()const noexcept(false);
 		PK ChildPK()const noexcept(false);
-//		string ParentJsonName;
 	private:
 		mutable string _tableSuffix;
 	};
@@ -76,6 +75,6 @@ namespace Jde::DB
 
 	RequestQL ParseQL( sv query )noexcept(false);
 
-	JDE_NATIVE_VISIBILITY void AddMutationListener( sv tablePrefix, function<void(const DB::MutationQL& m, PK id)> listener )noexcept;
+	Γ void AddMutationListener( sv tablePrefix, function<void(const DB::MutationQL& m, PK id)> listener )noexcept;
 }
 #undef var

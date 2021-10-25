@@ -163,7 +163,7 @@ namespace Jde::IO
 #else
 	DiskWatcher::DiskWatcher( path /*path*/, EDiskWatcherEvents /*events=DefaultEvents*/ )noexcept(false)
 	{
-		THROW( Exception("new NotImplemented") );
+		THROW( "new NotImplemented" );
 	}
 	DiskWatcher::~DiskWatcher()
 	{}

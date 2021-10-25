@@ -1,6 +1,5 @@
 #include "Alarm.h"
 
-//#define IntancePtr if( auto p=Instance(); p ) p
 #define var const auto
 
 namespace Jde::Threading
@@ -79,6 +78,6 @@ namespace Jde::Threading
 		_pThread->request_stop();
 		std::unique_lock<std::mutex> lk( _mtx );
 		_cv.notify_one();
-		base::Shutdown();
+		IWorker::Shutdown();
 	}
 }

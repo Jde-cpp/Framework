@@ -1,5 +1,4 @@
-#pragma once
-//#include <boost/container/flat_map.hpp>
+﻿#pragma once
 #include <jde/Exports.h>
 #include <jde/coroutine/Task.h>
 #include "../threading/Worker.h"
@@ -10,7 +9,7 @@ namespace Jde::Threading
 {
 	using boost::container::flat_multimap;
 	using namespace Coroutine;
-	struct JDE_NATIVE_VISIBILITY AlarmAwaitable final : CancelAwaitable<Task2>
+	struct Γ AlarmAwaitable final : CancelAwaitable<Task2>
 	{
 		AlarmAwaitable( TimePoint& alarm, Handle& handle )noexcept:CancelAwaitable{handle}, _alarm{alarm}{}
 		//~AlarmAwaitable(){ /*DBG("({})AlarmAwaitable::~Awaitable"sv, std::this_thread::get_id());*/ }
@@ -21,13 +20,14 @@ namespace Jde::Threading
 		TimePoint _alarm;
 	};
 
-	struct JDE_NATIVE_VISIBILITY Alarm final: Threading::TWorker<Alarm>
+	struct Γ Alarm final: Threading::TWorker<Alarm>
 	{
 		using base=Threading::TWorker<Alarm>;
-		Alarm():base{"Alarm"sv}{};
+		Alarm():base{}{};
 		~Alarm(){  DBG("Alarm::~Alarm"sv); }
 		static auto Wait( TimePoint t, Handle& handle )noexcept{ return AlarmAwaitable{t, handle}; }
 		static void Cancel( Handle handle )noexcept;
+		static constexpr sv Name{ "Alarm" };
 	private:
 		void Shutdown()noexcept override;
 		optional<bool> Poll()noexcept override;

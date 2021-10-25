@@ -21,8 +21,10 @@ namespace Jde::DB
 			where << schemaTable.Name << "." << columnName;
 			sv op = "=";
 			const json* pJson{ nullptr };
-			if( value.is_string() )
+			if( value.is_string() || value.is_number() )
 				pJson = &value;
+			else if( value.is_null() )
+				where << " is null";
 			else if( value.is_object() && value.items().begin()!=value.items().end() )
 			{
 				var first = value.items().begin();
@@ -44,7 +46,7 @@ namespace Jde::DB
 		return where.str();
 	}
 
-	α GraphQL::Query( const DB::TableQL& table, uint userId, json& jData )noexcept(false)->void
+	α GraphQL::Query( const DB::TableQL& table, json& jData )noexcept(false)->void
 	{
 		var isPlural = table.JsonName.ends_with( "s" );
 		var pSyntax = DB::DefaultSyntax();// _pSyntax; THROW_IF( !pSyntax, Exception("SqlSyntax not set.") );
@@ -150,7 +152,7 @@ namespace Jde::DB
 		}
 		std::vector<DB::DataValue> parameters;
 		var where = Where( table, *pSchemaTable, parameters );
-		auto rowToJson = [&]( const DB::IRow& row, uint iColumn, json& obj, sv objectName, sv memberName, const vector<uint>& dates, const flat_map<uint,sp<flat_map<uint,string>>>& flagValues )
+		auto colToJson = [&]( const DB::IRow& row, uint iColumn, json& obj, sv objectName, sv memberName, const vector<uint>& dates, const flat_map<uint,sp<flat_map<uint,string>>>& flagValues )
 		{
 			DB::DataValue value = row[iColumn];
 			var index = (EDataValue)value.index();
@@ -210,7 +212,7 @@ namespace Jde::DB
 				ERR( "{} not implemented"sv, (uint8)index );
 		};
 		flat_map<string,flat_multimap<uint,json>> subTables;
-		auto selectSubTables = [&subTables, &columnSql, &rowToJson, &parameters]( const vector<sp<const DB::TableQL>>& tables, const DB::Table& parentTable, sv where2 )
+		auto selectSubTables = [&subTables, &columnSql, &colToJson, &parameters]( const vector<sp<const DB::TableQL>>& tables, const DB::Table& parentTable, sv where2 )
 		{
 			for( var& pQLTable : tables )
 			{
@@ -254,12 +256,12 @@ namespace Jde::DB
 				{
 					json jSubRow;
 					uint index = 0;
-					var rowToJson2 = [&row, &subDates, &rowToJson, &subFlagValues]( const vector<DB::ColumnQL>& columns, bool checkId, json& jRow, uint& index2 )
+					var rowToJson2 = [&row, &subDates, &colToJson, &subFlagValues]( const vector<DB::ColumnQL>& columns, bool checkId, json& jRow, uint& index2 )
 					{
 						for( var& column : columns )
 						{
 							auto i = checkId && column.JsonName=="id" ? 1 : (index2++)+2;
-							rowToJson( row, i, jRow, "", column.JsonName, subDates, subFlagValues );
+							colToJson( row, i, jRow, "", column.JsonName, subDates, subFlagValues );
 						}
 					};
 					rowToJson2( pQLTable->Columns, true, jSubRow, index );
@@ -317,7 +319,7 @@ namespace Jde::DB
 				for( uint i=0; i<jsonMembers.size(); ++i )
 				{
 					var parent = get<0>(jsonMembers[i]);
-					rowToJson( row, i, jRow, parent==jsonTableName ? sv{} : parent, get<1>(jsonMembers[i]), dates, {} );
+					colToJson( row, i, jRow, parent==jsonTableName ? sv{} : parent, get<1>(jsonMembers[i]), dates, {} );
 				}
 				if( subTables.size() )
 					addSubTables( jRow );

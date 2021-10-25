@@ -13,32 +13,38 @@ namespace Jde::DB
 		}
 		return y;
 	}
-	DBException::DBException( const std::runtime_error& inner, sv sql, const std::vector<DataValue>* pValues, uint errorCode )noexcept:
-		RuntimeException( inner ),
-		Sql{sql},
+	DBException::DBException( _int errorCode, sv sql, const vector<DataValue>* pValues, string&& what, const source_location& sl )noexcept:
+		IException{ move(what), sl },
+		Sql{ sql },
 		Parameters{ CopyParams(pValues) },
 		ErrorCode{ errorCode }
+	{
+		Log();
+	}
+
+/*	DBException::DBException( _int errorCode, sv sql, const std::vector<DataValue>* pValues, const source_location& sl )noexcept:
+		DBException{ std::runtime_error{""}, sql, pValues, errorCode, sl }
+	{}
+	
+	DBException::DBException( _int errorCode, sv sql, const vector<DataValue>* pValues, str what, const source_location& sl )noexcept:
+		DBException{ std::runtime_error{what}, sql, pValues, errorCode, sl }
 	{}
 
-	DBException::DBException( uint errorCode, sv sql, const std::vector<DataValue>* pValues )noexcept:
-		DBException{ std::runtime_error{""}, sql, pValues, errorCode }
+	DBException::DBException( sv sql, const std::vector<DataValue>* pValues, const source_location& sl )noexcept:
+		DBException{ 0, sql, pValues, sl }
 	{}
-
-	DBException::DBException( sv sql, const std::vector<DataValue>* pValues )noexcept:
-		DBException{ 0, sql, pValues }
-	{}
-
+	*/
 	const char* DBException::what() const noexcept
 	{
 		if( Sql.size() && _what.empty() )
-			_what =  DB::Message( Sql, &Parameters, string{RuntimeException::what()} );
-		return RuntimeException::what();
+			_what =  DB::Message( Sql, &Parameters, string{IException::what()} );
+		return IException::what();
 	}
 
-	void DBException::Log( sv /*pszAdditionalInformation*/, optional<ELogLevel> pLevel )const noexcept
+	void DBException::Log()const noexcept
 	{
 		if( Sql.find("log_message_insert")==string::npos )
-			DB::Log( Sql, Parameters.size() ? &Parameters : nullptr, _fileName, _functionName, _line, pLevel ? *pLevel : _level, _pInner ? string{_pInner->what()} : what() );
+			DB::Log( Sql, Parameters.size() ? &Parameters : nullptr, _fileName, _functionName, _line, _level, _pInner ? string{_pInner->what()} : what() );
 		else
 			ERRX( "log_message_insert sql='{}'"sv, Sql );
 	}

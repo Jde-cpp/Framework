@@ -33,13 +33,16 @@ namespace Jde
 			os << sql.substr( prevIndex );
 		return os.str();
 	}
-
-	α DB::Log( sv sql, const std::vector<DataValue>* pParameters, sv file, sv fnctn, int line )noexcept->void
+	α DB::Log( sv sql, const std::vector<DataValue>* pParameters, const std::source_location& sl )noexcept->void
+	{
+		Logging::Log( Logging::Message2{_level, Message(sql, pParameters, {}), sl.file_name(), sl.function_name(), sl.line()} );
+	}
+	α DB::Log( sv sql, const std::vector<DataValue>* pParameters, sv file, sv fnctn, uint_least32_t line )noexcept->void
 	{
 		Logging::Log( Logging::Message2{_level, Message(sql, pParameters, {}), file, fnctn, line} );
 	}
 
-	α DB::Log( sv sql, const std::vector<DataValue>* pParameters, sv file, sv fnctn, int line, ELogLevel level, sv error )noexcept->void
+	α DB::Log( sv sql, const std::vector<DataValue>* pParameters, sv file, sv fnctn, uint_least32_t line, ELogLevel level, sv error )noexcept->void
 	{
 		Logging::Log( Logging::Message2{level, Message(sql, pParameters, error), file, fnctn, line} );
 	}

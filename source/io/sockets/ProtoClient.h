@@ -63,7 +63,7 @@ namespace Jde::IO::Sockets
 			auto transmission = Proto::Deserialize<TIn>( pData, size );
 			OnReceive( transmission );
 		}
-		catch( const Exception& )
+		catch( const IException& )
 		{}
 	}
 

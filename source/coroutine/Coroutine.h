@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "../threading/Thread.h"
 #include "../Settings.h"
 #include <jde/App.h>
@@ -16,7 +16,7 @@ namespace Jde::Coroutine
 	{
 		coroutine_handle<> CoHandle;
 	};
-	struct JDE_NATIVE_VISIBILITY ResumeThread final
+	struct Γ ResumeThread final
 	{
 		ResumeThread( str Name, Duration idleLimit, CoroutineParam&& param )noexcept;
 		~ResumeThread();
@@ -29,9 +29,8 @@ namespace Jde::Coroutine
 		jthread _thread;
 	};
 
-	struct JDE_NATIVE_VISIBILITY CoroutinePool final: IShutdown
+	struct Γ CoroutinePool final: IShutdown
 	{
-		//[[deprecated("Awaitable should have threadParam")]]static void Resume( coroutine_handle<>&& h, Threading::ThreadParam&& param )noexcept;
 		static void Resume( coroutine_handle<>&& h )noexcept;
 		void Shutdown()noexcept;
 
@@ -63,5 +62,4 @@ namespace Jde::Coroutine
 		static ELogLevel _level;
 		friend CoroutineTests;
 	};
-	//TODO unit tests
 }

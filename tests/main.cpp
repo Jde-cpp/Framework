@@ -11,6 +11,7 @@ namespace Jde
  	void Startup( int argc, char **argv )noexcept
 	{
 		var appName = "Tests.Framework"sv;
+		ASSERT( argc>1 && string{argv[1]}=="-c" )
 		OSApp::Startup( argc, argv, appName, "Unit Tests description" );
 	}
 }
@@ -22,8 +23,9 @@ int main( int argc, char **argv )
 	Startup( argc, argv );
 	auto result = EXIT_FAILURE;
 	{
-		if( var p=Settings::TryGet<string>("testing/tests"); p )
-			::testing::GTEST_FLAG( filter ) = *p;
+		var p=Settings::TryGet<string>( "testing/tests" );
+		var filter = p ? *p : "*";
+		::testing::GTEST_FLAG( filter ) = filter;
 	   result = RUN_ALL_TESTS();
 		IApplication::CleanUp();
 	}

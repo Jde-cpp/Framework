@@ -37,7 +37,7 @@ namespace Jde::DB
 		ASSERT_EQ( defTestItems.dump(), "{\"data\":{\"__type\":{\"fields\":[{\"name\":\"api\",\"type\":{\"kind\":7,\"name\":null,\"ofType\":{\"kind\":4,\"name\":\"Api\"}}},{\"name\":\"id\",\"type\":{\"kind\":7,\"name\":null,\"ofType\":{\"kind\":0,\"name\":\"ID\"}}},{\"name\":\"name\",\"type\":{\"kind\":0,\"name\":\"String\"}},{\"name\":\"rights\",\"type\":{\"kind\":7,\"name\":null,\"ofType\":{\"kind\":6,\"name\":\"Right\"}}}],\"name\":\"RolePermission\"}}}" );
 	}
 
-	TEST_F(QLTests, Filter)
+	TEST_F( QLTests, Filter)
 	{
 		var ql = "query{ rights(filter: {id: {ne: 0}}){ id name } }"sv;
 		var items = DB::Query( ql, 0 );
@@ -82,16 +82,21 @@ namespace Jde::DB
 				dest.erase( dest.find(name) );
 		}*/
 	}
+	TEST_F( QLTests, CreateUser )
+	{
+		//constexpr sv ql = "query{ user(name:\"JohnSmith@google.com\") { id name attributes created deleted updated description target authenticator } }";
+		//var db = DB::Query( ql, 0 );
+		//mutation { createUser(  "input": {"name":"JohnSmith@google.com","target":"jsmith","description":"Unit Test User update","authenticator":1} ){id} } 
+	}
 
-	TEST_F(QLTests, FetchUser)
+	TEST_F( QLTests, FetchUser )
 	{
 		constexpr sv ql = "query{ user(name:\"JohnSmith@google.com\") { id name attributes created deleted updated description target authenticator } }";
 		var db = DB::Query( ql, 0 );
 		//LOG( ELogLevel::Debug, db.dump() );
-		ASSERT_EQ( db.dump(), "{\"data\":{\"user\":{\"authenticator\":\"Google\",\"created\":\"2021-02-13T09:01:25Z\",\"deleted\":\"2021-02-13T09:01:25Z\",\"description\":\"Unit Test User update\",\"id\":3,\"name\":\"JohnSmith@google.com\",\"target\":\"jsmith\",\"updated\":\"2021-02-13T09:01:25Z\"}}}" );
+		ASSERT_EQ( db.dump(), "{\"data\":{\"user\":{\"created\":\"2021-10-21T09:58:59Z\",\"description\":\"Unit Test User update\",\"id\":1003,\"name\":\"JohnSmith@google.com\",\"target\":\"jsmith\"}}}" );
 	}
-
-	TEST_F(QLTests, DefTestsFetch)
+	TEST_F( QLTests, DefTestsFetch)
 	{
 		var ql = "query{ role(target:\"user_management\"){ id name created deleted updated description target groups{id name created deleted updated description target } rolePermissions{api{ id name } id name rights } } }"sv;
 		var db = DB::Query( ql, 0 );
@@ -105,7 +110,7 @@ namespace Jde::DB
 		ASSERT_EQ( actual, expected2 );
 	}
 
-	TEST_F(QLTests, ObjectFetch)
+	TEST_F( QLTests, ObjectFetch)
 	{
 		var ql = "query{ permissions(filter: null) {api{name} id name} }"sv;
 		var actual = DB::Query( ql, 0 ).dump();
@@ -115,7 +120,7 @@ namespace Jde::DB
 	}
 
 
-	TEST_F(QLTests, EnumFetchApi)
+	TEST_F( QLTests, EnumFetchApi)
 	{
 		var ql = "query{ __type(name: \"Api\") { enumValues { name description } } }"sv;
 		var items = DB::Query( ql, 0 );
@@ -123,7 +128,7 @@ namespace Jde::DB
 		ASSERT_EQ( items.dump(), "{\"data\":{\"__type\":{\"enumValues\":[{\"name\":\"None\"},{\"name\":\"UM\"},{\"name\":\"Web\"},{\"name\":\"Tws\"},{\"name\":\"Blockly\"}]}}}" );
 	}
 
-	TEST_F(QLTests, EnumFetchAuthenticator)
+	TEST_F( QLTests, EnumFetchAuthenticator)
 	{
 		var ql = "query{ __type(name: \"Authenticator\") { enumValues { id name } } }"sv;
 		var items = DB::Query( ql, 0 );
@@ -131,15 +136,15 @@ namespace Jde::DB
 		ASSERT_EQ( items.dump(), "{\"data\":{\"__type\":{\"enumValues\":[{\"id\":0,\"name\":\"None\"},{\"id\":1,\"name\":\"Google\"}]}}}" );
 	}
 
-	TEST_F(QLTests, Introspection)
+	TEST_F( QLTests, Introspection)
 	{
 		var ql = "query{ role(id:1){ groups{id name attributes created deleted updated description target} } }";
 		//var ql = " { mutation{ removeGroupRole(\"input\":{ \"roleId\": 1, \"groupId\": 1} ) } }";
 		//var ql = "query{ role(target:\"user_management\"){ id name attributes created deleted updated description target  groups{id name attributes created deleted updated description target } permissions{api{ id name } id name } } }";
 		var items = DB::Query( ql, 0 );
-//		DBG( items.dump() );
+		LOG( ELogLevel::Debug, items.dump() );
 	}
-	TEST_F(QLTests, IntrospectionSchema)
+	TEST_F( QLTests, IntrospectionSchema)
 	{
 		var ql = "query{__schema{mutationType{name fields { name args { name defaultValue type { name } } } } }";
 		var items = DB::Query( ql, 0 );

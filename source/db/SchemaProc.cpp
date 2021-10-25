@@ -61,7 +61,7 @@ namespace Jde::DB
 			var parentId = item.contains("$parent") ? item.find("$parent")->get<string>() : string{};
 			if( parentId.size() && parentTables.find(parentId)==parentTables.end() )
 			{
-				THROW_IF( j.find(parentId)==j.end(), Exception("Could not find parent {}", parentId) );
+				THROW_IF( j.find(parentId)==j.end(), "Could not find parent {}", parentId );
 				addTable( parentId, *j.find(parentId) );
 			}
 			parentTables.emplace( key, Table{key, item, parentTables, schema.Types, j} );
@@ -176,7 +176,7 @@ namespace Jde::DB
 				};
 				if( !set() )
 					for( auto p = pTable->NaturalKeys.begin(); p!=pTable->NaturalKeys.end() && !set(/**p*/); ++p );
-				THROW_IF( selectParams.empty(), Exception("Could not find keys in data for '{}'", tableName) );
+				THROW_IF( selectParams.empty(), "Could not find keys in data for '{}'", tableName );
 				osSelect << osWhere.str();
 
 
@@ -221,6 +221,8 @@ namespace Jde::DB
 		{
 			for( auto& column : pTable->Columns )
 			{
+				//if( pTable->Name=="um_users" && column.Name=="authenticator_id" )
+				//	__debugbreak();
 				if( column.PKTable.empty() )
 					continue;
 				if( std::find_if(fks.begin(), fks.end(), [&,t=tableName](var& fk){return fk.second.Table==t && fk.second.Columns==vector<string>{column.Name};})!=fks.end() )
@@ -235,6 +237,9 @@ namespace Jde::DB
 					column.IsFlags = true;
 				else
 				{
+					if( pPKTable->second->Data.size() )
+						column.IsEnum = true;
+
 					auto i = 0;
 					auto getName = [&,t=tableName](auto i){ return format( "{}_{}{}_fk", AbbrevName(t), AbbrevName(pPKTable->first), i==0 ? "" : to_string(i)); };
 					auto name = getName( i++ );

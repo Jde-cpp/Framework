@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <chrono>
 #include <map>
 #include <memory>
@@ -23,7 +23,7 @@ namespace Jde
 		WriteFile,
 		ServerCall
 	};
-	struct JDE_NATIVE_VISIBILITY Stopwatch
+	struct Γ Stopwatch
 	{
 		Stopwatch( sv what, bool started=true )noexcept;
 		Stopwatch( Stopwatch* pParent, sv what="", sv instance="", bool started=true )noexcept;
@@ -40,7 +40,6 @@ namespace Jde
 		void UnPause();
 		void Restart(){ _start = std::chrono::steady_clock::now(); }
 	private:
-		//void UpdateChild( const Stopwatch& sw );
 		static void Output( sv what, const SDuration& elapsed, bool logMemory );
 
 		const std::string _what;

@@ -9,24 +9,24 @@
 #include "Settings.h"
 #include "threading/InterruptibleThread.h"
 
+#define var const auto
+
 namespace Jde
 {
 	sp<IApplication> IApplication::_pInstance;
 	unique_ptr<string> IApplication::_pApplicationName;
 
 	mutex IApplication::_threadMutex;
-	VectorPtr<sp<Threading::InterruptibleThread>> IApplication::_pBackgroundThreads{ make_shared<std::vector<sp<Threading::InterruptibleThread>>>() };
-	std::function<void()> OnExit;
+	VectorPtr<sp<Threading::InterruptibleThread>> IApplication::_pBackgroundThreads{ make_shared<vector<sp<Threading::InterruptibleThread>>>() };
+	function<void()> OnExit;
 
-	auto _pDeletedThreads = make_shared<std::vector<sp<Threading::InterruptibleThread>>>();
+	auto _pDeletedThreads = make_shared<vector<sp<Threading::InterruptibleThread>>>();
 
-	std::vector<sp<void>> _objects;  mutex ObjectMutex;
-	auto _pShutdowns = make_shared<std::vector<sp<IShutdown>>>();
-}
-#define var const auto
+	//auto _pShutdowns = make_shared<vector<sp<IShutdown>>>();
+	vector<sp<void>> IApplication::_objects; mutex IApplication::_objectMutex;
+	vector<Threading::IPollWorker*> IApplication::_activeWorkers; atomic<bool> IApplication::_activeWorkersMutex;
+	vector<sp<IShutdown>> IApplication::_shutdowns;
 
-namespace Jde
-{
 	const TimePoint Start=Clock::now();
 	TimePoint IApplication::StartTime()noexcept{ return Start; }
 
@@ -43,7 +43,7 @@ namespace Jde
 				os << argv[i] << " ";
 			Logging::Default().log( spdlog::source_loc{FileName(MY_FILE).c_str(),__LINE__,__func__}, (spdlog::level::level_enum)ELogLevel::Information, os.str() ); //TODO add cwd.
 		}
-		_pApplicationName = std::make_unique<string>( appName );
+		_pApplicationName = make_unique<string>( appName );
 
 		bool console = false;
 		const string arg0{ argv[0] };
@@ -62,12 +62,12 @@ namespace Jde
 			else if( string(argv[i])=="-install" )
 			{
 				Install( serviceDescription );
-				THROWX( Exception(ELogLevel::Trace, "successfully installed.") );
+				throw Exception{ ELogLevel::Trace, "successfully installed." };
 			}
 			else if( string(argv[i])=="-uninstall" )
 			{
 				Uninstall();
-				THROWX( Exception(ELogLevel::Trace, "successfully uninstalled.") );
+				throw Exception{ ELogLevel::Trace, "successfully uninstalled." };
 			}
 			else
 				values.emplace( argv[i] );
@@ -86,23 +86,25 @@ namespace Jde
 		return values;
 	}
 
-	vector<Threading::IPollWorker*> _activeWorkers; atomic<bool> _activeWorkersMutex;
-	std::condition_variable _workerCondition; std::mutex _workerConditionMutex;
+	std::condition_variable _workerCondition; mutex _workerConditionMutex;
 	int _exitReason{0};
 	α IApplication::Exit( int reason )noexcept->void{ _exitReason = reason; }
 	α IApplication::ShuttingDown()noexcept->bool{ return _exitReason; }
 
 	α IApplication::AddActiveWorker( Threading::IPollWorker* p )noexcept->void
 	{
+#ifndef _MSC_VER
 		ASSERT( false );//need to implement signals in linux for _workerCondition.
+#endif
 		Threading::AtomicGuard l{ _activeWorkersMutex };
 		if( find(_activeWorkers.begin(), _activeWorkers.end(), p)==_activeWorkers.end() )
 		{
 			_activeWorkers.push_back( p );
 			if( _activeWorkers.size()==1 )
 			{
-				unique_lock<std::mutex> lk( _workerConditionMutex );
+				unique_lock<mutex> lk( _workerConditionMutex );
 				l.unlock();
+				OSApp::UnPause();
 				_workerCondition.notify_one();
 			}
 		}
@@ -138,9 +140,10 @@ namespace Jde
 			}
 			else
 			{
+				l.unlock();
 				OSApp::Pause();
 				// unique_lock<std::mutex> lk( _workerConditionMutex );
-				// l.unlock();
+				// 
 				// _workerCondition.wait( lk );
 			}
 		}
@@ -159,14 +162,13 @@ namespace Jde
 		INFO( "Waiting for process to complete. {}"sv, OSApp::ProcessId() );
 		GarbageCollect();
 		{
-			lock_guard l{ObjectMutex};
-			for( auto pShutdown : *_pShutdowns )
+			lock_guard l{ _objectMutex };
+			for( auto pShutdown : _shutdowns )
 			{
 				if( pShutdown )//not sure why it would be null.
 					pShutdown->Shutdown();
 			}
-			_pShutdowns->clear();
-			_pShutdowns = nullptr;
+			_shutdowns.clear();
 		}
 		for(;;)
 		{
@@ -199,7 +201,7 @@ namespace Jde
 	α IApplication::RemoveThread( sv name )noexcept->sp<Threading::InterruptibleThread>
 	{
 		lock_guard l{_threadMutex};
-		auto ppThread = std::find_if( _pBackgroundThreads->begin(), _pBackgroundThreads->end(), [name](var& p){ return p->Name==name;} );
+		auto ppThread = find_if( _pBackgroundThreads->begin(), _pBackgroundThreads->end(), [name](var& p){ return p->Name==name;} );
 		auto p = ppThread==_pBackgroundThreads->end() ? sp<Threading::InterruptibleThread>{} : *ppThread;
 		if( ppThread!=_pBackgroundThreads->end() )
 			_pBackgroundThreads->erase( ppThread );
@@ -231,29 +233,29 @@ namespace Jde
 
 	void IApplication::Add( sp<void> pShared )noexcept
 	{
-		lock_guard l{ ObjectMutex };
+		lock_guard l{ _objectMutex };
 		_objects.push_back( pShared );
 	}
 
 	void IApplication::AddShutdown( sp<IShutdown> pShared )noexcept
 	{
-		Add( pShared );
-		lock_guard l{ ObjectMutex };
-		_pShutdowns->push_back( pShared );
+		lock_guard l{ _objectMutex };
+		_objects.push_back( pShared );
+		_shutdowns.push_back( pShared );
 	}
 	void IApplication::RemoveShutdown( sp<IShutdown> pShutdown )noexcept
 	{
 		Remove( pShutdown );
-		lock_guard l{ ObjectMutex };
-		if( auto p=find( _pShutdowns->begin(), _pShutdowns->end(), pShutdown ); p!=_pShutdowns->end() )
-			_pShutdowns->erase( p );
+		lock_guard l{ _objectMutex };
+		if( auto p=find( _shutdowns.begin(), _shutdowns.end(), pShutdown ); p!=_shutdowns.end() )
+			_shutdowns.erase( p );
 		else
 			WARN( "Could not find shutdown"sv );
 	}
 
 	void IApplication::Remove( sp<void> pShared )noexcept
 	{
-		lock_guard l{ObjectMutex};
+		lock_guard l{ _objectMutex };
 		for( auto ppObject = _objects.begin(); ppObject!=_objects.end(); ++ppObject )
 		{
 			if( *ppObject==pShared )

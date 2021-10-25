@@ -9,7 +9,7 @@ namespace Jde::DB
 {
 	using namespace Coroutine;
 	namespace Types{ struct IRow; }
-	struct JDE_NATIVE_VISIBILITY IDataSource : std::enable_shared_from_this<IDataSource>
+	struct Γ IDataSource : std::enable_shared_from_this<IDataSource>
 	{
 		virtual ~IDataSource() = default;
 
@@ -25,16 +25,16 @@ namespace Jde::DB
 		optional<uint> TryExecute( sv sql, const std::vector<DataValue>& parameters, bool log=true )noexcept;
 		optional<uint> TryExecuteProc( sv sql, const std::vector<DataValue>& parameters, bool log=true )noexcept;
 
-		virtual uint Execute( sv sql )noexcept(false)=0;
-		virtual uint Execute( sv sql, const std::vector<DataValue>& parameters, bool log=true )noexcept(false)=0;
-		virtual uint Execute( sv sql, const std::vector<DataValue>* pParameters, std::function<void(const IRow&)>* f, bool isStoredProc=false, bool log=true )noexcept(false)=0;
-		virtual uint ExecuteProc( sv sql, const std::vector<DataValue>& parameters, bool log=true )noexcept(false)=0;
-		virtual uint ExecuteProc( sv sql, const std::vector<DataValue>& parameters, std::function<void(const IRow&)> f, bool log=true )noexcept(false)=0;
+		β Execute( sv sql )noexcept(false)->uint=0;
+		β Execute( sv sql, const std::vector<DataValue>& parameters, bool log=true )noexcept(false)->uint = 0;
+		β Execute( sv sql, const std::vector<DataValue>* pParameters, std::function<void(const IRow&)>* f, bool isStoredProc=false, bool log=true )noexcept(false)->uint = 0;
+		β ExecuteProc( sv sql, const std::vector<DataValue>& parameters, bool log=true )noexcept(false)->uint = 0;
+		β ExecuteProc( sv sql, const std::vector<DataValue>& parameters, std::function<void(const IRow&)> f, bool log=true )noexcept(false)->uint = 0;
 
-		void Select( sv sql, std::function<void(const IRow&)> f, const std::vector<DataValue>& parameters, bool log=true )noexcept(false);
-		void Select( sv sql, std::function<void(const IRow&)> f )noexcept(false);
-		virtual uint Select( sv sql, std::function<void(const IRow&)> f, const vector<DataValue>* pValues, bool log )noexcept(false)=0;
-		virtual α SelectCo( string&& sql, std::function<void(const IRow&)> f, const std::vector<DataValue>&& parameters, bool log )noexcept->up<IAwaitable> = 0;//[[noreturn]]{ throw Exception("Not implemented"); }//return FunctionAwaitable{ []( coroutine_handle<Task2::promise_type> ){} }; }//
+		α Select( sv sql, std::function<void(const IRow&)> f, const std::vector<DataValue>& parameters, bool log=true, SRCE )noexcept(false)->void;
+		α Select( sv sql, std::function<void(const IRow&)> f )noexcept(false)->void;
+		β Select( sv sql, std::function<void(const IRow&)> f, const vector<DataValue>* pValues, bool log, SRCE )noexcept(false)->uint=0;
+		β SelectCo( string&& sql, std::function<void(const IRow&)> f, const std::vector<DataValue>&& parameters, bool log )noexcept->up<IAwaitable> = 0;//[[noreturn]]{ throw Exception("Not implemented"); }//return FunctionAwaitable{ []( coroutine_handle<Task2::promise_type> ){} }; }//
 		bool TrySelect( sv sql, std::function<void(const IRow&)> f )noexcept;
 		template<class K,class V> sp<flat_map<K,V>> SelectMap( sv sql )noexcept(false);
 		string Catalog( sv sql )noexcept(false);

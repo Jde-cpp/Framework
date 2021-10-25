@@ -8,7 +8,7 @@
 namespace Jde
 {
 #define var const auto
-#define 🚪 JDE_NATIVE_VISIBILITY static auto
+#define 🚪 Γ static auto
 	struct Cache final //: public Jde::IShutdown
 	{
 		~Cache(){ if( HaveLogger() ) DBG("~Cache"sv); }

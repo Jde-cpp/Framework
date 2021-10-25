@@ -28,7 +28,7 @@ namespace Jde::IO::Sockets
 				_sessions.emplace( id, CreateSession(std::move(socket), id) );
 				Accept();
 			}
-			catch( const Exception& ){}
+			catch( const IException& ){}
 		});
 	}
 
@@ -52,9 +52,9 @@ namespace Jde::IO::Sockets
 				var messageLength = ProtoClientSession::MessageLength( _readMessageSize );
 				ReadBody( messageLength );
 			}
-			catch( const Exception& e )
+			catch( const IException& e )
 			{
-				if( e.GetLevel()<ELogLevel::Error )
+				if( e.Level()<ELogLevel::Error )
 					OnDisconnect();
 			}
 		});

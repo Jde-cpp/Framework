@@ -11,7 +11,6 @@ namespace Jde::IO
 	uint8 _threadSize=0;
 	α DriveWorker::ThreadSize()noexcept->uint8{ return _threadSize==0 ? (_threadSize=Settings::TryGet<uint8>("workers/drive/threadSize").value_or(5)) : _threadSize; }
 
-	//uint DriveWorker::Signal{ SIGUSR1+1 };
 	void DriveWorker::Initialize()noexcept
 	{
 		IWorker::Initialize();
@@ -87,10 +86,4 @@ namespace Jde::IO
 		base::await_suspend( h );
 		_arg.Send( move(h) );
 	}
-/*	α DriveAwaitable::await_resume()noexcept->TaskResult
-	{
-		base::AwaitResume();
-		return _pPromise ? TaskResult{ _pPromise->get_return_object().GetResult() } : TaskResult{ ExceptionPtr };
-	}
-*/
 }

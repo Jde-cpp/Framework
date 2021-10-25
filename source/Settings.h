@@ -11,12 +11,12 @@
 #pragma warning(pop)
 
 #define var const auto
-#define 🚪 JDE_NATIVE_VISIBILITY auto
+#define 🚪 Γ auto
 namespace Jde::Settings
 {
 	α Path()noexcept->fs::path;
 	using nlohmann::json;
-	struct JDE_NATIVE_VISIBILITY Container
+	struct Γ Container
 	{
 		Container( const json& json )noexcept;
 		Container( path jsonFile )noexcept(false);

@@ -124,11 +124,13 @@ namespace DB
 			{
 				string memberName = DB::Schema::ToJson( column.Name );
 				string tableName;
-				if( column.IsFlags )
+				if( column.IsFlags || column.IsEnum )
 				{
 					var pPKTable = _schema.Tables.find( column.PKTable ); THROW_IF( pPKTable==_schema.Tables.end(), "can not find column {}'s pk table {}.", column.Name, column.PKTable );
 					tableName = pPKTable->second->Name;
 					memberName = DB::Schema::ToJson( pPKTable->second->NameWithoutType() );
+					if( column.IsEnum )
+						memberName = DB::Schema::ToSingular( memberName );
 				}
 				var pValue = pInput->find( memberName );
 				if( pValue==pInput->end() )
@@ -528,7 +530,7 @@ namespace DB
 		else if( table.JsonName=="__schema" )
 			QuerySchema( table, jData );
 		else
-			DB::GraphQL::Query( table, userId, jData );
+			DB::GraphQL::Query( table, jData );
 	}
 
 	α QueryTables( const vector<DB::TableQL>& tables, uint userId )noexcept(false)->json
@@ -540,7 +542,7 @@ namespace DB
 	}
 
 
-	json DB::Query( sv query, UserPK userId )noexcept(false)
+	α DB::Query( sv query, UserPK userId )noexcept(false)->json
 	{
 		var qlType = ParseQL( query );
 		vector<DB::TableQL> tableQueries;
@@ -562,7 +564,7 @@ namespace DB
 	struct Parser
 	{
 		Parser( sv text, sv delimiters )noexcept: _text{text}, Delimiters{delimiters}{}
-		sv Next()noexcept
+		α Next()noexcept->sv
 		{
 			sv result = _peekValue;
 			if( result.empty() )
