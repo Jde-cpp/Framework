@@ -21,7 +21,7 @@ namespace Jde::IO::Sockets
 		{
 			try
 			{
-				THROW_IFX( ec, CodeException(ec.value()==125 ? "Sever shutting down"sv : "Accept Failed"sv, move(ec), ec.value()==125 ? ELogLevel::Information : ELogLevel::Error) );
+				THROW_IFX2( ec, CodeException(ec.value()==125 ? "Sever shutting down"sv : "Accept Failed"sv, move(ec), ec.value()==125 ? ELogLevel::Information : ELogLevel::Error) );
 				var id = ++_id;
 				DBG( "({})Accepted Connection"sv, id );
 				unique_lock l{ _mutex };
@@ -45,8 +45,8 @@ namespace Jde::IO::Sockets
 		{
 			try
 			{
-				THROW_IFX( ec && ec.value()==2, CodeException(fmt::format("({}) - Disconnected", Id), move(ec), _logLevel) );
-				THROW_IFX( ec, CodeException(move(ec), ec.value()==10054 || ec.value()==104 ? _logLevel : ELogLevel::Error) );
+				THROW_IFX2( ec && ec.value()==2, CodeException(fmt::format("({}) - Disconnected", Id), move(ec), _logLevel) );
+				THROW_IFX2( ec, CodeException(move(ec), ec.value()==10054 || ec.value()==104 ? _logLevel : ELogLevel::Error) );
 				THROW_IF( headerLength!=4, "only read '{}'"sv, headerLength );
 
 				var messageLength = ProtoClientSession::MessageLength( _readMessageSize );

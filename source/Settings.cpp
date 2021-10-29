@@ -13,12 +13,9 @@ namespace Jde
 		Container::Container( path jsonFile )noexcept(false):
 			_pJson{ make_unique<nlohmann::json>() }
 		{
-			if( !fs::exists(jsonFile) )
-				THROWX( EnvironmentException("file does not exsist:  {}", jsonFile.string()) );
+			CHECK_PATH( jsonFile );
 			var fileString = jsonFile.string();
-			std::ifstream is( fileString.c_str() );
-			if( is.bad() )
-				THROWX( EnvironmentException("Could not open file:  {}", jsonFile.string()) );
+			std::ifstream is( fileString.c_str() ); THROW_IF( is.bad(), "Could not open file:  {}", jsonFile.string() );
 			is >> *_pJson;
 		}
 		Container::Container( const nlohmann::json& json )noexcept:_pJson{ make_unique<nlohmann::json>(json) }{}
@@ -31,7 +28,7 @@ namespace Jde
 		sp<Container> Container::SubContainer( sv entry )const noexcept(false)
 		{
 			auto item = _pJson->find( entry );
-			THROW_IFX( item==_pJson->end(), EnvironmentException("Could not find {}", entry) );
+			THROW_IF( item==_pJson->end(), "Could not find {}", entry );
 			return make_shared<Container>( *item );
 		}
 
@@ -56,7 +53,7 @@ namespace Jde
 			return result;
 		}
 	}
-	α Settings::FileStem()noexcept->string 
+	α Settings::FileStem()noexcept->string
 	{
 		var executable = OSApp::Executable().filename();
 #ifdef _MSC_VER
@@ -84,13 +81,14 @@ namespace Jde
 			var settingsPath = Path();
 			try
 			{
-				CHECK_FILE_EXISTS( settingsPath );
+				CHECK_PATH( settingsPath );
 				_pGlobal = make_unique<Jde::Settings::Container>( settingsPath );
 			}
 			catch( const std::exception& e )
 			{
-				Logging::MessageBase m{ "({})Could not load settings - {}"sv, ELogLevel::Critical, source_location::current() };
-				Logging::LogMemory( m, {settingsPath.string(), e.what()} );
+				//Logging::MessageBase m{ "({})Could not load settings - {}"sv, ELogLevel::Critical };
+				//Logging::LogMemory( m, {settingsPath.string(), e.what()} );
+				LOG_MEMORY( ELogLevel::Critical, "({})Could not load settings - {}", settingsPath.string(), e.what() );
 				_pGlobal = std::make_unique<Jde::Settings::Container>( nlohmann::json{} );
 			}
 		}

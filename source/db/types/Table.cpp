@@ -107,19 +107,34 @@ namespace Jde::DB
 	Table::Table( sv name, const nlohmann::json& j, const flat_map<string,Table>& parents, const flat_map<string,Column>& commonColumns, const nlohmann::ordered_json& schema ):
 		Name{ name }
 	{
-		for( var& [columnName,value] : j.items() )
+		for( var& [attribute,value] : j.items() )
 		{
-			if( columnName=="$parent" )
+			if( attribute=="columns" )
 			{
-				var name2 = value.get<string>();
-				var pParent = parents.find( j.find("$parent")->get<string>() ); THROW_IF( pParent==parents.end(), "Could not find parent '{}'", j.find("$parent")->get<string>() );
+				for( var& it : value )
+				{
+					var dbName = Schema::FromJson( it["name"].get<string>() );
+					if( name=="dgr_classes" && dbName=="name" )
+						Dbg( "" );
+					Columns.push_back( Column{dbName, it, commonColumns, parents, schema} );
+					if( auto p=find(SurrogateKey.begin(), SurrogateKey.end(), dbName); p!=SurrogateKey.end() )
+					{
+						Columns.back().IsId = true;
+						Columns.back().Updateable = false;
+					}
+				}
+			}
+			else if( attribute=="parent" )
+			{
+				var parentName = value.get<string>();
+				var pParent = parents.find( parentName ); THROW_IF( pParent==parents.end(), "Could not find '{}' parent '{}'", name, parentName );
 				for( var& column : pParent->second.Columns )
 					Columns.push_back( column );
 				for( var& index : pParent->second.Indexes )
 					Indexes.push_back( Index{index.Name, Name, index} );
 				SurrogateKey = pParent->second.SurrogateKey;
 			}
-			else if( columnName=="$surrogateKey" )
+			else if( attribute=="surrogateKey" )
 			{
 				for( var& it : value )
 				{
@@ -130,7 +145,7 @@ namespace Jde::DB
 				}
 				Indexes.push_back( Index{"pk", Name, true, &SurrogateKey} );
 			}
-			else if( columnName=="$naturalKey" )
+			else if( attribute=="naturalKey" )
 			{
 				vector<SchemaName> columns;
 				for( var& it : value )
@@ -139,12 +154,12 @@ namespace Jde::DB
 				Indexes.push_back( Index{name2, Name, false, &columns} );
 				NaturalKeys.push_back( columns );
 			}
-			else if( columnName=="$flagsData" )
+			else if( attribute=="flagsData" )
 			{
 				for( var& it : value )
 					FlagsData.emplace( FlagsData.empty() ? 0 : 1 << (FlagsData.size()-1), it );
 			}
-			else if( columnName=="$data" )
+			else if( attribute=="data" )
 			{
 				auto seed = 0;
 				for( var& it : value )
@@ -160,18 +175,10 @@ namespace Jde::DB
 						Data.push_back( it );
 				}
 			}
-			else if( columnName=="$customInsertProc" )
+			else if( attribute=="customInsertProc" )
 				CustomInsertProc = value.get<bool>();
 			else
-			{
-				var dbName = Schema::FromJson( columnName );
-				Columns.push_back( Column{dbName, value, commonColumns, parents, schema} );
-				if( auto p=find(SurrogateKey.begin(), SurrogateKey.end(), dbName); p!=SurrogateKey.end() )
-				{
-					Columns.back().IsId = true;
-					Columns.back().Updateable = false;
-				}
-			}
+				ASSERT( false );
 		}
 	}
 
@@ -265,7 +272,7 @@ namespace Jde::DB
 
 	string ForeignKey::Create( sv name, sv columnName, const DB::Table& pkTable, sv foreignTable )noexcept(false)
 	{
-		THROW_IF( pkTable.SurrogateKey.size()!=1, EnvironmentException("{} has {} columns in pk, !1 has not implemented", pkTable.Name, pkTable.SurrogateKey.size() ) );
+		THROW_IF( pkTable.SurrogateKey.size()!=1, "{} has {} columns in pk, !1 has not implemented", pkTable.Name, pkTable.SurrogateKey.size() );
 		ostringstream os;
 		os << "alter table " << foreignTable << " add constraint " << name << " foreign key(" << columnName << ") references " << pkTable.Name << "(" << Str::AddCommas(pkTable.SurrogateKey) << ")";
 		return os.str();

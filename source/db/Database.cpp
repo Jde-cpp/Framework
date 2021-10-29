@@ -33,18 +33,14 @@ namespace Jde
 			os << sql.substr( prevIndex );
 		return os.str();
 	}
-	α DB::Log( sv sql, const std::vector<DataValue>* pParameters, const std::source_location& sl )noexcept->void
+	α DB::Log( sv sql, const std::vector<DataValue>* pParameters, const source_location& sl )noexcept->void
 	{
-		Logging::Log( Logging::Message2{_level, Message(sql, pParameters, {}), sl.file_name(), sl.function_name(), sl.line()} );
-	}
-	α DB::Log( sv sql, const std::vector<DataValue>* pParameters, sv file, sv fnctn, uint_least32_t line )noexcept->void
-	{
-		Logging::Log( Logging::Message2{_level, Message(sql, pParameters, {}), file, fnctn, line} );
+		Logging::Log( Logging::Message{_level, Message(sql, pParameters, {}), sl} );
 	}
 
-	α DB::Log( sv sql, const std::vector<DataValue>* pParameters, sv file, sv fnctn, uint_least32_t line, ELogLevel level, sv error )noexcept->void
+	α DB::Log( sv sql, const std::vector<DataValue>* pParameters, ELogLevel level, sv error, const source_location& sl )noexcept->void
 	{
-		Logging::Log( Logging::Message2{level, Message(sql, pParameters, error), file, fnctn, line} );
+		Logging::Log( Logging::Message{level, Message(sql, pParameters, error), sl} );
 	}
 
 	class DataSourceApi
@@ -174,7 +170,7 @@ namespace Jde
 		return y;
 	}
 
-	α DB::SelectIds( sv sql, const set<uint>& ids, std::function<void(const IRow&)> f )noexcept(false)->void
+	α DB::SelectIds( sv sql, const std::set<uint>& ids, std::function<void(const IRow&)> f )noexcept(false)->void
 	{
 		vector<DataValue> params; params.reserve( ids.size() );
 		string str; str.reserve( ids.size()*2 );

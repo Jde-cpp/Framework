@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include <source_location>
+//#include <source_location>
 #include <jde/Exports.h>
 #include "DataSource.h"
 #include "../Cache.h"
@@ -11,8 +11,8 @@ namespace Jde::DB
 	struct IDataSource; struct Syntax; //struct DataValue;
 	α Message( sv sql, const std::vector<DataValue>* pParameters, sv error={} )noexcept->string;
 	🚪 Log( sv sql, const std::vector<DataValue>* pParameters, SRCE )noexcept->void;
-	α Log( sv sql, const std::vector<DataValue>* pParameters, sv file, sv fnctn, uint_least32_t line )noexcept->void;
-	α Log( sv sql, const std::vector<DataValue>* pParameters, sv file, sv fnctn, uint_least32_t line, ELogLevel level, sv error )noexcept->void;
+	//α Log( sv sql, const std::vector<DataValue>* pParameters )noexcept->void;
+	α Log( sv sql, const std::vector<DataValue>* pParameters, ELogLevel level, sv error, SRCE )noexcept->void;
 	🚪 DefaultSyntax()noexcept->sp<Syntax>;
 	🚪 DataSource()noexcept(false)->sp<IDataSource>;
 	🚪 DataSource( path libraryName, sv connectionString )noexcept(false)->sp<IDataSource>;
@@ -29,7 +29,7 @@ namespace Jde::DB
 
 	🚪 Select( sv sql, std::function<void(const IRow&)> f, const vector<DataValue>& values )noexcept(false)->void;
 	🚪 Select( sv sql, std::function<void(const IRow&)> f )noexcept(false)->void;
-	🚪 SelectIds( sv sql, const set<uint>& ids, std::function<void(const IRow&)> f )noexcept(false)->void;
+	🚪 SelectIds( sv sql, const std::set<uint>& ids, std::function<void(const IRow&)> f )noexcept(false)->void;
 
 	template<class K,class V> sp<flat_map<K,V>> SelectMap( sv sql, str cacheName={} )noexcept(false);
 	ⓣ SelectSet( sv sql, const std::vector<DataValue>& parameters )noexcept(false)->boost::container::flat_set<T>;

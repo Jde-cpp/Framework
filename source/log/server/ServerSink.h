@@ -14,6 +14,7 @@
 
 namespace Jde::Logging
 {
+	namespace Messages{ struct ServerMessage; }
 	🚪 Server()noexcept->up<Logging::IServerSink>&; 🚪 SetServer( up<Logging::IServerSink> p )noexcept->void;
 	🚪 ServerLevel()noexcept->ELogLevel; 🚪 SetServerLevel( ELogLevel serverLevel )noexcept->void;
 
@@ -22,16 +23,16 @@ namespace Jde::Logging
 		IServerSink()=default;
 		virtual ~IServerSink();
 
-		virtual void Log( Messages::Message& message )noexcept=0;
-		virtual void Log( const MessageBase& messageBase )noexcept=0;
-		virtual void Log( const MessageBase& messageBase, vector<string>& values )noexcept=0;
+		β Log( Messages::ServerMessage& message )noexcept->void=0;
+		β Log( const MessageBase& messageBase )noexcept->void=0;
+		β Log( const MessageBase& messageBase, vector<string>& values )noexcept->void=0;
 
 		bool ShouldSendMessage( uint messageId )noexcept{ return _messagesSent.emplace(messageId); }
 		bool ShouldSendFile( uint messageId )noexcept{ return _filesSent.emplace(messageId); }
 		bool ShouldSendFunction( uint messageId )noexcept{ return _functionsSent.emplace(messageId); }
 		bool ShouldSendUser( uint messageId )noexcept{ return _usersSent.emplace(messageId); }
 		bool ShouldSendThread( uint messageId )noexcept{ return _threadsSent.emplace(messageId); }
-		virtual void SendCustom( uint32 /*requestId*/, str /*bytes*/ )noexcept{ CRITICAL("SendCustom not implemented"sv); }
+		β SendCustom( uint32 /*requestId*/, str /*bytes*/ )noexcept->void{ CRITICAL("SendCustom not implemented"); }
 		static bool Enabled()noexcept{ return _enabled; }
 		atomic<bool> SendStatus{false};
 	protected:
@@ -45,15 +46,15 @@ namespace Jde::Logging
 	};
 	namespace Messages
 	{
-		struct Γ Message final : Message2
+		struct Γ ServerMessage final : Logging::Message
 		{
-			Message( const MessageBase& base )noexcept:
-				Message2{ base }
+			ServerMessage( const MessageBase& base )noexcept:
+				Logging::Message{ base }
 			{}
-			Message( const Message& base );
-			Message( const MessageBase& base, vector<string> values )noexcept;
-			Message( const Message2& b, vector<string> values )noexcept:
-				Message2{ b },
+			ServerMessage( const ServerMessage& base );
+			ServerMessage( const MessageBase& base, vector<string> values )noexcept;
+			ServerMessage( const Message& b, vector<string> values )noexcept:
+				Message{ b },
 				Variables{ move(values) }
 			{}
 			const TimePoint Timestamp{ Clock::now() };
@@ -70,7 +71,7 @@ namespace Jde::Logging
 		static α Create()noexcept->ServerSink*;
 		ServerSink()noexcept(false);
 		~ServerSink(){DBGX("{}"sv, "~ServerSink");}
-		α Log( Messages::Message& m )noexcept->void override{ Write( m, m.Timestamp, &m.Variables ); }
+		α Log( Messages::ServerMessage& m )noexcept->void override{ Write( m, m.Timestamp, &m.Variables ); }
 		α Log( const MessageBase& m )noexcept->void override{ Write( m, Clock::now() ); }
 		α Log( const MessageBase& m, vector<string>& values )noexcept->void override{ Write( m, Clock::now(), &values ); };
 

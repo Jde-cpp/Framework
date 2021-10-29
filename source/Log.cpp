@@ -19,7 +19,7 @@ namespace Jde::Logging
 	α Tags()noexcept->const array<Tag_,20>&{return _tags;}
 	α ServerTags()noexcept->const array<Tag_,20>&{return _serverTags;}
 	bool _logMemory{true};
-	up<vector<Logging::Messages::Message>> _pMemoryLog; shared_mutex MemoryLogMutex;
+	up<vector<Logging::Messages::ServerMessage>> _pMemoryLog; shared_mutex MemoryLogMutex;
 	auto _pOnceMessages = make_unique<flat_map<uint,set<string>>>(); std::shared_mutex OnceMessageMutex;
 
 	flat_map<sv,vector<function<void(ELogLevel)>>> _tagCallbacks;
@@ -44,7 +44,7 @@ namespace Jde
 		SetServer( nullptr );
 	};
 
-#define PREFIX unique_lock l{ MemoryLogMutex }; if( !_pMemoryLog ) _pMemoryLog = make_unique<vector<Logging::Messages::Message>>();
+#define PREFIX unique_lock l{ MemoryLogMutex }; if( !_pMemoryLog ) _pMemoryLog = make_unique<vector<Logging::Messages::ServerMessage>>();
 	α Logging::LogMemory( const Logging::MessageBase& m )noexcept->void
 	{
 		PREFIX
@@ -55,10 +55,12 @@ namespace Jde
 		PREFIX
 		_pMemoryLog->emplace_back( move(m) );
 	}
-	α Logging::LogMemory( Logging::Message2&& m, vector<string> values )noexcept->void
+	α Logging::LogMemory( Logging::Message&& m, vector<string> values )noexcept->void
 	{
 		PREFIX
+		ASSERT( m._pMessage );
 		_pMemoryLog->emplace_back( move(m), move(values) );
+		ASSERT( _pMemoryLog->rbegin()->_pMessage );
 	}
 	α Logging::LogMemory( Logging::MessageBase&& m, vector<string> values )noexcept->void
 	{
@@ -182,7 +184,7 @@ namespace Jde
 					ERR( "{} - {}", m.MessageView, e.what() );
 				}
 				if( pServer && ServerLevel()<=m.Level )
-					pServer->Log( Messages::Message{m} );
+					pServer->Log( Messages::ServerMessage{m} );
 			}
 			if( !_logMemory )
 				ClearMemoryLog();
@@ -201,7 +203,7 @@ namespace Jde
 		ASSERTX( Server() && m.Level!=ELogLevel::NoLog );
 		Server()->Log( m, values );
 	}
-	void Logging::LogServer( Messages::Message& m )noexcept
+	void Logging::LogServer( Messages::ServerMessage& m )noexcept
 	{
 		ASSERTX( Server() && m.Level!=ELogLevel::NoLog );
 		Server()->Log( m );
@@ -275,13 +277,13 @@ namespace Jde
 	void ClearMemoryLog()noexcept
 	{
 		unique_lock l{ Logging::MemoryLogMutex };
-		Logging::_pMemoryLog = Logging::_logMemory ? make_unique<vector<Logging::Messages::Message>>() : nullptr;
+		Logging::_pMemoryLog = Logging::_logMemory ? make_unique<vector<Logging::Messages::ServerMessage>>() : nullptr;
 	}
-	vector<Logging::Messages::Message> FindMemoryLog( uint32 messageId )noexcept
+	vector<Logging::Messages::ServerMessage> FindMemoryLog( uint32 messageId )noexcept
 	{
 		shared_lock l{ Logging::MemoryLogMutex };
 		ASSERT( Logging::_pMemoryLog );
-		vector<Logging::Messages::Message>  results;
+		vector<Logging::Messages::ServerMessage>  results;
 		for_each( Logging::_pMemoryLog->begin(), Logging::_pMemoryLog->end(), [messageId,&results](var& msg){if( msg.MessageId==messageId) results.push_back(msg);} );
 		return results;
 	}
@@ -289,33 +291,11 @@ namespace Jde
 
 	namespace Logging
 	{
-		MessageBase::MessageBase( sv message, ELogLevel level, sv file, sv function, uint_least32_t line )noexcept:
-			Level{level},
-			MessageId{ Calc32RunTime(message) },//{IO::Crc::Calc32(message)},
-			MessageView{ message },
-			FileId{ Calc32RunTime(file) },
-			File{ file },
-			FunctionId{ Calc32RunTime(function) },
-			Function{ function },
-			LineNumber{ line }
-		{
-			if( level!=ELogLevel::Trace )
-				Fields |= EFields::Level;
-			if( message.size() )
-				Fields |= EFields::Message | EFields::MessageId;
-			if( File.size() )
-				Fields |= EFields::File | EFields::FileId;
-			if( Function.size() )
-				Fields |= EFields::Function | EFields::FunctionId;
-			if( LineNumber )
-				Fields |= EFields::LineNumber;
-		}
-
-		MessageBase::MessageBase( sv message, ELogLevel level, const source_location& sl )noexcept:
-			Level{level},
-			MessageId{ Calc32RunTime(message) },//{IO::Crc::Calc32(message)},
-			MessageView{ message },
-			FileId{ Calc32RunTime(sl.file_name()) },
+		MessageBase::MessageBase( ELogLevel level, const source_location& sl )noexcept:
+			Fields{ EFields::File | EFields::FileId | EFields::Function | EFields::FunctionId | EFields::LineNumber },
+			Level{ level },
+			MessageId{ 0 },//{},
+			FileId{ Calc32RunTime(FileName(sl.file_name())) },
 			File{ sl.file_name() },
 			FunctionId{ Calc32RunTime(sl.function_name()) },
 			Function{ sl.function_name() },
@@ -323,23 +303,20 @@ namespace Jde
 		{
 			if( level!=ELogLevel::Trace )
 				Fields |= EFields::Level;
-			if( message.size() )
-				Fields |= EFields::Message | EFields::MessageId;
-			Fields |= EFields::File | EFields::FileId | EFields::Function | EFields::FunctionId | EFields::LineNumber;
 		}
 
-		Message2::Message2( const MessageBase& b )noexcept:
+		Message::Message( const MessageBase& b )noexcept:
 			MessageBase{ b },
 			_fileName{ FileName(b.File) }
 		{
 			File = _fileName;
 		}
-		Message2::Message2( ELogLevel level, string message, sv file, sv function, uint_least32_t line )noexcept:
-			MessageBase( message, level, file, function, line ),
-			_fileName{ FileName(file) }
+		Message::Message( ELogLevel level, string message, const source_location& sl )noexcept:
+			MessageBase( level, sl ),
+			_pMessage{ make_unique<string>(move(message)) },
+			_fileName{ FileName(sl.file_name()) }
 		{
 			File = _fileName;
-			_pMessage = make_unique<string>( move(message) );
 			MessageView = *_pMessage;
 		}
 	}

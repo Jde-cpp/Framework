@@ -110,7 +110,7 @@ namespace Jde::Coroutine
 					else
 						addSettings();
 				}
-				catch( EnvironmentException& )
+				catch( IException& )
 				{
 					addSettings();
 				}

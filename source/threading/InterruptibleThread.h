@@ -94,5 +94,5 @@ namespace Jde::Threading  //TODO Reflection remove Threading from public items.
 		cv.wait( cl );
 		InterruptionPoint();
 	}
-	struct ThreadInterrupted : public Exception{ ThreadInterrupted()noexcept:Exception{ELogLevel::Trace, "interupted"}{} };
+	struct ThreadInterrupted : public Exception{ ThreadInterrupted()noexcept:Exception{"interupted", ELogLevel::Trace}{} };
 }

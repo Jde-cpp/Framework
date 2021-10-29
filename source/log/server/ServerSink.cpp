@@ -195,8 +195,8 @@ namespace Jde::Logging
 	}
 	namespace Messages
 	{
-		Message::Message( const MessageBase& base, vector<string> values )noexcept:
-			Message2{ base },
+		ServerMessage::ServerMessage( const MessageBase& base, vector<string> values )noexcept:
+			Message{ base },
 			Timestamp{ Clock::now() },
 			Variables{ move(values) }
 		{
@@ -204,8 +204,8 @@ namespace Jde::Logging
 			Fields |= EFields::Timestamp | EFields::ThreadId | EFields::Thread;
 		}
 
-		Message::Message( const Message& rhs ):
-			Message2{ rhs },
+		ServerMessage::ServerMessage( const ServerMessage& rhs ):
+			Message{ rhs },
 			Timestamp{ rhs.Timestamp },
 			Variables{ rhs.Variables },
 			//_pFile{ rhs._pFile ? make_unique<string>(*rhs._pFile) : nullptr },

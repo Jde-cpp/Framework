@@ -4,7 +4,7 @@
 #include "../coroutine/Awaitable.h"
 #include <jde/Log.h>
 
-#define DBLOG(message,params) Jde::DB::Log( message, params, MY_FILE, __func__, __LINE__ )
+#define DBLOG(sql,params) Jde::DB::Log( sql, params, sl )
 namespace Jde::DB
 {
 	using namespace Coroutine;
@@ -27,7 +27,7 @@ namespace Jde::DB
 
 		β Execute( sv sql )noexcept(false)->uint=0;
 		β Execute( sv sql, const std::vector<DataValue>& parameters, bool log=true )noexcept(false)->uint = 0;
-		β Execute( sv sql, const std::vector<DataValue>* pParameters, std::function<void(const IRow&)>* f, bool isStoredProc=false, bool log=true )noexcept(false)->uint = 0;
+		β Execute( sv sql, const std::vector<DataValue>* pParameters, std::function<void(const IRow&)>* f, bool isStoredProc=false, bool log=true, SRCE )noexcept(false)->uint = 0;
 		β ExecuteProc( sv sql, const std::vector<DataValue>& parameters, bool log=true )noexcept(false)->uint = 0;
 		β ExecuteProc( sv sql, const std::vector<DataValue>& parameters, std::function<void(const IRow&)> f, bool log=true )noexcept(false)->uint = 0;
 

@@ -34,14 +34,14 @@ namespace Jde
 	{
 	}
 	//IO::DriveWorker _driveWorker;
-	set<string> IApplication::BaseStartup( int argc, char** argv, sv appName, string serviceDescription/*, sv companyName*/ )noexcept(false)//no config file
+	flat_set<string> IApplication::BaseStartup( int argc, char** argv, sv appName, string serviceDescription/*, sv companyName*/ )noexcept(false)//no config file
 	{
 		{
 			ostringstream os;
 			os << "(" << OSApp::ProcessId() << ")";
 			for( uint i=0; i<argc; ++i )
 				os << argv[i] << " ";
-			Logging::Default().log( spdlog::source_loc{FileName(MY_FILE).c_str(),__LINE__,__func__}, (spdlog::level::level_enum)ELogLevel::Information, os.str() ); //TODO add cwd.
+			Logging::Default().log( spdlog::source_loc{FileName(SRCE_CUR.file_name()).c_str(),SRCE_CUR.line(),SRCE_CUR.function_name()}, (spdlog::level::level_enum)ELogLevel::Information, os.str() ); //TODO add cwd.
 		}
 		_pApplicationName = make_unique<string>( appName );
 
@@ -52,7 +52,7 @@ namespace Jde
 #else
 		bool terminate = false;
 #endif
-		set<string> values;
+		flat_set<string> values;
 		for( int i=1; i<argc; ++i )
 		{
 			if( string(argv[i])=="-c" )
@@ -62,12 +62,12 @@ namespace Jde
 			else if( string(argv[i])=="-install" )
 			{
 				Install( serviceDescription );
-				throw Exception{ ELogLevel::Trace, "successfully installed." };
+				throw Exception{ "successfully installed.", ELogLevel::Trace };
 			}
 			else if( string(argv[i])=="-uninstall" )
 			{
 				Uninstall();
-				throw Exception{ ELogLevel::Trace, "successfully uninstalled." };
+				throw Exception{ "successfully uninstalled.", ELogLevel::Trace };
 			}
 			else
 				values.emplace( argv[i] );
@@ -143,7 +143,7 @@ namespace Jde
 				l.unlock();
 				OSApp::Pause();
 				// unique_lock<std::mutex> lk( _workerConditionMutex );
-				// 
+				//
 				// _workerCondition.wait( lk );
 			}
 		}

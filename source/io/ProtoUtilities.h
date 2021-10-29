@@ -85,12 +85,12 @@ namespace Jde::IO
 		}
 		catch( fs::filesystem_error& e )
 		{
-			THROWX( IOException(move(e)) );
+			throw IOException( move(e) );
 		}
 		if( !pBytes )
 		{
 			fs::remove( path );
-			THROWX( IOException(path, "has 0 bytes. Removed") );
+			throw IOException{ path, "has 0 bytes. Removed" };
 		}
 		Internal::Deserialize( (google::protobuf::uint8*)pBytes->data(), (uint32)pBytes->size(), proto );
 	}

@@ -39,8 +39,7 @@ namespace Jde::IO
 		_path(path),
 		_fd{ ::inotify_init1(IN_NONBLOCK) }
 	{
-		if( _fd < 0 )
-			THROW( IOException("({})Could not init inotify."sv, errno) );
+		THROW_IFX2( _fd < 0, IO_EX(path, "({})Could not init inotify."sv, errno) );
 		TRACE( "DiskWatcher::inotify_init returned {}"sv, _fd );
 
 		try
@@ -48,8 +47,7 @@ namespace Jde::IO
 			auto add = [&]( var& subPath )
 			{
 				var wd = ::inotify_add_watch( _fd, subPath.string().c_str(), (uint32_t)_events );
-				if( wd < 0 )
-					THROW( IOException("({})Could not init watch on {}."sv, errno, subPath.c_str()) );
+				THROW_IFX2( wd < 0, IO_EX(subPath, "({})Could not init watch.", errno) );
 				_descriptors.emplace( wd, subPath );
 				TRACE( "inotify_add_watch on {}, returned {}"sv, subPath.c_str(), wd );
 			};
@@ -127,7 +125,7 @@ namespace Jde::IO
 					WARN( "read return EINTR, retrying"sv );
 					ReadEvent( fd, true );
 				}
-				THROW( IOException("read return '{}'"sv, err) );
+				THROW( "read return '{}'", err );
 			}
 			if( length<=0 )
 				break;

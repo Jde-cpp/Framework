@@ -58,20 +58,19 @@ namespace Jde::DB
 		function<void(sv,const json&)> addTable;
 		addTable = [&]( sv key, const json& item )
 		{
-			var parentId = item.contains("$parent") ? item.find("$parent")->get<string>() : string{};
+			var parentId = item.contains("parent") ? item.find("parent")->get<string>() : string{};
 			if( parentId.size() && parentTables.find(parentId)==parentTables.end() )
 			{
-				THROW_IF( j.find(parentId)==j.end(), "Could not find parent {}", parentId );
+				THROW_IF( j.find(parentId)==j.end(), "Could not find '{}' parent {}", key, parentId );
 				addTable( parentId, *j.find(parentId) );
 			}
 			parentTables.emplace( key, Table{key, item, parentTables, schema.Types, j} );
 		};
 		for( var& [key, value] : j.items() )
 		{
-			var name = Schema::FromJson( key );
-			if( !key.starts_with("$") )
+			if( var name = Schema::FromJson(key); !key.starts_with("$") )
 				schema.Tables.emplace( name, make_shared<Table>(name, value, parentTables, schema.Types, j) );
-			else if( key!="$types" && parentTables.find(key)==parentTables.end() )
+			else if( key!="$types" && key!="$scripts" && parentTables.find(key)==parentTables.end() )
 				addTable( key, value );
 		}
 		for( var& [tableName, pTable] : schema.Tables )
@@ -174,8 +173,12 @@ namespace Jde::DB
 					}
 					return selectParams.size();
 				};
-				if( !set() )
-					for( auto p = pTable->NaturalKeys.begin(); p!=pTable->NaturalKeys.end() && !set(/**p*/); ++p );
+				try
+				{
+					if( !set() )
+						for( auto p = pTable->NaturalKeys.begin(); p!=pTable->NaturalKeys.end() && !set(); ++p );
+				}
+				RETHROW( "Could not set data for {}"sv, tableName );
 				THROW_IF( selectParams.empty(), "Could not find keys in data for '{}'", tableName );
 				osSelect << osWhere.str();
 

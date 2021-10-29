@@ -26,6 +26,7 @@ distribution.
 #include <new>		// yes, this one new style header, is in the Android SDK.
 #include <cstddef>
 #include <cstdarg>
+#include <jde/TypeDefs.h>
 #include <jde/Exception.h>
 
 #define var const auto

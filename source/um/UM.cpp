@@ -74,7 +74,7 @@ namespace Jde
 			return;
 		if( _pSettings->ConnectionString.empty() )
 			_pSettings->ConnectionString = Settings::TryGet<string>( "db/connectionString" ).value_or( "" );
-		THROW_IF( _pSettings->ConnectionString.empty(), EnvironmentException("no user management connection string.") );
+		THROW_IF( _pSettings->ConnectionString.empty(), "no user management connection string." );
 		auto pDataSource = DB::DataSource();// _pSettings->LibraryName, _pSettings->ConnectionString );
 		auto path = Settings::TryGet<fs::path>( "db/meta" ).value_or( "meta.json" );
 		if( !fs::exists(path) )
@@ -86,8 +86,8 @@ namespace Jde
 		SetQLDataSource( pDataSource );
 
 		var pApis = pDataSource->SelectMap<string,uint>( "select name, id from um_apis" );
-		auto pUMApi = pApis->find( "UM" ); THROW_IF( pUMApi==pApis->end(), EnvironmentException("no user management in api table.") );
-		var umPermissionId = pDataSource->Scaler<uint>( "select id from um_permissions where api_id=? and name is null", {pUMApi->second} ).value_or(0); THROW_IF( umPermissionId==0, EnvironmentException("no user management permission.") );
+		auto pUMApi = pApis->find( "UM" ); THROW_IF( pUMApi==pApis->end(), "no user management in api table." );
+		var umPermissionId = pDataSource->Scaler<uint>( "select id from um_permissions where api_id=? and name is null", {pUMApi->second} ).value_or(0); THROW_IF( umPermissionId==0, "no user management permission." );
 		for( var& table : schema.Tables )
 			_tablePermissions.try_emplace( table.first, umPermissionId );
 

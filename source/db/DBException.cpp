@@ -13,11 +13,10 @@ namespace Jde::DB
 		}
 		return y;
 	}
-	DBException::DBException( _int errorCode, sv sql, const vector<DataValue>* pValues, string&& what, const source_location& sl )noexcept:
-		IException{ move(what), sl },
+	DBException::DBException( std::runtime_error&& e, sv sql, const vector<DataValue>* pValues, const source_location& sl )noexcept:
+		IException{ sl, move(e) },
 		Sql{ sql },
-		Parameters{ CopyParams(pValues) },
-		ErrorCode{ errorCode }
+		Parameters{ CopyParams(pValues) }
 	{
 		Log();
 	}
@@ -25,7 +24,7 @@ namespace Jde::DB
 /*	DBException::DBException( _int errorCode, sv sql, const std::vector<DataValue>* pValues, const source_location& sl )noexcept:
 		DBException{ std::runtime_error{""}, sql, pValues, errorCode, sl }
 	{}
-	
+
 	DBException::DBException( _int errorCode, sv sql, const vector<DataValue>* pValues, str what, const source_location& sl )noexcept:
 		DBException{ std::runtime_error{what}, sql, pValues, errorCode, sl }
 	{}
@@ -44,7 +43,7 @@ namespace Jde::DB
 	void DBException::Log()const noexcept
 	{
 		if( Sql.find("log_message_insert")==string::npos )
-			DB::Log( Sql, Parameters.size() ? &Parameters : nullptr, _fileName, _functionName, _line, _level, _pInner ? string{_pInner->what()} : what() );
+			DB::Log( Sql, Parameters.size() ? &Parameters : nullptr, _level, _pInner ? string{_pInner->what()} : what(), _sl );
 		else
 			ERRX( "log_message_insert sql='{}'"sv, Sql );
 	}

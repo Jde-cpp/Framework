@@ -71,7 +71,7 @@ namespace Jde
 		}
 		break;
 		default:
-			throw Exception( "{} not implemented", parameter.index() );
+			THROW( "{} not implemented", parameter.index() );
 		}
 		return os.str();
 	}
@@ -181,20 +181,20 @@ namespace Jde
 			switch( type )
 			{
 			case DataType::Bit:
-				THROW_IF( !j.is_boolean(), "{} could not conver to boolean", memberName );
+				THROW_IF( !j.is_boolean(), "{} could not conver to boolean {}", memberName, j.dump() );
 				value = DB::DataValue{ j.get<bool>() };
 				break;
 			case DataType::Int16:
 			case DataType::Int:
 			case DataType::Int8:
 			case DataType::Long:
-				THROW_IF( !j.is_number(), "{} could not conver to numeric", memberName );
+				THROW_IF( !j.is_number(), "{} could not conver to int {}", memberName, j.dump() );
 				value = DB::DataValue{ j.get<_int>() };
 				break;
 			case DataType::UInt16:
 			case DataType::UInt:
 			case DataType::ULong:
-				THROW_IF( !j.is_number(), "{} could not conver to numeric", memberName );
+				THROW_IF( !j.is_number(), "{} could not conver to uint {}", memberName, j.dump() );
 				value = DB::DataValue{ j.get<uint>() };
 				break;
 			case DataType::SmallFloat:
@@ -202,7 +202,7 @@ namespace Jde
 			case DataType::Decimal:
 			case DataType::Numeric:
 			case DataType::Money:
-				THROW_IF( !j.is_number(), "{} could not conver to numeric", memberName );
+				THROW_IF( !j.is_number(), "{} could not conver to numeric {}", memberName, j.dump() );
 				value = DB::DataValue{ j.get<double>() };
 				break;
 			case DataType::None:
