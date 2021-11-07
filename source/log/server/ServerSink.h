@@ -86,7 +86,7 @@ namespace Jde::Logging
 		atomic<bool> _stringsLoaded{false};
 		string _applicationName;
 		function<Coroutine::Task2(uint32,string&&)> _customFunction;
-		Proto::ToServer _buffer; atomic<bool> _bufferMutex;
+		Proto::ToServer _buffer; std::atomic_flag _bufferMutex;
 	};
 }
 #undef 🚪

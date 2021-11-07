@@ -5,6 +5,7 @@
 
 namespace Jde::IO::Sockets
 {
+#define _logLevel Sockets::LogLevel()
 	ProtoClientSession::ProtoClientSession( /*boost::asio::io_context& context*/ ):
 		_pIOContext{ IOContextThread::Instance() },
 		_socket{ _pIOContext->Context() }
@@ -24,9 +25,9 @@ namespace Jde::IO::Sockets
 			if( ec )
 			{
 				if( ec.value()==2 )
-					LOG( LogLevel(), "ProtoClientSession::ReadHeader closing - 2 '{}'", CodeException::ToString(ec) );
+					LOG( "ProtoClientSession::ReadHeader closing - 2 '{}'", CodeException::ToString(ec) );
 				else if( ec.value()==125 )
-					LOG( LogLevel(), "_socket.close() ec='{}'", CodeException::ToString(ec) );
+					LOG( "_socket.close() ec='{}'", CodeException::ToString(ec) );
 				else
 					ERR( "Client::ReadHeader Failed - '{}' closing"sv, ec.value() );
 			}
@@ -80,7 +81,6 @@ namespace Jde::IO::Sockets
 		try
 		{
 			net::connect( _socket, endpoints );
-			_connected = true;
 			ReadHeader();
 		}
 		catch( const boost::system::system_error& e )

@@ -12,7 +12,7 @@ namespace Jde::DB
 		DBException( std::runtime_error&& e, sv sql, const vector<DataValue>* pValues=nullptr, SRCE )noexcept;
 		//DBException( _int errorCode, sv sql, const vector<DataValue>* pValues=nullptr, SRCE )noexcept;
 //		DBException( sv sql, const vector<DataValue>* pValues=nullptr, SRCE )noexcept;
-		//DBException( _int errorCode, sv sql, const vector<DataValue>* pValues, str what, SRCE )noexcept;
+		DBException( _int errorCode, sv sql, const vector<DataValue>* pValues, str what, SRCE )noexcept;
 
 /*		template<class... Args>
 		DBException( sv value, Args&&... args ):

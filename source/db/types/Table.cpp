@@ -65,6 +65,8 @@ namespace Jde::DB
 		};
 		if( j.is_object() )
 		{
+//			if( Name=="name" )
+//				Dbg( j.dump() );
 			if( j.contains("sequence") )
 			{
 				IsIdentity = j.find( "sequence" )->get<bool>();
@@ -107,15 +109,27 @@ namespace Jde::DB
 	Table::Table( sv name, const nlohmann::json& j, const flat_map<string,Table>& parents, const flat_map<string,Column>& commonColumns, const nlohmann::ordered_json& schema ):
 		Name{ name }
 	{
+		if( var& p = j.find("parent"); p != j.end() )
+		{
+			var parentName = p->get<string>();
+			var pParent = parents.find( parentName ); THROW_IF( pParent==parents.end(), "Could not find '{}' parent '{}'", name, parentName );
+			for( var& column : pParent->second.Columns )
+				Columns.push_back( column );
+			for( var& index : pParent->second.Indexes )
+				Indexes.push_back( Index{index.Name, Name, index} );
+			SurrogateKey = pParent->second.SurrogateKey;
+		}
 		for( var& [attribute,value] : j.items() )
 		{
+			if( attribute=="parent" )
+				continue;
 			if( attribute=="columns" )
 			{
 				for( var& it : value )
 				{
 					var dbName = Schema::FromJson( it["name"].get<string>() );
-					if( name=="dgr_classes" && dbName=="name" )
-						Dbg( "" );
+					//if( name=="dgr_classes" && dbName=="name" )
+						//Dbg( "" );
 					Columns.push_back( Column{dbName, it, commonColumns, parents, schema} );
 					if( auto p=find(SurrogateKey.begin(), SurrogateKey.end(), dbName); p!=SurrogateKey.end() )
 					{
@@ -123,16 +137,6 @@ namespace Jde::DB
 						Columns.back().Updateable = false;
 					}
 				}
-			}
-			else if( attribute=="parent" )
-			{
-				var parentName = value.get<string>();
-				var pParent = parents.find( parentName ); THROW_IF( pParent==parents.end(), "Could not find '{}' parent '{}'", name, parentName );
-				for( var& column : pParent->second.Columns )
-					Columns.push_back( column );
-				for( var& index : pParent->second.Indexes )
-					Indexes.push_back( Index{index.Name, Name, index} );
-				SurrogateKey = pParent->second.SurrogateKey;
 			}
 			else if( attribute=="surrogateKey" )
 			{

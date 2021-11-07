@@ -103,12 +103,9 @@ namespace Jde
 		Γ friend std::ostream& operator<<( std::ostream &os, const Jde::DateTime& obj )noexcept;
 		static TimePoint ToDate( const TimePoint& time )noexcept;
 	private:
-//		void swap( const DateTime& other );
 		TimePoint _time_point;
 		mutable std::unique_ptr<time_t> _pTime{nullptr};
 		mutable std::shared_ptr<std::tm> _pTm{nullptr};
-
-		//std::tm	_tm;
 	};
 
 	inline string ToIsoString( TimePoint time )noexcept{ return DateTime(time).ToIsoString(); }
@@ -132,8 +129,6 @@ namespace Jde
 		inline TimePoint EndOfDay(const TimePoint& time){ DateTime date{time}; return DateTime(date.Year(), date.Month(), date.Day(), 23, 59, 59).GetTimePoint(); }
 		inline TimePoint BeginningOfDay(const TimePoint& time){ DateTime date{time}; return DateTime(date.Year(), date.Month(), date.Day(), 0, 0, 0).GetTimePoint(); }
 		inline TimePoint BeginningOfMonth( TimePoint time={} )noexcept{ DateTime date{time==TimePoint{} ? Clock::now() : time }; return DateTime{date.Year(), date.Month(), 1}.GetTimePoint(); }
-		//inline fs::file_time_type ToFileTime( TimePoint t )noexcept{ return fs::file_time_type::clock::from_time_t( Clock::to_time_t(t) ); }//TODO make more than exact to second.
-		//inline TimePoint ToTimePoint( fs::file_time_type t )noexcept;//{ return TimePoint::from_time_t( fs::file_time_type::clock::to_time_t(t) ); }
 		template<typename To, typename From> typename To::time_point ToClock( typename From::time_point f )noexcept;
 	}
 	template<typename To,typename From> typename To::time_point Chrono::ToClock( typename From::time_point from )noexcept
@@ -141,5 +136,4 @@ namespace Jde
 		return To::now()-std::chrono::milliseconds( duration_cast<std::chrono::milliseconds>(From::time_point::clock::now()-from) );
 	}
 }
-Γ std::ostream& operator<<( std::ostream &os, const std::chrono::system_clock::time_point& obj )noexcept;
 #undef var

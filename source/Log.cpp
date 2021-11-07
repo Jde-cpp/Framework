@@ -7,35 +7,62 @@
 	#include <spdlog/sinks/msvc_sink.h>
 #endif
 #include <boost/lexical_cast.hpp>
-#include "log/server/ServerSink.h"
 #include "Settings.h"
+#include "log/server/ServerSink.h"
+#include "collections/Collections.h"
+
 #define var const auto
 
 namespace Jde::Logging
 {
-	array<Tag_,20> _tags;
-	array<Tag_,20> _serverTags;
-
-	α Tags()noexcept->const array<Tag_,20>&{return _tags;}
-	α ServerTags()noexcept->const array<Tag_,20>&{return _serverTags;}
+	vector<LogTag> _tags;
+	vector<LogTag> _serverTags;
+	vector<LogTag*> _cumulativeTags;
 	bool _logMemory{true};
 	up<vector<Logging::Messages::ServerMessage>> _pMemoryLog; shared_mutex MemoryLogMutex;
 	auto _pOnceMessages = make_unique<flat_map<uint,set<string>>>(); std::shared_mutex OnceMessageMutex;
 
-	flat_map<sv,vector<function<void(ELogLevel)>>> _tagCallbacks;
-	α TagLevel( sv tag )noexcept->ELogLevel
+	α AddTags( vector<LogTag>& tags, sv path )noexcept->void
 	{
-		return (ELogLevel)std::max( (int8)Internal::TagLevel(tag,_tags), (int8)Internal::TagLevel(tag,_serverTags) );
-	}
-	α TagLevel( sv tag, function<void(ELogLevel)> onChange, ELogLevel dflt )noexcept->ELogLevel
-	{
-		_tagCallbacks.try_emplace( tag ).first->second.emplace_back( onChange );
-		ELogLevel l = TagLevel(tag);
-		return l==ELogLevel::NoLog ? dflt : l;
+		var settings = Settings::TryArray<string>( path );
+		for( var& tag : settings )
+		{
+			var log{ tag.size()<1 || tag[0]!='_' };
+			var tagName = log ? tag : tag.substr(1);
+			var pc = find_if( _cumulativeTags.begin(), _cumulativeTags.end(), [&](var& x){return x->Id==tagName;} ) ;
+			CONTINUE_IF( pc==_cumulativeTags.end(), "unknown tag '{}'", tagName );
+			var l = log ? ELogLevel::Debug : ELogLevel::NoLog;
+
+			bool change = false;
+			if( auto p = find_if(tags.begin(), tags.end(), [&](var& x){return x.Id==tagName;}); p!=tags.end() )
+			{
+				if( change = p->Level != l; change )
+					p->Level = l;
+			}
+			else if( (change = l!=ELogLevel::NoLog) )
+				tags.push_back( LogTag{(*pc)->Id, l} );
+			if( change )
+			{
+				var& otherTags = &tags==&_tags ? _serverTags : _tags;
+				var p = find_if( otherTags.begin(), otherTags.end(), [&](var& x){return x.Id==tagName;} );
+				auto cumulativeLevel = p==otherTags.end() ? l : std::min( l==ELogLevel::NoLog ? ELogLevel::None : l, p->Level==ELogLevel::NoLog ? ELogLevel::None : p->Level );
+				if( cumulativeLevel==ELogLevel::None )
+					cumulativeLevel = ELogLevel::NoLog;
+				(*pc)->Level = cumulativeLevel;
+			}
+		}
 	}
 }
 namespace Jde
 {
+	//α Tags()noexcept->const array<Tag_,20>&{return _tags;}
+	//α ServerTags()noexcept->const array<Tag_,20>&{return _serverTags;}
+	α Logging::TagLevel( sv tag )noexcept->const LogTag&
+	{
+		//_tags.emplace_back( tag, ELogLevel::NoLog );
+		return *_cumulativeTags.emplace_back( new LogTag{tag} );
+	}
+
 	α Logging::DestroyLogger()->void
 	{
 		TRACE( "Destroying Logger"sv );
@@ -48,25 +75,15 @@ namespace Jde
 	α Logging::LogMemory( const Logging::MessageBase& m )noexcept->void
 	{
 		PREFIX
-		_pMemoryLog->emplace_back( m );
-	}
-	α Logging::LogMemory( Logging::MessageBase&& m )noexcept->void
-	{
-		PREFIX
 		_pMemoryLog->emplace_back( move(m) );
 	}
+
 	α Logging::LogMemory( Logging::Message&& m, vector<string> values )noexcept->void
 	{
 		PREFIX
-		ASSERT( m._pMessage );
-		_pMemoryLog->emplace_back( move(m), move(values) );
-		ASSERT( _pMemoryLog->rbegin()->_pMessage );
-	}
-	α Logging::LogMemory( Logging::MessageBase&& m, vector<string> values )noexcept->void
-	{
-		PREFIX
 		_pMemoryLog->emplace_back( move(m), move(values) );
 	}
+
 	α Logging::LogMemory( const Logging::MessageBase& m, vector<string> values )noexcept->void
 	{
 		PREFIX
@@ -101,56 +118,13 @@ namespace Jde
 			pSink->set_pattern( pattern );
 			var level = sink.TryGet<ELogLevel>( "level" ).value_or( ELogLevel::Debug );
 			pSink->set_level( (spdlog::level::level_enum)level );
-			LOG_MEMORY( ELogLevel::Information, "({})level='{}' pattern='{}'{}", name, ToString(level), pattern, additional );
+			//LOG_MEMORY( ELogLevel::Information, "({})level='{}' pattern='{}'{}", name, ToString(level), pattern, additional );
+			LogMemoryDetail( Logging::Message{ELogLevel::Information, "({})level='{}' pattern='{}'{}"}, name, ToString(level), pattern, additional );
 			sinks.push_back( pSink );
 		}
 		return sinks;
 	}
 	vector<spdlog::sink_ptr> _sinks = LoadSinks();
-
-	α AddTags( array<Tag_,20>& tags, sv path )noexcept->void
-	{
-		auto l = ELogLevel::Debug;
-		var settings = Settings::TryArray<string>( path );
-		for( var& tag : settings )
-		{
-			bool change = false;
-			if( auto p = find_if(tags.begin(), tags.end(), [tag](var x){return x.Id[0]==0 || tag==x.Id.data();}); p!=tags.end() && p->Id[0]!=0 )
-			{
-				if( l!=ELogLevel::None )
-				{
-					change = p->Level!=l;
-					p->Level=l;
-				}
-				else
-				{
-					for( auto prev=p, next=std::next(p); next!=tags.end() && !prev->Empty(); ++next, ++prev )
-					{
-						memcpy( prev->Id.data(), next->Id.data(), next->Id.size() );
-						prev->Level = next->Level;
-					}
-				}
-			}
-			else if( (change = l!=ELogLevel::None) )
-			{
-				auto p2 = find_if( tags.begin(), tags.end(), [](var x){return x.Empty();} );
-				if(p2 ==tags.end() )
-					--p2;
-				memcpy(p2->Id.data(), tag.data(), std::min(tag.size(), p->Id.size()) );
-				if( tag.size()< p2->Id.size() )
-					p2->Id[tag.size()] = '\0';
-				p2->Level=l;
-			}
-			if( change )
-			{
-				if( auto pCallback=Logging::_tagCallbacks.find(tag); pCallback!=Logging::_tagCallbacks.end() )
-				{
-					for( auto&& c : pCallback->second )
-						c( l );
-				}
-			}
-		}
-	}
 
 	spdlog::logger _logger{ "my_logger", _sinks.begin(), _sinks.end() };
 
@@ -166,7 +140,7 @@ namespace Jde
 		_logger.flush_on( (spdlog::level::level_enum)flushOn );
 		auto pServer = IServerSink::Enabled() ? ServerSink::Create() : nullptr;
 		if( pServer )
-			AddTags( _tags, "logging/server/tags" );
+			AddTags( _serverTags, "logging/server/tags" );
 		if( _pMemoryLog )
 		{
 			for( var& m : *_pMemoryLog )
@@ -265,7 +239,7 @@ namespace Jde
 		auto& messages = _pOnceMessages->emplace( messageBase.FileId, set<string>{} ).first->second;
 		return messages.emplace(messageBase.MessageView).second;
 	}
-	void Logging::LogOnce( Logging::MessageBase&& messageBase )noexcept
+	void Logging::LogOnce( const Logging::MessageBase& messageBase )noexcept
 	{
 		if( ShouldLogOnce(messageBase) )
 			Log( move(messageBase) );

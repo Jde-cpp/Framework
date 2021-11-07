@@ -70,20 +70,15 @@ function buildWindows2
 	echo buildWindows2 $1 $2 $3;
 	echo $3 - starting;
 	local configuration=$3;
-	local cmd2="$1=$configuration";
+	local cmd="$1=$configuration";
 	local file=$2;
 	local out=.bin/$configuration/$file;
 	local targetDir=$baseDir/$jdeRoot/Public/stage/$configuration;
 	local target=$targetDir/$file;
 	if [ ! -f $target ]; then
 		echo $target - not found;
-		$cmd2
-		if [ $? -ne 0 ]; then
-			echo `pwd`;
-			echo $cmd2;
-			exit 1;
-		fi;
-		if [ -f $target ]; then echo $cmd2 outputing stage dir.; rm $taget; fi;
+		$cmd; if [ $? -ne 0 ]; then echo `pwd`; echo $cmd; exit 1; fi;
+		if [ -f $target ]; then echo $cmd outputing stage dir.; rm $taget; fi;
 		sourceDir=`pwd`;
 		subDir=$(if [ -d .bin ]; then echo "/.bin"; else echo ""; fi);
 		cd $targetDir;
@@ -181,7 +176,7 @@ function fetchBuild
 function findProtoc
 {
 	if windows; then
-		findExecutable protoc.exe $REPO_BASH/jde/Public/stage/release;
+		findExecutable protoc.exe $JDE_BASH/Public/stage/release;
 	fi;
 }
 popd > /dev/null;

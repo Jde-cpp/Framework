@@ -7,7 +7,7 @@ namespace Jde::Logging
 {
 	ELogLevel _serverLogLevel{ ELogLevel::None };
 	up<Logging::IServerSink> _pServerSink;
-	ELogLevel _sinkLogLevel = Settings::TryGet<ELogLevel>( "logging/server/diagnosticsLevel" ).value_or( ELogLevel::Trace );
+	static var _logLevel{ Logging::TagLevel("logServer") };
 }
 
 namespace Jde
@@ -45,7 +45,7 @@ namespace Jde::Logging
 		INFO( "ServerSink::ServerSink( path='{}', Host='{}', Port='{}' )", "logging/server", Host, Port );
 	}
 
-	α ServerSink::OnConnected()noexcept->void{ _connected = true; }
+	α ServerSink::OnConnected()noexcept->void{}
 
 
 	α ServerSink::OnDisconnect()noexcept->void
@@ -57,7 +57,6 @@ namespace Jde::Logging
 		_usersSent.clear();
 		_threadsSent.clear();
 		_instanceId = 0;
-		_connected = false;
 	}
 
 	α ServerSink::OnReceive( Proto::FromServer& transmission )noexcept->void
@@ -68,7 +67,7 @@ namespace Jde::Logging
 			if( item.has_strings() )
 			{
 				var& strings = item.strings();
-				LOG( _sinkLogLevel, "received '{}' strings", strings.messages_size()+strings.files_size()+strings.functions_size()+strings.threads_size() );
+				LOG( "received '{}' strings", strings.messages_size()+strings.files_size()+strings.functions_size()+strings.threads_size() );
 				for( auto i=0; i<strings.messages_size(); ++i )
 					_messagesSent.emplace( strings.messages(i) );
 				for( auto i=0; i<strings.files_size(); ++i )
@@ -161,7 +160,7 @@ namespace Jde::Logging
 		{
 			Proto::ToServer t;
 			{
-				Threading::AtomicGuard l{ _bufferMutex };
+				AtomicGuard l{ _bufferMutex };
 				if( _buffer.messages_size() )
 				{
 					for( auto i=0; i<_buffer.messages_size(); ++i )
@@ -188,7 +187,7 @@ namespace Jde::Logging
 		}
 		else
 		{
-			Threading::AtomicGuard l{ _bufferMutex };
+			AtomicGuard l{ _bufferMutex };
 			_buffer.add_messages()->set_allocated_message( pProto.release() );;
 			processMessage( _buffer );
 		}

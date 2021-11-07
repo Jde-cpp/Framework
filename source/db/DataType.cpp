@@ -1,4 +1,4 @@
-#include "DataType.h"
+﻿#include "DataType.h"
 #include "../DateTime.h"
 #include <jde/Str.h>
 #include "Syntax.h"
@@ -7,54 +7,38 @@
 
 namespace Jde
 {
-	using std::get;
 	using nlohmann::json;
-	string DB::to_string( const DataValue& parameter )
+	α DB::to_string( const DataValue& parameter )->string
 	{
 		ostringstream os;
 		constexpr sv nullString = "null"sv;
-		switch( (EDataValue)parameter.index() )
-		{
-		case EDataValue::Null:
+		const EDataValue type = (EDataValue)parameter.index();
+		if( type==EDataValue::Null )
 			os << nullString;
-		break;
-		case EDataValue::String:
+		else if( type==EDataValue::String )
 			os << get<string>(parameter);
-		break;
-		case EDataValue::StringView:
+		else if( type==EDataValue::StringView )
 			os << get<sv>(parameter);
-		break;
-		case EDataValue::StringPtr:
+		else if( type==EDataValue::StringPtr )
 		{
-			var& pValue = get<sp<string>>(parameter);
-			if( pValue )
-			{
-				var str = *pValue;
-				os << str;
-			}
+			if( var& pValue = get<sp<string>>(parameter); pValue )
+				os << *pValue;
 			else
 				os << nullString;
 		}
-		break;
-		case EDataValue::Bool:
+		else if( type==EDataValue::Bool )
 			os << get<bool>(parameter);
-		break;
-		case EDataValue::Int:
+		else if( type==EDataValue::Int )
 			os << get<int>(parameter);
-		break;
-		case EDataValue::Int64:
+		else if( type==EDataValue::Int64 )
 			os << get<_int>(parameter);
-		break;
-		case EDataValue::Uint:
+		else if( type==EDataValue::Uint )
 			os << get<uint>(parameter);
-		break;
-		case EDataValue::Decimal2:
+		else if( type==EDataValue::Decimal2 )
 			os << get<Decimal2>( parameter );
-		break;
-		case EDataValue::Double:
+		else if( type==EDataValue::Double )
 			os << get<double>( parameter );
-		break;
-		case EDataValue::DoubleOptional:
+		else if( type==EDataValue::DoubleOptional )
 		{
 			var& value = get<optional<double>>(parameter);
 			if( value.has_value() )
@@ -62,21 +46,17 @@ namespace Jde
 			else
 				os << nullString;
 		}
-		break;
-		case EDataValue::DateOptional:
+		else if( type==EDataValue::DateOptional )
 		{
 			var& value = get<optional<DBDateTime>>( parameter );
-			string value2 = value.has_value() ? Jde::to_string(value.value()) : string(nullString);
-			os << value2;
+			os << value.has_value() ? Jde::to_string( value.value() ) : string( nullString );
 		}
-		break;
-		default:
+		else
 			THROW( "{} not implemented", parameter.index() );
-		}
 		return os.str();
 	}
 
-	DB::DataType DB::ToDataType( sv t )noexcept
+	α  DB::ToDataType( sv t )noexcept->DB::DataType
 	{
 		CIString typeName{ t };
 		DataType type{ DataType::None };
@@ -139,7 +119,7 @@ namespace Jde
 		return type;
 	}
 
-	string DB::ToString( DataType type, const Syntax& syntax )noexcept
+	α DB::ToString( DataType type, const Syntax& syntax )noexcept->string
 	{
 		string typeName;
 		if( syntax.HasUnsigned() && type == DataType::UInt ) typeName = "int unsigned";
@@ -173,7 +153,7 @@ namespace Jde
 		return typeName;
 	}
 
-	DB::DataValue DB::ToDataValue( DataType type, const json& j, sv memberName )
+	α DB::ToDataValue( DataType type, const json& j, sv memberName )->DB::DataValue 
 	{
 		DB::DataValue value{ nullptr };
 		if( !j.is_null() )

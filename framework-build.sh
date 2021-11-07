@@ -32,7 +32,7 @@ else
 fi;
 fetchDefault Public;
 cd $scriptDir/../Public;
-stageDir=$REPO_BASH/jde/Public/stage
+stageDir=$JDE_BASH/Public/stage
 
 function winBoostConfig
 {
@@ -59,8 +59,8 @@ function winBoost
 {
 	lib=$1;
 	echo winBoost - $lib
-	winBoostConfig boost_$lib-vc142-mt-x64-1_76 release;
-	winBoostConfig boost_$lib-vc142-mt-gd-x64-1_76 debug;
+	winBoostConfig boost_$lib-vc142-mt-x64-1_77 release;
+	winBoostConfig boost_$lib-vc142-mt-gd-x64-1_77 debug;
 }
 if windows; then
 	pushd `pwd` > /dev/null;
@@ -120,16 +120,14 @@ function protocBuildWin
 	cd $type;
 	if test ! -f libprotobuf.vcxproj; then
 		cmake -G "Visual Studio 16 2019" -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_WITH_ZLIB=ON -DZLIB_INCLUDE_DIR=$REPO_DIR/vcpkg/installed/x64-windows/include -DZLIB_LIB=$REPO_DIR/vcpkg/installed/x64-windows/lib -Dprotobuf_MSVC_STATIC_RUNTIME=OFF -Dprotobuf_BUILD_SHARED_LIBS=$sharedLibs ../..
-		if [ $? -ne 0 ]; then
-			echo `pwd`/$cmd;
-			exit 1;
-		fi;
+		if [ $? -ne 0 ]; then echo `pwd`/$cmd; exit 1; fi;
 	fi;
 	baseCmd="msbuild.exe libprotobuf.vcxproj -p:Platform=x64 -maxCpuCount -nologo -v:q /clp:ErrorsOnly -p:Configuration"
 	buildWindows2 "$baseCmd" libprotobuf.dll release;
 	buildWindows2 "$baseCmd" libprotobufd.dll debug;
 	buildWindows2 "msbuild.exe protoc.vcxproj -p:Platform=x64 -maxCpuCount -nologo -v:q /clp:ErrorsOnly -p:Configuration" protoc.exe release;
-	cp Release/libprotoc.dll $REPO_BASH/jde/Public/stage/Release/libprotoc.dll;
+	echo `pwd`;
+	cp Release/libprotoc.dll $JDE_BASH/Public/stage/Release/libprotoc.dll;
 }
 function protocBuildLinux
 {
@@ -158,7 +156,7 @@ if [ $buildProto -eq 1 ]; then
 fi;
 
 protobufInclude=$REPO_DIR/protobuf/src;
-if windows; then findExecutable protoc.exe $REPO_BASH/jde/Public/stage/release; fi;
+if windows; then findExecutable protoc.exe $JDE_BASH/Public/stage/release; fi;
 
 cd $baseDir/$jdeRoot;
 if windows; then

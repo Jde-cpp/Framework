@@ -20,15 +20,15 @@ namespace Jde::IO
 		virtual ~IFileChunkArg()=default;
 		//virtual uint StartIndex()const noexcept=0; virtual void SetStartIndex( uint i )noexcept=0;
 		//virtual uint EndIndex()const noexcept=0; virtual void SetEndIndex( uint i )noexcept=0;
-		//virtual α Bytes()const noexcept->uint=0; virtual void SetBytes( uint i )noexcept=0;
+		//β Bytes()const noexcept->uint=0; virtual void SetBytes( uint i )noexcept=0;
 		//virtual void SetFileIOArg( FileIOArg* p )noexcept=0;
-		virtual α Handle()noexcept->HFile&;
-		virtual α Process()noexcept->void{};
-		virtual α FileArg()noexcept->FileIOArg&{ return _fileIOArg;}
-		virtual α FileArg()const noexcept->const FileIOArg&{ return _fileIOArg;}
-		//virtual α SetFileArg( const FileIOArg* )const noexcept->void=0;
+		β Handle()noexcept->HFile&;
+		β Process()noexcept->void{};
+		β FileArg()noexcept->FileIOArg&{ return _fileIOArg;}
+		β FileArg()const noexcept->const FileIOArg&{ return _fileIOArg;}
+		//β SetFileArg( const FileIOArg* )const noexcept->void=0;
 
-		atomic<bool> Sent{false};
+		std::atomic<bool> Sent;
 		uint Index;
 		//static uint Index;
 //	private:

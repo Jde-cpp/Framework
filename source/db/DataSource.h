@@ -17,19 +17,19 @@ namespace Jde::DB
 		uint ScalerNonNull( sv sql, const std::vector<DataValue>& parameters )noexcept(false);
 		virtual void SetAsynchronous()noexcept(false)=0;
 
-		template<typename T> optional<T> TryScaler( sv sql, const vector<DataValue>& parameters )noexcept;
-		template<typename T> optional<T> Scaler( sv sql, const vector<DataValue>& parameters )noexcept(false);
+		ⓣ TryScaler( sv sql, const vector<DataValue>& parameters )noexcept->optional<T>;
+		ⓣ Scaler( sv sql, const vector<DataValue>& parameters )noexcept(false)->optional<T>;
 		//virtual ⓣ ScalerCo( string&& sql, const vector<DataValue>&& parameters )noexcept(false){ throw Exception( "Not implemented" ); }
 
-		optional<uint> TryExecute( sv sql )noexcept;
-		optional<uint> TryExecute( sv sql, const std::vector<DataValue>& parameters, bool log=true )noexcept;
-		optional<uint> TryExecuteProc( sv sql, const std::vector<DataValue>& parameters, bool log=true )noexcept;
+		α TryExecute( sv sql )noexcept->optional<uint>;
+		α TryExecute( sv sql, const std::vector<DataValue>& parameters, bool log=true )noexcept->optional<uint>;
+		α TryExecuteProc( sv sql, const std::vector<DataValue>& parameters, bool log=true, SRCE )noexcept->optional<uint>;
 
 		β Execute( sv sql )noexcept(false)->uint=0;
 		β Execute( sv sql, const std::vector<DataValue>& parameters, bool log=true )noexcept(false)->uint = 0;
 		β Execute( sv sql, const std::vector<DataValue>* pParameters, std::function<void(const IRow&)>* f, bool isStoredProc=false, bool log=true, SRCE )noexcept(false)->uint = 0;
-		β ExecuteProc( sv sql, const std::vector<DataValue>& parameters, bool log=true )noexcept(false)->uint = 0;
-		β ExecuteProc( sv sql, const std::vector<DataValue>& parameters, std::function<void(const IRow&)> f, bool log=true )noexcept(false)->uint = 0;
+		β ExecuteProc( sv sql, const std::vector<DataValue>& parameters, bool log=true, SRCE )noexcept(false)->uint=0;
+		β ExecuteProc( sv sql, const std::vector<DataValue>& parameters, std::function<void(const IRow&)> f, bool log=true, SRCE )noexcept(false)->uint=0;
 
 		α Select( sv sql, std::function<void(const IRow&)> f, const std::vector<DataValue>& parameters, bool log=true, SRCE )noexcept(false)->void;
 		α Select( sv sql, std::function<void(const IRow&)> f )noexcept(false)->void;

@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <variant>
 DISABLE_WARNINGS
 #include <nlohmann/json.hpp>
@@ -31,48 +31,30 @@ namespace Jde::DB
 		Guid,
 		Binary,
 		VarBinary,
-		//[XmlEnum("vtchar")]
 		VarTChar,
-		//[XmlEnum("vwchar")]
 		VarWChar,
-		//[XmlEnum("numeric")]
 		Numeric,
-		//[XmlEnum("date_time")]
 		DateTime,
-		//[XmlEnum("cursor")]
 		Cursor,
-		//[XmlEnum("tchar")]
 		TChar,
-		//[XmlEnum("vchar")]
 		VarChar,
-		//[XmlEnum("ref_cursor")]
 		RefCursor,
-		//[XmlEnum("small_date_time")]
 		SmallDateTime,
-		//[XmlEnum("wchar")]
 		WChar,
-		//[XmlEnum("ntext")]
 		NText,
-		//[XmlEnum("text")]
 		Text,
-		//[XmlEnum("image")]
 		Image,
-		//[XmlEnum("blob")]
 		Blob,
-		//[XmlEnum("money")]
 		Money,
-		//[XmlEnum("char")]
 		Char,
-		//[XmlEnum( "time_span" )]
 		TimeSpan,
-		//[XmlEnum( "uri" )]
 		Uri,
 		UInt8,
 		UInt16
 	};
-	DataType ToDataType( sv typeName )noexcept;
-	string ToString( DataType type, const Syntax& syntax )noexcept;
+	α ToDataType( sv typeName )noexcept->DataType;
+	α ToString( DataType type, const Syntax& syntax )noexcept->string;
 
-	DataValue ToDataValue( DataType type, const nlohmann::json& j, sv memberName )noexcept(false);
+	α ToDataValue( DataType type, const nlohmann::json& j, sv memberName )noexcept(false)->DataValue;
 
 }

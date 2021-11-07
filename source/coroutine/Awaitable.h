@@ -2,7 +2,7 @@
 #include <jde/Exports.h>
 #include <jde/coroutine/Task.h>
 #include "Coroutine.h"
-
+namespace Jde{ using namespace Jde::Coroutine; }
 namespace Jde::Coroutine
 {
 	using ClientHandle = uint;
@@ -16,7 +16,7 @@ namespace Jde::Coroutine
 		TAwaitable()noexcept=default;
 		TAwaitable( str name )noexcept:_name{name}{};
 
-		virtual α await_ready()noexcept->bool{ return false; }
+		β await_ready()noexcept->bool{ return false; }
 		virtual TResult await_resume()noexcept=0;
 		inline virtual void await_suspend( coroutine_handle<Task2::promise_type> /*h*/ )noexcept{ OriginalThreadParamPtr = { Threading::GetThreadDescription(), Threading::GetAppThreadHandle() }; }
 		inline void AwaitResume()noexcept
@@ -63,12 +63,12 @@ namespace Jde::Coroutine
 		function<sp<void>()> _fnctn;
 	};
 
-	struct FunctionAwaitable final : IAwaitable
+	struct FunctionAwaitable /*final*/ : IAwaitable
 	{
 		using base=IAwaitable;
 		FunctionAwaitable( function<Task2(typename base::THandle)> fnctn, str name={} )noexcept:base{name}, _fnctn2{fnctn}{};
 
-		void await_suspend( typename base::THandle h )noexcept override{ base::await_suspend( h ); _fnctn2( move(h) ); }
+		α await_suspend( typename base::THandle h )noexcept->void override{ base::await_suspend( h ); _fnctn2( move(h) ); }
 	private:
 		function<Task2(HCoroutine)> _fnctn2;
 	};

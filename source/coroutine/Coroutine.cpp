@@ -1,4 +1,4 @@
-#include "Coroutine.h"
+﻿#include "Coroutine.h"
 #include "../threading/InterruptibleThread.h"
 #ifdef _MSC_VER
 	using std::stop_token;
@@ -11,7 +11,8 @@ using namespace std::chrono;
 namespace Jde::Coroutine
 {
 	std::shared_mutex CoroutinePool::_mtx;
-	ELogLevel CoroutinePool::_level{ ELogLevel::None };
+	static var _logLevel{ Logging::TagLevel("coroutine") };
+
 	sp<CoroutinePool> CoroutinePool::_pInstance;
 	std::atomic<uint> INDEX=0;
 	ResumeThread::ResumeThread( str name, Duration idleLimit, CoroutineParam&& param )noexcept:
@@ -34,29 +35,29 @@ namespace Jde::Coroutine
 							std::this_thread::yield();
 						else
 						{
-							LOG( CoroutinePool::LogLevel(), "({})CoroutineThread Stopping", index );
+							LOG( "({})CoroutineThread Stopping", index );
 							_thread.request_stop();
 						}
 						continue;
 					}
 				}
-				LOG( CoroutinePool::LogLevel(), "({}:{})CoroutineThread call resume", index, _param->CoHandle.address() );
+				LOG( "({}:{})CoroutineThread call resume", index, _param->CoHandle.address() );
 				_param->CoHandle.resume();
-				LOG( CoroutinePool::LogLevel(), "({})CoroutineThread finish resume", index );
+				LOG( "({})CoroutineThread finish resume", index );
 				SetThreadInfo( ThreadParam );
 				timeout = Clock::now()+IdleLimit;
-				LOG( CoroutinePool::LogLevel(), "({})CoroutineThread timeout={}", index, ToIsoString(timeout) );
+				LOG( "({})CoroutineThread timeout={}", index, ToIsoString(timeout) );
 				unique_lock l{ _paramMutex };
 				_param = {};
 			}
-			LOG( CoroutinePool::LogLevel(), "({})CoroutineThread::Done", index );
+			LOG( "({})CoroutineThread::Done", index );
 		}
 	}
 	{}
 	ResumeThread::~ResumeThread()
 	{
 		if( !IApplication::ShuttingDown() )
-			LOG( CoroutinePool::LogLevel(), "({})ResumeThread::~ResumeThread", std::this_thread::get_id() );
+			LOG( "({})ResumeThread::~ResumeThread", std::this_thread::get_id() );
 		if( _thread.joinable() )
 		{
 			_thread.request_stop();
@@ -66,7 +67,7 @@ namespace Jde::Coroutine
 	optional<CoroutineParam> ResumeThread::Resume( CoroutineParam&& param )noexcept
 	{
 		ASSERT( param.CoHandle.address() );
-		LOG( CoroutinePool::LogLevel(), "({})ResumeThread::Resume", param.CoHandle.address() );
+		LOG( "({})ResumeThread::Resume", param.CoHandle.address() );
 		unique_lock l{ _paramMutex };
 		bool haveParam = _param.has_value();
 		bool done = Done();
@@ -99,7 +100,7 @@ namespace Jde::Coroutine
 			{
 				auto addSettings = []()noexcept
 				{
-					INFO( "coroutinePool settings not found."sv );
+					LOG( "coroutinePool settings not found."sv );
 					nlohmann::json j2 = { {"maxThreadCount", 100}, {"threadDuration", "PT5S"}, {"poolIdleThreshold", "PT60S"} };
 					_pSettings = make_shared<Settings::Container>( j2 );
 				};
@@ -167,7 +168,7 @@ namespace Jde::Coroutine
 	void CoroutinePool::Run()noexcept
 	{
 		Threading::SetThreadInfo( Threading::ThreadParam{ string{Name}, (uint)Threading::EThread::CoroutinePool} );
-		LOG( CoroutinePool::LogLevel(), "{} - Starting", Name );
+		LOG( "{} - Starting", Name );
 		TimePoint quitTime = Clock::now()+ThreadDuration();
 		while( !Threading::GetThreadInterruptFlag().IsSet() ||  !_pQueue->empty() )
 		{
@@ -183,6 +184,6 @@ namespace Jde::Coroutine
 				break;
 			}
 		}
-		LOG( CoroutinePool::LogLevel(), "{} - Ending", Name );
+		LOG( "{} - Ending", Name );
 	}
 }

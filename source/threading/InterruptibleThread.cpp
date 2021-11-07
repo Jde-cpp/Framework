@@ -1,13 +1,14 @@
 #include "InterruptibleThread.h"
 
+#define var const auto
 namespace Jde::Threading
 {
+	static var _logLevel{ Logging::TagLevel("threads") };
 	thread_local InterruptFlag ThreadInterruptFlag;
 	InterruptFlag& GetThreadInterruptFlag()noexcept{return ThreadInterruptFlag;}
 	void InterruptionPoint()noexcept(false)
 	{
-		if( ThreadInterruptFlag.IsSet() )
-			throw ThreadInterrupted();
+		THROW_IFX( ThreadInterruptFlag.IsSet(), ThreadInterrupted() );
 	}
 
 	InterruptFlag::InterruptFlag()noexcept:
@@ -17,12 +18,12 @@ namespace Jde::Threading
 
 	bool InterruptFlag::IsSet()const noexcept
 	{
-		return _flag.load( std::memory_order_relaxed );
+		return _flag.test( std::memory_order_relaxed );
 	}
 
 	void InterruptFlag::Set()noexcept
 	{
-		_flag.store( true, std::memory_order_relaxed );
+		_flag.test_and_set( std::memory_order_relaxed );
 		std::lock_guard<std::mutex> lk( _setClearMutex );
 		if( _pThreadCondition )
 			_pThreadCondition->notify_all();
@@ -33,7 +34,7 @@ namespace Jde::Threading
 	{
 		if( ShouldJoin )
 			Join();
-		TAG( "threads", "~InterruptibleThread({})", Name );
+		LOG(  "~InterruptibleThread({})", Name );
 	}
 	void InterruptibleThread::Interrupt()noexcept
 	{
@@ -42,7 +43,6 @@ namespace Jde::Threading
 			DBG( "{} - Interrupt _pFlag={}", Name, _pFlag!=nullptr );
 			_pFlag->Set();
 		}
-
 	}
 	void InterruptibleThread::Join()
 	{

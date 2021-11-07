@@ -8,23 +8,29 @@
 #include "../coroutine/Awaitable.h"
 
 #define 🚪 Γ auto
-namespace Jde{ enum class ELogLevel : int8; }
+namespace Jde
+{ 
+	enum class ELogLevel : int8; 
+	struct AtomicGuard final : boost::noncopyable
+	{
+		AtomicGuard( std::atomic_flag& f )noexcept: _pValue{ &f }
+		{
+			while( f.test_and_set(std::memory_order_acquire) )
+			{
+            while( f.test(std::memory_order_relaxed) )
+					std::this_thread::yield();
+			}
+		}
+		AtomicGuard( AtomicGuard&& x )noexcept: _pValue{ x._pValue }{ x._pValue = nullptr; }
+		~AtomicGuard(){ if( _pValue ){ ASSERT(_pValue->test(std::memory_order_relaxed)) _pValue->clear(std::memory_order_release); } }
+		α unlock()noexcept->void{ ASSERT(_pValue) _pValue->clear( std::memory_order_release ); _pValue = nullptr; }
+	private:
+		std::atomic_flag* _pValue;
+	};
+}
 namespace Jde::Threading
 {
 	🚪 UniqueLock( str key )noexcept->std::unique_lock<std::shared_mutex>;
-
-	struct Γ AtomicGuard final : boost::noncopyable
-	{
-		AtomicGuard( atomic<bool>& v )noexcept: _pValue{ &v }
-		{
-			while( _pValue->exchange(true) )
-				std::this_thread::yield();
-		}
-		~AtomicGuard(){ if( _pValue ){ ASSERT(*_pValue) *_pValue = false; } }
-		void unlock()noexcept{ ASSERT(_pValue) *_pValue=false; _pValue = nullptr; }
-	private:
-		atomic<bool>* _pValue;
-	};
 
 	struct Γ CoLockAwatiable : Coroutine::TAwaitable<>
 	{
@@ -59,7 +65,7 @@ namespace Jde::Threading
 			_pSharedLock{nullptr},
 			_description( format("{}.{} - line={}, thread={}", instance, name, lineNumber, Threading::GetThreadDescription()) )
 		{
-			LOG( _logLevel, "unique lock - {}", _description );
+			LOG( "unique lock - {}", _description );
 			_pUniqueLock = make_unique<std::unique_lock<std::mutex>>( mutex );
 		}
 		MyLock( std::shared_mutex& mutex, sv instance, sv name, size_t lineNumber, bool shared = false ):
@@ -70,12 +76,12 @@ namespace Jde::Threading
 		{
 			if( shared )
 			{
-				LOG( _logLevel, "shared lock - {}", _description );
+				LOG( "shared lock - {}", _description );
 				_pSharedLock = make_unique<std::shared_lock<std::shared_mutex>>( mutex );
 			}
 			else
 			{
-				LOG( _logLevel, "unique lock - {}", _description );
+				LOG( "unique lock - {}", _description );
 				_pUniqueSharedLock = make_unique<std::unique_lock<std::shared_mutex>>( mutex );
 			}
 		}
@@ -87,12 +93,12 @@ namespace Jde::Threading
 				_pUniqueSharedLock->unlock();
 			else if( _pSharedLock )
 				_pSharedLock->unlock();
-			_unlocked=true; LOG( _logLevel, "release - {}", _description );
+			_unlocked=true; LOG( "release - {}", _description );
 		}
 		~MyLock()
 		{
 			if( !_unlocked )
-				LOG( _logLevel, "release - {}", _description );
+				LOG( "release - {}", _description );
 		}
 		Γ static void SetDefaultLogLevel( ELogLevel logLevel )noexcept;//{ _defaultLogLevel=logLevel; }
 		Γ static ELogLevel GetDefaultLogLevel()noexcept;
@@ -103,7 +109,7 @@ namespace Jde::Threading
 		std::unique_ptr<std::shared_lock<std::shared_mutex>> _pSharedLock;
 		std::string _description;
 		static ELogLevel _defaultLogLevel;
-		ELogLevel _logLevel{ GetDefaultLogLevel() };
+		const LogTag& _logLevel{ Logging::TagLevel("mutex") };
 	};
 #endif
 #undef 🚪

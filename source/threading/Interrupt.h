@@ -38,10 +38,8 @@ namespace Jde::Threading
 		std::once_flag _singleThread;
 		std::condition_variable _cvWait;  std::mutex _cvMutex;
 		up<Threading::InterruptibleThread> _pThread;
-		std::atomic<bool> _continue{true};
 		const string _threadName;
-		std::atomic<bool> _paused{false};
+		atomic<bool> _paused{ false };
 		std::chrono::nanoseconds _refreshRate;
-		const ELogLevel _logLevel{ELogLevel::Debug};
 	};
 }

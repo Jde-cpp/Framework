@@ -2,7 +2,7 @@
 #include <boost/container/flat_map.hpp>
 namespace Jde::Threading
 {
-	map<string,std::deque<std::variant<CoLockAwatiable*,coroutine_handle<>>>> _coLocks; atomic<bool> _coLocksLock;
+	map<string,std::deque<std::variant<CoLockAwatiable*,coroutine_handle<>>>> _coLocks; std::atomic_flag _coLocksLock;
 
 	CoLockGuard::CoLockGuard( str key, std::variant<CoLockAwatiable*,coroutine_handle<>> h )noexcept:
 		Handle{h},

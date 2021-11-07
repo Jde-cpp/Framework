@@ -205,7 +205,7 @@ namespace Jde::DB
 						params.push_back( ToDataValue(column.Type, *pData, column.Name) );
 					}
 					else
-						osInsertValues << (column.Default=="$now" ? pSyntax->UtcNow() : column.Default);
+						osInsertValues << ( column.Default=="$now" ? pSyntax->UtcNow() : column.Default );
 				}
 				if( _pDataSource->Scaler<uint>( osSelect.str(), selectParams)==0 )
 				{

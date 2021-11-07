@@ -1,4 +1,4 @@
-#include "DataSource.h"
+﻿#include "DataSource.h"
 
 #define var const auto
 namespace Jde::DB
@@ -27,7 +27,7 @@ namespace Jde::DB
 		{}
 		return result;
 	}
-	optional<uint> IDataSource::TryExecute( sv sql, const vector<DataValue>& parameters, bool log )noexcept
+	α IDataSource::TryExecute( sv sql, const vector<DataValue>& parameters, bool log )noexcept->optional<uint>
 	{
 		optional<uint> result;
 		try
@@ -40,12 +40,12 @@ namespace Jde::DB
 		return result;
 	}
 
-	optional<uint> IDataSource::TryExecuteProc( sv sql, const vector<DataValue>& parameters, bool log )noexcept
+	α IDataSource::TryExecuteProc( sv sql, const vector<DataValue>& parameters, bool log, const source_location& sl )noexcept->optional<uint>
 	{
 		optional<uint> result;
 		try
 		{
-			result = ExecuteProc( sql, parameters, log );
+			result = ExecuteProc( sql, parameters, log, sl );
 		}
 		catch( const IException& )
 		{}
@@ -53,7 +53,7 @@ namespace Jde::DB
 		return result;
 	}
 
-	string IDataSource::Catalog( sv sql )noexcept(false)
+	α IDataSource::Catalog( sv sql )noexcept(false)->string
 	{
 		string db;
 		auto fnctn = [&db]( auto& row ){ row >> db; };

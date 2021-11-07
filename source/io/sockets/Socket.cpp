@@ -1,4 +1,4 @@
-#include "Socket.h"
+﻿#include "Socket.h"
 #include <iostream>
 #include "../../threading/Thread.h"
 #include "../../threading/InterruptibleThread.h"
@@ -8,8 +8,8 @@
 
 namespace Jde::IO::Sockets
 {
-	ELogLevel _logLevel{ ELogLevel::Debug };
-	ELogLevel LogLevel()noexcept{ return _logLevel; }
+	static var _logLevel{ Logging::TagLevel("sockets") };
+	α LogLevel()noexcept->const LogTag&{ return _logLevel; }
 	sp<IOContextThread> _pInstance;
 	sp<IOContextThread> IOContextThread::Instance()noexcept
 	{
@@ -25,10 +25,10 @@ namespace Jde::IO::Sockets
 	void IOContextThread::Run()noexcept
 	{
 		Threading::SetThreadDscrptn( ThreadName );
-		TAG( "Threads", "({})Thread - Entering.", ThreadName );
+		LOG( "({})Thread - Entering.", ThreadName );
 		boost::system::error_code ec;
 		_ioc.run( ec );
-		TAG( "Threads", "({})Thread - Leaving - {} - {}.", ThreadName, ec.value(), ec.message() );
+		LOG( "({})Thread - Leaving - {} - {}.", ThreadName, ec.value(), ec.message() );
 	}
 
 	using std::system_error;
@@ -51,7 +51,7 @@ namespace Jde::IO::Sockets
 
 	IClientSocket::~IClientSocket()
 	{
-		LOG( LogLevel(), "IClientSocket::~IClientSocket" );
+		LOG( "IClientSocket::~IClientSocket" );
 	}
 
 

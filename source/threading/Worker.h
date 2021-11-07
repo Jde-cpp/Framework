@@ -29,7 +29,7 @@ namespace Jde::Threading
 	protected:
 		static sp<IWorker> _pInstance;
 		up<jthread> _pThread;
-		static std::atomic<bool> _mutex;
+		static std::atomic_flag _mutex;
 	};
 	struct Γ IPollWorker : IWorker, IPollster
 	{
@@ -57,8 +57,8 @@ namespace Jde::Threading
 	{
 		using base=TWorker<TDerived>; using Class=IQueueWorker<TArg,TDerived>;
 		Ω Push( TArg&& x )noexcept->void;
-		virtual α HandleRequest( TArg&& x )noexcept->void=0;
-		virtual α SetWorker( TArg& x )noexcept->void=0;
+		β HandleRequest( TArg&& x )noexcept->void=0;
+		β SetWorker( TArg& x )noexcept->void=0;
 	protected:
 		α Poll()noexcept->optional<bool>  override;
 		α Queue()noexcept->QueueMove<TArg>&{ return _queue;}
@@ -70,7 +70,7 @@ namespace Jde::Threading
 	
 	ⓣ TWorker<T>::Start()noexcept->sp<IWorker>
 	{
-		Threading::AtomicGuard l{ _mutex };
+		AtomicGuard l{ _mutex };
 		if( !_pInstance )
 		{
 			//pInstance = _pInstance = make_shared<T>();

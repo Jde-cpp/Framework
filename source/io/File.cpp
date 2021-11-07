@@ -53,7 +53,7 @@ namespace Jde::IO
 			CHECK_PATH( path );
 			auto size = GetFileSize( path );
 			TRACE( "Opening {} - {} bytes "sv, path.string(), size );
-			std::ifstream f( path, std::ios::binary ); THROW_IFX2( f.fail(), IOException(path, "Could not open file") );
+			std::ifstream f( path, std::ios::binary ); THROW_IFX( f.fail(), IOException(path, "Could not open file") );
 
 			return make_unique<vector<char>>( (std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>() );  //vexing parse
 		}
@@ -62,7 +62,7 @@ namespace Jde::IO
 			CHECK_PATH( path );
 			auto size = GetFileSize( path );
 			TRACE( "Opening {} - {} bytes "sv, path.string(), size );
-			std::ifstream f( path, std::ios::binary ); THROW_IFX2(f.fail(), IOException(path, "Could not open file") );
+			std::ifstream f( path, std::ios::binary ); THROW_IFX(f.fail(), IOException(path, "Could not open file") );
 			string result;
 			result.reserve( size );
 			result.assign( (std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>() );  //vexing parse
@@ -71,14 +71,14 @@ namespace Jde::IO
 		void SaveBinary( path path, const std::vector<char>& data )noexcept(false)
 		{
 			std::ofstream f( path, std::ios::binary );
-			THROW_IFX2( f.fail(), IOException(path, "Could not open file") );
+			THROW_IFX( f.fail(), IOException(path, "Could not open file") );
 
 			f.write( data.data(), data.size() );
 		}
 		void Save( path path, sv value, std::ios_base::openmode openMode )noexcept(false)
 		{
 			std::ofstream f( path, openMode );
-			THROW_IFX2( f.fail(), IOException(path, "Could not open file") );
+			THROW_IFX( f.fail(), IOException(path, "Could not open file") );
 
 			f.write( value.data(), value.size() );
 		}
@@ -125,7 +125,7 @@ namespace Jde::IO
 				compressedFile.replace_extension( format("{}{}", compressedFile.extension().string(),Extension()) );
 
 			auto command = ExtractCommand( compressedFile, destination );// -y -bsp0 -bso0
-			THROW_IFX2( system(command.c_str())==-1, IO_EX(path, "{} failed.", command) );
+			THROW_IFX( system(command.c_str())==-1, IO_EX(path, "{} failed.", command) );
 		}
 	}
 
@@ -187,7 +187,7 @@ namespace Jde::IO
 
 	void File::ForEachLine( sv filePath, const std::function<void(sv)>& function, const size_t lineCount )
 	{
-		std::ifstream file( string(filePath).c_str() ); THROW_IFX2(file.fail(), IOException(filePath, "Could not open file") );
+		std::ifstream file( string(filePath).c_str() ); THROW_IFX(file.fail(), IOException(filePath, "Could not open file") );
 		//String line;
 		std::string line;
 
@@ -199,7 +199,7 @@ namespace Jde::IO
 		std::ifstream file2( string(pszFileName).c_str(), std::ios::binary | std::ios::ate );
 		const size_t fileSize = file2.tellg();
 		file2.close();
-		std::ifstream file( string(pszFileName).c_str() ); THROW_IFX2( file.fail(), IOException(pszFileName, "Could not open file") );
+		std::ifstream file( string(pszFileName).c_str() ); THROW_IFX( file.fail(), IOException(pszFileName, "Could not open file") );
 		size_t chunkSize2=fileSize;
 		std::vector<char> rgBuffer( chunkSize2 );
 		vector<string> tokens;
@@ -274,7 +274,7 @@ namespace Jde::IO
 	size_t File::ForEachLine2( path path, const std::function<void(const std::vector<std::string>&, size_t lineIndex)>& function, const std::set<size_t>& columnIndexes, const size_t lineCount/*=std::numeric_limits<size_t>::max()*/, const size_t startLine, const size_t chunkSize/*=2^30*/, Stopwatch* /* pStopwatch*/ )noexcept(false)
 	{
 		//FILE* pFile = fopen( file.c_str(), "r" );
-		std::ifstream file( path.string() ); THROW_IFX2( file.fail(), IOException(path, "Could not open file") );
+		std::ifstream file( path.string() ); THROW_IFX( file.fail(), IOException(path, "Could not open file") );
 
 		std::vector<char> rgBuffer( chunkSize );
 		vector<string> tokens;
@@ -340,7 +340,7 @@ namespace Jde::IO
 
 	size_t File::ForEachLine3( sv pszFileName, const std::function<void(const std::vector<double>&, size_t lineIndex)>& function, const std::set<size_t>& columnIndexes, const size_t maxLines, const size_t startLine, const size_t chunkSize, size_t maxColumnCount, Stopwatch* /*sw*/ )
 	{
-		std::ifstream file( string(pszFileName).c_str() ); THROW_IFX2( file.fail(), IOException(fs::path(pszFileName), "Could not open file") );
+		std::ifstream file( string(pszFileName).c_str() ); THROW_IFX( file.fail(), IOException(fs::path(pszFileName), "Could not open file") );
 
 		std::vector<char> rgBuffer( chunkSize );
 		vector<double> tokens;
@@ -432,7 +432,7 @@ namespace Jde::IO
 		std::ifstream file2( string(pszFileName).c_str(), std::ios::binary | std::ios::ate);
 		const size_t fileSize = file2.tellg();
 		file2.close();
-		std::ifstream file( string(pszFileName).c_str() ); THROW_IFX2( file.fail(), IOException(fs::path(pszFileName), "Could not open file") );
+		std::ifstream file( string(pszFileName).c_str() ); THROW_IFX( file.fail(), IOException(fs::path(pszFileName), "Could not open file") );
 		size_t chunkSize2=fileSize;
 		std::vector<char> rgBuffer( chunkSize2 );
 		vector<double> tokens;

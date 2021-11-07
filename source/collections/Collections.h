@@ -58,6 +58,12 @@ namespace Jde
 		}
 	};
 
+	ẗ TryGetValue( const flat_map<K,V>& map, const K& key, V deflt )->V
+	{
+		const auto& pItem = map.find(key);
+		return pItem==map.end() ? deflt : *pItem;
+	}
+
 namespace Collections
 {
 	uint32 Crc( const vector<string> values )noexcept;
@@ -71,28 +77,25 @@ namespace Collections
 		return y;
 	}
 
-	template<typename TKey, typename TValue>
-	flat_map<TValue,TKey> Invert( const flat_map<TKey,TValue>& map )noexcept
+	ẗ Invert( const flat_map<K,V>& map )noexcept->flat_map<V,K>
 	{
-		flat_map<TValue,TKey> results;
+		flat_map<V,K> results;
 		for_each( map.begin(), map.end(), [&results](var& x){results.emplace(x.second,x.first); } );
 		return results;
 	}
 
-	template<typename TKey, typename TValue>
-	unique_ptr<std::set<TKey>> Keys( const map<TKey,TValue>& map )noexcept
+	ẗ Keys( const map<K,V>& map )noexcept->unique_ptr<std::set<K>>
 	{
-		auto pResults = make_unique<std::set<TKey>>();
+		auto pResults = make_unique<std::set<K>>();
 		for( const auto& keyValue : map )
 			pResults->emplace( keyValue.first );
 
 		return pResults;
 	}
 
-	template<typename TKey, typename TValue>
-	unique_ptr<std::vector<TValue>> Values( const map<TKey,TValue>& map )
+	ẗ Values( const map<K,V>& map )->unique_ptr<std::vector<V>>
 	{
-		auto pResults = make_unique<std::vector<TValue>>(); pResults->reserve( map.size() );
+		auto pResults = make_unique<std::vector<V>>(); pResults->reserve( map.size() );
 		for( const auto& keyValue : map )
 			pResults->push_back( keyValue.second );
 
@@ -105,25 +108,16 @@ namespace Collections
 		std::for_each( values.begin(), values.end(), function );
 	}
 
-	template<typename TKey, typename TValue>
-	void ForEachMap( const map<TKey,TValue>& map, std::function<void(const TKey& key, const TValue& value)> func )
+	ẗ ForEachMap( const map<K,V>& map, std::function<void(const K& key, const V& value)> func )->void
 	{
 		for( const auto& keyValue : map )
 			func( keyValue.first, keyValue.second );
 	}
 
-	template<typename TKey, typename TValue>
-	void ForEachValue( const map<TKey,TValue>& map, std::function<void(const TValue& value)> func )
+	ẗ ForEachValue( const map<K,V>& map, std::function<void(const V& value)> func )->void
 	{
 		for( const auto& keyValue : map )
 			func( keyValue.second );
-	}
-
-	template<typename TKey, typename TValue>
-	const TValue& TryGetValue( const map<TKey,TValue>& map, const TKey& key, const TValue& deflt )
-	{
-		const auto& pItem = map.find(key);
-		return pItem==map.end() ? deflt : *pItem;
 	}
 
 	template<typename T>
@@ -166,10 +160,9 @@ namespace Collections
 		return result;
 	}
 
-	template<typename TKey,typename TValue>
-	const shared_ptr<TValue> FindFirst( const std::map<TKey,shared_ptr<TValue>>& collection, std::function<bool(const TValue&)> func )
+	ẗ FindFirst( const std::map<K,shared_ptr<V>>& collection, std::function<bool(const V&)> func )->const shared_ptr<V>
 	{
-		shared_ptr<TValue> pValue{nullptr};
+		shared_ptr<V> pValue{nullptr};
 		for( const auto& keyValuePtr : collection )
 		{
 			if( func(*keyValuePtr.second) )
@@ -181,10 +174,9 @@ namespace Collections
 		return pValue;
 	}
 
-	template<typename TKey,typename TValue>
-	shared_ptr<TValue> FindFirst( std::map<TKey,shared_ptr<TValue>>& collection, std::function<bool(const TValue&)> func )
+	ẗ FindFirst( std::map<K,shared_ptr<V>>& collection, std::function<bool(const V&)> func )->shared_ptr<V>
 	{
-		shared_ptr<TValue> pValue{nullptr};
+		shared_ptr<V> pValue{nullptr};
 		for( const auto& keyValuePtr : collection )
 		{
 			if( func(*keyValuePtr.second) )
@@ -196,10 +188,9 @@ namespace Collections
 		return pValue;
 	}
 
-	template<typename TKey,typename TValue>
-	void Erase( std::map<TKey,shared_ptr<TValue>>& collection, std::function<bool(const TValue&)> func )
+	ẗ Erase( std::map<K,shared_ptr<V>>& collection, std::function<bool(const V&)> func )->void
 	{
-		std::forward_list<TKey> doomed;
+		std::forward_list<K> doomed;
 		for( const auto& keyValuePtr : collection )
 		{
 			if( func(*keyValuePtr.second) )
@@ -230,22 +221,8 @@ namespace Collections
 		}
 		return in;
 	}
-/*
-	inline uint32 Crc( const vector<string> values )noexcept
-	{
-		//boost::crc_32_type result;
-		std::ostringstream os;
-		for( const auto& value : values )
-		{
-//			result.process_bytes( value.c_str(), value.size() );
-			os << value;
-		}
-		//uint32 checksum = result.checksum();
 
-		//assert( checksum==IO::Crc::Calc32(os.str()) );
-		return IO::Crc::Calc32( os.str() );
-	}
-*/
+
 	inline std::vector<uint> Indexes( const std::vector<string>& population, const std::vector<string>& subset )noexcept
 	{
 		std::vector<uint> results; results.reserve( subset.size() );

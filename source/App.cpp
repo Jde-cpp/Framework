@@ -24,7 +24,7 @@ namespace Jde
 
 	//auto _pShutdowns = make_shared<vector<sp<IShutdown>>>();
 	vector<sp<void>> IApplication::_objects; mutex IApplication::_objectMutex;
-	vector<Threading::IPollWorker*> IApplication::_activeWorkers; atomic<bool> IApplication::_activeWorkersMutex;
+	vector<Threading::IPollWorker*> IApplication::_activeWorkers; std::atomic_flag IApplication::_activeWorkersMutex;
 	vector<sp<IShutdown>> IApplication::_shutdowns;
 
 	const TimePoint Start=Clock::now();
@@ -96,7 +96,7 @@ namespace Jde
 #ifndef _MSC_VER
 		ASSERT( false );//need to implement signals in linux for _workerCondition.
 #endif
-		Threading::AtomicGuard l{ _activeWorkersMutex };
+		AtomicGuard l{ _activeWorkersMutex };
 		if( find(_activeWorkers.begin(), _activeWorkers.end(), p)==_activeWorkers.end() )
 		{
 			_activeWorkers.push_back( p );
@@ -111,7 +111,7 @@ namespace Jde
 	}
 	void IApplication::RemoveActiveWorker( Threading::IPollWorker* p )noexcept
 	{
-		Threading::AtomicGuard l{ _activeWorkersMutex };
+		AtomicGuard l{ _activeWorkersMutex };
 		_activeWorkers.erase( remove(_activeWorkers.begin(), _activeWorkers.end(), p), _activeWorkers.end() );
 	}
 	void IApplication::Pause()noexcept
@@ -119,7 +119,7 @@ namespace Jde
 		INFO( "Pausing main thread." );
 		while( !_exitReason )
 		{
-			Threading::AtomicGuard l{ _activeWorkersMutex };
+			AtomicGuard l{ _activeWorkersMutex };
 			uint size = _activeWorkers.size();
 			if( size )
 			{
@@ -127,7 +127,7 @@ namespace Jde
 				bool processed = false;
 				for( uint i=0; i<size; ++i )
 				{
-					Threading::AtomicGuard l2{ _activeWorkersMutex };
+					AtomicGuard l2{ _activeWorkersMutex };
 					auto p = i<_activeWorkers.size() ? _activeWorkers[i] : nullptr; if( !p ) break;
 					l2.unlock();
 					if( var pWorkerProcessed = p->Poll();  pWorkerProcessed )

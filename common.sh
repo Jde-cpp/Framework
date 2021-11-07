@@ -14,28 +14,29 @@ function findExecutable
      		PATH=${defaultPath//\\}:$PATH;
 		else
 			if [ $exitFailure -eq 1 ]; then
-				echo can not find "${defaultPath//\\}/$exe";
+				echo common.sh:17 can not find "${defaultPath//\\}/$exe";
 				exit 1;
 			fi;
-			#echo 'false';
 			false; return;
 		fi;
 	fi;
-	#echo 'true';
 	true;
 }
 
 function toBashDir
 {
 	windowsDir=$1;
+	echo toBashDir $1 $2
    local -n _bashDir=$2
    _bashDir=${windowsDir/:/}; _bashDir=${_bashDir//\\//}; _bashDir=${_bashDir/C/c};
 	if [[ ${_bashDir:0:1} != "/" ]]; then _bashDir=/$_bashDir; fi;
 }
 if windows; then
 	toBashDir $REPO_DIR REPO_BASH;
+	toBashDir $JDE_DIR JDE_BASH;
 else
 	REPO_BASH=$REPO_DIR;
+	JDE_BASH=$JDE_DIR
 fi;
 
 function moveToDir

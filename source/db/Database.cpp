@@ -15,7 +15,7 @@ namespace Jde
 	using boost::container::flat_map;
 	using nlohmann::json;
 	using nlohmann::ordered_json;
-	ELogLevel _level = Logging::TagLevel( "sql", [](α l){_level=l;} );
+	static var _logLevel{ Logging::TagLevel("sql") };
 
 	α DB::Message( sv sql, const std::vector<DataValue>* pParameters, sv error )noexcept->string
 	{
@@ -35,7 +35,7 @@ namespace Jde
 	}
 	α DB::Log( sv sql, const std::vector<DataValue>* pParameters, const source_location& sl )noexcept->void
 	{
-		Logging::Log( Logging::Message{_level, Message(sql, pParameters, {}), sl} );
+		Logging::Log( Logging::Message{_logLevel.Level, Message(sql, pParameters, {}), sl} );
 	}
 
 	α DB::Log( sv sql, const std::vector<DataValue>* pParameters, ELogLevel level, sv error, const source_location& sl )noexcept->void

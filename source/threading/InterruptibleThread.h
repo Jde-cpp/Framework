@@ -18,7 +18,7 @@ namespace Jde::Threading  //TODO Reflection remove Threading from public items.
 		bool IsDone()const noexcept{return _done;} void SetIsDone(){_done=true;}
 	private:
 		bool _done{false};
-		std::atomic<bool> _flag{false};
+		std::atomic_flag _flag;
 		std::condition_variable* _pThreadCondition{nullptr};
 		std::condition_variable_any* _pThreadConditionAny{nullptr};
 		std::mutex _setClearMutex;

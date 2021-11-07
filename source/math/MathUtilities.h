@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <numeric>
 
 namespace Jde::Math
@@ -9,15 +9,9 @@ namespace Jde::Math
 		return static_cast<T>( llround(value) );
 	}
 
-	//inline _int Round( double value ){ return static_cast<_iint>( llround(value) ); }
 	template<typename T>
 	struct StatResult
 	{
-/*		constexpr StatResult()=default;
-		StatResult( T average, T variance, T min, T max ):
-			Average{average}, Variance{variance}, Min{min}, Max{max}
-		{}
-		StatResult& operator=(const Jde::Math::StatResult&)=default;*/
 		T Average{0.0};
 		T Variance{0.0};
 		T Min{0.0};
@@ -25,17 +19,16 @@ namespace Jde::Math
 	};
 
 #define var const auto
-	template<typename TCollection>
-	StatResult<typename TCollection::value_type> Statistics( const TCollection& values, bool calcVariance=true )
+	ⓣ Statistics( const T& values, bool calcVariance=true )noexcept->StatResult<typename T::value_type>
 	{
-		typedef typename TCollection::value_type T;
+		typedef typename T::value_type TValue;
 		var size = values.size();
 		//ASSERT( size>0 );
-		T sum{};
-		T min{ std::numeric_limits<T>::max() };
-		T max{ std::numeric_limits<T>::min() };
-		T average{};
-		T variance{};
+		TValue sum{};
+		TValue min{ std::numeric_limits<TValue>::max() };
+		TValue max{ std::numeric_limits<TValue>::min() };
+		TValue average{};
+		TValue variance{};
 		for( var& value : values )
 		{
 			sum += value;
@@ -53,10 +46,10 @@ namespace Jde::Math
 					return accumulator + diff*diff / (size - 1);//sample?
 				};
 				double v2 = std::accumulate( values.begin(), values.end(), 0.0, varianceFunction );
-				variance = static_cast<T>( v2 );
+				variance = static_cast<TValue>( v2 );
 			}
 		}
-		return StatResult<T>{ average, variance, min, max };
+		return StatResult<TValue>{ average, variance, min, max };
 	}
 #undef var
 }

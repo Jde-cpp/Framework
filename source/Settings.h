@@ -46,7 +46,7 @@ namespace Jde::Settings
 
 	ⓣ Container::Get( sv path )const noexcept(false)->T
 	{
-		auto p = TryGet<T>( path ); if( !p ) throw Exception{ SRCE_CUR, "'{}' was not found in settings.", path };//mysql precludes using THROW_IF
+		auto p = TryGet<T>( path ); if( !p ) throw Exception{ SRCE_CUR, ELogLevel::Debug, "'{}' was not found in settings.", path };//mysql precludes using THROW_IF
 		return *p;
 	}
 

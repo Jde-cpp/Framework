@@ -72,7 +72,7 @@ namespace Jde::IO
 		virtual void OnQOverflow( path path, const NotifyEvent& event )noexcept;
 		virtual void OnIgnored( path path, const NotifyEvent& event )noexcept;
 	private:
-		const ELogLevel _logLevel{ELogLevel::Debug};
+		const LogTag& _logLevel{ Logging::TagLevel("driveWatcher") };
 	};
 //#endif
 #pragma endregion

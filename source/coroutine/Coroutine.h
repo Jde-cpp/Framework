@@ -35,12 +35,6 @@ namespace Jde::Coroutine
 		void Shutdown()noexcept;
 
 #define SETTINGS(T,n,dflt) optional<T> v; if( _pSettings ) v=_pSettings->TryGet<T>(n); return v.value_or(dflt)
-		static ELogLevel LogLevel()noexcept
-		{
-			if( _level==ELogLevel::None && _pSettings )
-				_level = _pSettings->TryGet<ELogLevel>( "logLevel" ).value_or( ELogLevel::Trace );
-			return _level;
-		}
 	private:
 		void InnerResume( CoroutineParam&& param )noexcept;
 		optional<CoroutineParam> StartThread( CoroutineParam&& param )noexcept;

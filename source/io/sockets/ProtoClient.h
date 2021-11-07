@@ -27,7 +27,6 @@ namespace Jde::IO::Sockets
 		α ReadBody( int messageLength )noexcept->void;
 		virtual void Process( google::protobuf::uint8* pData, int size )noexcept=0;
 
-		std::atomic<bool> _connected{ false };
 		sp<IOContextThread> _pIOContext;
 		tcp::socket _socket;
 		char _readMessageSize[4];

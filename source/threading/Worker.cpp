@@ -9,7 +9,7 @@
 namespace Jde::Threading
 {
 	sp<IWorker> IWorker::_pInstance;
-	std::atomic<bool> IWorker::_mutex;
+	std::atomic_flag IWorker::_mutex;
 	IWorker::IWorker( sv name )noexcept:
 		//Name{ name },
 		ThreadCount{ Settings::TryGet<uint8>(format("workers/{}/threads", name)).value_or(0) }
@@ -33,7 +33,7 @@ namespace Jde::Threading
 
 	α IWorker::Shutdown()noexcept->void
 	{
-		Threading::AtomicGuard l{ _mutex };
+		AtomicGuard l{ _mutex };
 		if( _pThread )
 		{
 			_pThread->request_stop();
@@ -43,7 +43,7 @@ namespace Jde::Threading
 	}
 	α IPollWorker::WakeUp()noexcept->void
 	{
-		Threading::AtomicGuard l{ _mutex };
+		AtomicGuard l{ _mutex };
 		++_calls;
 		if( ThreadCount && !_pThread )
 			StartThread();
@@ -52,7 +52,7 @@ namespace Jde::Threading
 	}
 	α IPollWorker::Sleep()noexcept->void
 	{
-		Threading::AtomicGuard l{ _mutex };
+		AtomicGuard l{ _mutex };
 		--_calls;
 		_lastRequest = Clock::now();
 		if( !_calls && !ThreadCount )
@@ -72,7 +72,7 @@ namespace Jde::Threading
 			TimePoint lastRequest = _lastRequest;
 			if( !_calls && Clock::now()>lastRequest+keepAlive )
 			{
-				Threading::AtomicGuard l{ _mutex };
+				AtomicGuard l{ _mutex };
 				_pThread->request_stop();
 				_pThread->detach();
 				_pThread = nullptr;

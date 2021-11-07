@@ -40,7 +40,7 @@ namespace Jde::IO::Sockets
 	protected:
 		void ReadHeader()noexcept;
 		tcp::socket _socket;
-		ELogLevel _logLevel{ ELogLevel::Debug };
+		const static LogTag& _logLevel;
 	private:
 		virtual void ReadBody( uint messageLength )noexcept=0;
 		char _readMessageSize[4];

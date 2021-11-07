@@ -21,10 +21,13 @@ namespace Jde::DB
 		Log();
 	}
 
-/*	DBException::DBException( _int errorCode, sv sql, const std::vector<DataValue>* pValues, const source_location& sl )noexcept:
-		DBException{ std::runtime_error{""}, sql, pValues, errorCode, sl }
+	DBException::DBException( _int errorCode, sv sql, const std::vector<DataValue>* pValues, str what, const source_location& sl )noexcept:
+		IException{ what, sl },
+		Sql{ sql },
+		Parameters{ CopyParams(pValues) },
+		ErrorCode{ errorCode }
 	{}
-
+/*
 	DBException::DBException( _int errorCode, sv sql, const vector<DataValue>* pValues, str what, const source_location& sl )noexcept:
 		DBException{ std::runtime_error{what}, sql, pValues, errorCode, sl }
 	{}
