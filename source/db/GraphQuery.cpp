@@ -6,9 +6,10 @@
 #define var const auto
 namespace Jde::DB
 {
+	static const LogTag& _logLevel = Logging::TagLevel( "ql" );
 	α Where( const DB::TableQL& table, const Table& schemaTable, std::vector<DB::DataValue>& parameters )noexcept(false)->string
 	{
-		DBG( "{}", table.Args.dump() );
+		LOG( "Where({})", table.Args.dump() );
 		var pWhere = table.Args.find( "filter" );
 		var j = pWhere==table.Args.end() ? table.Args : *pWhere;
 		ostringstream where;

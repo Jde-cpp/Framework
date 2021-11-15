@@ -15,7 +15,7 @@ namespace Jde
 	using boost::container::flat_map;
 	using nlohmann::json;
 	using nlohmann::ordered_json;
-	static var _logLevel{ Logging::TagLevel("sql") };
+	static var& _logLevel{ Logging::TagLevel("sql") };
 
 	α DB::Message( sv sql, const std::vector<DataValue>* pParameters, sv error )noexcept->string
 	{
@@ -35,7 +35,8 @@ namespace Jde
 	}
 	α DB::Log( sv sql, const std::vector<DataValue>* pParameters, const source_location& sl )noexcept->void
 	{
-		Logging::Log( Logging::Message{_logLevel.Level, Message(sql, pParameters, {}), sl} );
+		var l = _logLevel.Level;
+		Logging::Log( Logging::Message{l, Message(sql, pParameters, {}), sl} );
 	}
 
 	α DB::Log( sv sql, const std::vector<DataValue>* pParameters, ELogLevel level, sv error, const source_location& sl )noexcept->void
@@ -59,13 +60,13 @@ namespace Jde
 			auto pDataSource = _pConnections->find( string(connectionString) );
 			if( pDataSource == _pConnections->end() )
 			{
-				auto pNew = shared_ptr<Jde::DB::IDataSource>{ GetDataSourceFunction() };
+				auto pNew = sp<Jde::DB::IDataSource>{ GetDataSourceFunction() };
 				pNew->SetConnectionString( connectionString );
 				pDataSource = _pConnections->emplace( connectionString, pNew ).first;
 			}
 			return pDataSource->second;
 		}
-		static sp<flat_map<string,shared_ptr<Jde::DB::IDataSource>>> _pConnections; static mutex _connectionsMutex;
+		static sp<flat_map<string,sp<Jde::DB::IDataSource>>> _pConnections; static mutex _connectionsMutex;
 	};
 	sp<flat_map<string,sp<DB::IDataSource>>> DataSourceApi::_pConnections = make_shared<flat_map<string,sp<DB::IDataSource>>>(); mutex DataSourceApi::_connectionsMutex;
 	up<flat_map<string,sp<DataSourceApi>>> _pDataSources = make_unique<flat_map<string,sp<DataSourceApi>>>(); mutex _dataSourcesMutex;
@@ -118,7 +119,7 @@ namespace Jde
 	void Initialize( path libraryName )noexcept(false)
 	{
 		static DataSourceApi api{ libraryName };
-		_pDefault = shared_ptr<Jde::DB::IDataSource>{ api.GetDataSourceFunction() };
+		_pDefault = sp<Jde::DB::IDataSource>{ api.GetDataSourceFunction() };
 		std::call_once( _singleShutdown, [](){ IApplication::AddShutdownFunction( DB::CleanDataSources ); } );
 	}
 
@@ -137,7 +138,7 @@ namespace Jde
 
 	sp<DB::IDataSource> DB::DataSource( path libraryName, sv connectionString )
 	{
-		shared_ptr<IDataSource> pDataSource;
+		sp<IDataSource> pDataSource;
 		std::unique_lock l{_dataSourcesMutex};
 		string key = libraryName.string();
 		std::call_once( _singleShutdown, [](){ IApplication::AddShutdownFunction( CleanDataSources ); } );

@@ -9,8 +9,8 @@
 
 #define 🚪 Γ auto
 namespace Jde
-{ 
-	enum class ELogLevel : int8; 
+{
+	enum class ELogLevel : int8;
 	struct AtomicGuard final : boost::noncopyable
 	{
 		AtomicGuard( std::atomic_flag& f )noexcept: _pValue{ &f }
@@ -104,9 +104,9 @@ namespace Jde::Threading
 		Γ static ELogLevel GetDefaultLogLevel()noexcept;
 	private:
 		bool _unlocked{false};
-		std::unique_ptr<std::unique_lock<std::mutex>> _pUniqueLock;
-		std::unique_ptr<std::unique_lock<std::shared_mutex>> _pUniqueSharedLock;
-		std::unique_ptr<std::shared_lock<std::shared_mutex>> _pSharedLock;
+		up<std::unique_lock<std::mutex>> _pUniqueLock;
+		up<std::unique_lock<std::shared_mutex>> _pUniqueSharedLock;
+		up<std::shared_lock<std::shared_mutex>> _pSharedLock;
 		std::string _description;
 		static ELogLevel _defaultLogLevel;
 		const LogTag& _logLevel{ Logging::TagLevel("mutex") };

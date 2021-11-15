@@ -19,7 +19,7 @@
 			"visualizerFile": "${workspaceFolder}/my.natvis",
 			"showDisplayString": true,
 			"setupCommands": [{"description": "Enable pretty-printing for gdb","text": "-enable-pretty-printing",	"ignoreFailures": true }],
-			"sourceFileMap": { "/build/glibc-S9d2JN/glibc-2.27":"${env:REPO_DIR}/glibc-2.27" },
+			"sourceFileMap": { "/build/glibc-eX1tMB/glibc-2.27":"${env:REPO_DIR}/glibc-2.27" },
 			"preLaunchTask": "build"
 		},
 		{
@@ -34,7 +34,7 @@
 			"externalConsole": false,
 			"MIMode": "gdb",
 			"setupCommands": [{"description": "Enable pretty-printing for gdb","text": "-enable-pretty-printing",	"ignoreFailures": true }],
-			"sourceFileMap": { "/build/glibc-OTsEL5/glibc-2.27":"${env:REPO_DIR}/glibc-2.27" },
+			"sourceFileMap": { "/build/glibc-eX1tMB/glibc-2.27":"${env:REPO_DIR}/glibc-2.27" },
 			"preLaunchTask": "buildDebug"
 		},
 		{
@@ -49,7 +49,7 @@
 			"externalConsole": false,
 			"MIMode": "gdb",
 			"setupCommands": [{"description": "Enable pretty-printing for gdb","text": "-enable-pretty-printing","ignoreFailures": true}],
-			"sourceFileMap": { "/build/glibc-OTsEL5/glibc-2.27":"${env:REPO_DIR}/glibc-2.27" },
+			"sourceFileMap": { "/build/glibc-eX1tMB/glibc-2.27":"${env:REPO_DIR}/glibc-2.27" },
 			"preLaunchTask": "release"
 		}
 	]

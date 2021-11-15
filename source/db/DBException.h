@@ -10,22 +10,15 @@ namespace Jde::DB
 	struct Γ DBException final: IException
 	{
 		DBException( std::runtime_error&& e, sv sql, const vector<DataValue>* pValues=nullptr, SRCE )noexcept;
-		//DBException( _int errorCode, sv sql, const vector<DataValue>* pValues=nullptr, SRCE )noexcept;
-//		DBException( sv sql, const vector<DataValue>* pValues=nullptr, SRCE )noexcept;
 		DBException( _int errorCode, sv sql, const vector<DataValue>* pValues, str what, SRCE )noexcept;
-
-/*		template<class... Args>
-		DBException( sv value, Args&&... args ):
-			IException( value, args... ),
-			ErrorCode{999}
-		{
-			_level = ELogLevel::Error;
-		}
-*/
+		α Clone()noexcept->sp<IException> override{ return std::make_shared<DBException>(move(*this)); }
 		α Log()const noexcept->void override;
 		α what() const noexcept->const char* override;
+		α Ptr()->std::exception_ptr override{ return std::make_exception_ptr(*this); }
+		[[noreturn]] α Throw()->void override{ throw *this; }
+
 		const string Sql;
 		const vector<DataValue> Parameters;
-		const _int ErrorCode{0};
+		const _int ErrorCode{ 0 };
 	};
 }

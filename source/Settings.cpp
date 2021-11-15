@@ -20,39 +20,58 @@ namespace Jde
 		}
 		Container::Container( const nlohmann::json& json )noexcept:_pJson{ make_unique<nlohmann::json>(json) }{}
 
-		optional<Container> Container::TrySubContainer( sv entry )const noexcept
+		α Container::TrySubContainer( sv entry )const noexcept->optional<Container>
 		{
 			auto p = _pJson->find( entry );
 			return p==_pJson->end() ? optional<Container>{} : Container( *p );
 		}
-		sp<Container> Container::SubContainer( sv entry )const noexcept(false)
+		α Container::SubContainer( sv entry )const noexcept(false)->sp<Container>
 		{
 			auto item = _pJson->find( entry );
 			THROW_IF( item==_pJson->end(), "Could not find {}", entry );
 			return make_shared<Container>( *item );
 		}
 
-		bool Container::Have( sv path )noexcept{ return _pJson->find(path)!=_pJson->end(); }//TODO rename contains
+		α Container::Have( sv path )noexcept->bool{ return _pJson->find(path)!=_pJson->end(); }//TODO rename contains
 
 		α Container::FindPath( sv path )const noexcept->optional<json>
 		{
 			var values = Str::Split( path, '/' );
-			auto j = *_pJson;
+			auto j = _pJson.get();
 			optional<json> result;
 			for( uint i=0; i<values.size(); ++i )
 			{
 				var value = values[i];
-				auto p = j.find( value );
-				if( p == j.end() )
+				auto p = j->find( value );
+				if( p == j->end() )
 					break;
 				if( i+1==values.size() )
 					result = *p;
 				else
-					j = *p;
+					j = &*p;
 			}
 			return result;
 		}
 	}
+
+	α Settings::Set( sv path, const fs::path& value )noexcept->void
+	{
+		var values = Str::Split( path, '/' );
+		auto j = &Global().Json();
+		for( uint i=0; i<values.size()-1; ++i )
+		{
+			var member = values[i];
+			auto p = j->find( member );
+			if( p == j->end() )
+			{
+				(*j)[string{member}] = json::object();
+				p = j->find( member );
+			}
+			j = &*p;
+		}
+		(*j)[string{values.back()}] = value.string();
+	}
+
 	α Settings::FileStem()noexcept->string
 	{
 		var executable = OSApp::Executable().filename();
@@ -82,7 +101,8 @@ namespace Jde
 			try
 			{
 				CHECK_PATH( settingsPath );
-				_pGlobal = make_unique<Jde::Settings::Container>( settingsPath );
+				_pGlobal = mu<Jde::Settings::Container>( settingsPath );
+				LOG_MEMORY( ELogLevel::Information, "({}) Settings", settingsPath.string() );
 			}
 			catch( const std::exception& e )
 			{

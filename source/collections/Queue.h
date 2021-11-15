@@ -14,17 +14,15 @@ namespace Jde
 	{
 	public:
 		Queue()=default;
-		//Queue( function<void()> onPush );
 		Queue( const Queue& other );
 		void Push(sp<T> new_value)noexcept;
-		std::shared_ptr<T> WaitAndPop();
-		std::shared_ptr<T> WaitAndPop( Duration duration );
-		std::shared_ptr<T> TryPop();
+		sp<T> WaitAndPop();
+		sp<T> WaitAndPop( Duration duration );
+		sp<T> TryPop();
 		bool Empty()const noexcept;
 		bool ForEach( std::function<void(T&)> func )noexcept;
 		uint size()const{ std::lock_guard<std::mutex> lk(_mtx); return _queue.size(); }
 	private:
-		//function<void()> _onPush;
 		mutable std::mutex _mtx;
 		std::queue<sp<T>> _queue;
 		std::condition_variable _cv;
@@ -43,7 +41,7 @@ namespace Jde
 		_cv.notify_one();
 	}
 	template<typename T>
-	std::shared_ptr<T> Queue<T>::WaitAndPop()
+	sp<T> Queue<T>::WaitAndPop()
 	{
 		std::unique_lock<std::mutex> lk( _mtx );
 		_cv.wait_for( lk, Duration::max(), [this]{return !_queue.empty();} );
@@ -52,7 +50,7 @@ namespace Jde
 		return pItem;
 	}
 	template<typename T>
-	std::shared_ptr<T> Queue<T>::WaitAndPop( Duration duration )
+	sp<T> Queue<T>::WaitAndPop( Duration duration )
 	{
 		std::unique_lock<std::mutex> lk( _mtx );
 		bool hasValues = _cv.wait_for( lk, duration, [this]{return !_queue.empty();} );
@@ -65,11 +63,11 @@ namespace Jde
 		return pItem;
 	}
 	template<typename T>
-	std::shared_ptr<T> Queue<T>::TryPop()
+	sp<T> Queue<T>::TryPop()
 	{
 		std::lock_guard<std::mutex> lk(_mtx);
 		const auto empty = _queue.empty();
-		auto pItem = empty ? std::shared_ptr<T>{} : _queue.front();
+		auto pItem = empty ? sp<T>{} : _queue.front();
 		if( !empty )
 			_queue.pop();
 		return pItem;

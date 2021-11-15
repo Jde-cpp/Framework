@@ -58,3 +58,4 @@ tests/Debug/*
 tests/packages/*
 Tests.Framework.log
 *.aps
+tests/Tests.Framework.json

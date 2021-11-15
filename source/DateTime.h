@@ -3,54 +3,26 @@
 #include <jde/TypeDefs.h>
 #include <jde/Exports.h>
 
+namespace Jde::Chrono
+{
+	using namespace std::chrono;
+	Γ α Epoch()noexcept->TimePoint;
+	Ξ MillisecondsSinceEpoch( TimePoint time)noexcept->uint{ return duration_cast<std::chrono::milliseconds>( time-Epoch() ).count(); }
+	Γ α Min( TimePoint a, TimePoint b )noexcept->TimePoint;
+
+	Ξ Date( TimePoint time )noexcept->TimePoint{ return Clock::from_time_t( Clock::to_time_t(time)/(60*60*24)*(60*60*24) ); }
+	Ξ Time( TimePoint time )noexcept->Duration{ return time-Date(time); }
+
+	Ξ FromDays( DayIndex days )noexcept->TimePoint{ return Epoch()+days*24h; }
+	Ξ ToDays( TimePoint time )noexcept->DayIndex{ return duration_cast<std::chrono::hours>( time-Epoch()).count()/24; }
+	Ξ ToDays( time_t time )noexcept->DayIndex{ return ToDays(Clock::from_time_t(time)); }
+
+	Γ α ToDuration( sv iso )noexcept(false)->Duration;
+	Γ α ToString( Duration d )noexcept->string;
+}
 namespace Jde
 {
-	typedef std::chrono::system_clock Clock;
-	typedef Clock::time_point TimePoint;
-	typedef std::optional<TimePoint> TimePoint_;
-	typedef Clock::duration Duration;
-
-	using namespace std::literals::chrono_literals;
-	typedef uint16 DayIndex;
-	#define var const auto
-	namespace Chrono
-	{
-		Γ TimePoint Epoch()noexcept;
-		inline uint MillisecondsSinceEpoch(const TimePoint& time)noexcept{ return duration_cast<std::chrono::milliseconds>( time-Epoch() ).count(); }
-		inline DayIndex DaysSinceEpoch(const TimePoint& time)noexcept{ return duration_cast<std::chrono::hours>( time-Epoch()).count()/24; }
-		Γ const TimePoint& Min( const TimePoint& a, const TimePoint& b )noexcept;
-		inline DayIndex ToDay(time_t time)noexcept{ return DaysSinceEpoch(Clock::from_time_t(time)); }
-		inline TimePoint FromDays( DayIndex days )noexcept{ return Epoch()+days*24h; }
-		inline TimePoint Date( const TimePoint& time )noexcept{ return Clock::from_time_t( Clock::to_time_t(time)/(60*60*24)*(60*60*24) ); }
-		inline Duration Time( const TimePoint& time )noexcept{ return time-Date(time); }
-		Γ Duration ToDuration( sv iso )noexcept(false);
-		Γ string ToString( Duration d )noexcept;
-
-		namespace TimeSpan
-		{
-			constexpr static size_t NanosPerMicro{ 1000 };
-			constexpr static size_t MicrosPerMilli{ 1000 };
-			constexpr static size_t MilliPerSecond{ 1000 };
-			constexpr static size_t SecondsPerMinute{ 60 };
-			constexpr static size_t MinutesPerHour{ 60 };
-			constexpr static size_t HoursPerDay{ 24 };
-			constexpr static size_t SecondsPerHour{ SecondsPerMinute*MinutesPerHour };
-			constexpr static size_t SecondsPerDay{ SecondsPerHour*HoursPerDay };
-			constexpr static size_t NanosPerSecond{ NanosPerMicro*MicrosPerMilli*MilliPerSecond };
-			constexpr static size_t NanosPerMinute{ NanosPerSecond*SecondsPerMinute };
-		}
-	}
-
-	enum class DayOfWeek : uint8
-	{
-		Sunday=0,
-		Monday=1,
-		Tuesday=2,
-		Wednesday=3,
-		Thursday=4,
-		Friday=5,
-		Saturday=6
-	};
+	enum class DayOfWeek : uint8{ Sunday=0, Monday=1, Tuesday=2, Wednesday=3, Thursday=4, Friday=5, Saturday=6 };
 
 	struct Γ DateTime
 	{
@@ -61,14 +33,14 @@ namespace Jde
 		DateTime( sv iso )noexcept(false);
 		DateTime( TimePoint tp )noexcept;
 		DateTime( fs::file_time_type time )noexcept;
-		static DateTime BeginingOfWeek();
+		Ω BeginingOfWeek()->DateTime;
 		DateTime& operator=(const DateTime& other)noexcept;
 		bool operator==(const DateTime& other)const noexcept{return _time_point==other._time_point; }
 		bool operator<(const DateTime& other)const noexcept{return _time_point<other._time_point;}
 		DateTime operator+( const Duration& timeSpan )const;
 		DateTime& operator+=( const Duration& timeSpan );
 
-		static DayOfWeek DayOfWk( const TimePoint& time )noexcept{ return DateTime{time}.DayOfWk();}
+		Ω DayOfWk( TimePoint time )noexcept{ return DateTime{time}.DayOfWk();}
 		DayOfWeek DayOfWk()const noexcept{ return (DayOfWeek)(Tm()->tm_wday);}
 		uint32 Nanos()const noexcept;
 		uint_fast8_t Second()const noexcept{ return static_cast<uint_fast8_t>(Tm()->tm_sec); }
@@ -81,59 +53,76 @@ namespace Jde
 
 		TimePoint Date()const noexcept{ return Clock::from_time_t( TimeT()/(60*60*24)*(60*60*24) ); }
 #ifdef _MSC_VER
-		static TimePoint Today()noexcept{ return Clock::from_time_t( _time64(nullptr)/(60*60*24)*(60*60*24) ); }
+		Ω Today()noexcept->TimePoint{ return Clock::from_time_t( _time64(nullptr)/(60*60*24)*(60*60*24) ); }
 #else
-		static TimePoint Today()noexcept { return Clock::from_time_t(time(nullptr) / (60 * 60 * 24) * (60 * 60 * 24)); }
+		Ω Today()noexcept->TimePoint{ return Clock::from_time_t(time(nullptr) / (60 * 60 * 24) * (60 * 60 * 24)); }
 #endif
-		std::string DateDisplay()const noexcept;
-		std::string DateDisplay4()const noexcept;
-		std::string TimeDisplay()const noexcept;
-		std::string LocalTimeDisplay()const noexcept;
-		std::string LocalDateDisplay()const noexcept;
-		std::string LocalDisplay()const noexcept;
-		std::string ToIsoString()const noexcept;
-		static std::string ToIsoString(const tm& timeStruct)noexcept;
-		static uint8 ParseMonth( sv month )noexcept(false);
+		α DateDisplay()const noexcept->string;
+		α DateDisplay4()const noexcept->string;
+		α TimeDisplay()const noexcept->string;
+		α LocalTimeDisplay()const noexcept->string;
+		α LocalDateDisplay()const noexcept->string;
+		α LocalDisplay()const noexcept->string;
+		α ToIsoString()const noexcept->string;
+		Ω ToIsoString(const tm& timeStruct)noexcept->string;
+		Ω ParseMonth( sv month )noexcept(false)->uint8;
 		time_t TimeT()const noexcept;
-		const TimePoint& GetTimePoint()const noexcept{return _time_point;}
+		TimePoint GetTimePoint()const noexcept{return _time_point;}
 		operator TimePoint()const noexcept{ return _time_point; }
-		std::unique_ptr<std::tm> LocalTm()const noexcept;
-		std::shared_ptr<std::tm> Tm()const  noexcept;
+		up<std::tm> LocalTm()const noexcept;
+		sp<std::tm> Tm()const  noexcept;
 
 		Γ friend std::ostream& operator<<( std::ostream &os, const Jde::DateTime& obj )noexcept;
-		static TimePoint ToDate( const TimePoint& time )noexcept;
+		Ω ToDate( TimePoint time )noexcept->TimePoint;
 	private:
 		TimePoint _time_point;
-		mutable std::unique_ptr<time_t> _pTime{nullptr};
-		mutable std::shared_ptr<std::tm> _pTm{nullptr};
+		mutable up<time_t> _pTime{nullptr};
+		mutable sp<std::tm> _pTm{nullptr};
 	};
 
-	inline string ToIsoString( TimePoint time )noexcept{ return DateTime(time).ToIsoString(); }
-	inline string ToIsoString( fs::file_time_type time )noexcept{ return DateTime(time).ToIsoString(); }
-	inline string to_string( TimePoint time ){ return DateTime(time).ToIsoString(); }//TODO take out.
+	Ξ ToIsoString( TimePoint time )noexcept->string{ return DateTime(time).ToIsoString(); }
+	Ξ ToIsoString( fs::file_time_type time )noexcept->string{ return DateTime(time).ToIsoString(); }
+	//Ξ to_string( TimePoint time )noexcept->string{ return DateTime(time).ToIsoString(); }//TODO take out.
+	Ξ DateDisplay( TimePoint time)noexcept->string{ return DateTime{time}.DateDisplay(); }
+	Ξ DateDisplay( DayIndex day)noexcept->string{ return DateTime{Chrono::FromDays(day)}.DateDisplay(); }
+}
+#define var const auto
+namespace Jde::Timezone
+{
+	Γ Duration GetGmtOffset( sv name, TimePoint utc )noexcept(false);
+	Γ Duration TryGetGmtOffset( sv name, TimePoint utc )noexcept;
+	Γ Duration EasternTimezoneDifference( TimePoint time )noexcept;
+	Ξ EasternTimeNow()noexcept->TimePoint{ var now=Clock::now(); return now+EasternTimezoneDifference(now); };
+}
 
-	namespace Timezone
+namespace Jde::TimeSpan
+{
+	constexpr static size_t NanosPerMicro{ 1000 };
+	constexpr static size_t MicrosPerMilli{ 1000 };
+	constexpr static size_t MilliPerSecond{ 1000 };
+	constexpr static size_t SecondsPerMinute{ 60 };
+	constexpr static size_t MinutesPerHour{ 60 };
+	constexpr static size_t HoursPerDay{ 24 };
+	constexpr static size_t SecondsPerHour{ SecondsPerMinute*MinutesPerHour };
+	constexpr static size_t SecondsPerDay{ SecondsPerHour*HoursPerDay };
+	constexpr static size_t NanosPerSecond{ NanosPerMicro*MicrosPerMilli*MilliPerSecond };
+	constexpr static size_t NanosPerMinute{ NanosPerSecond*SecondsPerMinute };
+}
+
+namespace Jde::Chrono
+{
+	Ξ ToTimePoint( uint16 year, uint8 month, uint8 day, uint8 hour=0, uint8 minute=0, uint8 second=0, Duration nanoFraction=Duration{0} )noexcept->TimePoint{ return DateTime(year,month, day, hour, minute,second, nanoFraction).GetTimePoint(); }
+	Ξ EndOfMonth( TimePoint time )noexcept->TimePoint{ DateTime date{time}; return DateTime(date.Year()+(date.Month()==12 ? 1 : 0), date.Month()%12+1, 1).GetTimePoint()-1s; }
+	Ξ to_timepoint( sv iso )noexcept->TimePoint{ return DateTime{iso}.GetTimePoint(); }
+	Ξ EndOfDay( TimePoint time)noexcept->TimePoint{ DateTime date{time}; return DateTime(date.Year(), date.Month(), date.Day(), 23, 59, 59).GetTimePoint(); }
+	Ξ BeginningOfDay( TimePoint time)noexcept->TimePoint{ DateTime date{time}; return DateTime(date.Year(), date.Month(), date.Day(), 0, 0, 0).GetTimePoint(); }
+	Ξ BeginningOfMonth( TimePoint time={} )noexcept->TimePoint{ DateTime date{time==TimePoint{} ? Clock::now() : time }; return DateTime{date.Year(), date.Month(), 1}.GetTimePoint(); }
+	Ξ Display( time_t t )noexcept->string{ return DateTime{t}.LocalDisplay(); }
+	Ξ TimeDisplay( time_t t ) noexcept->string{ return DateTime{t}.TimeDisplay(); }
+	ẗ ToClock( typename V::time_point from )noexcept->typename K::time_point
 	{
-		Γ Duration GetGmtOffset( sv name, TimePoint utc )noexcept(false);
-		Γ Duration TryGetGmtOffset( sv name, TimePoint utc )noexcept;
-		Γ Duration EasternTimezoneDifference( TimePoint time )noexcept;
-		inline TimePoint EasternTimeNow()noexcept{ var now=Clock::now(); return now+EasternTimezoneDifference(now); };
-	}
-	namespace Chrono
-	{
-		inline TimePoint ToTimePoint( uint16 year, uint8 month, uint8 day, uint8 hour=0, uint8 minute=0, uint8 second=0, Duration nanoFraction=Duration{0} )noexcept{ return DateTime(year,month, day, hour, minute,second, nanoFraction).GetTimePoint(); }
-		inline TimePoint EndOfMonth( const TimePoint& time )noexcept{ DateTime date{time}; return DateTime(date.Year()+(date.Month()==12 ? 1 : 0), date.Month()%12+1, 1).GetTimePoint()-1s; }
-		inline TimePoint to_timepoint( sv iso )noexcept{ return DateTime{iso}.GetTimePoint(); }
-		inline string DateDisplay(const TimePoint& time)noexcept{ return DateTime{time}.DateDisplay(); }
-		inline string DateDisplay(DayIndex day)noexcept{ return DateTime{FromDays(day)}.DateDisplay(); }
-		inline TimePoint EndOfDay(const TimePoint& time){ DateTime date{time}; return DateTime(date.Year(), date.Month(), date.Day(), 23, 59, 59).GetTimePoint(); }
-		inline TimePoint BeginningOfDay(const TimePoint& time){ DateTime date{time}; return DateTime(date.Year(), date.Month(), date.Day(), 0, 0, 0).GetTimePoint(); }
-		inline TimePoint BeginningOfMonth( TimePoint time={} )noexcept{ DateTime date{time==TimePoint{} ? Clock::now() : time }; return DateTime{date.Year(), date.Month(), 1}.GetTimePoint(); }
-		template<typename To, typename From> typename To::time_point ToClock( typename From::time_point f )noexcept;
-	}
-	template<typename To,typename From> typename To::time_point Chrono::ToClock( typename From::time_point from )noexcept
-	{
-		return To::now()-std::chrono::milliseconds( duration_cast<std::chrono::milliseconds>(From::time_point::clock::now()-from) );
+		return K::now()-milliseconds{ duration_cast<milliseconds>(V::time_point::clock::now()-from) };
 	}
 }
+
 #undef var

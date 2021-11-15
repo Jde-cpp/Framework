@@ -49,7 +49,7 @@ namespace Jde
 		else if( type==EDataValue::DateOptional )
 		{
 			var& value = get<optional<DBDateTime>>( parameter );
-			os << value.has_value() ? Jde::to_string( value.value() ) : string( nullString );
+			os << ( value.has_value() ? ToIsoString(value.value()) : string(nullString) );
 		}
 		else
 			THROW( "{} not implemented", parameter.index() );
@@ -153,7 +153,7 @@ namespace Jde
 		return typeName;
 	}
 
-	α DB::ToDataValue( DataType type, const json& j, sv memberName )->DB::DataValue 
+	α DB::ToDataValue( DataType type, const json& j, sv memberName )->DB::DataValue
 	{
 		DB::DataValue value{ nullptr };
 		if( !j.is_null() )

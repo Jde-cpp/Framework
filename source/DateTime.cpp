@@ -8,98 +8,87 @@
 namespace Jde
 {
 	using namespace std::chrono;
-	const TimePoint& Chrono::Min( const TimePoint& a, const TimePoint& b )noexcept{ return a.time_since_epoch()<b.time_since_epoch() ? a : b; }
-	namespace Chrono
-	{
-		TimePoint _epoch{ DateTime(1970,1,1).GetTimePoint() };
-		TimePoint Epoch()noexcept{ return _epoch; };
 
-		Duration ToDuration( sv iso )noexcept(false)//P3Y6M4DT12H30M5S
+	static TimePoint _epoch{ DateTime(1970,1,1).GetTimePoint() };
+
+	α Chrono::Min( TimePoint a, TimePoint b )noexcept->TimePoint{ return a.time_since_epoch()<b.time_since_epoch() ? a : b; }
+
+	α Chrono::Epoch()noexcept->TimePoint{ return _epoch; };
+
+	Duration Chrono::ToDuration( sv iso )noexcept(false)//P3Y6M4DT12H30M5S
+	{
+		std::istringstream is{ string{iso} };
+		if( is.get()!='P' )
+			THROW( "Expected 'P' as first character." );
+		bool parsingTime = false;
+		Duration duration{ Duration::zero() };
+		while( is.good() )
 		{
-			std::istringstream is{ string{iso} };
-			if( is.get()!='P' )
-				THROW( "Expected 'P' as first character." );
-			bool parsingTime = false;
-			Duration duration{ Duration::zero() };
-			while( is.good() )
+			if( !parsingTime && (parsingTime = is.peek()=='T') )
 			{
-				if( !parsingTime && (parsingTime = is.peek()=='T') )
-				{
-					is.get();
-					continue;
-				}
-				double value;
-				is >> value;
-				var type = is.get();
-				if( type=='Y' )
-					duration += hours( Math::URound(value*365.25*24) );
-				else if( !parsingTime && type=='M' )
-					duration += hours( Math::URound(value*30*24) );
-				else if( type=='D' )
-					duration += hours( Math::URound(value*24) );
-				else if( type=='H' )
-					duration += minutes( Math::URound(value*60) );
-				else if( type=='M' )
-					duration += seconds( Math::URound(value*60) );
-				else if( type=='S' )
-					duration += milliseconds( Math::URound(value*1000) );
+				is.get();
+				continue;
 			}
-			return duration;
+			double value;
+			is >> value;
+			var type = is.get();
+			if( type=='Y' )
+				duration += hours( Math::URound(value*365.25*24) );
+			else if( !parsingTime && type=='M' )
+				duration += hours( Math::URound(value*30*24) );
+			else if( type=='D' )
+				duration += hours( Math::URound(value*24) );
+			else if( type=='H' )
+				duration += minutes( Math::URound(value*60) );
+			else if( type=='M' )
+				duration += seconds( Math::URound(value*60) );
+			else if( type=='S' )
+				duration += milliseconds( Math::URound(value*1000) );
 		}
-		string ToString( Duration d )noexcept
-		{
-			ostringstream os;
-			os << 'P';
-			#define output(period,suffix) if( d>=period{1} || d<=period{-1} ){ os << duration_cast<period>(d).count() << suffix; d%=period{1}; }
+		return duration;
+	}
+
+	string Chrono::ToString( Duration d )noexcept
+	{
+		ostringstream os;
+		os << 'P';
+		#define output(period,suffix) if( d>=period{1} || d<=period{-1} ){ os << duration_cast<period>(d).count() << suffix; d%=period{1}; }
 #ifdef _MSC_VER
-			var year = hours(24 * 365);
-			if( d >= year || d <= -year )
-			{
-				os << duration_cast<hours>(d).count()/year.count() << "Y";
-				d %= year;
-			}
-			var month = hours(24 * 30);
-			if( d >= month || d <= -month )
-			{
-				os << duration_cast<hours>(d).count() / month.count() << "M";
-				d %= month;
-			}
-			var days = hours(24);
-			if( d >= days || d <= -days )
-			{
-				os << duration_cast<hours>(d).count() / days.count() << "M";
-				d %= days;
-			}
-#else
-			output( years, "Y" );
-			output( months, "M" );
-			output( days, "D" );
-#endif
-			if( d!=Duration::zero() )
-			{
-				os << "T";
-				output( hours, "H" );
-				output( minutes, "M" );
-				output( seconds, "S" );
-				if( d!=Duration::zero() )
-					os << duration_cast<milliseconds>(d).count();
-			}
-			return os.str();
+		var year = hours(24 * 365);
+		if( d >= year || d <= -year )
+		{
+			os << duration_cast<hours>(d).count()/year.count() << "Y";
+			d %= year;
 		}
+		var month = hours(24 * 30);
+		if( d >= month || d <= -month )
+		{
+			os << duration_cast<hours>(d).count() / month.count() << "M";
+			d %= month;
+		}
+		var days = hours(24);
+		if( d >= days || d <= -days )
+		{
+			os << duration_cast<hours>(d).count() / days.count() << "M";
+			d %= days;
+		}
+#else
+		output( years, "Y" );
+		output( months, "M" );
+		output( days, "D" );
+#endif
+		if( d!=Duration::zero() )
+		{
+			os << "T";
+			output( hours, "H" );
+			output( minutes, "M" );
+			output( seconds, "S" );
+			if( d!=Duration::zero() )
+				os << duration_cast<milliseconds>(d).count();
+		}
+		return os.str();
 	}
 
-#ifndef __cplusplus
-	TimePoint::TimePoint( const TimePoint& tp )noexcept:
-		base{ tp },
-		_text{ DateTime(tp).ToIsoString() }
-	{}
-	constexpr TimePoint& TimePoint::operator+=( const DurationType& x )noexcept
-	{
-		base::operator+=(x);
-		_text=ToIsoString(base);
-		return *this;
-	}
-#endif
 	DateTime::DateTime()noexcept:
 		_time_point( system_clock::now() )
 	{}
@@ -130,7 +119,7 @@ namespace Jde
 		tm.tm_hour = hour;
 		tm.tm_min = minute;
 		tm.tm_sec = second;
-#if _WINDOWS
+#ifdef _MSC_VER
 		var time = _mkgmtime( &tm );
 #else
 		var time = timegm( &tm );
@@ -148,7 +137,7 @@ namespace Jde
 		tm.tm_hour = stoi( string(iso.substr(11,2)) );
 		tm.tm_min = stoi( string(iso.substr(14,2)) );
 		tm.tm_sec = stoi( string(iso.substr(17,2)) );
-#if _WINDOWS
+#ifdef _MSC_VER
 		var time = _mkgmtime( &tm );
 #else
 		var time = timegm( &tm );
@@ -156,7 +145,7 @@ namespace Jde
 		_time_point = Clock::from_time_t( time );
 	}
 
-	std::string DateTime::DateDisplay()const noexcept
+	α DateTime::DateDisplay()const noexcept->string
 	{
 		return format( "{:0>2}/{:0>2}/{:0>2}", Month(), Day(), Year()-2000 );
 	}
@@ -193,7 +182,7 @@ namespace Jde
 
 	uint32 DateTime::Nanos()const noexcept
 	{
-		return _time_point.time_since_epoch().count()%Chrono::TimeSpan::NanosPerSecond;
+		return _time_point.time_since_epoch().count()%TimeSpan::NanosPerSecond;
 	}
 
 	time_t DateTime::TimeT()const noexcept
@@ -203,13 +192,13 @@ namespace Jde
 		return *_pTime;
 	}
 
-	shared_ptr<std::tm> DateTime::Tm()const noexcept
+	sp<std::tm> DateTime::Tm()const noexcept
 	{
 		if( !_pTm )
 		{
 			time_t time = TimeT();
-			_pTm = unique_ptr<std::tm>( new std::tm() );
-#if _WINDOWS
+			_pTm = up<std::tm>( new std::tm() );
+#ifdef _MSC_VER
 			gmtime_s( _pTm.get(), &time );
 #else
 			gmtime_r( &time, _pTm.get() );
@@ -218,7 +207,7 @@ namespace Jde
 		return _pTm;
 	}
 
-	unique_ptr<std::tm> DateTime::LocalTm()const noexcept
+	up<std::tm> DateTime::LocalTm()const noexcept
 	{
 		time_t time = TimeT();
 		auto pLocal = make_unique<std::tm>();
@@ -230,36 +219,36 @@ namespace Jde
 		return pLocal;
 	}
 
-	std::string DateTime::TimeDisplay()const noexcept
+	α DateTime::TimeDisplay()const noexcept->string
 	{
 		return fmt::format( "{:0>2}:{:0>2}", Hour(), Minute() );
 	}
-	std::string DateTime::LocalTimeDisplay()const noexcept
+	α DateTime::LocalTimeDisplay()const noexcept->string
 	{
 		auto pLocal = LocalTm();
 		return fmt::format( "{:0>2}:{:0>2}", pLocal->tm_hour, pLocal->tm_min );
 	}
-	std::string DateTime::LocalDateDisplay()const noexcept
+	α DateTime::LocalDateDisplay()const noexcept->string
 	{
 		auto pLocal = LocalTm();
 		return fmt::format( "{:0>2}/{:0>2}/{:0>2}", pLocal->tm_mon+1, pLocal->tm_mday, pLocal->tm_year-100 );
 	}
-	std::string DateTime::LocalDisplay()const noexcept
+	α DateTime::LocalDisplay()const noexcept->string
 	{
 		return fmt::format( "{} {}", LocalDateDisplay(), LocalTimeDisplay() );
 	}
-	TimePoint DateTime::ToDate( const TimePoint& time )noexcept
+	α DateTime::ToDate( TimePoint time )noexcept->TimePoint
 	{
 		var secondsSinceEpoch = duration_cast<seconds>( time.time_since_epoch() ).count();
 		constexpr uint secondsPerDay = duration_cast<seconds>( 24h ).count();
 		var day = time - seconds( secondsSinceEpoch%secondsPerDay );
 		return day;
 	}
-	std::string DateTime::ToIsoString()const noexcept
+	α DateTime::ToIsoString()const noexcept->string
 	{
 		return ToIsoString( *Tm() );
 	}
-	std::string DateTime::ToIsoString(const tm& t)noexcept
+	α DateTime::ToIsoString(const tm& t)noexcept->string
 	{
 		return fmt::format( "{}-{:0>2}-{:0>2}T{:0>2}:{:0>2}:{:0>2}Z", t.tm_year+1900, t.tm_mon+1, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec ).c_str();
 	}
@@ -290,15 +279,3 @@ namespace Jde
 			return Duration{};
 		}
 	}
-
-	std::ostream& operator<<( std::ostream &os, const Jde::DateTime& obj )noexcept
-	{
-		os << obj.ToIsoString( *obj.LocalTm() );
-		return os;
-	}
-}
-std::ostream& operator<<( std::ostream &os, const std::chrono::system_clock::time_point& obj )noexcept
-{
-	os << Jde::DateTime(obj).ToIsoString();
-	return os;
-}

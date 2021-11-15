@@ -11,7 +11,6 @@
 #pragma warning(pop)
 
 #define var const auto
-#define 🚪 Γ auto
 namespace Jde::Settings
 {
 	α Path()noexcept->fs::path;
@@ -21,32 +20,33 @@ namespace Jde::Settings
 		Container( const json& json )noexcept;
 		Container( path jsonFile )noexcept(false);
 		α TryMembers( sv path )noexcept->flat_map<string,Container>;
-		bool Have( sv path )noexcept;
+		α Have( sv path )noexcept->bool;
 		α FindPath( sv path )const noexcept->optional<json>;
 		ⓣ TryArray( sv path )noexcept->vector<T>;
 		ⓣ Map( sv path )noexcept->map<string,T>;
 
 		α ForEach( sv path, function<void(sv, const nlohmann::json&)> f )noexcept->void;
 
-		sp<Container> SubContainer( sv entry )const noexcept(false);
-		optional<Container> TrySubContainer( sv entry )const noexcept;
-		ⓣ Get( sv path )const noexcept(false)->T;
+		α SubContainer( sv entry )const noexcept(false)->sp<Container>;
+		α TrySubContainer( sv entry )const noexcept->optional<Container>;
+		ⓣ Get( sv path, SRCE )const noexcept(false)->T;
 		ⓣ TryGet( sv path )const noexcept->optional<T>;
-		json& Json()noexcept{ /*ASSERT(_pJson);*/ return *_pJson; }
+
+		α& Json()noexcept{ /*ASSERT(_pJson);*/ return *_pJson; }
 	private:
-		unique_ptr<json> _pJson;
+		up<json> _pJson;
 	};
 
-	🚪 Global()noexcept->Container&;
+	Γ α Global()noexcept->Container&;
 
 	α FileStem()noexcept->string;
-	#define $ template<> inline α
-	$ Container::Get<TimePoint>( sv path )const noexcept(false)->TimePoint{ return DateTime{ Get<string>(path) }.GetTimePoint(); }
-	$ Container::Get<fs::path>( sv path )const noexcept(false)->fs::path{ var p = TryGet<string>(path); return p.has_value() ? fs::path{*p} : fs::path{}; }
+	#define $ template<> Ξ
+	$ Container::Get<TimePoint>( sv path, const source_location& sl )const noexcept(false)->TimePoint{ return DateTime{ Get<string>(path, sl) }.GetTimePoint(); }
+	$ Container::Get<fs::path>( sv path, const source_location& )const noexcept(false)->fs::path{ var p = TryGet<string>(path); return p.has_value() ? fs::path{*p} : fs::path{}; }
 
-	ⓣ Container::Get( sv path )const noexcept(false)->T
+	ⓣ Container::Get( sv path, const source_location& sl )const noexcept(false)->T
 	{
-		auto p = TryGet<T>( path ); if( !p ) throw Exception{ SRCE_CUR, ELogLevel::Debug, "'{}' was not found in settings.", path };//mysql precludes using THROW_IF
+		auto p = TryGet<T>( path ); if( !p ) throw Exception{ sl, ELogLevel::Debug, "'{}' was not found in settings.", path };//mysql precludes using THROW_IF
 		return *p;
 	}
 
@@ -71,7 +71,7 @@ namespace Jde::Settings
 		return level;
 	}
 
-	inline α Container::TryMembers( sv path )noexcept->flat_map<string,Container>
+	Ξ Container::TryMembers( sv path )noexcept->flat_map<string,Container>
 	{
 		flat_map<string,Container> members;
 		auto j = FindPath( path );
@@ -114,6 +114,8 @@ namespace Jde::Settings
 		}
 		return values;
 	}
+	Γ α Set( sv path, const fs::path& value )noexcept->void;
+
 	ⓣ TryArray( sv path )noexcept{ return Global().TryArray<T>(path); }
 
 	ⓣ Container::TryArray( sv path )noexcept->vector<T>
@@ -139,7 +141,7 @@ namespace Jde::Settings
 		return values;
 	}
 
-	inline α Container::ForEach( sv path, function<void(sv, const nlohmann::json&)> f )noexcept->void
+	Ξ Container::ForEach( sv path, function<void(sv, const nlohmann::json&)> f )noexcept->void
 	{
 
 		if( auto p = FindPath( path ); p && p->is_object() )
@@ -150,12 +152,12 @@ namespace Jde::Settings
 	}
 
 
-	ⓣ Get( sv path )noexcept(false){ return Global().Get<T>( path ); }
+	ⓣ Get( sv path, SRCE )noexcept(false){ return Global().Get<T>( path, sl ); }
 	ⓣ TryGet( sv path )noexcept->optional<T>{ return Global().TryGet<T>( path ); }
 	$ TryGet<Duration>( sv path )noexcept->optional<Duration>{ return Global().TryGet<Duration>( path ); }
-	inline α TryMembers( sv path )noexcept->flat_map<string,Container>{ return Global().TryMembers( path ); }
+	Ξ TryMembers( sv path )noexcept->flat_map<string,Container>{ return Global().TryMembers( path ); }
 	$ TryGet<ELogLevel>( sv path )noexcept->optional<ELogLevel>{ return Global().TryGet<ELogLevel>( path ); }
-	inline α ForEach( sv path, function<void(sv, const nlohmann::json& v)> f )noexcept->void{ return Global().ForEach(path, f); }
+	Ξ ForEach( sv path, function<void(sv, const nlohmann::json& v)> f )noexcept->void{ return Global().ForEach(path, f); }
 	ⓣ TryGetSubcontainer( sv container, sv path )noexcept->optional<T>
 	{
 		optional<T> v;
@@ -173,5 +175,4 @@ namespace Jde::Settings
 	}
 }
 #undef var
-#undef 🚪
 #undef $

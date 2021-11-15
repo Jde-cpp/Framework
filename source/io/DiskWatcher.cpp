@@ -70,10 +70,9 @@ namespace Jde::IO
 	{
 		DBG( "DiskWatcher::~DiskWatcher on  {}"sv, _path );
 		close( _fd );
-	//	_pThread->Join();
 	}
 
-	α DiskWatcher::Run()noexcept
+	α DiskWatcher::Run()noexcept->void
 	{
 		DBG( "DiskWatcher::Run  {}"sv, _path );
 		struct pollfd fds;
@@ -108,7 +107,7 @@ namespace Jde::IO
 		IApplication::Remove( pThis );
 	}
 
-	α DiskWatcher::ReadEvent( const pollfd& fd, bool isRetry )noexcept(false)
+	α DiskWatcher::ReadEvent( const pollfd& fd, bool isRetry )noexcept(false)->void
 	{
 		for( ;; )
 		{
@@ -233,7 +232,7 @@ namespace Jde::IO
 		{
 			for( var& event : *pEvents )
 			{
-				tuple<shared_ptr<IDriveChange>,fs::path>* pOnChangePath;
+				tuple<sp<IDriveChange>,fs::path>* pOnChangePath;
 				{
 					std::shared_lock<std::shared_mutex> l( _mutex );
 					auto pDescriptorChange = _descriptors.find( event.WatchDescriptor );

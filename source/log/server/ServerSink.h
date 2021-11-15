@@ -10,13 +10,12 @@
 	#include "./proto/messages.pb.h"
 #pragma warning(pop)
 
-#define 🚪 Γ auto
-
 namespace Jde::Logging
 {
+	struct IServerSink;
 	namespace Messages{ struct ServerMessage; }
-	🚪 Server()noexcept->up<Logging::IServerSink>&; 🚪 SetServer( up<Logging::IServerSink> p )noexcept->void;
-	🚪 ServerLevel()noexcept->ELogLevel; 🚪 SetServerLevel( ELogLevel serverLevel )noexcept->void;
+	Γ α Server()noexcept->up<Logging::IServerSink>&; Γ α SetServer( up<Logging::IServerSink> p )noexcept->void;
+	Γ α ServerLevel()noexcept->ELogLevel; Γ α SetServerLevel( ELogLevel serverLevel )noexcept->void;
 
 	struct Γ IServerSink : private boost::noncopyable
 	{
@@ -60,7 +59,7 @@ namespace Jde::Logging
 			const TimePoint Timestamp{ Clock::now() };
 			vector<string> Variables;
 		private:
-			unique_ptr<string> _pFunction;
+			up<string> _pFunction;
 		};
 	}
 
@@ -89,4 +88,3 @@ namespace Jde::Logging
 		Proto::ToServer _buffer; std::atomic_flag _bufferMutex;
 	};
 }
-#undef 🚪

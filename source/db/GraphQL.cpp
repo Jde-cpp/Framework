@@ -16,11 +16,13 @@ namespace Jde
 	using DB::EDataValue;
 	using DB::DataType;
 	sp<DB::IDataSource> _pDataSource;
-	void DB::SetQLDataSource( sp<DB::IDataSource> p )noexcept{ _pDataSource = p; }
+	static const LogTag& _logLevel = Logging::TagLevel( "ql" );
 
-	void DB::ClearQLDataSource()noexcept{ _pDataSource = nullptr; }
+	α DB::SetQLDataSource( sp<DB::IDataSource> p )noexcept->void{ _pDataSource = p; }
+
+	α DB::ClearQLDataSource()noexcept->void{ _pDataSource = nullptr; }
 	flat_map<string,vector<function<void(const DB::MutationQL& m, PK id)>>> _applyMutationListeners;  shared_mutex _applyMutationListenerMutex;
-	void DB::AddMutationListener( sv tablePrefix, function<void(const DB::MutationQL& m, PK id)> listener )noexcept
+	α DB::AddMutationListener( sv tablePrefix, function<void(const DB::MutationQL& m, PK id)> listener )noexcept->void
 	{
 		unique_lock l{_applyMutationListenerMutex};
 		auto& listeners = _applyMutationListeners.try_emplace( string{tablePrefix} ).first->second;
@@ -32,7 +34,7 @@ namespace Jde
 		α Schema()noexcept->DB::Schema&{ return _schema;}
 		α DataSource()noexcept->sp<IDataSource>{ return _pDataSource; }
 	}
-	void DB::AppendQLSchema( const DB::Schema& schema )noexcept
+	α DB::AppendQLSchema( const DB::Schema& schema )noexcept->void
 	{
 		for( var& [name,v] : schema.Types )
 			_schema.Types.emplace( name, v );
@@ -57,40 +59,53 @@ namespace DB
 	{
 		return InputParam2( name, Input() );
 	}
-	nlohmann::json MutationQL::Input()const noexcept(false)
+	α MutationQL::Input()const noexcept(false)->nlohmann::json
 	{
 		var pInput = Args.find("input"); THROW_IF( pInput==Args.end(), "Could not find input argument. {}", Args.dump() );
 		return *pInput;
 	}
 
-	string TableQL::DBName()const noexcept
+	α TableQL::DBName()const noexcept->string
 	{
 		return DB::Schema::ToPlural( DB::Schema::FromJson(JsonName) );
 	}
 }
 #define TEST_ACCESS(a,b,c) TRACE( "TEST_ACCESS({},{},{})"sv, a, b, c )
-
-	uint Insert( const DB::Table& table, const DB::MutationQL& m )noexcept(false)
+	α ToJsonName( DB::Column c )noexcept
+	{
+		string tableName;
+		auto memberName{ DB::Schema::ToJson(c.Name) };
+		if( c.IsFlags || c.IsEnum )
+		{
+			var pPKTable = _schema.Tables.find( c.PKTable ); THROW_IF( pPKTable==_schema.Tables.end(), "can not find column {}'s pk table {}.", c.Name, c.PKTable );
+			tableName = pPKTable->second->Name;
+			memberName = DB::Schema::ToJson( pPKTable->second->NameWithoutType() );
+			if( c.IsEnum )
+				memberName = DB::Schema::ToSingular( memberName );
+		}
+		return make_tuple( memberName, tableName );
+	}
+	α Insert( const DB::Table& table, const DB::MutationQL& m )noexcept(false)->uint
 	{
 		ostringstream sql{ DB::Schema::ToSingular(table.Name), std::ios::ate }; sql << "_insert(";
 		std::vector<DB::DataValue> parameters; parameters.reserve( table.Columns.size() );
 		var pInput = m.Args.find( "input" ); THROW_IF( pInput == m.Args.end(), "Could not find 'input' arg." );
-		for( var& column : table.Columns )
+		for( var& c : table.Columns )
 		{
-			if( !column.Insertable )
+			if( !c.Insertable )
 				continue;
-			var memberName = DB::Schema::ToJson( column.Name );
+			var [memberName, tableName] = ToJsonName( c );
 			var pValue = pInput->find( memberName );
 
-			var exists = pValue!=pInput->end(); THROW_IF( !exists && !column.IsNullable && column.Default.empty() && column.Insertable, "No value specified for {}.", memberName );
+			var exists = pValue!=pInput->end(); THROW_IF( !exists && !c.IsNullable && c.Default.empty() && c.Insertable, "No value specified for {}.", memberName );
 			if( parameters.size() )
 				sql << ", ";
 			sql << "?";
 			DB::DataValue value;
 			if( !exists )
-				value = column.Default.size() ? DB::DataValue{column.Default} : DB::DataValue{nullptr};
+				value = c.Default.size() ? DB::DataValue{c.Default} : DB::DataValue{nullptr};
 			else
-				value = ToDataValue( column.Type, *pValue, memberName );
+				value = ToDataValue( c.Type, *pValue, memberName );
 			parameters.push_back( value );
 		}
 		sql << ")";
@@ -101,44 +116,35 @@ namespace DB
 	}
 	uint Update( const DB::Table& table, const DB::MutationQL& m, const DB::Syntax& syntax )
 	{
-		ostringstream sql{ "update ", std::ios::ate }; sql << table.Name << " set ";
+		ostringstream sql{ format("update {} set ", table.Name), std::ios::ate };
 		std::vector<DB::DataValue> parameters; parameters.reserve( table.Columns.size() );
 		var pInput = m.Args.find( "input" ); THROW_IF( pInput==m.Args.end(), "Could not find input argument. {}", m.Args.dump() );
 		string sqlUpdate;
 		vector<string> where; where.reserve(2);
 		vector<DB::DataValue> whereParams; whereParams.reserve( 2 );
-		for( var& column : table.Columns )
+		for( var& c : table.Columns )
 		{
-			if( !column.Updateable )
+			if( !c.Updateable )
 			{
-				if( var p=find(table.SurrogateKey.begin(), table.SurrogateKey.end(), column.Name); p!=table.SurrogateKey.end() )
+				if( var p=find(table.SurrogateKey.begin(), table.SurrogateKey.end(), c.Name); p!=table.SurrogateKey.end() )
 				{
-					var pId = m.Args.find( DB::Schema::ToJson(column.Name) ); THROW_IF( pId==m.Args.end(), "Could not find '{}' argument. {}", DB::Schema::ToJson(column.Name), m.Args.dump() );
-					whereParams.push_back( ToDataValue(DataType::ULong, *pId, column.Name) );
-					where.push_back( column.Name+"=?" );
+					var pId = m.Args.find( DB::Schema::ToJson(c.Name) ); THROW_IF( pId==m.Args.end(), "Could not find '{}' argument. {}", DB::Schema::ToJson(c.Name), m.Args.dump() );
+					whereParams.push_back( ToDataValue(DataType::ULong, *pId, c.Name) );
+					where.push_back( c.Name+"=?" );
 				}
-				else if( column.Name=="updated" )
-					sqlUpdate = format( ",{}={}", column.Name, syntax.UtcNow() );
+				else if( c.Name=="updated" )
+					sqlUpdate = format( ",{}={}", c.Name, syntax.UtcNow() );
 			}
 			else
 			{
-				string memberName = DB::Schema::ToJson( column.Name );
-				string tableName;
-				if( column.IsFlags || column.IsEnum )
-				{
-					var pPKTable = _schema.Tables.find( column.PKTable ); THROW_IF( pPKTable==_schema.Tables.end(), "can not find column {}'s pk table {}.", column.Name, column.PKTable );
-					tableName = pPKTable->second->Name;
-					memberName = DB::Schema::ToJson( pPKTable->second->NameWithoutType() );
-					if( column.IsEnum )
-						memberName = DB::Schema::ToSingular( memberName );
-				}
+				var [memberName, tableName] = ToJsonName( c );
 				var pValue = pInput->find( memberName );
 				if( pValue==pInput->end() )
 					continue;
 				if( parameters.size() )
 					sql << ", ";
-				sql << column.Name << "=?";
-				if( column.IsFlags )
+				sql << c.Name << "=?";
+				if( c.IsFlags )
 				{
 					uint value = 0;
 					if( pValue->is_array() && pValue->size() )
@@ -153,9 +159,10 @@ namespace DB
 					parameters.push_back( value );
 				}
 				else
-					parameters.push_back( ToDataValue(column.Type, *pValue, memberName) );
+					parameters.push_back( ToDataValue(c.Type, *pValue, memberName) );
 			}
 		}
+		THROW_IF( where.size()==0, "There is no where clause." );
 		THROW_IF( parameters.size()==0, "There is nothing to update." );
 		for( var& param : whereParams ) parameters.push_back( param );
 		if( sqlUpdate.size() )
@@ -166,7 +173,7 @@ namespace DB
 //		DBG( "result={}"sv, result );
 		return result;
 	}
-	uint Delete( const DB::Table& table, const DB::MutationQL& m )
+	α Delete( const DB::Table& table, const DB::MutationQL& m )->uint
 	{
 		var pId = m.Args.find( "id" ); THROW_IF( pId==m.Args.end(), "Could not find id argument. {}", m.Args.dump() );
 		var pColumn = find_if( table.Columns.begin(), table.Columns.end(), []( var& c ){ return c.Name=="deleted"; } ); THROW_IF( pColumn==table.Columns.end(), "Could not find 'deleted' column" );
@@ -321,7 +328,7 @@ namespace DB
 		}
 		return qlTypeName;
 	}
-	void IntrospectFields( sv typeName, const DB::Table& dbTable, const DB::TableQL& fieldTable, json& jData )noexcept(false)
+	α IntrospectFields( sv typeName, const DB::Table& dbTable, const DB::TableQL& fieldTable, json& jData )noexcept(false)
 	{
 		auto fields = json::array();
 		var pTypeTable = fieldTable.FindTable( "type" );
@@ -431,7 +438,7 @@ namespace DB
 		jTable["name"] = dbTable.JsonTypeName();
 		jData["__type"] = jTable;
 	}
-	void IntrospectEnum( sv /*typeName*/, const DB::Table& dbTable, const DB::TableQL& fieldTable, json& jData )noexcept(false)
+	α IntrospectEnum( sv /*typeName*/, const DB::Table& dbTable, const DB::TableQL& fieldTable, json& jData )noexcept(false)
 	{
 		auto fields = json::array();
 		ostringstream sql{ "select ", std::ios::ate };
@@ -454,7 +461,7 @@ namespace DB
 		jTable["enumValues"] = fields;
 		jData["__type"] = jTable;
 	}
-	void QueryType( const DB::TableQL& typeTable, json& jData )noexcept(false)
+	α QueryType( const DB::TableQL& typeTable, json& jData )noexcept(false)
 	{
 		THROW_IF( typeTable.Args.find("name")==typeTable.Args.end(), "__type data for all names '{}' not supported", typeTable.JsonName );
 		var typeName = typeTable.Args["name"].get<string>();
@@ -469,7 +476,7 @@ namespace DB
 				THROW( "__type data for '{}' not supported", pQlTable->JsonName );
 		}
 	}
-	void QuerySchema( const DB::TableQL& schemaTable, json& jData )noexcept(false)
+	α QuerySchema( const DB::TableQL& schemaTable, json& jData )noexcept(false)->void
 	{
 		THROW_IF( schemaTable.Tables.size()!=1, "Only Expected 1 table type for __schema {}", schemaTable.Tables.size() );
 		var pMutationTable = schemaTable.Tables[0]; THROW_IF( pMutationTable->JsonName!="mutationType", "Only mutationType implemented for __schema - {}", pMutationTable->JsonName );
@@ -544,6 +551,7 @@ namespace DB
 
 	α DB::Query( sv query, UserPK userId )noexcept(false)->json
 	{
+		LOGS( string{query} );
 		var qlType = ParseQL( query );
 		vector<DB::TableQL> tableQueries;
 		json j;
@@ -724,8 +732,7 @@ namespace DB
 	}
 	DB::RequestQL DB::ParseQL( sv query )noexcept(false)
 	{
-		uint i = query.find_first_of( "{" );
-		THROW_IF( i==sv::npos || i>query.size()-2, "Invalid query '{}'", query );
+		uint i = query.find_first_of( "{" ); THROW_IF( i==sv::npos || i>query.size()-2, "Invalid query '{}'", query );
 		Parser parser{ query.substr(i+1), "{}()," };
 		auto name = parser.Next();
 		if( name=="query" )

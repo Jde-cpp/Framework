@@ -25,6 +25,9 @@ namespace Jde
 	};
 	struct Γ Stopwatch
 	{
+		using SClock=std::chrono::steady_clock;
+		using SDuration=SClock::duration;
+		using STimePoint=SClock::time_point;
 		Stopwatch( sv what, bool started=true )noexcept;
 		Stopwatch( Stopwatch* pParent, sv what="", sv instance="", bool started=true )noexcept;
 		virtual ~Stopwatch();

@@ -3,7 +3,7 @@
 
 namespace Jde::DB
 {
-	const std::vector<DataValue> CopyParams( const std::vector<DataValue>* pValues )
+	α CopyParams( const std::vector<DataValue>* pValues )->const std::vector<DataValue>
 	{
 		std::vector<DataValue> y;
 		if( pValues )
@@ -27,23 +27,15 @@ namespace Jde::DB
 		Parameters{ CopyParams(pValues) },
 		ErrorCode{ errorCode }
 	{}
-/*
-	DBException::DBException( _int errorCode, sv sql, const vector<DataValue>* pValues, str what, const source_location& sl )noexcept:
-		DBException{ std::runtime_error{what}, sql, pValues, errorCode, sl }
-	{}
 
-	DBException::DBException( sv sql, const std::vector<DataValue>* pValues, const source_location& sl )noexcept:
-		DBException{ 0, sql, pValues, sl }
-	{}
-	*/
-	const char* DBException::what() const noexcept
+	α DBException::what()const noexcept->const char*
 	{
 		if( Sql.size() && _what.empty() )
 			_what =  DB::Message( Sql, &Parameters, string{IException::what()} );
 		return IException::what();
 	}
 
-	void DBException::Log()const noexcept
+	α DBException::Log()const noexcept->void
 	{
 		if( Sql.find("log_message_insert")==string::npos )
 			DB::Log( Sql, Parameters.size() ? &Parameters : nullptr, _level, _pInner ? string{_pInner->what()} : what(), _sl );

@@ -11,34 +11,31 @@ namespace Jde::Threading
 	class ReusableThread /*: public std::enable_shared_from_this<ReusableThread<TArgs>>*/
 	{
 	public:
-		ReusableThread( sv name, std::function<void(std::shared_ptr<TArgs>)> method );
-		//void NextArgs( std::shared_ptr<TArgs*>& pArgs ){ AddQueue( pArgs ); }
-		void Join( std::shared_ptr<TArgs>& pArgs );
+		ReusableThread( sv name, std::function<void(sp<TArgs>)> method );
+		void Join( sp<TArgs>& pArgs );
 		void Join();
 
 	private:
-		void AddQueue( std::shared_ptr<TArgs>& pArgs )noexcept;
+		void AddQueue( sp<TArgs>& pArgs )noexcept;
 		void Execute();
-		//bool _isFree{true};
 		bool _stop{false};
-		//bool _runToEnd{false};
-		std::function<void( std::shared_ptr<TArgs> )> _method;
-		std::string _name;
-		std::unique_ptr<std::thread> _pThread{nullptr};
+		std::function<void( sp<TArgs> )> _method;
+		string _name;
+		up<std::thread> _pThread{nullptr};
 		std::mutex _queueMutex{}; std::condition_variable _queueCV;  //wait for queue to be added to.
 		std::mutex _join{}; std::condition_variable _joinCV; //join wait for processing.
 		static constexpr size_t _maxSize=1;
-		std::deque<std::shared_ptr<TArgs>> _argumentStack; std::shared_mutex _argumentStackMutex;
+		std::deque<sp<TArgs>> _argumentStack; std::shared_mutex _argumentStackMutex;
 	};
 
 	template<class TArgs>
-	ReusableThread<TArgs>::ReusableThread( sv name, std::function<void(std::shared_ptr<TArgs>)> method ):
+	ReusableThread<TArgs>::ReusableThread( sv name, std::function<void(sp<TArgs>)> method ):
 		_method( method ),
 		_name( name )
 	{}
 
 	template<class TArgs>
-	void ReusableThread<TArgs>::AddQueue( std::shared_ptr<TArgs>& pArgs )noexcept
+	void ReusableThread<TArgs>::AddQueue( sp<TArgs>& pArgs )noexcept
 	{
 		std::unique_lock l( _argumentStackMutex );
 		_argumentStack.push_back( pArgs );
@@ -58,7 +55,7 @@ namespace Jde::Threading
 	}
 
 	template<class TArgs>
-	void ReusableThread<TArgs>::Join( std::shared_ptr<TArgs>& pArgs )
+	void ReusableThread<TArgs>::Join( sp<TArgs>& pArgs )
 	{
 		std::unique_lock<std::mutex> lk( _join );
 		AddQueue( pArgs );
@@ -71,8 +68,7 @@ namespace Jde::Threading
 		bool cntn = true;
 		for( ;cntn; )
 		{
-			//_isFree = false;
-			std::shared_ptr<TArgs> pArguments = nullptr;
+			sp<TArgs> pArguments = nullptr;
 			{
 				std::unique_lock l( _argumentStackMutex );
 				if( _argumentStack.size() )
@@ -88,7 +84,6 @@ namespace Jde::Threading
 			else
 			{
 				std::unique_lock lk( _queueMutex );
-				//_joinCV.notify_one();
 				_queueCV.wait( lk );
 			}
 

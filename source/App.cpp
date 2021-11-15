@@ -14,7 +14,7 @@
 namespace Jde
 {
 	sp<IApplication> IApplication::_pInstance;
-	unique_ptr<string> IApplication::_pApplicationName;
+	up<string> IApplication::_pApplicationName;
 
 	mutex IApplication::_threadMutex;
 	VectorPtr<sp<Threading::InterruptibleThread>> IApplication::_pBackgroundThreads{ make_shared<vector<sp<Threading::InterruptibleThread>>>() };

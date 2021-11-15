@@ -17,50 +17,78 @@ namespace Jde::Logging
 {
 	vector<LogTag> _tags;
 	vector<LogTag> _serverTags;
-	vector<LogTag*> _cumulativeTags;
+	up<vector<LogTag*>> _pCumulativeTags;
 	bool _logMemory{true};
 	up<vector<Logging::Messages::ServerMessage>> _pMemoryLog; shared_mutex MemoryLogMutex;
 	auto _pOnceMessages = make_unique<flat_map<uint,set<string>>>(); std::shared_mutex OnceMessageMutex;
+	static const LogTag& _statusLevel = Logging::TagLevel( "status" );
+
+	α SetTag( sv tag, vector<LogTag>& existing )noexcept->sv
+	{
+		var log{ tag.size()<1 || tag[0]!='_' };
+		var tagName = log ? tag : tag.substr(1);
+		var pc = find_if( _pCumulativeTags->begin(), _pCumulativeTags->end(), [&](var& x){return x->Id==tagName;} );
+		if( pc==_pCumulativeTags->end() )
+		{
+			ERR( "unknown tag '{}'", tagName );
+			static auto showed{ false };
+			if( !showed )
+			{
+				showed = true;
+				ostringstream os;
+				std::for_each( _pCumulativeTags->begin(), _pCumulativeTags->end(), [&](var p){ os << p->Id << ", ";} );
+				INFO( "available tags:  {}", os.str().substr(0, os.str().size()-2) );
+			}
+			return {};
+		}
+		var l = log ? ELogLevel::Debug : ELogLevel::NoLog;
+
+		bool change = false;
+		if( auto p = find_if(existing.begin(), existing.end(), [&](var& x){return x.Id==tagName;}); p!=existing.end() )
+		{
+			if( change = p->Level != l; change )
+				p->Level = l;
+		}
+		else if( (change = l!=ELogLevel::NoLog) )
+			existing.push_back( LogTag{(*pc)->Id, l} );
+		if( change )
+		{
+			var& otherTags = &existing==&_tags ? _serverTags : _tags;
+			var p = find_if( otherTags.begin(), otherTags.end(), [&](var& x){return x.Id==tagName;} );
+			auto cumulativeLevel = p==otherTags.end() ? l : std::min( l==ELogLevel::NoLog ? ELogLevel::None : l, p->Level==ELogLevel::NoLog ? ELogLevel::None : p->Level );
+			if( cumulativeLevel==ELogLevel::None )
+				cumulativeLevel = ELogLevel::NoLog;
+			(*pc)->Level = cumulativeLevel;
+		}
+		return (*pc)->Id;
+	}
 
 	α AddTags( vector<LogTag>& tags, sv path )noexcept->void
 	{
+		vector<sv> tagIds;
 		var settings = Settings::TryArray<string>( path );
 		for( var& tag : settings )
 		{
-			var log{ tag.size()<1 || tag[0]!='_' };
-			var tagName = log ? tag : tag.substr(1);
-			var pc = find_if( _cumulativeTags.begin(), _cumulativeTags.end(), [&](var& x){return x->Id==tagName;} ) ;
-			CONTINUE_IF( pc==_cumulativeTags.end(), "unknown tag '{}'", tagName );
-			var l = log ? ELogLevel::Debug : ELogLevel::NoLog;
-
-			bool change = false;
-			if( auto p = find_if(tags.begin(), tags.end(), [&](var& x){return x.Id==tagName;}); p!=tags.end() )
-			{
-				if( change = p->Level != l; change )
-					p->Level = l;
-			}
-			else if( (change = l!=ELogLevel::NoLog) )
-				tags.push_back( LogTag{(*pc)->Id, l} );
-			if( change )
-			{
-				var& otherTags = &tags==&_tags ? _serverTags : _tags;
-				var p = find_if( otherTags.begin(), otherTags.end(), [&](var& x){return x.Id==tagName;} );
-				auto cumulativeLevel = p==otherTags.end() ? l : std::min( l==ELogLevel::NoLog ? ELogLevel::None : l, p->Level==ELogLevel::NoLog ? ELogLevel::None : p->Level );
-				if( cumulativeLevel==ELogLevel::None )
-					cumulativeLevel = ELogLevel::NoLog;
-				(*pc)->Level = cumulativeLevel;
-			}
+			var t = SetTag( tag, tags );
+			if( t.size() )
+				tagIds.push_back( t );
 		}
+		Logging::Log( Logging::Message(ELogLevel::Information, &tags==&_tags ? "FileTags:  {}." : "ServerTags:  {}."), Str::AddCommas(tagIds) );
 	}
 }
 namespace Jde
 {
-	//α Tags()noexcept->const array<Tag_,20>&{return _tags;}
-	//α ServerTags()noexcept->const array<Tag_,20>&{return _serverTags;}
+	TimePoint _startTime = Clock::now(); Logging::Proto::Status _status; mutex _statusMutex; TimePoint _lastStatusUpdate;
+
+	α Logging::SetTag( sv tag, ELogLevel, bool file )noexcept->void{ SetTag( tag, file ? _tags : _serverTags ); }
+
 	α Logging::TagLevel( sv tag )noexcept->const LogTag&
 	{
-		//_tags.emplace_back( tag, ELogLevel::NoLog );
-		return *_cumulativeTags.emplace_back( new LogTag{tag} );
+		if( !_pCumulativeTags )
+			_pCumulativeTags = make_unique<vector<LogTag*>>();
+		var pp = find_if( _pCumulativeTags->begin(), _pCumulativeTags->end(), [&](var& x){return x->Id==tag;} );
+		auto p = pp==_pCumulativeTags->end() ? _pCumulativeTags->emplace_back( new LogTag{tag} ) : *pp;
+		return *p;
 	}
 
 	α Logging::DestroyLogger()->void
@@ -92,7 +120,6 @@ namespace Jde
 
 	α Logging::LogMemory()noexcept->bool{ return Logging::_logMemory; }
 
-	TimePoint _startTime = Clock::now(); Logging::Proto::Status _status; mutex _statusMutex; TimePoint _lastStatusUpdate;
 	vector<spdlog::sink_ptr> LoadSinks()noexcept
 	{
 		vector<spdlog::sink_ptr> sinks;
@@ -130,7 +157,6 @@ namespace Jde
 
 	α Logging::Initialize()noexcept->void
 	{
-		AddTags( _tags, "logging/tags" );
 		_status.set_starttime( (google::protobuf::uint32)Clock::to_time_t(_startTime) );
 
 		_logMemory = Settings::TryGet<bool>("logging/memory").value_or( false );
@@ -139,8 +165,6 @@ namespace Jde
 		var flushOn = Settings::TryGet<ELogLevel>( "logging/flushOn" ).value_or( ELogLevel::Information );
 		_logger.flush_on( (spdlog::level::level_enum)flushOn );
 		auto pServer = IServerSink::Enabled() ? ServerSink::Create() : nullptr;
-		if( pServer )
-			AddTags( _serverTags, "logging/server/tags" );
 		if( _pMemoryLog )
 		{
 			for( var& m : *_pMemoryLog )
@@ -151,7 +175,10 @@ namespace Jde
 					args.push_back( fmt::detail::make_arg<ctx>(a) );
 				try
 				{
-					_logger.log( spdlog::source_loc{m.File.data(),(int)m.LineNumber,m.Function.data()}, (spdlog::level::level_enum)m.Level, fmt::vformat(m.MessageView, fmt::basic_format_args<ctx>{args.data(), (int)args.size()}) );
+					if( _sinks.size() )
+						_logger.log( spdlog::source_loc{m.File.data(),(int)m.LineNumber,m.Function.data()}, (spdlog::level::level_enum)m.Level, fmt::vformat(m.MessageView, fmt::basic_format_args<ctx>{args.data(), (int)args.size()}) );
+					else
+						std::cerr << fmt::vformat( m.MessageView, fmt::basic_format_args<ctx>{args.data(), (int)args.size()} );
 				}
 				catch( const fmt::v8::format_error& e )
 				{
@@ -165,6 +192,9 @@ namespace Jde
 		}
 		INFO( "settings path={}", Settings::Path() );
 		INFO( "log minLevel='{}' flushOn='{}'", ELogLevelStrings[minLevel], ELogLevelStrings[(uint8)flushOn] );//TODO add flushon to Server
+		if( pServer )
+			AddTags( _serverTags, "logging/server/tags" );
+		AddTags( _tags, "logging/tags" );
 	}
 
 	void Logging::LogServer( const MessageBase& m )noexcept
@@ -194,7 +224,7 @@ namespace Jde
 		for( int i=0; i<_status.details_size(); ++i )
 			os << ";  " << _status.details(i);
 
-		LOGS( ELogLevel::Trace, os.str() );
+		Logging::Log( Logging::Message(Logging::_statusLevel.Level, os.str()) );
 		if( Logging::Server() )
 			Logging::Server()->SendStatus = true;
 		_lastStatusUpdate = Clock::now();

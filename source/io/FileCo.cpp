@@ -75,9 +75,9 @@ namespace Jde::IO
 		{
 			_arg.Open();
 		}
-		catch( const IOException& e )
+		catch( IOException& e )
 		{
-			ExceptionPtr = std::make_exception_ptr( e );
+			ExceptionPtr = e.Clone();
 		}
 		return ExceptionPtr!=nullptr;
 	}

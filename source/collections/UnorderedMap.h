@@ -30,7 +30,6 @@ namespace Jde::Collections
 		uint eraseIf( function<bool(const TValue&)> func )noexcept;
 		α clear()noexcept{ unique_lock<shared_mutex> l(_mutex); base::clear(); }
 		uint size()const noexcept;
-		//shared_ptr<TValue> FindNC( const TKey& key ){ return const_cast<shared_ptr<TValue>>( Find(key) ); }
 		bool IfNone( function<bool(const TKey&,const TValue&)> ifFunction, function<void()> function );
 		sp<TValue> Find( const TKey& key )const noexcept;
 		sp<TValue> FindFirst( function<bool(const TValue&)> where );
@@ -47,7 +46,6 @@ namespace Jde::Collections
 		template<class... Args >
 		α AddOrUpdate( TKey key, function<sp<TValue>()> add, function<void(TValue&)> update )->void;
 		sp<std::forward_list<sp<TValue>>> Values()const;
-		//bool Set( const TKey& key, const TValue& value )noexcept;
 		bool Set( const TKey& key, sp<TValue> pValue )noexcept;
 		std::unique_lock<shared_mutex> Lock()noexcept{ return std::unique_lock<shared_mutex>{_mutex}; }
 	private:
@@ -190,10 +188,10 @@ namespace Jde::Collections
 		return pItem==base::end() ? nullptr : pItem->second;
 	}
 	template<typename TKey, typename TValue>
-	shared_ptr<TValue> UnorderedMap<TKey,TValue>::FindFirst( function<bool(const TValue&)> where )
+	sp<TValue> UnorderedMap<TKey,TValue>::FindFirst( function<bool(const TValue&)> where )
 	{
  		shared_lock<shared_mutex> l(_mutex);
-		shared_ptr<TValue> pFound;
+		sp<TValue> pFound;
 		for( const auto& idValuePtr : *this )
 		{
 			if( where(*idValuePtr.second) )

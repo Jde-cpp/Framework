@@ -40,7 +40,7 @@ namespace Jde::IO
 		FileIOArg( path path, bool vec )noexcept;
 		FileIOArg( path path, sp<vector<char>> pVec )noexcept;
 		FileIOArg( path path, sp<string> pData )noexcept;
-		~FileIOArg(){ DBG("FileIOArg::~FileIOArg"sv); }
+		//~FileIOArg(){ DBG("FileIOArg::~FileIOArg"sv); }
 		α Open()noexcept(false)->void;
 		α HandleChunkComplete( IFileChunkArg* pChunkArg )noexcept->bool;
 		α Send( coroutine_handle<Task2::promise_type>&& h )noexcept->void;
@@ -51,7 +51,6 @@ namespace Jde::IO
 		/*const*/ bool IsRead{ false };
 		fs::path Path;
 		std::variant<sp<vector<char>>,sp<string>> Buffer;
-
 		vector<up<IFileChunkArg>> Chunks;
 		coroutine_handle<Task2::promise_type> CoHandle;
 		HFile Handle{0};
@@ -69,7 +68,7 @@ namespace Jde::IO
 		α await_suspend( typename base::THandle h )noexcept->void override;//{ base::await_suspend( h ); _pPromise = &h.promise(); }
 		α await_resume()noexcept->TaskResult override;
 	private:
-		std::exception_ptr ExceptionPtr;
+		sp<IException> ExceptionPtr;
 		FileIOArg _arg;
 	};
 

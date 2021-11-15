@@ -56,21 +56,21 @@ namespace Jde::IO
 //#ifndef _MSC_VER
 	struct Γ IDriveChange
 	{
-		virtual void OnAccess( path path, const NotifyEvent& event )noexcept;
-		virtual void OnModify( path path, const NotifyEvent& event )noexcept;
-		virtual void OnAttribute( path path, const NotifyEvent& event )noexcept;
-		virtual void OnCloseWrite( path path, const NotifyEvent& event )noexcept;
-		virtual void OnCloseNoWrite( path path, const NotifyEvent& event )noexcept;
-		virtual void OnOpen( path path, const NotifyEvent& event )noexcept;
-		virtual void OnMovedFrom( path path, const NotifyEvent& event )noexcept;
-		virtual void OnMovedTo( path path, const NotifyEvent& event )noexcept;
-		virtual void OnCreate( path path, const NotifyEvent& event )noexcept;
-		virtual void OnDelete( path path, const NotifyEvent& event )noexcept;
-		virtual void OnDeleteSelf( path path, const NotifyEvent& event )noexcept;
-		virtual void OnMoveSelf( path path, const NotifyEvent& event )noexcept;
-		virtual void OnUnmount( path path, const NotifyEvent& event )noexcept;
-		virtual void OnQOverflow( path path, const NotifyEvent& event )noexcept;
-		virtual void OnIgnored( path path, const NotifyEvent& event )noexcept;
+		β OnAccess( path path, const NotifyEvent& event )noexcept->void;
+		β OnModify( path path, const NotifyEvent& event )noexcept->void;
+		β OnAttribute( path path, const NotifyEvent& event )noexcept->void;
+		β OnCloseWrite( path path, const NotifyEvent& event )noexcept->void;
+		β OnCloseNoWrite( path path, const NotifyEvent& event )noexcept->void;
+		β OnOpen( path path, const NotifyEvent& event )noexcept->void;
+		β OnMovedFrom( path path, const NotifyEvent& event )noexcept->void;
+		β OnMovedTo( path path, const NotifyEvent& event )noexcept->void;
+		β OnCreate( path path, const NotifyEvent& event )noexcept->void;
+		β OnDelete( path path, const NotifyEvent& event )noexcept->void;
+		β OnDeleteSelf( path path, const NotifyEvent& event )noexcept->void;
+		β OnMoveSelf( path path, const NotifyEvent& event )noexcept->void;
+		β OnUnmount( path path, const NotifyEvent& event )noexcept->void;
+		β OnQOverflow( path path, const NotifyEvent& event )noexcept->void;
+		β OnIgnored( path path, const NotifyEvent& event )noexcept->void;
 	private:
 		const LogTag& _logLevel{ Logging::TagLevel("driveWatcher") };
 	};
@@ -115,16 +115,16 @@ namespace Jde::IO
 
 	struct IDrive : std::enable_shared_from_this<IDrive>
 	{
-		virtual map<string,IDirEntryPtr> Recursive( path path )noexcept(false)=0;
-		virtual IDirEntryPtr Get( path path )noexcept(false)=0;
-		virtual IDirEntryPtr Save( path path, const vector<char>& bytes, const IDirEntry& dirEntry )noexcept(false)=0;
-		virtual IDirEntryPtr CreateFolder( path path, const IDirEntry& dirEntry )=0;
-		virtual void Remove( path path )=0;
-		virtual void Trash( path path )=0;
-		virtual void TrashDisposal( TimePoint latestDate )=0;
-		virtual VectorPtr<char> Load( const IDirEntry& dirEntry )=0;
-		virtual void Restore( sv name )noexcept(false)=0;
-		virtual void SoftLink( path existingFile, path newSymLink )noexcept(false)=0;
+		β Recursive( path path )noexcept(false)->map<string,IDirEntryPtr> =0;
+		β Get( path path )noexcept(false)->IDirEntryPtr=0;
+		β Save( path path, const vector<char>& bytes, const IDirEntry& dirEntry )noexcept(false)->IDirEntryPtr=0;
+		β CreateFolder( path path, const IDirEntry& dirEntry )->IDirEntryPtr=0;
+		β Remove( path path )->void=0;
+		β Trash( path path )->void=0;
+		β TrashDisposal( TimePoint latestDate )->void=0;
+		β Load( const IDirEntry& dirEntry )->VectorPtr<char> =0;
+		β Restore( sv name )noexcept(false)->void=0;
+		β SoftLink( path existingFile, path newSymLink )noexcept(false)->void=0;
 	};
 
 #pragma region DiskWatcher
@@ -134,14 +134,14 @@ namespace Jde::IO
 		virtual ~DiskWatcher();
 		constexpr static EDiskWatcherEvents DefaultEvents = {EDiskWatcherEvents::Modify | EDiskWatcherEvents::MovedFrom | EDiskWatcherEvents::MovedTo | EDiskWatcherEvents::Create | EDiskWatcherEvents::Delete};
 	protected:
-		virtual void OnModify( path path, const NotifyEvent& /*event*/ )noexcept{WARN( "No listener for OnModify {}."sv, path.string() );};
-		virtual void OnMovedFrom( path path, const NotifyEvent& /*event*/ )noexcept{WARN( "No listener for OnMovedFrom {}."sv, path.string() );};
-		virtual void OnMovedTo( path path, const NotifyEvent& /*event*/ )noexcept{WARN( "No listener for OnMovedTo {}."sv, path.string() );};
-		virtual void OnCreate( path path, const NotifyEvent& /*event*/ )noexcept=0;
-		virtual void OnDelete( path path, const NotifyEvent& /*event*/ )noexcept{WARN( "No listener for OnDelete {}."sv, path.string() );};
+		β OnModify( path path, const NotifyEvent& /*event*/ )noexcept->void{WARN( "No listener for OnModify {}."sv, path.string() );};
+		β OnMovedFrom( path path, const NotifyEvent& /*event*/ )noexcept->void{WARN( "No listener for OnMovedFrom {}."sv, path.string() );};
+		β OnMovedTo( path path, const NotifyEvent& /*event*/ )noexcept->void{WARN( "No listener for OnMovedTo {}."sv, path.string() );};
+		β OnCreate( path path, const NotifyEvent& /*event*/ )noexcept->void=0;
+		β OnDelete( path path, const NotifyEvent& /*event*/ )noexcept->void{WARN( "No listener for OnDelete {}."sv, path.string() );};
 	private:
-		void Run()noexcept;
-		void ReadEvent( const pollfd& fd, bool isRetry=false )noexcept(false);
+		α Run()noexcept->void;
+		α ReadEvent( const pollfd& fd, bool isRetry=false )noexcept(false)->void;
 		EDiskWatcherEvents _events{DefaultEvents};
 		map<uint32_t, fs::path> _descriptors;
 		fs::path _path;

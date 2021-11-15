@@ -89,6 +89,7 @@
 		"__tree": "cpp",
 		"stack": "cpp",
 		"__errc": "cpp",
-		"codecvt": "cpp"
+		"codecvt": "cpp",
+		"source_location": "cpp"
 	}
 }

@@ -80,7 +80,7 @@ namespace Jde::DB
 				for( auto& column : pTable->Columns )
 				{
 					var& dbTable = pNameDBTable->second;
-					var pDBColumn = dbTable.FindColumn( column.Name ); CONTINUE_IF( !pDBColumn, "Could not find db column {}", column.Name );
+					var pDBColumn = dbTable.FindColumn( column.Name ); if( !pDBColumn ){ ERR("Could not find db column {}", column.Name); continue; }
 					if( pDBColumn->Default.empty() && column.Default.size() && column.Default!="$now" )
 						_pDataSource->TryExecute( pSyntax->AddDefault(tableName, column.Name, column.Default) );
 				}
@@ -224,8 +224,6 @@ namespace Jde::DB
 		{
 			for( auto& column : pTable->Columns )
 			{
-				//if( pTable->Name=="um_users" && column.Name=="authenticator_id" )
-				//	__debugbreak();
 				if( column.PKTable.empty() )
 					continue;
 				if( std::find_if(fks.begin(), fks.end(), [&,t=tableName](var& fk){return fk.second.Table==t && fk.second.Columns==vector<string>{column.Name};})!=fks.end() )

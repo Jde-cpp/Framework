@@ -84,7 +84,7 @@ namespace Collections
 		return results;
 	}
 
-	ẗ Keys( const map<K,V>& map )noexcept->unique_ptr<std::set<K>>
+	ẗ Keys( const map<K,V>& map )noexcept->up<std::set<K>>
 	{
 		auto pResults = make_unique<std::set<K>>();
 		for( const auto& keyValue : map )
@@ -93,7 +93,7 @@ namespace Collections
 		return pResults;
 	}
 
-	ẗ Values( const map<K,V>& map )->unique_ptr<std::vector<V>>
+	ẗ Values( const map<K,V>& map )->up<std::vector<V>>
 	{
 		auto pResults = make_unique<std::vector<V>>(); pResults->reserve( map.size() );
 		for( const auto& keyValue : map )
@@ -160,9 +160,9 @@ namespace Collections
 		return result;
 	}
 
-	ẗ FindFirst( const std::map<K,shared_ptr<V>>& collection, std::function<bool(const V&)> func )->const shared_ptr<V>
+	ẗ FindFirst( const std::map<K,sp<V>>& collection, std::function<bool(const V&)> func )->const sp<V>
 	{
-		shared_ptr<V> pValue{nullptr};
+		sp<V> pValue{nullptr};
 		for( const auto& keyValuePtr : collection )
 		{
 			if( func(*keyValuePtr.second) )
@@ -174,9 +174,9 @@ namespace Collections
 		return pValue;
 	}
 
-	ẗ FindFirst( std::map<K,shared_ptr<V>>& collection, std::function<bool(const V&)> func )->shared_ptr<V>
+	ẗ FindFirst( std::map<K,sp<V>>& collection, std::function<bool(const V&)> func )->sp<V>
 	{
-		shared_ptr<V> pValue{nullptr};
+		sp<V> pValue{nullptr};
 		for( const auto& keyValuePtr : collection )
 		{
 			if( func(*keyValuePtr.second) )
@@ -188,7 +188,7 @@ namespace Collections
 		return pValue;
 	}
 
-	ẗ Erase( std::map<K,shared_ptr<V>>& collection, std::function<bool(const V&)> func )->void
+	ẗ Erase( std::map<K,sp<V>>& collection, std::function<bool(const V&)> func )->void
 	{
 		std::forward_list<K> doomed;
 		for( const auto& keyValuePtr : collection )
@@ -211,12 +211,7 @@ namespace Collections
 			{
 				in = universe.find(item)!=universe.end();
 				if( !in )
-				{
-					//GetDefaultLogger()->debug( "{}", item.DateDisplay() );
-					//for( const auto& item2 : universe )
-						//GetDefaultLogger()->debug( "{}", item2.DateDisplay() );
 					break;
-				}
 			}
 		}
 		return in;
@@ -239,7 +234,7 @@ namespace Collections
 	template<template<class, class,class...> class M, class K, class V, class... Ts>
 	up<V>& InsertUnique( M<K,up<V>,Ts...>& map, const K& key )noexcept
 	{
-		auto p = map.find( key );//M<K,std::unique_ptr<V>>::iterator
+		auto p = map.find( key );//M<K,std::up<V>>::iterator
 		if( p == map.end() )
 			p = map.emplace( key, make_unique<V>() ).first;
 		return p->second;
@@ -253,22 +248,5 @@ namespace Collections
 			p = map.emplace( key, make_shared<V>() ).first;
 		return *p->second;
 	}
-
-/*	template<template<class, class,class...> class M, class K, class V, class... Ts>
-	V TryGet( M<K,V,Ts...>& map, const K& key, function<V()> fnctn )noexcept
-	{
-		auto p = map.find( key );//M<K,sp<V>>::iterator
-		if( p == map.end() )
-			p = map.emplace( key, make_shared<V>() );
-		return *p->second;
-	}
-*/
-
-/*	template<template<class, class> class M, class K, class V>
-	void If( const M<K,V>& map, const K& key, function<void(const K&)> fnctn )
-	{
-		if( var p = map.find( key ); p!=map.end() )
-			fnctn( p->second );
-	}*/
 }}
 #undef var

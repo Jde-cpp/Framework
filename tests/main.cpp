@@ -10,9 +10,8 @@ namespace Jde
 #endif
  	void Startup( int argc, char **argv )noexcept
 	{
-		var appName = "Tests.Framework"sv;
 		ASSERT( argc>1 && string{argv[1]}=="-c" )
-		OSApp::Startup( argc, argv, appName, "Unit Tests description" );
+		OSApp::Startup( argc, argv, "Tests.Framework"sv, "Unit Tests description" );
 	}
 }
 

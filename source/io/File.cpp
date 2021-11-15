@@ -20,14 +20,14 @@ namespace Jde::IO
      			function( dirEntry );
 		}
 
-		std::unique_ptr<std::set<fs::directory_entry>> GetDirectory( path directory )
+		up<std::set<fs::directory_entry>> GetDirectory( path directory )
 		{
 			auto items = make_unique<std::set<fs::directory_entry>>();
 			Jde::IO::FileUtilities::ForEachItem( directory, [&items]( fs::directory_entry item ){items->emplace(item);} );
 			return items;
 		}
 
-		std::unique_ptr<std::set<fs::directory_entry>> GetDirectories( path directory, std::unique_ptr<std::set<fs::directory_entry>> pItems )
+		up<std::set<fs::directory_entry>> GetDirectories( path directory, up<std::set<fs::directory_entry>> pItems )
 		{
 			if( !pItems )
 				pItems = make_unique<std::set<fs::directory_entry>>();
@@ -48,7 +48,7 @@ namespace Jde::IO
 			return fs::file_size( fs::canonical(path) );
 		}
 
-		unique_ptr<vector<char>> LoadBinary( path path )noexcept(false)//fs::filesystem_error
+		up<vector<char>> LoadBinary( path path )noexcept(false)//fs::filesystem_error
 		{
 			CHECK_PATH( path );
 			auto size = GetFileSize( path );
@@ -87,7 +87,7 @@ namespace Jde::IO
 			SaveBinary( path, data );
 			Compress( path );
 		}
-		unique_ptr<vector<char>> Compression::LoadBinary( path uncompressed, path compressed, bool setPermissions, bool leaveUncompressed )noexcept(false)
+		up<vector<char>> Compression::LoadBinary( path uncompressed, path compressed, bool setPermissions, bool leaveUncompressed )noexcept(false)
 		{
 			var compressedPath = compressed.string().size() ? compressed : uncompressed;
 			Extract( compressedPath );
@@ -357,7 +357,7 @@ namespace Jde::IO
 				++found;
 		}
 		uint_fast8_t* pColumnIndexes3 = columnIndexes3.data();
-		unique_ptr<std::thread> pThread(nullptr);
+		up<std::thread> pThread(nullptr);
 		do
 		{
 			file.read( rgBuffer.data(), chunkSize );

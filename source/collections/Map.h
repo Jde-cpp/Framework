@@ -21,7 +21,6 @@ namespace Jde
 		Map( const Map& copy )=delete;
 		void erase( const TKey& item )noexcept{ LOCK base::erase( item ); }
 		void clear()noexcept{ LOCK base::clear(); }
-		//base Find( std::function<bool(const TValue&)> func )const;
 		sp<TValue> Find( const TKey& key )const noexcept;
 		sp<TValue> FindFirst( std::function<bool(const TValue&)> where );
 		uint ForEach( std::function<void(const TKey&, const TValue&)>& )const;
@@ -43,7 +42,7 @@ namespace Jde
 	}
 
 	template<typename TKey, typename TValue>
-	std::shared_ptr<TValue> Map<TKey,TValue>::Find( const TKey& key )const noexcept
+	sp<TValue> Map<TKey,TValue>::Find( const TKey& key )const noexcept
 	{
  		SLOCK
 		const auto pItem = base::find( key );
@@ -69,10 +68,10 @@ namespace Jde
 	}
 
 	template<typename TKey, typename TValue>
-	shared_ptr<TValue> Map<TKey,TValue>::FindFirst( std::function<bool(const TValue&)> where )
+	sp<TValue> Map<TKey,TValue>::FindFirst( std::function<bool(const TValue&)> where )
 	{
  		SLOCK
-		shared_ptr<TValue> pFound;
+		sp<TValue> pFound;
 		for( const auto& idValuePtr : *this )
 		{
 			if( where(*idValuePtr.second) )

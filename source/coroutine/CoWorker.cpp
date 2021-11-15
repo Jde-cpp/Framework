@@ -6,12 +6,12 @@ namespace Jde::Coroutine
 	sp<CoWorker> CoWorker::_pInstance;
 	std::once_flag CoWorker::_singleThread;
 
-	void CoWorker::Start()noexcept
+	α CoWorker::Start()noexcept->void
 	{
 		IApplication::AddShutdown( _pInstance );
 		_pThread = make_unique<Threading::InterruptibleThread>( _name, [this](){Run();} );
 	}
-	void CoWorker::Shutdown()noexcept
+	α CoWorker::Shutdown()noexcept->void
 	{
 		_pThread->Interrupt();
 		{
@@ -22,7 +22,7 @@ namespace Jde::Coroutine
 		_pInstance = nullptr;
 	}
 
-	void CoWorker::Run()noexcept
+	α CoWorker::Run()noexcept->void
 	{
 		Threading::SetThreadDscrptn( _name );
 		DBG( "{} - Starting"sv, _name );

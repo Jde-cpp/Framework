@@ -15,7 +15,7 @@ namespace Jde
 {
 	using namespace std::chrono;
 
-	SDuration Stopwatch::_minimumToLog = 1s;
+	Stopwatch::SDuration Stopwatch::_minimumToLog = 1s;
 
 	Stopwatch::Stopwatch( sv what, bool started )noexcept:
 		_what{ what },
@@ -36,7 +36,7 @@ namespace Jde
 			Finish();
 	}
 
-	SDuration Stopwatch::Elapsed()const
+	Stopwatch::SDuration Stopwatch::Elapsed()const
 	{
 		auto end = SClock::now();
 		var asNano = duration_cast<SDuration>( end - _start - _elapsedPause );
@@ -149,7 +149,7 @@ namespace Jde
 			fmt = format( "{0}", count );
 		return fmt;
 	}
-	
+
 	void Stopwatch::UnPause()
 	{
 		if( _startPause!=STimePoint{} )

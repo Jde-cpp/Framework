@@ -17,9 +17,9 @@ namespace Jde::Coroutine
 		TAwaitable( str name )noexcept:_name{name}{};
 
 		β await_ready()noexcept->bool{ return false; }
-		virtual TResult await_resume()noexcept=0;
-		inline virtual void await_suspend( coroutine_handle<Task2::promise_type> /*h*/ )noexcept{ OriginalThreadParamPtr = { Threading::GetThreadDescription(), Threading::GetAppThreadHandle() }; }
-		inline void AwaitResume()noexcept
+		β await_resume()noexcept->TResult=0;
+		β await_suspend( coroutine_handle<typename TTask::promise_type> /*h*/ )noexcept->void{ OriginalThreadParamPtr = { Threading::GetThreadDescription(), Threading::GetAppThreadHandle() }; }
+		α AwaitResume()noexcept->void
 		{
 			if( _name.size() )
 				DBG("({}){}::await_resume"sv, std::this_thread::get_id(), _name);
@@ -33,39 +33,40 @@ namespace Jde::Coroutine
 		const string _name;
 	};
 
-	struct IAwaitable /*abstract*/ : TAwaitable<Task2>
+	class IAwaitable : public TAwaitable<Task2>
 	{
 		using base=TAwaitable<Task2>;
-		virtual ~IAwaitable()=0;
-
+	public:
 		IAwaitable( str name={} )noexcept:base{name}{};
-		void await_suspend( typename base::THandle h )noexcept override
+		virtual ~IAwaitable()=0;
+		α await_suspend( HCoroutine h )noexcept->void override
 		{
 			base::await_suspend( h );
-			auto& ro = h.promise().get_return_object();
-			if( ro.HasResult() )
-				ro.Clear();
 			_pPromise = &h.promise();
+			if( auto& ro = _pPromise->get_return_object(); ro.HasResult() )
+				ro.Clear();
 		}
-		typename base::TResult await_resume()noexcept override{ AwaitResume(); return _pPromise->get_return_object().GetResult(); }
+		α await_resume()noexcept->TaskResult override{ AwaitResume(); return _pPromise->get_return_object().GetResult(); }
 	protected:
-		typename base::TPromise* _pPromise{ nullptr };
+		Task2::promise_type* _pPromise{ nullptr };
 	};
 	inline IAwaitable::~IAwaitable(){}
 
 	struct AsyncAwaitable final : IAwaitable
 	{
+		using base=IAwaitable;
 		AsyncAwaitable( function<sp<void>()> fnctn )noexcept:_fnctn{fnctn}{};
-		void await_suspend( IAwaitable::THandle h )noexcept override{ base::await_suspend(h); CoroutinePool::Resume( move(h) ); }
+		α await_suspend( IAwaitable::THandle h )noexcept->void override{ base::await_suspend(h); CoroutinePool::Resume( move(h) ); }
 
 		TaskResult await_resume()noexcept override;
 	private:
 		function<sp<void>()> _fnctn;
 	};
 
-	struct FunctionAwaitable /*final*/ : IAwaitable
+	class FunctionAwaitable /*final*/ : public IAwaitable
 	{
 		using base=IAwaitable;
+	public:
 		FunctionAwaitable( function<Task2(typename base::THandle)> fnctn, str name={} )noexcept:base{name}, _fnctn2{fnctn}{};
 
 		α await_suspend( typename base::THandle h )noexcept->void override{ base::await_suspend( h ); _fnctn2( move(h) ); }
@@ -74,16 +75,14 @@ namespace Jde::Coroutine
 	};
 	template<class T>
 	struct Promise : std::promise<T>
-	{
-		~Promise(){ DBG("~Promise"sv); }
-	};
+	{};
 	ⓣ CallAwaitable( up<Promise<sp<T>>> pPromise, IAwaitable&& a )->Task2
 	{
 		TaskResult r = co_await a;
 		if( r.HasValue() )
 			pPromise->set_value( r.Get<T>() );
 		else
-			pPromise->set_exception( r.Error() );
+			pPromise->set_exception( r.Error()->Ptr() );
 	}
 	ⓣ Future( IAwaitable&& a )->std::future<sp<T>>
 	{
@@ -97,7 +96,7 @@ namespace Jde::Coroutine
 		using base=IAwaitable;
 		AWrapper( function<Task2(HCoroutine h)> fnctn, str name={} )noexcept:base{name}, _fnctn{fnctn}{};
 
-		void await_suspend( HCoroutine h )noexcept override
+		α await_suspend( HCoroutine h )noexcept->void override
 		{
 			base::await_suspend( h );
 			_fnctn( move(h) );
@@ -116,16 +115,16 @@ namespace Jde::Coroutine
 	};
 	template<class T> CancelAwaitable<T>::~CancelAwaitable(){}
 
-	inline TaskResult AsyncAwaitable::await_resume()noexcept
+	Ξ AsyncAwaitable::await_resume()noexcept->TaskResult
 	{
 		AwaitResume();
 		try
 		{
 			return TaskResult{ _fnctn() };
 		}
-		catch( const std::exception& e )
+		catch( IException& e )
 		{
-			return TaskResult{ std::make_exception_ptr(e) };
+			return TaskResult{ e.Clone() };
 		}
 	}
 }
