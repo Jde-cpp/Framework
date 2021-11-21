@@ -213,7 +213,7 @@ namespace Jde::Logging
 			//if( _pFile )
 			//	File = *_pFile;
 			if( _pFunction )
-				Function = *_pFunction;
+				Function = _pFunction->c_str();
 		}
 	}
 }

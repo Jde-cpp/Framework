@@ -17,7 +17,7 @@ namespace Jde
 	using nlohmann::ordered_json;
 	static var& _logLevel{ Logging::TagLevel("sql") };
 
-	α DB::Message( sv sql, const std::vector<DataValue>* pParameters, sv error )noexcept->string
+	α DB::Message( sv sql, const vector<object>* pParameters, sv error )noexcept->string
 	{
 		var size = pParameters ? pParameters->size() : 0;
 		ostringstream os;
@@ -27,21 +27,25 @@ namespace Jde
 		for( uint sqlIndex=0, paramIndex=0; (sqlIndex=sql.find_first_of('?', prevIndex))!=string::npos && paramIndex<size; ++paramIndex, prevIndex=sqlIndex+1 )
 		{
 			os << sql.substr( prevIndex, sqlIndex-prevIndex );
-			os << DB::to_string( (*pParameters)[paramIndex] );
+			os << DB::ToString( (*pParameters)[paramIndex] );
 		}
 		if( prevIndex<sql.size() )
 			os << sql.substr( prevIndex );
 		return os.str();
 	}
-	α DB::Log( sv sql, const std::vector<DataValue>* pParameters, const source_location& sl )noexcept->void
+	α DB::Log( sv sql, const vector<object>* pParameters, SL sl )noexcept->void
 	{
 		var l = _logLevel.Level;
 		Logging::Log( Logging::Message{l, Message(sql, pParameters, {}), sl} );
 	}
 
-	α DB::Log( sv sql, const std::vector<DataValue>* pParameters, ELogLevel level, sv error, const source_location& sl )noexcept->void
+	α DB::Log( sv sql, const vector<object>* pParameters, ELogLevel level, sv error, SL sl )noexcept->void
 	{
 		Logging::Log( Logging::Message{level, Message(sql, pParameters, error), sl} );
+	}
+	α DB::LogNoServer( sv sql, const vector<object>* pParameters, ELogLevel level, sv error, SL sl )noexcept->void
+	{
+		Logging::LogNoServer( Logging::Message{level, Message(sql, pParameters, error), sl} );
 	}
 
 	class DataSourceApi
@@ -54,7 +58,7 @@ namespace Jde
 		{}
 		decltype(GetDataSource) *GetDataSourceFunction;
 
-		sp<DB::IDataSource> Emplace( sv connectionString )
+		α Emplace( sv connectionString )->sp<DB::IDataSource>
 		{
 			std::unique_lock l{ _connectionsMutex };
 			auto pDataSource = _pConnections->find( string(connectionString) );
@@ -73,11 +77,11 @@ namespace Jde
 	sp<DB::Syntax> _pSyntax;
 	sp<DB::IDataSource> _pDefault;
 	up<vector<function<void()>>> _pDBShutdowns = make_unique<vector<function<void()>>>();
-	void DB::ShutdownClean( function<void()>& shutdown )noexcept
+	α DB::ShutdownClean( function<void()>& shutdown )noexcept->void
 	{
 		_pDBShutdowns->push_back( shutdown );
 	}
-	void DB::CleanDataSources()noexcept
+	α DB::CleanDataSources()noexcept->void
 	{
 		DBG( "CleanDataSources"sv );
 		DB::ClearQLDataSource();
@@ -96,7 +100,7 @@ namespace Jde
 		}
 		DBG( "~CleanDataSources"sv );
 	}
-	void DB::CreateSchema()noexcept(false)
+	α DB::CreateSchema()noexcept(false)->void
 	{
 		auto pDataSource = DB::DataSource();
 		var path = Settings::Global().Get<fs::path>( "metaDataPath" );
@@ -104,7 +108,7 @@ namespace Jde
 		ordered_json j = json::parse( IO::FileUtilities::Load(path) );
 		/*var schema =*/ pDataSource->SchemaProc()->CreateSchema( j, path.parent_path() );
 	}
-	sp<DB::Syntax> DB::DefaultSyntax()noexcept
+	α DB::DefaultSyntax()noexcept->sp<DB::Syntax>
 	{
 		if( !_pSyntax )
 		{
@@ -116,14 +120,14 @@ namespace Jde
 	}
 
 	std::once_flag _singleShutdown;
-	void Initialize( path libraryName )noexcept(false)
+	α Initialize( path libraryName )noexcept(false)->void
 	{
 		static DataSourceApi api{ libraryName };
 		_pDefault = sp<Jde::DB::IDataSource>{ api.GetDataSourceFunction() };
 		std::call_once( _singleShutdown, [](){ IApplication::AddShutdownFunction( DB::CleanDataSources ); } );
 	}
 
-	sp<DB::IDataSource> DB::DataSource()noexcept(false)
+	α DB::DataSource()noexcept(false)->sp<DB::IDataSource>
 	{
 		if( !_pDefault )
 		{
@@ -132,11 +136,11 @@ namespace Jde
 			var env = cs.find( '=' )==string::npos ? IApplication::Instance().GetEnvironmentVariable( cs ) : string{};
 			_pDefault->SetConnectionString( env.empty() ? cs : env );
 		}
-		ASSERT( _pDefault );
+		THROW_IF( !_pDefault, "No default datasource" );
 		return _pDefault;
 	}
 
-	sp<DB::IDataSource> DB::DataSource( path libraryName, sv connectionString )
+	α DB::DataSource( path libraryName, sv connectionString )->sp<DB::IDataSource>
 	{
 		sp<IDataSource> pDataSource;
 		std::unique_lock l{_dataSourcesMutex};
@@ -148,32 +152,27 @@ namespace Jde
 		return pSource->second->Emplace( connectionString );
 	}
 
-#define DS if( auto p = DataSource(); p ) p
-#define DS_RET(x) auto p = DataSource(); return !p ? x : p
-	void DB::Select( sv sql, std::function<void(const IRow&)> f )noexcept(false){ DS->Select(sql, f); }
-	void DB::Select( sv sql, std::function<void(const IRow&)> f, const vector<DataValue>& values )noexcept(false){ DS->Select(sql, f, values); }
-	uint DB::ExecuteProc( sv sql, vector<DataValue>&& parameters )noexcept(false)
+//#define DS if( auto p = DataSource(); p ) p
+	α DB::Select( string sql, function<void(const IRow&)> f, SL sl )noexcept(false)->void{ DataSource()->Select(move(sql), f, sl); }
+	α DB::Select( string sql, function<void(const IRow&)> f, const vector<object>& values, SL sl )noexcept(false)->void{ DataSource()->Select(move(sql), f, values, sl); }
+	α DB::Execute( string sql, vector<object>&& parameters, SL sl )noexcept(false)->uint
 	{
-		DS_RET(0)->ExecuteProc( sql, parameters );
-	}
-	uint DB::Execute( sv sql, std::vector<DataValue>&& parameters )noexcept(false)
-	{
-		DS_RET(0)->Execute( sql, parameters );
+		return DataSource()->Execute( move(sql), parameters, sl );
 	}
 
-	CIString DB::SelectName( sv sql, uint id, sv cacheName )noexcept(false)
+	α DB::SelectName( string sql, uint id, sv cacheName, SL sl )noexcept(false)->CIString
 	{
 		CIString y;
 		if( auto p = cacheName.size() ? Cache::GetValue<uint,CIString>(string{cacheName}, id) : sp<CIString>{}; p )
 			y = CIString{ *p };
 		if( y.empty() )
-			y = Scaler<CIString>( sql, {id} ).value_or( CIString{} );
+			y = Scaler<CIString>( move(sql), {id}, sl ).value_or( CIString{} );
 		return y;
 	}
 
-	α DB::SelectIds( sv sql, const std::set<uint>& ids, std::function<void(const IRow&)> f )noexcept(false)->void
+	α DB::SelectIds( string sql, const std::set<uint>& ids, function<void(const IRow&)> f, SL sl )noexcept(false)->void
 	{
-		vector<DataValue> params; params.reserve( ids.size() );
+		vector<object> params; params.reserve( ids.size() );
 		string str; str.reserve( ids.size()*2 );
 		for( var id : ids )
 		{
@@ -182,6 +181,6 @@ namespace Jde
 			str+="?";
 			params.emplace_back( id );
 		}
-		Select( format("{}({})", sql, str), f, params );
+		Select( format("{}({})", move(sql), str, sl), f, params );
 	}
 }

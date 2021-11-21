@@ -1,10 +1,68 @@
 #include "Mutex.h"
 #include <boost/container/flat_map.hpp>
+#define var const auto
+namespace Jde
+{
+	static const LogTag& _logLevel = Logging::TagLevel( "locks" );
+
+	CoGuard::CoGuard( CoLock& lock )noexcept:
+		_lock{lock}
+	{
+		LOG( "CoGuard" );
+	}
+
+	CoGuard::~CoGuard()
+	{
+		LOG( "~CoGuard" );
+		_lock.Clear();
+	}
+
+	α LockAwait::await_ready()noexcept->bool
+	{
+		_pGuard = _lock.TestAndSet();
+		return !!_pGuard;
+	}
+	α LockAwait::await_suspend( HCoroutine h )noexcept->void
+	{
+		base::await_suspend( h );
+		if( (_pGuard = _lock.Push(h)) )
+			h.resume();
+	}
+	α CoLock::TestAndSet()->sp<CoGuard>
+	{
+		lock_guard l{ _mutex };
+		return _flag.test_and_set(std::memory_order_acquire) ? sp<CoGuard>{} : sp<CoGuard>( new CoGuard(*this) );
+	}
+	α CoLock::Push( HCoroutine h )->sp<CoGuard>
+	{
+		lock_guard l{ _mutex };
+		var p = _flag.test_and_set(std::memory_order_acquire) ? sp<CoGuard>{} : sp<CoGuard>{ new CoGuard(*this) };
+		if( !p )
+			_queue.push( move(h) );
+		return p;
+	}
+	α CoLock::Clear()->void
+	{
+		lock_guard l{ _mutex };
+		if( !_queue.empty() )
+		{
+			auto h = _queue.front();
+			_queue.pop();
+			h.promise().get_return_object().SetResult( sp<CoGuard>{ new CoGuard(*this) } );
+			if( _resumeOnPool )
+				CoroutinePool::Resume( move(h) );
+			else
+				h.resume();
+		}
+		else
+			_flag.clear();
+	}
+}
 namespace Jde::Threading
 {
-	map<string,std::deque<std::variant<CoLockAwatiable*,coroutine_handle<>>>> _coLocks; std::atomic_flag _coLocksLock;
+	flat_map<string,std::deque<std::variant<LockKeyAwait*,coroutine_handle<>>>> _coLocks; std::atomic_flag _coLocksLock;
 
-	CoLockGuard::CoLockGuard( str key, std::variant<CoLockAwatiable*,coroutine_handle<>> h )noexcept:
+	CoLockGuard::CoLockGuard( str key, std::variant<LockKeyAwait*,coroutine_handle<>> h )noexcept:
 		Handle{h},
 		Key{key}
 	{}
@@ -20,26 +78,26 @@ namespace Jde::Threading
 		}
 	}
 
-	bool CoLockAwatiable::await_ready()noexcept
+	bool LockKeyAwait::await_ready()noexcept
 	{
 		AtomicGuard l( _coLocksLock );
 		auto& locks = _coLocks.try_emplace( Key ).first->second;
 		locks.push_back( this );
 		return locks.size()==1;
 	}
-	void CoLockAwatiable::await_suspend( typename base::THandle h )noexcept
+	void LockKeyAwait::await_suspend( typename base::THandle h )noexcept
 	{
 		base::await_suspend( h );
 		AtomicGuard l( _coLocksLock ); ASSERT( _coLocks.find(Key)!=_coLocks.end() );
 		auto& locks = _coLocks.find( Key )->second;
 		for( uint i=0; !Handle && i<locks.size(); ++i )
 		{
-			if( locks[i].index()==0 && get<CoLockAwatiable*>(locks[i])==this )
+			if( locks[i].index()==0 && get<LockKeyAwait*>(locks[i])==this )
 				locks[i] = Handle = h;
  		}
 		ASSERT( Handle );
 	}
-	CoLockAwatiable::base::TResult CoLockAwatiable::await_resume()noexcept
+	LockKeyAwait::base::TResult LockKeyAwait::await_resume()noexcept
 	{
 		return Coroutine::TaskResult{ Handle ? make_shared<CoLockGuard>( Key, Handle ) : make_shared<CoLockGuard>( Key, this ) };
 	}

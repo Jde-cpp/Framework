@@ -14,7 +14,7 @@ namespace Jde::IO
 {
 	namespace FileUtilities
 	{
-		void ForEachItem( path path, std::function<void(const fs::directory_entry&)> function )noexcept(false)//__fs::filesystem::filesystem_error
+		α ForEachItem( path path, std::function<void(const fs::directory_entry&)> function )noexcept(false)->void//__fs::filesystem::filesystem_error
 		{
 			for( var& dirEntry : fs::directory_iterator(path) )
      			function( dirEntry );
@@ -68,21 +68,29 @@ namespace Jde::IO
 			result.assign( (std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>() );  //vexing parse
 			return result;
 		}
-		void SaveBinary( path path, const std::vector<char>& data )noexcept(false)
+		α SaveBinary( path path, const std::vector<char>& data )noexcept(false)->void
 		{
 			std::ofstream f( path, std::ios::binary );
 			THROW_IFX( f.fail(), IOException(path, "Could not open file") );
 
 			f.write( data.data(), data.size() );
 		}
-		void Save( path path, sv value, std::ios_base::openmode openMode )noexcept(false)
+		α Save( path path, sv value, std::ios_base::openmode openMode, SL sl )noexcept(false)->void
 		{
-			std::ofstream f( path, openMode );
-			THROW_IFX( f.fail(), IOException(path, "Could not open file") );
-
-			f.write( value.data(), value.size() );
+			Save( path, ms<string>(value), sl );
+			// if( !fs::exists(path.parent_path()) )
+			// {
+			// 	fs::create_directories( path.parent_path() );
+			// 	INFO( "Created directory '{}'", path.parent_path() );
+			// }
+			// std::ofstream f{ path, openMode }; THROW_IFX( f.fail(), IOException(path, "Could not open file", sl) );
+			// f.write( value.data(), value.size() );
 		}
-		void Compression::Save( path path, const vector<char>& data )
+		α Save( path path, sp<string> value, SL sl )noexcept(false)->void
+		{
+			Future<sp<void>>( IO::Write(path, value, sl) ).get();
+		}
+		α Compression::Save( path path, const vector<char>& data )->void
 		{
 			SaveBinary( path, data );
 			Compress( path );
@@ -117,7 +125,7 @@ namespace Jde::IO
 			auto compressedFile = path;
 			return compressedFile.replace_extension( format("{}{}", path.extension().string(),Extension()) );
 		}
-		void Compression::Extract( path path )noexcept(false)
+		α Compression::Extract( path path )noexcept(false)->void
 		{
 			auto destination = string( path.parent_path().string() );
 			fs::path compressedFile = path;
@@ -185,7 +193,7 @@ namespace Jde::IO
 		return columnNames;
 	}
 
-	void File::ForEachLine( sv filePath, const std::function<void(sv)>& function, const size_t lineCount )
+	α File::ForEachLine( sv filePath, const std::function<void(sv)>& function, const size_t lineCount )->void
 	{
 		std::ifstream file( string(filePath).c_str() ); THROW_IFX(file.fail(), IOException(filePath, "Could not open file") );
 		//String line;
@@ -594,7 +602,7 @@ namespace Jde::IO
 		}
 		return make_tuple( year, month, day );
 	}
-	void FileUtilities::Replace( path source, path destination, const flat_map<string,string>& replacements )noexcept(false)
+	α FileUtilities::Replace( path source, path destination, const flat_map<string,string>& replacements )noexcept(false)->void
 	{
 		auto sourceContent = Load( source );
 		for( var& [search,replacement] : replacements )

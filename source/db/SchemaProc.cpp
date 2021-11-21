@@ -150,10 +150,10 @@ namespace Jde::DB
 			}
 			for( var& jData : pTable->Data )
 			{
-				vector<DB::DataValue> params;
+				vector<object> params;
 
 				ostringstream osSelect{ "select count(*) from ", std::ios::ate }; osSelect << tableName << " where ";
-				vector<DB::DataValue> selectParams;
+				vector<object> selectParams;
 				ostringstream osWhere;
 				var set = [&,&table=*pTable]()
 				{
@@ -164,7 +164,7 @@ namespace Jde::DB
 							osWhere << " and ";
 						osWhere << keyColumn << "=?";
 						if( var pData = jData.find( Schema::ToJson(keyColumn) ); pData!=jData.end() )
-							selectParams.push_back( ToDataValue(table.FindColumn(keyColumn)->Type, *pData, keyColumn) );
+							selectParams.push_back( ToObject(table.FindColumn(keyColumn)->Type, *pData, keyColumn) );
 						else
 						{
 							selectParams.clear();
@@ -202,7 +202,7 @@ namespace Jde::DB
 					if( haveData )
 					{
 						osInsertValues << "?";
-						params.push_back( ToDataValue(column.Type, *pData, column.Name) );
+						params.push_back( ToObject(column.Type, *pData, column.Name) );
 					}
 					else
 						osInsertValues << ( column.Default=="$now" ? pSyntax->UtcNow() : column.Default );
@@ -242,7 +242,7 @@ namespace Jde::DB
 						column.IsEnum = true;
 
 					auto i = 0;
-					auto getName = [&,t=tableName](auto i){ return format( "{}_{}{}_fk", AbbrevName(t), AbbrevName(pPKTable->first), i==0 ? "" : to_string(i)); };
+					auto getName = [&,t=tableName](auto i){ return format( "{}_{}{}_fk", AbbrevName(t), AbbrevName(pPKTable->first), i==0 ? "" : ToString(i)); };
 					auto name = getName( i++ );
 					for( ; fks.find(name)!=fks.end(); name = getName(i++) );
 

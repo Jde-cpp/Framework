@@ -3,61 +3,59 @@
 #define var const auto
 namespace Jde::DB
 {
-	void IDataSource::Select( sv sql, std::function<void(const IRow&)> f )
+	α IDataSource::Select( string sql, RowΛ f, SL sl )noexcept(false)->void
 	{
-		Select( sql, f, nullptr, true );
+		Select( move(sql), f, nullptr, sl );
 	}
-	void IDataSource::Select( sv sql, std::function<void(const IRow&)> f, const vector<DataValue>& values, bool log, const source_location& sl )noexcept(false)
+	α IDataSource::Select( string sql, RowΛ f, const vector<object>& values, SL sl )noexcept(false)->void
 	{
-		Select( sql, f, &values, log, sl );
+		Select( move(sql), f, &values, sl );
 	}
-	bool IDataSource::TrySelect( sv sql, std::function<void(const IRow&)> f )noexcept
+	α IDataSource::TrySelect( string sql, RowΛ f, SL sl )noexcept->bool
 	{
-		return Try( [&]{Select( sql, f);} );
+		return Try( [&]{Select( move(sql), f, sl);} );
 	}
 
-	optional<uint> IDataSource::TryExecute( sv sql )noexcept
+	α IDataSource::TryExecute( string sql, SL sl )noexcept->optional<uint>
 	{
 		optional<uint> result;
 		try
 		{
-			result = Execute( sql );
+			result = Execute( move(sql), sl );
 		}
-		catch( const IException&  )
-		{}
+		catch( const IException&  ){}
+
 		return result;
 	}
-	α IDataSource::TryExecute( sv sql, const vector<DataValue>& parameters, bool log )noexcept->optional<uint>
+	α IDataSource::TryExecute( string sql, const vector<object>& parameters, SL sl )noexcept->optional<uint>
 	{
 		optional<uint> result;
 		try
 		{
-			result = Execute( sql, parameters, log );
+			result = Execute( move(sql), parameters, sl );
 		}
-		catch( const IException&  )
-		{}
+		catch( const IException&  ){}
 
 		return result;
 	}
 
-	α IDataSource::TryExecuteProc( sv sql, const vector<DataValue>& parameters, bool log, const source_location& sl )noexcept->optional<uint>
+	α IDataSource::TryExecuteProc( string sql, const vector<object>& parameters, SL sl )noexcept->optional<uint>
 	{
 		optional<uint> result;
 		try
 		{
-			result = ExecuteProc( sql, parameters, log, sl );
+			result = ExecuteProc( move(sql), parameters, sl );
 		}
-		catch( const IException& )
-		{}
+		catch( const IException& ){}
 
 		return result;
 	}
 
-	α IDataSource::Catalog( sv sql )noexcept(false)->string
+	α IDataSource::Catalog( string sql, SL sl )noexcept(false)->string
 	{
 		string db;
 		auto fnctn = [&db]( auto& row ){ row >> db; };
-		Select( sql, fnctn, {}, false );
+		Select( move(sql), fnctn, nullptr, sl );
 		return db;
 	}
 }

@@ -14,8 +14,7 @@
 		"label": "buildDebug",
 		"type": "shell",
 		"command": "tput reset; ./build.sh debug",
-		"problemMatcher": { "base": "$gcc", "fileLocation": ["absolute"]},
-		"group": {"kind": "build", "isDefault": false }
+		"problemMatcher": { "base": "$gcc", "fileLocation": ["absolute"]}
 	},
 	{
 		"label": "rebuild",

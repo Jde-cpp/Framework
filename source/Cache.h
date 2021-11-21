@@ -8,7 +8,7 @@
 namespace Jde
 {
 #define var const auto
-#define 🚪 Γ static auto
+#define Φ Γ Ω
 	struct Cache final //: public Jde::IShutdown
 	{
 		~Cache(){ if( HaveLogger() ) DBG("~Cache"sv); }
@@ -16,7 +16,7 @@ namespace Jde
 		Ṫ Emplace( str name )noexcept->sp<T>{ return Instance().InstanceEmplace<T>( name ); }
 		Ṫ Get( str name )noexcept{ return Instance().InstanceGet<T>(name); }
 		Ṫ Set( str name, sp<T> p )noexcept->sp<T>{ return Instance().InstanceSet<T>(name, p); }
-		🚪 Clear( sv name )noexcept->bool{ return Instance().InstanceClear( name ); }
+		Φ Clear( sv name )noexcept->bool{ return Instance().InstanceClear( name ); }
 		template<class K,class V> static α GetValue( str n, K id )noexcept->sp<V>{ return Instance().InstanceGetValue<K,V>( n, id ); }
 
 	private:
@@ -26,8 +26,8 @@ namespace Jde
 		ẗ InstanceGetValue( str n, K id )noexcept->sp<V>;
 		template<class T> sp<T> InstanceEmplace( str name )noexcept;
 		ⓣ InstanceSet( str name, sp<T> pValue )noexcept->sp<T>;
-		🚪 Instance()noexcept->Cache&;
-		map<string,sp<void>,std::less<>> _cache; mutable shared_mutex _cacheLock;
+		Φ Instance()noexcept->Cache&;
+		std::map<string,sp<void>,std::less<>> _cache; mutable shared_mutex _cacheLock;
 	};
 
 	ⓣ Cache::InstanceGet( str name )noexcept->sp<T>
@@ -78,5 +78,5 @@ namespace Jde
 		return pValue;
 	}
 #undef var
-#undef 🚪
+#undef Φ
 }

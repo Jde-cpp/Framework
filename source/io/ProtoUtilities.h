@@ -21,7 +21,7 @@ namespace Jde::IO::Proto
 
 	ⓣ ToVector( const google::protobuf::RepeatedPtrField<T>& x )noexcept->vector<T>;
 
-	α Save( const google::protobuf::MessageLite& msg, path path )noexcept(false)->void;
+	α Save( const google::protobuf::MessageLite& msg, path path, SL )noexcept(false)->void;
 	α ToString( const google::protobuf::MessageLite& msg )noexcept(false)->string;
 	α SizePrefixed( const google::protobuf::MessageLite& m )noexcept(false)->tuple<up<google::protobuf::uint8[]>,uint>;
 	α ToTimestamp( TimePoint t )->up<google::protobuf::Timestamp>;
@@ -38,14 +38,14 @@ namespace Jde::IO::Proto
 
 namespace Jde::IO
 {
-	inline string Proto::ToString( const google::protobuf::MessageLite& msg )noexcept(false)
+	Ξ Proto::ToString( const google::protobuf::MessageLite& msg )noexcept(false)->string
 	{
 		string output;
 		msg.SerializeToString( &output );
 		return output;
 	}
 
-	inline tuple<up<google::protobuf::uint8[]>,uint> Proto::SizePrefixed( const google::protobuf::MessageLite& m )noexcept(false)
+	Ξ Proto::SizePrefixed( const google::protobuf::MessageLite& m )noexcept(false)->tuple<up<google::protobuf::uint8[]>,uint>
 	{
 		const uint32_t length = (uint32_t)m.ByteSizeLong();
 		var size = length+4;
@@ -57,11 +57,11 @@ namespace Jde::IO
 		var result = m.SerializeToArray( pDestination, (int)length ); THROW_IF( !result, "Could not serialize to an array" );
 		return make_tuple( move(pData), size );
 	}
-	inline void Proto::Save( const google::protobuf::MessageLite& msg, path path )noexcept(false)
+	Ξ Proto::Save( const google::protobuf::MessageLite& msg, path path, SRCE )noexcept(false)->void
 	{
-		string output;
-		msg.SerializeToString( &output );
-		FileUtilities::SaveBinary( path, output );
+		var p = ms<string>();
+		msg.SerializeToString( p.get() );
+		FileUtilities::Save( path, p, sl );
 	}
 
 	ⓣ Proto::Deserialize( const vector<char>& data )noexcept(false)->up<T>
@@ -124,7 +124,7 @@ namespace Jde::IO
 		return y;
 	}
 
-	inline α Proto::ToTimestamp( TimePoint t )->up<google::protobuf::Timestamp>
+	Ξ Proto::ToTimestamp( TimePoint t )->up<google::protobuf::Timestamp>
 	{
 		auto pTime = make_unique<google::protobuf::Timestamp>();
 		var seconds = Clock::to_time_t( t );

@@ -32,7 +32,7 @@ namespace Jde::DB
 	{
 		string JsonName;
 		Column* SchemaColumnPtr{nullptr};
-		Ω QLType( const DB::Column& db )noexcept->string;
+		Ω QLType( const DB::Column& db, SRCE )noexcept(false)->string;
 	};
 
 	struct TableQL final

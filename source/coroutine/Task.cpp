@@ -32,15 +32,16 @@ namespace Jde::Coroutine
 		}
 		catch( const IException& e )
 		{
-			ERR( "unhandled - {}", e.what() );
+			e.Log();
+			CRITICAL( "unhandled - {}", e.what() );
 		}
 		catch( const std::exception& e )
 		{
-			ERR( "unhandled_exception ->{}"sv, e.what() );
+			CRITICAL( "unhandled_exception ->{}"sv, e.what() );
 		}
 		catch( ... )
 		{
-			ERR( "unhandled_exception"sv );
+			CRITICAL( "unhandled_exception"sv );
 		}
 	}
 }

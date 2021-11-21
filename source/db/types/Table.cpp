@@ -11,7 +11,7 @@ namespace Jde::DB
 {
 	using nlohmann::json;
 
-	Column::Column( sv name, uint ordinalPosition, sv dflt, bool isNullable, DataType type, optional<uint> maxLength, bool isIdentity, bool isId, optional<uint> numericPrecision, optional<uint> numericScale )noexcept:
+	Column::Column( sv name, uint ordinalPosition, sv dflt, bool isNullable, EType type, optional<uint> maxLength, bool isIdentity, bool isId, optional<uint> numericPrecision, optional<uint> numericScale )noexcept:
 		Name{name},
 		OrdinalPosition{ordinalPosition},
 		Default{dflt},
@@ -47,8 +47,8 @@ namespace Jde::DB
 			}
 			else
 			{
-				Type = ToDataType( typeName );
-				if( Type==DataType::None )
+				Type = ToType( typeName );
+				if( Type==EType::None )
 				{
 					if( var pPKTable = schema.find(string{typeName}); pPKTable!=schema.end() )
 					{
@@ -57,8 +57,8 @@ namespace Jde::DB
 							Type = pColumn->Type;
 						IsEnum = table.Data.size();
 					}
-					if( Type==DataType::None )
-						Type = DataType::UInt;
+					if( Type==EType::None )
+						Type = EType::UInt;
 					PKTable = Schema::FromJson( typeName );
 				}
 			}
@@ -80,8 +80,8 @@ namespace Jde::DB
 				if( j.contains("length") )
 				{
 					MaxLength = j.find( "length" )->get<uint>();
-					if( Type!=DataType::Char )
-						Type = DataType::VarTChar;
+					if( Type!=EType::Char )
+						Type = EType::VarTChar;
 				}
 				if( j.contains("default") )
 					Default = j.find("default")->get<string>();
@@ -181,7 +181,7 @@ namespace Jde::DB
 			}
 			else if( attribute=="customInsertProc" )
 				CustomInsertProc = value.get<bool>();
-			else
+			else if( attribute!="usePrefix" )
 				ASSERT( false );
 		}
 	}

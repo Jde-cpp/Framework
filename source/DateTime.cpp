@@ -15,7 +15,7 @@ namespace Jde
 
 	α Chrono::Epoch()noexcept->TimePoint{ return _epoch; };
 
-	Duration Chrono::ToDuration( sv iso )noexcept(false)//P3Y6M4DT12H30M5S
+	α Chrono::ToDuration( sv iso )noexcept(false)->Duration //P3Y6M4DT12H30M5S
 	{
 		std::istringstream is{ string{iso} };
 		if( is.get()!='P' )
@@ -48,7 +48,7 @@ namespace Jde
 		return duration;
 	}
 
-	string Chrono::ToString( Duration d )noexcept
+	α Chrono::ToString( Duration d )noexcept->string
 	{
 		ostringstream os;
 		os << 'P';
@@ -149,7 +149,7 @@ namespace Jde
 	{
 		return format( "{:0>2}/{:0>2}/{:0>2}", Month(), Day(), Year()-2000 );
 	}
-	DateTime DateTime::BeginingOfWeek()
+	α DateTime::BeginingOfWeek()->DateTime
 	{
 		var now = time(nullptr);
 		constexpr uint16 secondsPerDay = 60*60*24;
@@ -158,7 +158,7 @@ namespace Jde
 		return DateTime( beginingOfWeek );
 	}
 
-	DateTime& DateTime::operator=(const DateTime& other)noexcept
+	α DateTime::operator=(const DateTime& other)noexcept->DateTime&
 	{
 		_time_point = other._time_point;
 		_pTime = nullptr;
@@ -166,33 +166,33 @@ namespace Jde
 		return *this;
 	}
 
-	DateTime& DateTime::operator+=( const Duration& timeSpan )
+	α DateTime::operator+=( const Duration& timeSpan )->DateTime&
 	{
 		_time_point += timeSpan;
 		_pTime = nullptr;
 		_pTm = nullptr;
 		return *this;
 	}
-	DateTime DateTime::operator+( const Duration& timeSpan )const
+	α DateTime::operator+( const Duration& timeSpan )const->DateTime
 	{
 		DateTime result{*this};
 		result += timeSpan;
 		return result;
 	}
 
-	uint32 DateTime::Nanos()const noexcept
+	α DateTime::Nanos()const noexcept->uint32
 	{
 		return _time_point.time_since_epoch().count()%TimeSpan::NanosPerSecond;
 	}
 
-	time_t DateTime::TimeT()const noexcept
+	α DateTime::TimeT()const noexcept->time_t
 	{
 		if( !_pTime )
 			_pTime = make_unique<time_t>( system_clock::to_time_t(_time_point) );
 		return *_pTime;
 	}
 
-	sp<std::tm> DateTime::Tm()const noexcept
+	α DateTime::Tm()const noexcept->sp<std::tm>
 	{
 		if( !_pTm )
 		{
@@ -207,11 +207,11 @@ namespace Jde
 		return _pTm;
 	}
 
-	up<std::tm> DateTime::LocalTm()const noexcept
+	α DateTime::LocalTm()const noexcept->up<std::tm>
 	{
 		time_t time = TimeT();
 		auto pLocal = make_unique<std::tm>();
-#ifdef _WINDOWS
+#ifdef _MSC_VER
 		_localtime64_s( pLocal.get(), &time );
 #else
 		localtime_r( &time, pLocal.get() );
@@ -260,22 +260,22 @@ namespace Jde
 		THROW_IF( index>=(int)months.size(), "Could not parse month '{}'", month );
 		return (uint8)index+1;
 	}
-	string DateTime::MonthAbbrev()const noexcept
+	α DateTime::MonthAbbrev()const noexcept->string
 	{
 		var month = months[Month()-1];
 		return string{ (char)std::toupper(month[0]),month[1],month[2] };
 	}
-
-	namespace Timezone
+}
+namespace Jde::Timezone
+{
+	α TryGetGmtOffset( sv name, TimePoint utc )noexcept->Duration
 	{
-		Duration TryGetGmtOffset( sv name, TimePoint utc )noexcept
+		try
 		{
-			try
-			{
-				return GetGmtOffset( name, utc );
-			}
-			catch( const IException& )
-			{}
-			return Duration{};
+			return GetGmtOffset( name, utc );
 		}
+		catch( const IException& )
+		{}
+		return Duration{};
 	}
+}

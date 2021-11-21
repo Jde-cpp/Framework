@@ -29,9 +29,7 @@ namespace Jde
 	{}
 
 	IException::~IException()
-	{
-		//Log(); log on constructor this won't run on derived class.
-	}
+	{}
 
 	α IException::Log()const noexcept->void
 	{
@@ -122,13 +120,13 @@ namespace Jde
 
 	α IOException::what()const noexcept->const char*
 	{
-		_what = _pUnderLying ? _pUnderLying->what() : format( "({}) {} - {} path='{}'", ErrorCode(), std::strerror(errno), IException::what(), Path().string() );
+		_what = _pUnderLying ? _pUnderLying->what() : ErrorCode()
+			? format( "({}) {} - {} path='{}'", ErrorCode(), std::strerror(errno), IException::what(), Path().string() )
+			: format( "'{}' - {}", IException::what(), Path().string() );
 		return _what.c_str();
 	}
 
-	α IOException::Log()const noexcept->void
-	{
-
-		_what = _pUnderLying ? _pUnderLying->what() : format( "({}) {} - {} path='{}'", ErrorCode(), std::strerror(errno), IException::what(), Path().string() );
-	}
+	// α IOException::Log()const noexcept->void
+	// {
+	// }
 }

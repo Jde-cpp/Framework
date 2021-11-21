@@ -14,7 +14,7 @@ namespace Jde::Coroutine
 		using TPromise=typename TTask::promise_type;
 		using THandle=coroutine_handle<TPromise>;
 		TAwaitable()noexcept=default;
-		TAwaitable( str name )noexcept:_name{name}{};
+		TAwaitable( string name )noexcept:_name{move(name)}{};
 
 		β await_ready()noexcept->bool{ return false; }
 		β await_resume()noexcept->TResult=0;
@@ -37,7 +37,8 @@ namespace Jde::Coroutine
 	{
 		using base=TAwaitable<Task2>;
 	public:
-		IAwaitable( str name={} )noexcept:base{name}{};
+		IAwaitable( SRCE )noexcept:_sl{sl}{};
+		IAwaitable( str name, SRCE )noexcept:base{name},_sl{sl}{};
 		virtual ~IAwaitable()=0;
 		α await_suspend( HCoroutine h )noexcept->void override
 		{
@@ -47,6 +48,10 @@ namespace Jde::Coroutine
 				ro.Clear();
 		}
 		α await_resume()noexcept->TaskResult override{ AwaitResume(); return _pPromise->get_return_object().GetResult(); }
+		α Set( std::variant<sp<void>,sp<TaskResult::TException>>&& x )->void{ ASSERT( _pPromise ); _pPromise->get_return_object().SetResult( move(x) ); }
+		α Get()noexcept(false)->sp<void>{ ASSERT( _pPromise ); return _pPromise->get_return_object().Get( _sl ); }
+
+		source_location _sl;
 	protected:
 		Task2::promise_type* _pPromise{ nullptr };
 	};
@@ -89,6 +94,13 @@ namespace Jde::Coroutine
 		auto p = make_unique<Promise<sp<T>>>();
 		std::future<sp<T>> f = p->get_future();
 		CallAwaitable( move(p), move(a) );
+		return f;
+	}
+	ⓣ Future( up<IAwaitable> a )->std::future<sp<T>>
+	{
+		auto p = make_unique<Promise<sp<T>>>();
+		std::future<sp<T>> f = p->get_future();
+		CallAwaitable( move(p), move(*a) );
 		return f;
 	}
 	struct AWrapper final : IAwaitable

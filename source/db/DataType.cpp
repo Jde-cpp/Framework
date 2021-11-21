@@ -8,37 +8,37 @@
 namespace Jde
 {
 	using nlohmann::json;
-	α DB::to_string( const DataValue& parameter )->string
+	α DB::ToString( const object& parameter, SL sl )noexcept(false)->string
 	{
 		ostringstream os;
 		constexpr sv nullString = "null"sv;
-		const EDataValue type = (EDataValue)parameter.index();
-		if( type==EDataValue::Null )
+		const EObject type = (EObject)parameter.index();
+		if( type==EObject::Null )
 			os << nullString;
-		else if( type==EDataValue::String )
+		else if( type==EObject::String )
 			os << get<string>(parameter);
-		else if( type==EDataValue::StringView )
+		else if( type==EObject::StringView )
 			os << get<sv>(parameter);
-		else if( type==EDataValue::StringPtr )
+		else if( type==EObject::StringPtr )
 		{
 			if( var& pValue = get<sp<string>>(parameter); pValue )
 				os << *pValue;
 			else
 				os << nullString;
 		}
-		else if( type==EDataValue::Bool )
+		else if( type==EObject::Bool )
 			os << get<bool>(parameter);
-		else if( type==EDataValue::Int )
+		else if( type==EObject::Int )
 			os << get<int>(parameter);
-		else if( type==EDataValue::Int64 )
+		else if( type==EObject::Int64 )
 			os << get<_int>(parameter);
-		else if( type==EDataValue::Uint )
+		else if( type==EObject::Uint )
 			os << get<uint>(parameter);
-		else if( type==EDataValue::Decimal2 )
+		else if( type==EObject::Decimal2 )
 			os << get<Decimal2>( parameter );
-		else if( type==EDataValue::Double )
+		else if( type==EObject::Double )
 			os << get<double>( parameter );
-		else if( type==EDataValue::DoubleOptional )
+		else if( type==EObject::DoubleOptional )
 		{
 			var& value = get<optional<double>>(parameter);
 			if( value.has_value() )
@@ -46,176 +46,150 @@ namespace Jde
 			else
 				os << nullString;
 		}
-		else if( type==EDataValue::DateOptional )
+		else if( type==EObject::DateOptional )
 		{
-			var& value = get<optional<DBDateTime>>( parameter );
+			var& value = get<optional<DBTimePoint>>( parameter );
 			os << ( value.has_value() ? ToIsoString(value.value()) : string(nullString) );
 		}
 		else
-			THROW( "{} not implemented", parameter.index() );
+			throw Exception{ sl, Jde::ELogLevel::Debug, "{} not implemented", parameter.index() };
 		return os.str();
 	}
 
-	α  DB::ToDataType( sv t )noexcept->DB::DataType
+	α  DB::ToType( sv t )noexcept->DB::EType
 	{
 		CIString typeName{ t };
-		DataType type{ DataType::None };
+		EType type{ EType::None };
 		if( typeName=="dateTime" )
-			type=DataType::DateTime;
+			type=EType::DateTime;
 		else if( typeName=="smallDateTime" )
-			type=DataType::SmallDateTime;
+			type=EType::SmallDateTime;
 		else if( typeName=="float" )
-			type=DataType::Float;
+			type=EType::Float;
 		else if( typeName=="real" )
-			type=DataType::SmallFloat;
+			type=EType::SmallFloat;
 		else if( typeName=="bool" )
-			type=DataType::Bit;
+			type=EType::Bit;
 		else if( typeName=="int" )
-			type = DataType::Int;
+			type = EType::Int;
 		else if( typeName=="uint32" )
-			type = DataType::UInt;
+			type = EType::UInt;
 		else if( typeName=="uint64" )
-			type = DataType::ULong;
+			type = EType::ULong;
 		else if( typeName=="Long" )
-			type = DataType::Long;
+			type = EType::Long;
 		else if( typeName=="nvarchar" )
-			type = DataType::VarWChar;
+			type = EType::VarWChar;
 		else if(typeName=="nchar")
-			type = DataType::WChar;
+			type = EType::WChar;
 		else if( typeName=="smallint" )
-			type = DataType::Int16;
+			type = EType::Int16;
 		else if( typeName=="uint16" )
-			type = DataType::UInt16;
+			type = EType::UInt16;
 		else if( typeName=="int8" )
-			type = DataType::Int8;
+			type = EType::Int8;
 		else if( typeName=="uint8" )
-			type = DataType::UInt8;
+			type = EType::UInt8;
 		else if( typeName=="guid" )
-			type = DataType::Guid;
+			type = EType::Guid;
 		else if(typeName=="varbinary")
-			type = DataType::VarBinary;
+			type = EType::VarBinary;
 		else if( typeName=="varchar" )
-			type = DataType::VarChar;
+			type = EType::VarChar;
 		else if( typeName=="ntext" )
-			type = DataType::NText;
+			type = EType::NText;
 		else if( typeName=="text" )
-			type=DataType::Text;
+			type = EType::Text;
 		else if( typeName=="char" )
-			type=DataType::Char;
+			type = EType::Char;
 		else if( typeName=="image" )
-			type=DataType::Image;
+			type = EType::Image;
 		else if( typeName=="bit" )
-			type=DataType::Bit;
+			type = EType::Bit;
 		else if( typeName=="binary" )
-			type=DataType::Binary;
+			type = EType::Binary;
 		else if( typeName=="decimal" )
-			type=DataType::Decimal;
+			type = EType::Decimal;
 		else if( typeName=="numeric" )
-			type=DataType::Numeric;
+			type = EType::Numeric;
 		else if( typeName=="money" )
-			type=DataType::Money;
+			type = EType::Money;
 		else
 			TRACE( "Unknown datatype({})."sv, typeName.c_str() );
 		return type;
 	}
 
-	α DB::ToString( DataType type, const Syntax& syntax )noexcept->string
+	α DB::ToString( EType type, const Syntax& syntax )noexcept->string
 	{
 		string typeName;
-		if( syntax.HasUnsigned() && type == DataType::UInt ) typeName = "int unsigned";
-		else if( type == DataType::Int || type == DataType::UInt ) typeName = "int";
-		else if( syntax.HasUnsigned() && type == DataType::ULong ) typeName = "bigint(20) unsigned";
-		else if( type == DataType::Long || type == DataType::ULong ) typeName="bigint";
-		else if( type == DataType::DateTime ) typeName = "datetime";
-		else if( type == DataType::SmallDateTime )typeName = "smalldatetime";
-		else if( type == DataType::Float ) typeName = "float";
-		else if( type == DataType::SmallFloat )typeName = "real";
-		else if( type == DataType::VarWChar ) typeName = "nvarchar";
-		else if( type == DataType::WChar ) typeName = "nchar";
-		else if( syntax.HasUnsigned() && type == DataType::UInt16 ) typeName="smallint";
-		else if( type == DataType::Int16 || type == DataType::UInt16 ) typeName="smallint";
-		else if( syntax.HasUnsigned() && type == DataType::UInt8 ) typeName =  "tinyint unsigned";
-		else if( type == DataType::Int8 || type == DataType::UInt8 ) typeName = "tinyint";
-		else if( type == DataType::Guid ) typeName = "uniqueidentifier";
-		else if( type == DataType::VarBinary ) typeName = "varbinary";
-		else if( type == DataType::VarChar ) typeName = "varchar";
-		else if( type == DataType::VarTChar ) typeName = "varchar";
-		else if( type == DataType::NText ) typeName = "ntext";
-		else if( type == DataType::Text ) typeName = "text";
-		else if( type == DataType::Char ) typeName = "char";
-		else if( type == DataType::Image ) typeName = "image";
-		else if( type == DataType::Bit ) typeName="bit";
-		else if( type == DataType::Binary ) typeName = "binary";
-		else if( type == DataType::Decimal ) typeName = "decimal";
-		else if( type == DataType::Numeric ) typeName = "numeric";
-		else if( type == DataType::Money ) typeName = "money";
-		else ERR( "Unknown datatype({})."sv, type );
+		if( syntax.HasUnsigned() && type == EType::UInt ) typeName = "int unsigned";
+		else if( type == EType::Int || type == EType::UInt ) typeName = "int";
+		else if( syntax.HasUnsigned() && type == EType::ULong ) typeName = "bigint(20) unsigned";
+		else if( type == EType::Long || type == EType::ULong ) typeName="bigint";
+		else if( type == EType::DateTime ) typeName = "datetime";
+		else if( type == EType::SmallDateTime )typeName = "smalldatetime";
+		else if( type == EType::Float ) typeName = "float";
+		else if( type == EType::SmallFloat )typeName = "real";
+		else if( type == EType::VarWChar ) typeName = "nvarchar";
+		else if( type == EType::WChar ) typeName = "nchar";
+		else if( syntax.HasUnsigned() && type == EType::UInt16 ) typeName="smallint";
+		else if( type == EType::Int16 || type == EType::UInt16 ) typeName="smallint";
+		else if( syntax.HasUnsigned() && type == EType::UInt8 ) typeName =  "tinyint unsigned";
+		else if( type == EType::Int8 || type == EType::UInt8 ) typeName = "tinyint";
+		else if( type == EType::Guid ) typeName = "uniqueidentifier";
+		else if( type == EType::VarBinary ) typeName = "varbinary";
+		else if( type == EType::VarChar ) typeName = "varchar";
+		else if( type == EType::VarTChar ) typeName = "varchar";
+		else if( type == EType::NText ) typeName = "ntext";
+		else if( type == EType::Text ) typeName = "text";
+		else if( type == EType::Char ) typeName = "char";
+		else if( type == EType::Image ) typeName = "image";
+		else if( type == EType::Bit ) typeName="bit";
+		else if( type == EType::Binary ) typeName = "binary";
+		else if( type == EType::Decimal ) typeName = "decimal";
+		else if( type == EType::Numeric ) typeName = "numeric";
+		else if( type == EType::Money ) typeName = "money";
+		else ERR( "Unknown datatype({})."sv, (uint)type );
 		return typeName;
 	}
 
-	α DB::ToDataValue( DataType type, const json& j, sv memberName )->DB::DataValue
+	α DB::ToObject( EType type, const json& j, sv memberName, SL sl )noexcept(false)->DB::object
 	{
-		DB::DataValue value{ nullptr };
+		object value{ nullptr };
 		if( !j.is_null() )
 		{
 			switch( type )
 			{
-			case DataType::Bit:
-				THROW_IF( !j.is_boolean(), "{} could not conver to boolean {}", memberName, j.dump() );
-				value = DB::DataValue{ j.get<bool>() };
+			case EType::Bit:
+				THROW_IFX( !j.is_boolean(), Exception(sl, "{} could not conver to boolean {}", memberName, j.dump()) );
+				value = object{ j.get<bool>() };
 				break;
-			case DataType::Int16:
-			case DataType::Int:
-			case DataType::Int8:
-			case DataType::Long:
-				THROW_IF( !j.is_number(), "{} could not conver to int {}", memberName, j.dump() );
-				value = DB::DataValue{ j.get<_int>() };
+			case EType::Int16: case EType::Int: case EType::Int8: case EType::Long:
+				THROW_IFX( !j.is_number(), Exception(sl, "{} could not conver to int {}", memberName, j.dump()) );
+				value = object{ j.get<_int>() };
 				break;
-			case DataType::UInt16:
-			case DataType::UInt:
-			case DataType::ULong:
-				THROW_IF( !j.is_number(), "{} could not conver to uint {}", memberName, j.dump() );
-				value = DB::DataValue{ j.get<uint>() };
+			case EType::UInt16: case EType::UInt: case EType::ULong:
+				THROW_IFX( !j.is_number(), Exception(sl, "{} could not conver to uint {}", memberName, j.dump()) );
+				value = object{ j.get<uint>() };
 				break;
-			case DataType::SmallFloat:
-			case DataType::Float:
-			case DataType::Decimal:
-			case DataType::Numeric:
-			case DataType::Money:
-				THROW_IF( !j.is_number(), "{} could not conver to numeric {}", memberName, j.dump() );
-				value = DB::DataValue{ j.get<double>() };
+			case EType::SmallFloat: case EType::Float: case EType::Decimal: case EType::Numeric: case EType::Money:
+				THROW_IFX( !j.is_number(), Exception(sl, "{} could not conver to numeric {}", memberName, j.dump()) );
+				value = object{ j.get<double>() };
 				break;
-			case DataType::None:
-			case DataType::Binary:
-			case DataType::VarBinary:
-			case DataType::Guid:
-			case DataType::Cursor:
-			case DataType::RefCursor:
-			case DataType::Image:
-			case DataType::Blob:
-			case DataType::TimeSpan:
-				THROW( "DataType {} is not implemented.", type );
-			case DataType::VarTChar:
-			case DataType::VarWChar:
-			case DataType::VarChar:
-			case DataType::NText:
-			case DataType::Text:
-			case DataType::Uri:
-				THROW_IF( !j.is_string(), "{} could not conver to string", memberName );
-				value = DB::DataValue{ j.get<string>() };
+			case EType::None: case EType::Binary: case EType::VarBinary: case EType::Guid: case EType::Cursor: case EType::RefCursor: case EType::Image: case EType::Blob: case EType::TimeSpan:
+				throw Exception{ sl, "EObject {} is not implemented.", (uint)type };
+			case EType::VarTChar: case EType::VarWChar: case EType::VarChar: case EType::NText: case EType::Text: case EType::Uri:
+				THROW_IFX( !j.is_string(), Exception(sl, "{} could not conver to string", memberName) );
+				value = object{ j.get<string>() };
 				break;
-			case DataType::TChar:
-			case DataType::WChar:
-			case DataType::UInt8:
-			case DataType::Char:
-				THROW( "char DataType {} is not implemented." );
-			case DataType::DateTime:
-			case DataType::SmallDateTime:
-				THROW_IF( !j.is_string(), "{} could not conver to string for datetime", memberName );
+			case EType::TChar: case EType::WChar: case EType::UInt8: case EType::Char:
+				throw Exception{ sl, "char EObject {} is not implemented.", (uint)type };
+			case EType::DateTime: case EType::SmallDateTime:
+				THROW_IFX( !j.is_string(), Exception(sl, "{} could not convert to string for datetime", memberName) );
 				const string time{ j.get<string>() };
 				const Jde::DateTime dateTime{ time };
 				const TimePoint t = dateTime.GetTimePoint();
-				value = DB::DataValue{ t };
+				value = object{ t };
 				break;
 			}
 		}

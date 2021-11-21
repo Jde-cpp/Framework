@@ -12,7 +12,7 @@ namespace Jde::DB
 	struct Γ Column
 	{
 		Column()=default;
-		Column( sv name, uint ordinalPosition, sv dflt, bool isNullable, DataType type, optional<uint> maxLength, bool isIdentity, bool isId, optional<uint> numericPrecision, optional<uint> numericScale )noexcept;
+		Column( sv name, uint ordinalPosition, sv dflt, bool isNullable, EType type, optional<uint> maxLength, bool isIdentity, bool isId, optional<uint> numericPrecision, optional<uint> numericScale )noexcept;
 		Column( sv name )noexcept;
 		Column( sv name, const nlohmann::json& j, const flat_map<string,Column>& commonColumns, const flat_map<string,Table>& parents, const nlohmann::ordered_json& schema )noexcept(false);
 
@@ -24,7 +24,7 @@ namespace Jde::DB
 		bool IsNullable{ false };
 		mutable bool IsFlags{ false };
 		mutable bool IsEnum{ false };
-		DataType Type{ DataType::UInt };
+		EType Type{ EType::UInt };
 		optional<uint> MaxLength;
 		bool IsIdentity{ false };
 		bool IsId{ false };

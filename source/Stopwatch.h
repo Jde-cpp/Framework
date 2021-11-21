@@ -56,7 +56,7 @@ namespace Jde
 		const bool _logMemory{false};
 		static SDuration _minimumToLog;
 		mutable SDuration _previousProgressElapsed{0};
-		static map<string,SDuration> _accumulations;
+		static flat_map<string,SDuration> _accumulations;
 
 		STimePoint _startPause;
 		SDuration _elapsedPause{0};

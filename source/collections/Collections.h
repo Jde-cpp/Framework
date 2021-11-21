@@ -8,18 +8,17 @@
 #define var const auto
 namespace Jde
 {
-	template<typename T>
-	typename T::mapped_type Find( const T& collection, typename T::key_type key )
+	ⓣ Find( const T& collection, typename T::key_type key )->typename T::mapped_type
 	{
 		auto pItem = collection.find( key );
 		return pItem==collection.end() ? typename T::mapped_type{} : pItem->second;
 	}
 
-	template<typename T>
-	typename T::mapped_type Find( const sp<T>& p, typename T::key_type key )
+	ⓣ Find( const T& collection, const typename T::mapped_type& value )->optional<typename T::key_type>
 	{
-		auto pCopy = p;
-		return pCopy ? Find( *pCopy, key ) : typename T::mapped_type{};
+		auto pBegin = collection.begin(); auto pEnd = collection.end();
+		auto p = boost::container::find_if( pBegin, pEnd, [&value](var& x)->bool{ return x.second==value; } );
+		return p==collection.end() ? nullopt : optional<typename T::key_type>{ p->first };
 	}
 
 	ⓣ EmplaceShared( T& map, typename T::key_type key )->typename T::mapped_type&
@@ -39,23 +38,11 @@ namespace Jde
 		F _f;
 	};
 
-	template <typename T>
-	struct SPCompare
+	template<class T> struct SPCompare
 	{
-		//using is_transparent = void;
-		bool operator()( const sp<T>& a, const sp<T>& b )const{
-			return *a < *b;
-		}
-
-		bool operator() (const sp<T>& a, const T& b) const
-		{
-			return *a < b;
-		}
-
-		bool operator()( const T& a, const sp<T>& b) const
-		{
-			return a < *b;
-		}
+		α operator()( const sp<T>& a, const sp<T>& b )const noexcept->bool{ return *a < *b; }
+		α operator()(const sp<T>& a, const T& b)const noexcept->bool{ return *a < b; }
+		α operator()( const T& a, const sp<T>& b)const noexcept->bool{ return a < *b; }
 	};
 
 	ẗ TryGetValue( const flat_map<K,V>& map, const K& key, V deflt )->V
@@ -84,7 +71,7 @@ namespace Collections
 		return results;
 	}
 
-	ẗ Keys( const map<K,V>& map )noexcept->up<std::set<K>>
+	ẗ Keys( const std::map<K,V>& map )noexcept->up<std::set<K>>
 	{
 		auto pResults = make_unique<std::set<K>>();
 		for( const auto& keyValue : map )
@@ -93,7 +80,7 @@ namespace Collections
 		return pResults;
 	}
 
-	ẗ Values( const map<K,V>& map )->up<std::vector<V>>
+	ẗ Values( const std::map<K,V>& map )->up<std::vector<V>>
 	{
 		auto pResults = make_unique<std::vector<V>>(); pResults->reserve( map.size() );
 		for( const auto& keyValue : map )
@@ -108,13 +95,13 @@ namespace Collections
 		std::for_each( values.begin(), values.end(), function );
 	}
 
-	ẗ ForEachMap( const map<K,V>& map, std::function<void(const K& key, const V& value)> func )->void
+	ẗ ForEachMap( const std::map<K,V>& map, std::function<void(const K& key, const V& value)> func )->void
 	{
 		for( const auto& keyValue : map )
 			func( keyValue.first, keyValue.second );
 	}
 
-	ẗ ForEachValue( const map<K,V>& map, std::function<void(const V& value)> func )->void
+	ẗ ForEachValue( const std::map<K,V>& map, std::function<void(const V& value)> func )->void
 	{
 		for( const auto& keyValue : map )
 			func( keyValue.second );
@@ -202,7 +189,7 @@ namespace Collections
 
 
 	template<typename T>
-	bool ContainsAll( const std::set<T>& universe, const std::set<T>& set )
+	α ContainsAll( const std::set<T>& universe, const std::set<T>& set )->bool
 	{
 		bool in = set.size() <= universe.size();
 		if( in )

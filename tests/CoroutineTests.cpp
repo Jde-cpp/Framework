@@ -52,7 +52,7 @@ namespace Jde::Coroutine
 				if( param )
 				{
 					DBG( "new thread duration={}."sv, duration_cast<milliseconds>(IdleLimit).count() );
-					_pThreads->push_back( make_shared<ResumeThread>("pool[0]", IdleLimit, move(*param)) );
+					_pThreads->push_back( ms<ResumeThread>("pool[0]", IdleLimit, move(*param)) );
 				}
 				else
 					LOGN( ELogLevel::Information, "Resumed", 1 );
@@ -174,30 +174,14 @@ namespace Jde::Coroutine
 	}
 	*/
 
-	α Write( path path, sp<vector<char>> pBuffer )->Task2
-	{
-		co_await IO::Write( fs::path{path}, pBuffer );
-		std::shared_lock l{ mtx };
-		cv.notify_one();
-	}
-
-	sp<vector<char>> _pRead;
-	α Read( path path )->Task2
-	{
-		_pRead = ( co_await IO::Read( fs::path{path} ) ).Get<vector<char>>();
-		std::shared_lock l{ mtx2 };
-		cv.notify_one();
-	}
-
 	TEST_F(CoroutineTests, File)
 	{
 		var chunkSize = IO::DriveWorker::ChunkSize();
 		var threadSize = IO::DriveWorker::ThreadSize();
 		constexpr uint itemSize = sizeof( double );
 		var itemCount = chunkSize*threadSize*2.5/itemSize;
-		//var itemCount = chunkSize*threadSize/itemSize;
 		var totalSize = (itemCount+1)*itemSize;
-		auto pBuffer = make_shared<vector<char>>( (size_t)totalSize );
+		auto pBuffer = ms<vector<char>>( (size_t)totalSize );
 		std::uniform_real_distribution<double> unif( 0, std::numeric_limits<double>::max() );
 		std::default_random_engine re;
 		for( uint i=0; i<itemCount; ++i )
@@ -206,14 +190,10 @@ namespace Jde::Coroutine
 			memcpy( pBuffer->data()+i*itemSize, &v, itemSize );
 		}
 		var path = fs::path( fs::temp_directory_path()/"test.dat" );
-		INFO( "Writing {}."sv, path.string() );
-		Write( path, pBuffer );
-		std::shared_lock l{ mtx };
-		cv.wait( l );
-		Read( path );
-		std::shared_lock l2{ mtx2 };
-		cv.wait( l2 );
-		bool equal = *pBuffer==*_pRead;
+		fs::remove( path );
+		Future<sp<void>>( IO::Write(path, pBuffer) ).get();
+		var pRead = Future<vector<char>>( IO::Read(path) ).get();
+		bool equal = *pBuffer==*pRead;
 		ASSERT_TRUE( equal );
 	}
 }

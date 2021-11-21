@@ -111,7 +111,7 @@ namespace Jde::DB
 		CreateUser();
 		results = FetchUser();
 		LOGS( results.dump() );
-		auto expected = "{\"data\":{\"user\":{\"created\":\"2021-10-21T09:58:59Z\",\"description\":\"Unit Test User\",\"id\":1003,\"name\":\"JohnSmith@google.com\",\"target\":\"jsmith\", \"authenticator\": 1}}}"_json;
+		auto expected = "{\"data\":{\"user\":{\"created\":\"2021-10-21T09:58:59Z\",\"description\":\"Unit Test User\",\"id\":1003,\"name\":\"JohnSmith@google.com\",\"target\":\"jsmith\", \"authenticator\": \"Google\"}}}"_json;
 		SetAttribute( results, expected, "created" );
 		SetAttribute( results, expected, "id" );
 		ASSERT_EQ( results.dump(), expected.dump() );

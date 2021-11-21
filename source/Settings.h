@@ -11,10 +11,13 @@
 #pragma warning(pop)
 
 #define var const auto
+namespace Jde
+{
+	using nlohmann::json;
+}
 namespace Jde::Settings
 {
 	α Path()noexcept->fs::path;
-	using nlohmann::json;
 	struct Γ Container
 	{
 		Container( const json& json )noexcept;
@@ -23,7 +26,7 @@ namespace Jde::Settings
 		α Have( sv path )noexcept->bool;
 		α FindPath( sv path )const noexcept->optional<json>;
 		ⓣ TryArray( sv path )noexcept->vector<T>;
-		ⓣ Map( sv path )noexcept->map<string,T>;
+		ⓣ Map( sv path )noexcept->flat_map<string,T>;
 
 		α ForEach( sv path, function<void(sv, const nlohmann::json&)> f )noexcept->void;
 
@@ -129,10 +132,10 @@ namespace Jde::Settings
 		return values;
 	}
 
-	ⓣ Container::Map( sv path )noexcept->map<string,T>
+	ⓣ Container::Map( sv path )noexcept->flat_map<string,T>
 	{
 		auto pItem = _pJson->find( path );
-		map<string,T> values;
+		flat_map<string,T> values;
 		if( pItem!=_pJson->end() )
 		{
 			for( var& [key,value] : pItem->items() )

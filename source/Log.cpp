@@ -176,7 +176,7 @@ namespace Jde
 				try
 				{
 					if( _sinks.size() )
-						_logger.log( spdlog::source_loc{m.File.data(),(int)m.LineNumber,m.Function.data()}, (spdlog::level::level_enum)m.Level, fmt::vformat(m.MessageView, fmt::basic_format_args<ctx>{args.data(), (int)args.size()}) );
+						_logger.log( spdlog::source_loc{m.File,(int)m.LineNumber,m.Function}, (spdlog::level::level_enum)m.Level, fmt::vformat(m.MessageView, fmt::basic_format_args<ctx>{args.data(), (int)args.size()}) );
 					else
 						std::cerr << fmt::vformat( m.MessageView, fmt::basic_format_args<ctx>{args.data(), (int)args.size()} );
 				}
@@ -313,14 +313,14 @@ namespace Jde
 			MessageBase{ b },
 			_fileName{ FileName(b.File) }
 		{
-			File = _fileName;
+			File = _fileName.c_str();
 		}
 		Message::Message( ELogLevel level, string message, const source_location& sl )noexcept:
 			MessageBase( level, sl ),
 			_pMessage{ make_unique<string>(move(message)) },
 			_fileName{ FileName(sl.file_name()) }
 		{
-			File = _fileName;
+			File = _fileName.c_str();
 			MessageView = *_pMessage;
 		}
 	}

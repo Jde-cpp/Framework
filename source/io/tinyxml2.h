@@ -1617,10 +1617,11 @@ public:
 	/// See QueryIntText()
 	XMLError QueryInt64Text(int64_t* uval) const;
 
-	template<typename T> std::optional<T> TryChildTo( const char* elementName )noexcept
+	ⓣ TryChildTo( const char* elementName )noexcept->std::optional<T>
    {
-      auto s = TryChildText( elementName );
-      return s.size() ? Jde::Str::TryTo<T>( Jde::Str::Trim(std::string{s}) ) : std::nullopt;
+      std::string s{ TryChildText(elementName) };
+		Jde::Str::Trim( s );
+      return s.size() ? Jde::Str::TryTo<T>( s ) : std::nullopt;
       //if( s.size() )
       //{
       //   auto trim = Jde::Str::Trim( std::string{s} );

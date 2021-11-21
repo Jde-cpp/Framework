@@ -52,13 +52,13 @@ namespace Jde
 	α AssignUserGroups( UserPK userId=0 )noexcept(false)->void
 	{
 		ostringstream sql{ "select user_id, group_id from um_user_groups g join um_users u on g.user_id=u.id and u.deleted is null", std::ios::ate };
-		vector<DB::DataValue> params;
+		vector<DB::object> params;
 		if( userId )
 		{
 			sql << " where user_id=?";
-			params.push_back( DB::DataValue{userId} );
+			params.push_back( DB::object{userId} );
 		}
-		QUERY.Select( sql.str(), [&](var& r)
+		DB::DataSource()->Select( sql.str(), [&](var& r)
 		{
 			unique_lock l{_userGroupMutex};
 			_userGroups.try_emplace(r.GetUInt(0)).first->second.emplace( r.GetUInt(1) );
@@ -80,14 +80,23 @@ namespace Jde
 		if( !fs::exists(path) )
 			path = IApplication::ApplicationDataFolder()/path;
 		INFO( "db meta='{}'"sv, path.string() );
-		var j = json::parse( IO::FileUtilities::Load(path) );
+		json j;
+		try
+		{
+			j = json::parse( IO::FileUtilities::Load(path) );
+		}
+		catch( const std::exception& e )//nlohmann::detail::parse_error
+		{
+			throw IOException( path, e.what(), {SRCE_CUR.file_name(), SRCE_CUR.line()-4, SRCE_CUR.function_name()} );
+		}
+
 		var schema = pDataSource->SchemaProc()->CreateSchema( j, path.parent_path() );
 		AppendQLSchema( schema );
 		SetQLDataSource( pDataSource );
 
-		var pApis = pDataSource->SelectMap<string,uint>( "select name, id from um_apis" );
-		auto pUMApi = pApis->find( "UM" ); THROW_IF( pUMApi==pApis->end(), "no user management in api table." );
-		var umPermissionId = pDataSource->Scaler<uint>( "select id from um_permissions where api_id=? and name is null", {pUMApi->second} ).value_or(0); THROW_IF( umPermissionId==0, "no user management permission." );
+		var pApis = pDataSource->SelectEnumSync<uint>( "um_apis" );
+		auto pId = Find( *pApis, "UM" ); THROW_IF( !pId, "no user management in api table." );
+		var umPermissionId = pDataSource->Scaler<uint>( "select id from um_permissions where api_id=? and name is null", {*pId} ).value_or(0); THROW_IF( umPermissionId==0, "no user management permission." );
 		for( var& table : schema.Tables )
 			_tablePermissions.try_emplace( table.first, umPermissionId );
 
@@ -154,7 +163,7 @@ namespace Jde
 				roleId = m.InputParam( "roleId" ).get<uint>();
 				permissionId = m.InputParam( "permissionId" ).get<uint>();
 			}
-			var access = (UM::EAccess)DB::DataSource()->Scaler<uint>( "select right_id from um_role_permissions where role_id=? and permission_id=?", std::vector<DB::DataValue>{roleId, permissionId} ).value_or( 0 );
+			var access = (UM::EAccess)DB::DataSource()->Scaler<uint>( "select right_id from um_role_permissions where role_id=? and permission_id=?", std::vector<DB::object>{roleId, permissionId} ).value_or( 0 );
 			{
 				unique_lock l{ _rolePermissionMutex };
 				_rolePermissions.try_emplace( roleId ).first->second[permissionId] = (Jde::UM::EAccess)access;

@@ -7,7 +7,7 @@
 #include <jde/coroutine/Task.h>
 #include "../coroutine/Awaitable.h"
 
-#define 🚪 Γ auto
+#define Φ Γ auto
 namespace Jde
 {
 	enum class ELogLevel : int8;
@@ -25,20 +25,59 @@ namespace Jde
 		~AtomicGuard(){ if( _pValue ){ ASSERT(_pValue->test(std::memory_order_relaxed)) _pValue->clear(std::memory_order_release); } }
 		α unlock()noexcept->void{ ASSERT(_pValue) _pValue->clear( std::memory_order_release ); _pValue = nullptr; }
 	private:
-		std::atomic_flag* _pValue;
+		atomic_flag* _pValue;
+	};
+	//Ξ CoLock()noexcept{ return CoLockAwait{move(key)}; }
+	struct CoLock; struct CoGuard;
+	class Γ LockAwait : public Coroutine::IAwaitable
+	{
+		using base=Coroutine::IAwaitable;
+	public:
+		LockAwait( CoLock& lock )noexcept:_lock{lock}{}
+		α await_ready()noexcept->bool override;
+		α await_suspend( HCoroutine h )noexcept->void override;
+		α await_resume()noexcept->TaskResult override{ return _pGuard ? TaskResult{move(_pGuard)} : base::await_resume(); }
+	private:
+		CoLock& _lock;
+		sp<CoGuard> _pGuard;
+	};
+
+	struct Γ CoLock
+	{
+		α Lock(){ return LockAwait{*this}; }
+	private:
+		α TestAndSet()->sp<CoGuard>;
+		α Push( HCoroutine h )->sp<CoGuard>;
+		α Clear()->void;
+
+		std::queue<HCoroutine> _queue; mutex _mutex;
+		atomic_flag _flag;
+		const bool _resumeOnPool{ false };
+		//sp<CoGuard> _pGuard;
+		friend class LockAwait; friend struct CoGuard;
+	};
+	struct Γ CoGuard
+	{
+		~CoGuard();
+	private:
+		CoGuard( CoLock& lock )noexcept;
+		CoLock& _lock;
+		friend CoLock;
 	};
 }
 namespace Jde::Threading
 {
-	🚪 UniqueLock( str key )noexcept->std::unique_lock<std::shared_mutex>;
+	Φ UniqueLock( str key )noexcept->std::unique_lock<std::shared_mutex>;
 
-	struct Γ CoLockAwatiable : Coroutine::TAwaitable<>
+	class Γ LockKeyAwait : public Coroutine::TAwaitable<>
 	{
-		CoLockAwatiable( str key )noexcept:Key{key}{}
 		using base=Coroutine::TAwaitable<>;
-		bool await_ready()noexcept override;
-		void await_suspend( typename base::THandle h )noexcept override;
-		typename base::TResult await_resume()noexcept override;
+	public:
+		LockKeyAwait( string key )noexcept:Key{move(key)}{}
+
+		α await_ready()noexcept->bool override;
+		α await_suspend( HCoroutine h )noexcept->void override;
+		α await_resume()noexcept->TaskResult override;
 	private:
 		base::THandle Handle{nullptr};
 		const string Key;
@@ -46,15 +85,14 @@ namespace Jde::Threading
 
 	struct CoLockGuard final : boost::noncopyable
 	{
-		CoLockGuard( str Key, std::variant<CoLockAwatiable*,coroutine_handle<>> )noexcept;
+		CoLockGuard( str Key, std::variant<LockKeyAwait*,coroutine_handle<>> )noexcept;
 		~CoLockGuard();
 	private:
-		std::variant<CoLockAwatiable*,coroutine_handle<>> Handle;
+		std::variant<LockKeyAwait*,coroutine_handle<>> Handle;
 		string Key;
 	};
 
-	inline α CoLock( str key )noexcept{ return CoLockAwatiable{key}; }
-
+	Ξ CoLockKey( string key )noexcept{ return LockKeyAwait{move(key)}; }
 
 #ifndef NDEBUG //TODORefactor move somewhere else
 	struct MyLock
@@ -112,5 +150,5 @@ namespace Jde::Threading
 		const LogTag& _logLevel{ Logging::TagLevel("mutex") };
 	};
 #endif
-#undef 🚪
+#undef Φ
 }

@@ -58,12 +58,12 @@ namespace Jde::IO
 		sp<Threading::IWorker> _pWorkerKeepAlive;
 	};
 
-	struct Γ DriveAwaitable : IAwaitable
+	struct Γ DriveAwaitable final : IAwaitable
 	{
 		using base=IAwaitable;
-		DriveAwaitable( path path, bool vector )noexcept:_arg{ path, vector }{}
-		DriveAwaitable( path path, sp<vector<char>> data )noexcept:_arg{ path, data }{}
-		DriveAwaitable( path path, sp<string> data )noexcept:_arg{ path, data }{}
+		DriveAwaitable( path path, bool vector, SRCE )noexcept:base{ sl },_arg{ path, vector }{}
+		DriveAwaitable( path path, sp<vector<char>> data, SRCE )noexcept:base{ sl },_arg{ path, data }{}
+		DriveAwaitable( path path, sp<string> data, SRCE )noexcept:base{ sl },_arg{ path, data }{}
 		α await_ready()noexcept->bool override;
 		α await_suspend( typename base::THandle h )noexcept->void override;//{ base::await_suspend( h ); _pPromise = &h.promise(); }
 		α await_resume()noexcept->TaskResult override;

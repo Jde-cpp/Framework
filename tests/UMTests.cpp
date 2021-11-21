@@ -8,6 +8,7 @@
 #define var const auto
 namespace Jde::UM
 {
+	static const LogTag& _logLevel = Logging::TagLevel( "tests" );
 	using nlohmann::json;
 	struct UMTests : public ::testing::Test
 	{
@@ -29,7 +30,7 @@ namespace Jde::UM
 		constexpr sv frmt = "{{ mutation {{ create{}(\"input\":{{ \"name\": \"{}\", \"target\": \"{}\", \"description\": \"{}\"{}}}){{ id }} }} }}"sv;
 		var query = format( frmt, service, name, target, description, suffix );
 		var items = DB::Query( query, 0 );
-		Dbg( items.dump() );
+		LOGS( items.dump() );
 		uint id = items["data"][DB::Schema::ToJson(service)]["id"].get<uint>();
 
 		constexpr sv updateFormat = "{{ mutation {{ update{}(\"id\":{}, \"input\":{{ \"description\": \"{} update\"}}) }} }}";
@@ -38,7 +39,7 @@ namespace Jde::UM
 
 		constexpr sv deleteFormat = "{{ mutation {{ delete{}(\"id\":{}) }} }}";
 		var deleteQuery = format( deleteFormat, service, id );
-		Dbg( deleteQuery );
+		LOGS( deleteQuery );
 		var deleteResult = DB::Query( deleteQuery, 0 );
 
 		return id;
@@ -63,7 +64,7 @@ namespace Jde::UM
 		constexpr sv frmt = "{{query {}(\"name\": \"{}\") {{ id }} }}";
 		var query = format( frmt, service, name );
 		json j = DB::Query( query, 0 );
-		Dbg( j.dump() );
+		LOGS( j.dump() );
 		var data = j["data"];
 		var obj = j["data"][string{service}];
 		//THROW_IF( obj.is_null(), Exception("Could not find '{}' - '{}'- {}", service, name, j.dump()) );
@@ -77,14 +78,14 @@ namespace Jde::UM
 		//bool create = true;
 
 		json j1 = DB::Query( "query{ role(filter:{id:{eq:8}}){ rolePermissions{api{ id name } id name rights } } }", 0 );
-		Dbg( j1.dump() );
+		LOGS( j1.dump() );
 		json jx = DB::Query( "query{ authenticators{ id name }, users{ id name target description authenticatorId attributes created updated deleted } }", 0 );
-		Dbg( jx.dump() );
+		LOGS( jx.dump() );
 		auto adminUserId = Query( "user", "JohnSmith@google.com" ); if( !adminUserId ) adminUserId = Crud( "User", "JohnSmith@google.com", "jsmith", "Unit Test User", ",\"authenticatorId\": 1" );
 		auto authenticatedUserId = Query( "user", "low-user@google.com" ); if( !authenticatedUserId ) authenticatedUserId = Crud( "User", "low-user@google.com", "low-user", "Unit Test User2", ",\"authenticatorId\": 1" );
 
 		json j = DB::Query( "query{ authenticators{ id name }, users{ id name target description authenticatorId attributes created updated deleted } }", 0 );
-		Dbg( j.dump() );
+		LOGS( j.dump() );
 
 		auto administersId = Query( "group", "UnitTestAdminGroup" ); if( !administersId ) administersId = Crud( "Group", "UnitTestAdminGroup", "UnitTestAdminGroup", "UnitTestAdminGroup desc" );
 		auto readUMRoleId = Query( "role", "UnitTestRole" ); if( !readUMRoleId ) readUMRoleId = Crud( "Role", "UnitTestRole", "unittest_role_1", "unittest1 role desc" );
@@ -96,13 +97,13 @@ namespace Jde::UM
 		//Test administer.
 		//Test account.
 
-		var twsApiId = Query( "api", "Tws" );
+		//var twsApiId = Query( "api", "Tws" );
 		sv permissionName = "Act1234"sv;
 		auto permissionId = Query( "permission", permissionName );
 		if( !permissionId )
 		{
-			constexpr sv frmt = "{{ mutation {{ create{}(\"input\":{{ \"name\": \"{}\", \"apiId\": {}}}){{ id }} }} }}";
-			var query = format( frmt, "Permission", permissionName, twsApiId );
+			constexpr sv frmt = "{{ mutation {{ create{}(\"input\":{{ \"name\": \"{}\", \"api\": \"Tws\"}}){{ id }} }} }}";
+			var query = format( frmt, "Permission", permissionName );
 			var items = DB::Query( query, 0 );
 			permissionId = items["data"]["permission"]["id"].get<uint>();
 		}

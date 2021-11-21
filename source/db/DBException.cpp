@@ -3,30 +3,25 @@
 
 namespace Jde::DB
 {
-	α CopyParams( const std::vector<DataValue>* pValues )->const std::vector<DataValue>
+	α CopyParams( const std::vector<object>* pValues )->const std::vector<object>
 	{
-		std::vector<DataValue> y;
+		std::vector<object> y;
 		if( pValues )
 		{
 			for( uint i=0; i<pValues->size(); ++i )
-				y.push_back( EDataValue::StringView==(EDataValue)(*pValues)[i].index() ? DataValue{ string{ get<sv>((*pValues)[i])} } : (*pValues)[i] );
+				y.push_back( EObject::StringView==(EObject)(*pValues)[i].index() ? object{ string{ get<sv>((*pValues)[i])} } : (*pValues)[i] );
 		}
 		return y;
 	}
-	DBException::DBException( std::runtime_error&& e, sv sql, const vector<DataValue>* pValues, const source_location& sl )noexcept:
-		IException{ sl, move(e) },
-		Sql{ sql },
-		Parameters{ CopyParams(pValues) }
-	{
-		Log();
-	}
 
-	DBException::DBException( _int errorCode, sv sql, const std::vector<DataValue>* pValues, str what, const source_location& sl )noexcept:
+	DBException::DBException( _int errorCode, sv sql, const std::vector<object>* pValues, str what, const source_location& sl )noexcept:
 		IException{ what, sl },
 		Sql{ sql },
 		Parameters{ CopyParams(pValues) },
 		ErrorCode{ errorCode }
-	{}
+	{
+		Log();
+	}
 
 	α DBException::what()const noexcept->const char*
 	{

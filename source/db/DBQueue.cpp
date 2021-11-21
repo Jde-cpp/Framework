@@ -1,20 +1,22 @@
 #include "DBQueue.h"
 #include "DataSource.h"
+#include "Database.h"
 #include "../threading/InterruptibleThread.h"
 
 #define var const auto
 namespace Jde::DB
 {
-	Statement::Statement( sv sql, const VectorPtr<DB::DataValue>& parameters, bool isStoredProc ):
+	Statement::Statement( sv sql, const VectorPtr<object>& parameters, bool isStoredProc, SL sl ):
 		Sql{ sql },
 		Parameters{ parameters },
-		IsStoredProc{isStoredProc}
+		IsStoredProc{isStoredProc},
+		SourceLocation{ sl }
 	{}
 
 	DBQueue::DBQueue( sp<IDataSource> spDataSource )noexcept:
 		_spDataSource{ spDataSource }
 	{
-		_pThread = make_shared<Threading::InterruptibleThread>( "DBQueue", [&](){Run();} );
+		_pThread = ms<Threading::InterruptibleThread>( "DBQueue", [&](){Run();} );
 		IApplication::AddThread( _pThread );
 	}
 
@@ -26,37 +28,24 @@ namespace Jde::DB
 		//_queue.Push( sp<Statement>{} );
 	}
 
-	void DBQueue::Push( sv sql, const VectorPtr<DB::DataValue>& parameters, bool isStoredProc )noexcept
+	void DBQueue::Push( sv sql, const VectorPtr<object>& parameters, bool isStoredProc, SL sl )noexcept
 	{
 		RETURN_IF( _stopped, "pushing '{}' when stopped", sql );
 		// if( !_stopped )
-		// 	_queue.Push( make_shared<Statement>(sql, parameters, isStoredProc) );
+		// 	_queue.Push( ms<Statement>(sql, parameters, isStoredProc) );
 		// else
 		// 	DBG("pushing '{}' when stopped", sql);
-		auto pStatement = make_shared<Statement>(sql, parameters, isStoredProc);
+		auto pStatement = ms<Statement>( sql, parameters, isStoredProc, sl );
 		try
 		{
 			if( pStatement->IsStoredProc )
-				_spDataSource->ExecuteProc( pStatement->Sql, *pStatement->Parameters, false );
+				_spDataSource->ExecuteProcNoLog( pStatement->Sql, *pStatement->Parameters, sl );
 			else
-				_spDataSource->Execute( pStatement->Sql, *pStatement->Parameters, false );
+				_spDataSource->ExecuteNoLog( pStatement->Sql, pStatement->Parameters.get(), nullptr, false, sl );
 		}
 		catch( const IException& e )
 		{
-			ostringstream os;
-			uint iParam = 0;
-			for( char ch : pStatement->Sql )
-			{
-				if( ch=='?' )
-				{
-					const DB::DataValue& value = (*pStatement->Parameters)[iParam++];
-					string value2 = to_string( value );
-					os << value2;
-				}
-				else
-					os << ch;
-			}
-			ERRX( "{} - {}"sv, os.str(), e.what() );
+			DB::LogNoServer( sql, parameters.get(), ELogLevel::Error, e.what(), sl );
 		}
 	}
 
@@ -71,25 +60,13 @@ namespace Jde::DB
 			try
 			{
 				if( pStatement->IsStoredProc )
-					_spDataSource->ExecuteProc( pStatement->Sql, *pStatement->Parameters, false );
+					_spDataSource->ExecuteProcNoLog( pStatement->Sql, *pStatement->Parameters );
 				else
-					_spDataSource->Execute( pStatement->Sql, *pStatement->Parameters, false );
+					_spDataSource->ExecuteNoLog( pStatement->Sql, pStatement->Parameters.get() );
 			}
 			catch( const IException& e )
 			{
-				ostringstream os;
-				uint iParam = 0;
-				for( char ch : pStatement->Sql )
-				{
-					if( ch=='?' )
-					{
-						const DB::DataValue& value = (*pStatement->Parameters)[iParam++];
-						os << to_string( value );
-					}
-					else
-						os << ch;
-				}
-				ERRX( "{} - {}"sv, os.str(), e.what() );
+				DB::LogNoServer( pStatement->Sql, pStatement->Parameters.get(), ELogLevel::Error, e.what(), pStatement->SourceLocation );
 			}
 		}
 		_stopped = true;

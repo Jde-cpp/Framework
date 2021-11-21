@@ -13,8 +13,8 @@
 namespace Jde
 {
 	using nlohmann::json;
-	using DB::EDataValue;
-	using DB::DataType;
+	using DB::EObject;
+	using DB::EType;
 	sp<DB::IDataSource> _pDataSource;
 	static const LogTag& _logLevel = Logging::TagLevel( "ql" );
 
@@ -41,25 +41,25 @@ namespace Jde
 		for( var& [name,v] : schema.Tables )
 			_schema.Tables.emplace( name, v );
 	}
-	nlohmann::json InputParam2( sv name, const nlohmann::json& input )noexcept(false)
+	α InputParam2( sv name, const json& input )noexcept(false)->json
 	{
 		var p = input.find( name ); THROW_IF( p==input.end(), "Could not find '{}' argument. {}", name, input.dump() );
 		return *p;
 	}
 namespace DB
 {
-	string MutationQL::TableSuffix()const noexcept
+	α MutationQL::TableSuffix()const noexcept->string
 	{
 		if( _tableSuffix.empty() )
 			_tableSuffix = DB::Schema::ToPlural( DB::Schema::FromJson(JsonName) );
 		return _tableSuffix;
 	}
 
-	nlohmann::json MutationQL::InputParam( sv name )const noexcept(false)
+	α MutationQL::InputParam( sv name )const noexcept(false)->json
 	{
 		return InputParam2( name, Input() );
 	}
-	α MutationQL::Input()const noexcept(false)->nlohmann::json
+	α MutationQL::Input()const noexcept(false)->json
 	{
 		var pInput = Args.find("input"); THROW_IF( pInput==Args.end(), "Could not find input argument. {}", Args.dump() );
 		return *pInput;
@@ -71,7 +71,7 @@ namespace DB
 	}
 }
 #define TEST_ACCESS(a,b,c) TRACE( "TEST_ACCESS({},{},{})"sv, a, b, c )
-	α ToJsonName( DB::Column c )noexcept
+	α ToJsonName( DB::Column c )noexcept(false)
 	{
 		string tableName;
 		auto memberName{ DB::Schema::ToJson(c.Name) };
@@ -88,7 +88,7 @@ namespace DB
 	α Insert( const DB::Table& table, const DB::MutationQL& m )noexcept(false)->uint
 	{
 		ostringstream sql{ DB::Schema::ToSingular(table.Name), std::ios::ate }; sql << "_insert(";
-		std::vector<DB::DataValue> parameters; parameters.reserve( table.Columns.size() );
+		std::vector<DB::object> parameters; parameters.reserve( table.Columns.size() );
 		var pInput = m.Args.find( "input" ); THROW_IF( pInput == m.Args.end(), "Could not find 'input' arg." );
 		for( var& c : table.Columns )
 		{
@@ -101,11 +101,20 @@ namespace DB
 			if( parameters.size() )
 				sql << ", ";
 			sql << "?";
-			DB::DataValue value;
+			DB::object value;
 			if( !exists )
-				value = c.Default.size() ? DB::DataValue{c.Default} : DB::DataValue{nullptr};
+				value = c.Default.size() ? DB::object{ c.Default } : DB::object{ nullptr };
 			else
-				value = ToDataValue( c.Type, *pValue, memberName );
+			{
+				if( c.IsEnum && pValue->is_string() )
+				{
+					var pValues = Future<flat_map<uint,string>>( _pDataSource->SelectEnum<uint>(tableName) ).get();
+					optional<uint> pEnum = Find( *pValues, pValue->get<string>() ); THROW_IF( !pEnum, "Could not find '{}' for {}", pValue->get<string>(), memberName );
+					value = *pEnum;
+				}
+				else
+					value = ToObject( c.Type, *pValue, memberName );
+			}
 			parameters.push_back( value );
 		}
 		sql << ")";
@@ -114,14 +123,14 @@ namespace DB
 		_pDataSource->ExecuteProc( sql.str(), parameters, result );
 		return id;
 	}
-	uint Update( const DB::Table& table, const DB::MutationQL& m, const DB::Syntax& syntax )
+	α Update( const DB::Table& table, const DB::MutationQL& m, const DB::Syntax& syntax )->uint
 	{
 		ostringstream sql{ format("update {} set ", table.Name), std::ios::ate };
-		std::vector<DB::DataValue> parameters; parameters.reserve( table.Columns.size() );
+		std::vector<DB::object> parameters; parameters.reserve( table.Columns.size() );
 		var pInput = m.Args.find( "input" ); THROW_IF( pInput==m.Args.end(), "Could not find input argument. {}", m.Args.dump() );
 		string sqlUpdate;
 		vector<string> where; where.reserve(2);
-		vector<DB::DataValue> whereParams; whereParams.reserve( 2 );
+		vector<DB::object> whereParams; whereParams.reserve( 2 );
 		for( var& c : table.Columns )
 		{
 			if( !c.Updateable )
@@ -129,7 +138,7 @@ namespace DB
 				if( var p=find(table.SurrogateKey.begin(), table.SurrogateKey.end(), c.Name); p!=table.SurrogateKey.end() )
 				{
 					var pId = m.Args.find( DB::Schema::ToJson(c.Name) ); THROW_IF( pId==m.Args.end(), "Could not find '{}' argument. {}", DB::Schema::ToJson(c.Name), m.Args.dump() );
-					whereParams.push_back( ToDataValue(DataType::ULong, *pId, c.Name) );
+					whereParams.push_back( ToObject(EType::ULong, *pId, c.Name) );
 					where.push_back( c.Name+"=?" );
 				}
 				else if( c.Name=="updated" )
@@ -149,7 +158,7 @@ namespace DB
 					uint value = 0;
 					if( pValue->is_array() && pValue->size() )
 					{
-						var values = _pDataSource->SelectMap<string,uint>( format("select name, id from {}", tableName) );
+						var values = Future<flat_map<string,uint>>( _pDataSource->SelectMap<string,uint>(format("select name, id from {}", tableName)) ).get();
 						for( var& flag : *pValue )
 						{
 							if( var pFlag = values->find(flag); pFlag != values->end() )
@@ -159,7 +168,7 @@ namespace DB
 					parameters.push_back( value );
 				}
 				else
-					parameters.push_back( ToDataValue(c.Type, *pValue, memberName) );
+					parameters.push_back( ToObject(c.Type, *pValue, memberName) );
 			}
 		}
 		THROW_IF( where.size()==0, "There is no where clause." );
@@ -177,8 +186,8 @@ namespace DB
 	{
 		var pId = m.Args.find( "id" ); THROW_IF( pId==m.Args.end(), "Could not find id argument. {}", m.Args.dump() );
 		var pColumn = find_if( table.Columns.begin(), table.Columns.end(), []( var& c ){ return c.Name=="deleted"; } ); THROW_IF( pColumn==table.Columns.end(), "Could not find 'deleted' column" );
-		std::vector<DB::DataValue> parameters;
-		parameters.push_back( ToDataValue(DataType::ULong, *pId, "id") );
+		std::vector<DB::object> parameters;
+		parameters.push_back( ToObject(EType::ULong, *pId, "id") );
 		ostringstream sql{ "update ", std::ios::ate }; sql << table.Name << " set deleted=" << DB::DefaultSyntax()->UtcNow() << " where id=?";
 		return _pDataSource->Execute( sql.str(), parameters );
 	}
@@ -186,25 +195,25 @@ namespace DB
 	{
 		var pId = m.Args.find( "id" ); THROW_IF( pId==m.Args.end(), "Could not find id argument. {}", m.Args.dump() );
 		var pColumn = find_if( table.Columns.begin(), table.Columns.end(), []( var& c ){ return c.Name=="deleted"; } ); THROW_IF( pColumn==table.Columns.end(), "Could not find 'deleted' column" );
-		std::vector<DB::DataValue> parameters;
-		parameters.push_back( ToDataValue(DataType::ULong, *pId, "id") );
+		std::vector<DB::object> parameters;
+		parameters.push_back( ToObject(EType::ULong, *pId, "id") );
 		ostringstream sql{ "update ", std::ios::ate }; sql << table.Name << " set deleted=null where id=?";
 		return _pDataSource->Execute( sql.str(), parameters );
 	}
 	α Purge( sv tableName, const DB::MutationQL& m )->uint
 	{
 		var pId = m.Args.find( "id" ); THROW_IF( pId==m.Args.end(), "Could not find id argument. {}", m.Args.dump() );
-		std::vector<DB::DataValue> parameters;
-		parameters.push_back( ToDataValue(DataType::ULong, *pId, "id") );
+		std::vector<DB::object> parameters;
+		parameters.push_back( ToObject(EType::ULong, *pId, "id") );
 		ostringstream sql{ "delete from ", std::ios::ate }; sql << tableName << " where id=?";
 		return _pDataSource->Execute( sql.str(), parameters );
 	}
 
-	std::vector<DB::DataValue> ChildParentParams( sv childId, sv parentId, const json& input )
+	std::vector<DB::object> ChildParentParams( sv childId, sv parentId, const json& input )
 	{
-		std::vector<DB::DataValue> parameters;
-		parameters.push_back( ToDataValue(DataType::ULong, InputParam2(childId, input), childId) );
-		parameters.push_back( ToDataValue(DataType::ULong, InputParam2(parentId, input), parentId) );
+		std::vector<DB::object> parameters;
+		parameters.push_back( ToObject(EType::ULong, InputParam2(childId, input), childId) );
+		parameters.push_back( ToObject(EType::ULong, InputParam2(parentId, input), parentId) );
 		return parameters;
 	};
 	α Add( const DB::Table& table, const json& input )->uint
@@ -223,7 +232,7 @@ namespace DB
 			sql << "," << columnName;
 			values << ",?";
 
-			parameters.push_back( ToDataValue(pColumn->Type, value, name) );
+			parameters.push_back( ToObject(pColumn->Type, value, name) );
 		}
 		sql << ")values( " << values.str() << ")";
 		return _pDataSource->Execute( sql.str(), parameters );
@@ -269,59 +278,33 @@ namespace DB
 		return result;
 	}
 
-	string DB::ColumnQL::QLType( const DB::Column& column )noexcept
+	α DB::ColumnQL::QLType( const DB::Column& column, SL sl )noexcept(false)->string
 	{
 		string qlTypeName = "ID";
 		if( !column.IsId )
 		{
 			switch( column.Type )
 			{
-			case DataType::Bit:
+			case EType::Bit:
 				qlTypeName = "Boolean";
 				break;
-			case DataType::Int16:
-			case DataType::Int:
-			case DataType::Int8:
-			case DataType::Long:
+			case EType::Int16: case EType::Int: case EType::Int8: case EType::Long:
 				qlTypeName = "Int";
 				break;
-			case DataType::UInt16:
-			case DataType::UInt:
-			case DataType::ULong:
+			case EType::UInt16: case EType::UInt: case EType::ULong:
 				qlTypeName = "UInt";
 				break;
-			case DataType::SmallFloat:
-			case DataType::Float:
-			case DataType::Decimal:
-			case DataType::Numeric:
-			case DataType::Money:
+			case EType::SmallFloat: case EType::Float: case EType::Decimal: case EType::Numeric: case EType::Money:
 				qlTypeName = "Float";
 				break;
-			case DataType::None:
-			case DataType::Binary:
-			case DataType::VarBinary:
-			case DataType::Guid:
-			case DataType::Cursor:
-			case DataType::RefCursor:
-			case DataType::Image:
-			case DataType::Blob:
-			case DataType::TimeSpan:
-				THROW( "DataType {} is not implemented.", column.Type );
-			case DataType::VarTChar:
-			case DataType::VarWChar:
-			case DataType::VarChar:
-			case DataType::NText:
-			case DataType::Text:
-			case DataType::Uri:
+			case EType::None: case EType::Binary: case EType::VarBinary: case EType::Guid: case EType::Cursor: case EType::RefCursor: case EType::Image: case EType::Blob: case EType::TimeSpan:
+				throw Exception{ sl, ELogLevel::Debug, "EType {} is not implemented.", (uint)column.Type };
+			case EType::VarTChar: case EType::VarWChar: case EType::VarChar: case EType::NText: case EType::Text: case EType::Uri:
 				qlTypeName = "String";
 				break;
-			case DataType::TChar:
-			case DataType::WChar:
-			case DataType::UInt8:
-			case DataType::Char:
+			case EType::TChar: case EType::WChar: case EType::UInt8: case EType::Char:
 				qlTypeName = "Char";
-			case DataType::DateTime:
-			case DataType::SmallDateTime:
+			case EType::DateTime: case EType::SmallDateTime:
 				qlTypeName = "DateTime";
 				break;
 			}
@@ -618,7 +601,7 @@ namespace DB
 		sv Delimiters;
 		sv _peekValue;
 	};
-	string StringifyKeys( sv json )
+	α StringifyKeys( sv json )->string
 	{
 		ostringstream os;
 		bool inValue = false;
@@ -677,14 +660,14 @@ namespace DB
 		}
 		return os.str();
 	}
-	json ParseJson( Parser& q )
+	α ParseJson( Parser& q )->json
 	{
 		string params{ q.Next(')') }; THROW_IF( params.front()!='(', "Expected '(' vs {} @ '{}' to start function - '{}'.",  params.front(), q.Index()-1, q.Text() );
 		params.front()='{'; params.back() = '}';
 		params = StringifyKeys( params );
 		return json::parse( params );
 	}
-	DB::TableQL LoadTable( Parser& q, sv jsonName )noexcept(false)//__type(name: "Account") { fields { name type { name kind ofType{name kind} } } }
+	α LoadTable( Parser& q, sv jsonName )noexcept(false)->DB::TableQL//__type(name: "Account") { fields { name type { name kind ofType{name kind} } } }
 	{
 		var j = q.Peek()=="(" ? ParseJson( q ) : json{};
 		THROW_IF( q.Next()!="{", "Expected '{{' after table name. i='{}', text='{}'", q.Index(), q.AllText() );
@@ -698,7 +681,7 @@ namespace DB
 		}
 		return table;
 	}
-	vector<DB::TableQL> LoadTables( Parser& q, sv jsonName )noexcept(false)
+	α LoadTables( Parser& q, sv jsonName )noexcept(false)->vector<DB::TableQL>
 	{
 		vector<DB::TableQL> results;
 		do
@@ -714,7 +697,7 @@ namespace DB
 		return results;
 	}
 
-	DB::MutationQL LoadMutation( Parser& q )
+	α LoadMutation( Parser& q )->DB::MutationQL
 	{
 		THROW_IF( q.Next()!="{", "mutation expected '{' as 1st character." );
 		var command = q.Next();
@@ -730,7 +713,7 @@ namespace DB
 		DB::MutationQL ql{ string{tableJsonName}, type, j, result/*, parentJsonName*/ };
 		return ql;
 	}
-	DB::RequestQL DB::ParseQL( sv query )noexcept(false)
+	α DB::ParseQL( sv query )noexcept(false)->DB::RequestQL
 	{
 		uint i = query.find_first_of( "{" ); THROW_IF( i==sv::npos || i>query.size()-2, "Invalid query '{}'", query );
 		Parser parser{ query.substr(i+1), "{}()," };
