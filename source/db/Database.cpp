@@ -173,14 +173,14 @@ namespace Jde
 	α DB::SelectIds( string sql, const std::set<uint>& ids, function<void(const IRow&)> f, SL sl )noexcept(false)->void
 	{
 		vector<object> params; params.reserve( ids.size() );
-		string str; str.reserve( ids.size()*2 );
+		string s; s.reserve( ids.size()*2 );
 		for( var id : ids )
 		{
-			if( str.size() )
-				str+=",";
-			str+="?";
+			if( s.size() )
+				s+=",";
+			s+="?";
 			params.emplace_back( id );
 		}
-		Select( format("{}({})", move(sql), str, sl), f, params );
+		Select( format("{}({})", move(sql), s), f, params, sl );
 	}
 }

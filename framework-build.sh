@@ -32,6 +32,7 @@ else
 fi;
 fetchDefault Public;
 cd $scriptDir/../Public;
+if [[ -z $JDE_DIR ]]; then JDE_BASH=$REPO_BASH/jde; else toBashDir $JDE_DIR JDE_BASH; fi;
 stageDir=$JDE_BASH/Public/stage
 
 function winBoostConfig
@@ -174,7 +175,7 @@ function frameworkProtoc
 	fi;
 	echo frameworkProtoc $cleanProtoc
 	if [ $cleanProtoc -eq 1 ]; then
-	   	protoc --cpp_out dllexport_decl=JDE_NATIVE_VISIBILITY:. -I$protobufInclude -I. messages.proto;
+	   	protoc --cpp_out dllexport_decl=Γ:. -I$protobufInclude -I. messages.proto;
 		if [ $? -ne 0 ]; then exit 1; fi;
 		if windows; then
 			echo `pwd`;

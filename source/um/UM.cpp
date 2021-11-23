@@ -87,7 +87,7 @@ namespace Jde
 		}
 		catch( const std::exception& e )//nlohmann::detail::parse_error
 		{
-			throw IOException( path, e.what(), {SRCE_CUR.file_name(), SRCE_CUR.line()-4, SRCE_CUR.function_name()} );
+			throw IOException{ path, e.what(), source_location::current( SRCE_CUR.line()-4, __builtin_COLUMN(), SRCE_CUR.file_name(), SRCE_CUR.function_name()) };
 		}
 
 		var schema = pDataSource->SchemaProc()->CreateSchema( j, path.parent_path() );

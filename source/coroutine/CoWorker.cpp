@@ -1,4 +1,4 @@
-#include "CoWorker.h"
+﻿#include "CoWorker.h"
 #include "../threading/InterruptibleThread.h"
 
 namespace Jde::Coroutine

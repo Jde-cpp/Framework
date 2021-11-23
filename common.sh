@@ -1,6 +1,7 @@
 #!/bin/bash
 windows() { [[ -n "$WINDIR" ]]; }
 t=$(readlink -f "${BASH_SOURCE[0]}"); commonBuild=$(basename "$t"); unset t;
+export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 
 function findExecutable
 {
@@ -14,6 +15,7 @@ function findExecutable
      		PATH=${defaultPath//\\}:$PATH;
 		else
 			if [ $exitFailure -eq 1 ]; then
+				echo `pwd`;
 				echo common.sh:17 can not find "${defaultPath//\\}/$exe";
 				exit 1;
 			fi;
@@ -27,13 +29,13 @@ function toBashDir
 {
 	windowsDir=$1;
 	echo toBashDir $1 $2
-   local -n _bashDir=$2
-   _bashDir=${windowsDir/:/}; _bashDir=${_bashDir//\\//}; _bashDir=${_bashDir/C/c};
+   	local -n _bashDir=$2
+   	_bashDir=${windowsDir/:/}; _bashDir=${_bashDir//\\//}; _bashDir=${_bashDir/C/c};
 	if [[ ${_bashDir:0:1} != "/" ]]; then _bashDir=/$_bashDir; fi;
 }
 if windows; then
 	toBashDir $REPO_DIR REPO_BASH;
-	toBashDir $JDE_DIR JDE_BASH;
+	if [[ -z $JDE_DIR ]]; then JDE_DIR=$REPO_BASH/jde; else toBashDir $JDE_DIR JDE_BASH; fi;
 else
 	REPO_BASH=$REPO_DIR;
 	JDE_BASH=$JDE_DIR
@@ -122,7 +124,7 @@ function mklink
 	if [ -f $file ]; then rm $file; fi;
 	if windows; then
 		toWinDir "$fetchLocation" _source;
-		if [ ! -f "$_source/$file" ]; then echo $_source/$file not found; exit 1; fi;
+		if [ ! -f "$_source/$file" ]; then echo $PS4 $_source/$file not found; exit 1; fi;
 		toWinDir "`pwd`" _destination;
 		cmd <<< "mklink \"$_destination\\$file\" \"$_source\\$file\" " > /dev/null;  #"
 		if [ $? -ne 0 ]; then

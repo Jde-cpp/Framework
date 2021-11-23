@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "DataType.h"
 #include <jde/Str.h>
 #include "../math/Decimal.h"
@@ -15,13 +15,13 @@ namespace Jde::DB
 		β GetInt32( uint position, SRCE )const->int32_t=0;
 		β GetIntOpt( uint position, SRCE )const->std::optional<_int> = 0;
 		β GetDouble( uint position, SRCE )const->double=0;
-		β GetFloat( uint position, SRCE )const->float{ return static_cast<float>( GetDouble(position) ); }
+		β GetFloat( uint position, SRCE )const->float{ return static_cast<float>( GetDouble(position, sl) ); }
 		β GetDoubleOpt( uint position, SRCE )const->std::optional<double> = 0;
 		β GetTimePoint( uint position, SRCE )const->DBTimePoint=0;
 		β GetTimePointOpt( uint position, SRCE )const->std::optional<DBTimePoint> = 0;
 		β GetUInt( uint position, SRCE )const->uint=0;
-		β GetUInt32( uint position, SRCE )const->uint32_t{ return static_cast<uint32_t>(GetUInt(position)); }
-		β GetUInt16( uint position, SRCE )const->uint16_t{ return static_cast<uint16_t>(GetUInt(position)); }
+		β GetUInt32( uint position, SRCE )const->uint32_t{ return static_cast<uint32_t>(GetUInt(position, sl)); }
+		β GetUInt16( uint position, SRCE )const->uint16_t{ return static_cast<uint16_t>(GetUInt(position, sl)); }
 		β GetUIntOpt( uint position, SRCE )const->std::optional<uint> = 0;
 		ⓣ Get( uint position, SRCE )const noexcept(false)->T;
 
@@ -52,11 +52,11 @@ namespace Jde::DB
 		mutable uint _index{0};
 	};
 
-	template<> Ξ IRow::Get<string>( uint position, SL sl )const->string{ return GetString(position); }
-	template<> Ξ IRow::Get<uint>( uint position, SL sl )const->uint{ return GetUInt(position); }
-	template<> Ξ IRow::Get<unsigned int>( uint position, SL sl )const->unsigned int{ return (unsigned int)GetUInt(position); }
-	template<> Ξ IRow::Get<optional<uint32>>( uint position, SL sl )const->optional<uint32>{ const auto p = GetUIntOpt(position); return p ? optional<uint32>{static_cast<uint32>(*p)} : optional<uint32>{}; }
-	template<> Ξ IRow::Get<uint8>( uint position, SL sl )const->uint8{ return (uint8)GetUInt16(position); }
-	template<> Ξ IRow::Get<CIString>( uint position, SL sl )const->CIString{ return GetCIString(position); }
+	template<> Ξ IRow::Get<string>( uint position, SL sl )const->string{ return GetString(position, sl); }
+	template<> Ξ IRow::Get<uint>( uint position, SL sl )const->uint{ return GetUInt(position, sl); }
+	template<> Ξ IRow::Get<unsigned int>( uint position, SL sl )const->unsigned int{ return (unsigned int)GetUInt(position, sl); }
+	template<> Ξ IRow::Get<optional<uint32>>( uint position, SL sl )const->optional<uint32>{ const auto p = GetUIntOpt(position, sl); return p ? optional<uint32>{static_cast<uint32>(*p)} : optional<uint32>{}; }
+	template<> Ξ IRow::Get<uint8>( uint position, SL sl )const->uint8{ return (uint8)GetUInt16(position, sl); }
+	template<> Ξ IRow::Get<CIString>( uint position, SL sl )const->CIString{ return GetCIString(position, sl); }
 
 }

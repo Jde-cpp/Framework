@@ -308,6 +308,17 @@ namespace Jde
 			if( level!=ELogLevel::Trace )
 				Fields |= EFields::Level;
 		}
+		MessageBase::MessageBase( ELogLevel level, sv message, const char* file, const char* function, uint_least32_t line )noexcept:
+			Fields{ EFields::Message | EFields::File | EFields::FileId | EFields::Function | EFields::FunctionId | EFields::LineNumber },
+			Level{ level },
+			MessageId{ Calc32RunTime(message) },//{},
+			FileId{ Calc32RunTime(FileName(file)) },
+			File{ file },
+			FunctionId{ Calc32RunTime(function) },
+			Function{ function },
+			LineNumber{ line }
+		{}
+
 
 		Message::Message( const MessageBase& b )noexcept:
 			MessageBase{ b },
@@ -315,6 +326,10 @@ namespace Jde
 		{
 			File = _fileName.c_str();
 		}
+/*		Message::Message( sv m, ELogLevel l, const char* file, const char* function, uint_least32_t line )noexcept:
+			MessageBase( m, l, file, function, line )
+		{}
+*/
 		Message::Message( ELogLevel level, string message, const source_location& sl )noexcept:
 			MessageBase( level, sl ),
 			_pMessage{ make_unique<string>(move(message)) },
@@ -323,5 +338,15 @@ namespace Jde
 			File = _fileName.c_str();
 			MessageView = *_pMessage;
 		}
+		Message::Message( const Message& x )noexcept:
+			MessageBase{ x },
+			_pMessage{ x._pMessage ? make_unique<string>(*x._pMessage) : nullptr },
+			_fileName{ x._fileName }
+		{
+			File = _fileName.c_str();
+			if( _pMessage )
+				MessageView = *_pMessage;
+		}
+
 	}
 }

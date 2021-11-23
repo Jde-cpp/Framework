@@ -1,4 +1,4 @@
-#include <jde/io/File.h>
+﻿#include <jde/io/File.h>
 
 #include <cmath>
 #include <fstream>
@@ -75,7 +75,7 @@ namespace Jde::IO
 
 			f.write( data.data(), data.size() );
 		}
-		α Save( path path, sv value, std::ios_base::openmode openMode, SL sl )noexcept(false)->void
+		α Save( path path, sv value, std::ios_base::openmode /*openMode*/, SL sl )noexcept(false)->void
 		{
 			Save( path, ms<string>(value), sl );
 			// if( !fs::exists(path.parent_path()) )

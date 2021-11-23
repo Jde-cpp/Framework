@@ -1,4 +1,4 @@
-#include "Mutex.h"
+﻿#include "Mutex.h"
 #include <boost/container/flat_map.hpp>
 #define var const auto
 namespace Jde

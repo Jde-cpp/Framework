@@ -69,8 +69,8 @@ namespace Jde
 		IException{ string{msg}, sl },
 		_errorCode{ make_unique<boost::system::error_code>(errorCode) }
 	{}
-	BoostCodeException::BoostCodeException( const BoostCodeException& e, const source_location& sl )noexcept:
-		IException{ {}, sl },
+	BoostCodeException::BoostCodeException( const BoostCodeException& e )noexcept:
+		IException{ e },
 		_errorCode{ make_unique<boost::system::error_code>(*e._errorCode) }
 	{}
 	BoostCodeException::~BoostCodeException()

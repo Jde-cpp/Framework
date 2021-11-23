@@ -1,4 +1,4 @@
-#include "DBException.h"
+﻿#include "DBException.h"
 #include "Database.h"
 
 namespace Jde::DB

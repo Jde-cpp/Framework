@@ -3,7 +3,8 @@ sourceBuildDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 if [[ -z $commonBuild ]]; then source $sourceBuildDir/common.sh; fi;
 baseDir=$sourceBuildDir/../..;
 jdeRoot=jde;
-
+if [ -z $JDE_DIR ]; then JDE_DIR=$REPO_BASH/jde; fi;
+if [ -z $JDE_BASH ]; then toBashDir $JDE_DIR JDE_BASH; fi;
 
 t=$(readlink -f "${BASH_SOURCE[0]}"); sourceBuild=$(basename "$t"); unset t;
 #echo running $sourceBuild
@@ -176,6 +177,8 @@ function fetchBuild
 function findProtoc
 {
 	if windows; then
+		#if [[ -z $JDE_DIR ]]; then JDE_BASH=$REPO_BASH/jde; else toBashDir $JDE_DIR JDE_BASH; fi;
+		#echo JDE_BASH=$JDE_BASH;
 		findExecutable protoc.exe $JDE_BASH/Public/stage/release;
 	fi;
 }

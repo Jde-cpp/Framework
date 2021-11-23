@@ -92,7 +92,7 @@ namespace Jde::DB
 		β ExecuteNoLog( string sql, const vector<object>* pParameters, RowΛ* f=nullptr, bool isStoredProc=false, SRCE )noexcept(false)->uint = 0;
 		β ExecuteProc( string sql, vec<object> parameters, SRCE )noexcept(false)->uint=0;
 		β ExecuteProc( string sql, vec<object> parameters, RowΛ f, SRCE )noexcept(false)->uint=0;
-		β ExecuteProcCo( string&& sql, const vector<object>&& parameters, SRCE )noexcept->up<IAwaitable> = 0;
+		β ExecuteProcCo( string sql, vector<object> p, SRCE )noexcept->up<IAwaitable> = 0;
 		β ExecuteProcNoLog( string sql, vec<object> parameters, SRCE )noexcept(false)->uint=0;
 
 		α Select( string sql, RowΛ f, vec<object> parameters, SRCE )noexcept(false)->void;
