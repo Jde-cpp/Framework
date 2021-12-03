@@ -2,15 +2,16 @@
 	"wakeDuration": "PT5S",
 	"db":
 	{
-		"driverx": "Jde.DB.Odbc.dll",
-		"connectionStringx": "DSN=Jde_TWS_Connection",
-		"driver": "libJde.MySql.so",
-		"connectionString": "Jde_UM_Connection",
-		"meta": "../../TwsWebSocket/meta.json"
+		"driver": "Jde.DB.Odbc.dll",
+		"connectionString": "DSN=Jde_TWS_Connection",
+		"driverx": "libJde.MySql.so",
+		"connectionStringx": "Jde_UM_Connection",
+		"meta": "../../TwsWebSocket/meta.json",
+		"chunkSize":  1
 	},
 	"logging":
 	{
-		"tags": [ "threads", "web", "tweet", "" ],
+		"tags": [ "threads" ],
 		"console":{},
 		"file":{ "path": ".." },
 		"server": { "portx": 4321, "level": "Debug", "diagnosticsLevel": "Debug", "tags": {"threads":"Debug"} }
@@ -39,6 +40,6 @@
 	},
 	"testing":
 	{
-		"tests":  "QLTests.*"
+		"tests":  "*"
 	}
 }

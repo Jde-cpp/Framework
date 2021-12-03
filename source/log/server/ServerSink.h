@@ -19,27 +19,29 @@ namespace Jde::Logging
 
 	struct Γ IServerSink : private boost::noncopyable
 	{
-		IServerSink()=default;
+		using ID=uint32;
+		IServerSink()noexcept=default;
+		IServerSink( const unordered_set<ID>& msgs )noexcept:_messagesSent{msgs}{}
 		virtual ~IServerSink();
 
 		β Log( Messages::ServerMessage& message )noexcept->void=0;
 		β Log( const MessageBase& messageBase )noexcept->void=0;
 		β Log( const MessageBase& messageBase, vector<string>& values )noexcept->void=0;
 
-		bool ShouldSendMessage( uint messageId )noexcept{ return _messagesSent.emplace(messageId); }
-		bool ShouldSendFile( uint messageId )noexcept{ return _filesSent.emplace(messageId); }
-		bool ShouldSendFunction( uint messageId )noexcept{ return _functionsSent.emplace(messageId); }
-		bool ShouldSendUser( uint messageId )noexcept{ return _usersSent.emplace(messageId); }
-		bool ShouldSendThread( uint messageId )noexcept{ return _threadsSent.emplace(messageId); }
-		β SendCustom( uint32 /*requestId*/, str /*bytes*/ )noexcept->void{ CRITICAL("SendCustom not implemented"); }
-		static bool Enabled()noexcept{ return _enabled; }
+		α ShouldSendMessage( ID messageId )noexcept->bool{ return _messagesSent.emplace(messageId); }
+		α ShouldSendFile( ID messageId )noexcept->bool{ return _filesSent.emplace(messageId); }
+		α ShouldSendFunction( ID messageId )noexcept->bool{ return _functionsSent.emplace(messageId); }
+		α ShouldSendUser( ID messageId )noexcept->bool{ return _usersSent.emplace(messageId); }
+		α ShouldSendThread( ID messageId )noexcept->bool{ return _threadsSent.emplace(messageId); }
+		β SendCustom( ID /*requestId*/, str /*bytes*/ )noexcept->void{ CRITICAL("SendCustom not implemented"); }
+		Ω Enabled()noexcept->bool{ return _enabled; }
 		atomic<bool> SendStatus{false};
 	protected:
-		UnorderedSet<uint> _messagesSent;
-		UnorderedSet<uint> _filesSent;
-		UnorderedSet<uint> _functionsSent;
-		UnorderedSet<uint> _usersSent;
-		UnorderedSet<uint> _threadsSent;
+		UnorderedSet<ID> _messagesSent;
+		UnorderedSet<ID> _filesSent;
+		UnorderedSet<ID> _functionsSent;
+		UnorderedSet<ID> _usersSent;
+		UnorderedSet<ID> _threadsSent;
 	private:
 		static bool _enabled;
 	};

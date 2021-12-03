@@ -6,8 +6,8 @@
 #define var const auto
 namespace Jde::DB
 {
-	Statement::Statement( sv sql, const VectorPtr<object>& parameters, bool isStoredProc, SL sl ):
-		Sql{ sql },
+	Statement::Statement( string sql, const VectorPtr<object>& parameters, bool isStoredProc, SL sl ):
+		Sql{ move(sql) },
 		Parameters{ parameters },
 		IsStoredProc{isStoredProc},
 		SourceLocation{ sl }
@@ -28,14 +28,14 @@ namespace Jde::DB
 		//_queue.Push( sp<Statement>{} );
 	}
 
-	void DBQueue::Push( sv sql, const VectorPtr<object>& parameters, bool isStoredProc, SL sl )noexcept
+	void DBQueue::Push( string sql, const VectorPtr<object>& parameters, bool isStoredProc, SL sl )noexcept
 	{
 		RETURN_IF( _stopped, "pushing '{}' when stopped", sql );
 		// if( !_stopped )
 		// 	_queue.Push( ms<Statement>(sql, parameters, isStoredProc) );
 		// else
 		// 	DBG("pushing '{}' when stopped", sql);
-		auto pStatement = ms<Statement>( sql, parameters, isStoredProc, sl );
+		auto pStatement = ms<Statement>( move(sql), parameters, isStoredProc, sl );
 		try
 		{
 			if( pStatement->IsStoredProc )
@@ -43,9 +43,9 @@ namespace Jde::DB
 			else
 				_spDataSource->ExecuteNoLog( pStatement->Sql, pStatement->Parameters.get(), nullptr, false, sl );
 		}
-		catch( const IException& e )
+		catch( const IException& )
 		{
-			DB::LogNoServer( sql, parameters.get(), ELogLevel::Error, e.what(), sl );
+			//DB::LogNoServer( move(pStatement->Sql), parameters.get(), ELogLevel::Error, e.what(), sl );
 		}
 	}
 

@@ -266,16 +266,38 @@ namespace Jde
 		return string{ (char)std::toupper(month[0]),month[1],month[2] };
 	}
 }
-namespace Jde::Timezone
+namespace Jde
 {
-	α TryGetGmtOffset( sv name, TimePoint utc )noexcept->Duration
+	α Timezone::TryGetGmtOffset( sv name, TimePoint utc, SL sl )noexcept->Duration
 	{
 		try
 		{
-			return GetGmtOffset( name, utc );
+			return GetGmtOffset( name, utc, sl );
 		}
 		catch( const IException& )
 		{}
 		return Duration{};
 	}
+#ifdef _MSC_VER
+	α Timezone::GetGmtOffset( sv inputName, TimePoint utc, SL sl )noexcept(false)->Duration 
+	{
+/*		CIString ciName{ inputName };
+		if( ciName=="EST (Eastern Standard Time)"sv || ciName=="US/Eastern"sv )
+			ciName = "Eastern Standard Time"sv;
+		else if( ciName=="MET (Middle Europe Time)"sv || ciName=="MET"sv )
+			ciName = "W. Europe Standard Time"sv;*/
+		try
+		{
+			return std::chrono::zoned_time{ inputName, utc }.get_info().offset;
+		}
+		catch( std::exception& e )
+		{
+			throw Exception( sl, move(e), "Could not find time zone '{}'", inputName );
+		}
+	}
+	α Timezone::EasternTimezoneDifference( TimePoint time, SL sl )noexcept(false)->Duration
+	{
+		return GetGmtOffset( "America/New_York", time, sl );
+	}
+#endif
 }

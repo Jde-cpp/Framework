@@ -89,10 +89,10 @@ namespace Jde
 #define var const auto
 namespace Jde::Timezone
 {
-	Γ Duration GetGmtOffset( sv name, TimePoint utc )noexcept(false);
-	Γ Duration TryGetGmtOffset( sv name, TimePoint utc )noexcept;
-	Γ Duration EasternTimezoneDifference( TimePoint time )noexcept;
-	Ξ EasternTimeNow()noexcept->TimePoint{ var now=Clock::now(); return now+EasternTimezoneDifference(now); };
+	Γ Duration GetGmtOffset( sv name, TimePoint utc, SRCE )noexcept(false);
+	Γ Duration TryGetGmtOffset( sv name, TimePoint utc, SRCE )noexcept;
+	Γ Duration EasternTimezoneDifference( TimePoint time, SRCE )noexcept(false);
+	Ξ EasternTimeNow(SRCE)noexcept(false)->TimePoint{ var now=Clock::now(); return now+EasternTimezoneDifference(now, sl); };
 }
 
 namespace Jde::TimeSpan

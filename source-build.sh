@@ -100,14 +100,10 @@ function buildWindows2
 }
 function buildWindows
 {
-	echo buildWindows $1;
 	dir=$1;
+	echo buildWindows $dir;
 	if [[ ! -f "$dir.vcxproj.user" && -f "$dir.vcxproj._user" ]]; then
-		echo `pwd`
-		echo linkFile $dir.vcxproj._user $dir.vcxproj.user
 		linkFile $dir.vcxproj._user $dir.vcxproj.user;	if [ $? -ne 0 ]; then echo `pwd`; echo FAILED:  linkFile $dir.vcxproj._user $dir.vcxproj.user; exit 1; fi;
-		echo linkFile $dir.vcxproj._user $dir.vcxproj.user;
-		echo done linking file;
 	fi;
 	echo clean=$clean;
 	if [ ${clean:-1} -eq 1 ]; then
@@ -116,25 +112,21 @@ function buildWindows
 	fi;
 	file=$2;
 	echo file=$file dir=$dir;
-	#echo if [[ -z file ]] then [[ $dir = "Framework" ]] && file="Jde.dll" || file="Jde.dir.dll" fi;
-	#if [[ -z $file ]]; then [[ $dir = "Framework" ]] && file="Jde.dll" || file="Jde.$dir.dll"; fi;
-	if [[ -z $2 ]]; then
+	if [[ -z $file ]]; then
 		echo file empty;
 		if [[ $dir = "Framework" ]]; then
 			file="Jde.dll";
 		else
 			file="Jde.$dir.dll";
 		fi;
-	else
-		echo file not empty;
 	fi;
-	echo file=$file;
-	echo buildWindows $dir `pwd`;
-	baseCmd="msbuild.exe $dir.vcxproj -p:Platform=x64 -maxCpuCount -nologo -v:q /clp:ErrorsOnly -p:Configuration"
+	#echo buildWindows $dir `pwd`;
+	projFile=$([ "${PWD##*/}" = "tests" ] && echo "Tests.$dir" || echo "$dir");
+	baseCmd="msbuild.exe $projFile.vcxproj -p:Platform=x64 -maxCpuCount -nologo -v:q /clp:ErrorsOnly -p:Configuration"
 	echo buildWindows $baseCmd $file release
 	buildWindows2 "$baseCmd" $file release;
 	buildWindows2 "$baseCmd" $file debug;
-	echo build $dir complete.
+	echo build $projFile complete.
 }
 
 function createProto
@@ -166,6 +158,14 @@ function build
 		buildWindows $1 $3
 	else
 		buildLinux $2
+	fi;
+}
+function buildTest
+{
+	if windows; then
+		buildWindows $1 $2
+	else
+		buildLinux 1
 	fi;
 }
 function fetchBuild

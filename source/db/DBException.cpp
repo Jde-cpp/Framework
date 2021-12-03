@@ -35,6 +35,6 @@ namespace Jde::DB
 		if( Sql.find("log_message_insert")==string::npos )
 			DB::Log( Sql, Parameters.size() ? &Parameters : nullptr, _level, _pInner ? string{_pInner->what()} : what(), _sl );
 		else
-			ERRX( "log_message_insert sql='{}'"sv, Sql );
+			DB::LogNoServer( Sql, &Parameters, ELogLevel::Error, what(), _sl );
 	}
 }

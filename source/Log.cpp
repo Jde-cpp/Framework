@@ -22,6 +22,7 @@ namespace Jde::Logging
 	up<vector<Logging::Messages::ServerMessage>> _pMemoryLog; shared_mutex MemoryLogMutex;
 	auto _pOnceMessages = make_unique<flat_map<uint,set<string>>>(); std::shared_mutex OnceMessageMutex;
 	static const LogTag& _statusLevel = Logging::TagLevel( "status" );
+	static const LogTag& _logLevel = Logging::TagLevel( "status" );
 
 	α SetTag( sv tag, vector<LogTag>& existing )noexcept->sv
 	{
@@ -73,7 +74,8 @@ namespace Jde::Logging
 			if( t.size() )
 				tagIds.push_back( t );
 		}
-		Logging::Log( Logging::Message(ELogLevel::Information, &tags==&_tags ? "FileTags:  {}." : "ServerTags:  {}."), Str::AddCommas(tagIds) );
+		//LOG_MEMORY( "settings", ELogLevel::Information, "({}) Settings", settingsPath.string() );
+		LOG_MEMORY( "settings", ELogLevel::Information, &tags==&_tags ? "FileTags:  {}." : "ServerTags:  {}.", Str::AddCommas(tagIds) );
 	}
 }
 namespace Jde
@@ -96,6 +98,11 @@ namespace Jde
 		TRACE( "Destroying Logger"sv );
 
 		Logging::_pOnceMessages = nullptr;
+		{
+			unique_lock l{ MemoryLogMutex }; 
+			_pMemoryLog = nullptr;
+			_logMemory = false;
+		}
 		SetServer( nullptr );
 	};
 
@@ -118,7 +125,7 @@ namespace Jde
 		_pMemoryLog->emplace_back( m, move(values) );
 	}
 
-	α Logging::LogMemory()noexcept->bool{ return Logging::_logMemory; }
+	α Logging::LogMemory()noexcept->bool{ return _logMemory; }
 
 	vector<spdlog::sink_ptr> LoadSinks()noexcept
 	{
@@ -146,7 +153,7 @@ namespace Jde
 			var level = sink.TryGet<ELogLevel>( "level" ).value_or( ELogLevel::Debug );
 			pSink->set_level( (spdlog::level::level_enum)level );
 			//LOG_MEMORY( ELogLevel::Information, "({})level='{}' pattern='{}'{}", name, ToString(level), pattern, additional );
-			LogMemoryDetail( Logging::Message{ELogLevel::Information, "({})level='{}' pattern='{}'{}"}, name, ToString(level), pattern, additional );
+			LogMemoryDetail( Logging::Message{"settings", ELogLevel::Information, "({})level='{}' pattern='{}'{}"}, name, ToString(level), pattern, additional );
 			sinks.push_back( pSink );
 		}
 		return sinks;
@@ -165,6 +172,11 @@ namespace Jde
 		var flushOn = Settings::TryGet<ELogLevel>( "logging/flushOn" ).value_or( ELogLevel::Information );
 		_logger.flush_on( (spdlog::level::level_enum)flushOn );
 		auto pServer = IServerSink::Enabled() ? ServerSink::Create() : nullptr;
+
+		if( pServer )
+			AddTags( _serverTags, "logging/server/tags" );
+		AddTags( _tags, "logging/tags" );
+
 		if( _pMemoryLog )
 		{
 			for( var& m : *_pMemoryLog )
@@ -175,6 +187,8 @@ namespace Jde
 					args.push_back( fmt::detail::make_arg<ctx>(a) );
 				try
 				{
+					if( m.Tag.size() && find_if(_tags.begin(), _tags.end(), [&](var& x){return x.Id==m.Tag;})==_tags.end() )
+						continue;
 					if( _sinks.size() )
 						_logger.log( spdlog::source_loc{m.File,(int)m.LineNumber,m.Function}, (spdlog::level::level_enum)m.Level, fmt::vformat(m.MessageView, fmt::basic_format_args<ctx>{args.data(), (int)args.size()}) );
 					else
@@ -190,11 +204,8 @@ namespace Jde
 			if( !_logMemory )
 				ClearMemoryLog();
 		}
-		INFO( "settings path={}", Settings::Path() );
-		INFO( "log minLevel='{}' flushOn='{}'", ELogLevelStrings[minLevel], ELogLevelStrings[(uint8)flushOn] );//TODO add flushon to Server
-		if( pServer )
-			AddTags( _serverTags, "logging/server/tags" );
-		AddTags( _tags, "logging/tags" );
+		LOG( "settings path={}", Settings::Path() );
+		LOG( "log minLevel='{}' flushOn='{}'", ELogLevelStrings[minLevel], ELogLevelStrings[(uint8)flushOn] );//TODO add flushon to Server
 	}
 
 	void Logging::LogServer( const MessageBase& m )noexcept
@@ -337,15 +348,32 @@ namespace Jde
 		{
 			File = _fileName.c_str();
 			MessageView = *_pMessage;
+			MessageId = Calc32RunTime( MessageView );
 		}
+
+		Message::Message( sv tag, ELogLevel level, string message, const source_location& sl )noexcept:
+			MessageBase( level, sl ),
+			Tag{ tag },
+			_pMessage{ make_unique<string>(move(message)) },
+			_fileName{ FileName(sl.file_name()) }
+		{
+			File = _fileName.c_str();
+			MessageView = *_pMessage;
+			MessageId = Calc32RunTime( MessageView );
+		}
+
 		Message::Message( const Message& x )noexcept:
 			MessageBase{ x },
 			_pMessage{ x._pMessage ? make_unique<string>(*x._pMessage) : nullptr },
-			_fileName{ x._fileName }
+			_fileName{ x._fileName },
+			Tag{ x.Tag }
 		{
 			File = _fileName.c_str();
 			if( _pMessage )
+			{
 				MessageView = *_pMessage;
+				MessageId = Calc32RunTime( MessageView );
+			}
 		}
 
 	}

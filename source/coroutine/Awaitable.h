@@ -72,7 +72,7 @@ namespace Jde::Coroutine
 	{
 		using base=IAwaitable;
 	public:
-		FunctionAwaitable( function<Task2(typename base::THandle)> fnctn, str name={} )noexcept:base{name}, _fnctn2{fnctn}{};
+		FunctionAwaitable( function<Task2(typename base::THandle)> fnctn, SRCE, str name={} )noexcept:base{name, sl}, _fnctn2{fnctn}{};
 
 		α await_suspend( typename base::THandle h )noexcept->void override{ base::await_suspend( h ); _fnctn2( move(h) ); }
 	private:

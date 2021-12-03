@@ -171,7 +171,7 @@ namespace Jde::Logging
 						else if( pMessage->has_string() )
 						{
 							auto pString = up<Logging::Proto::RequestString>( pMessage->release_string() );
-							UnorderedSet<uint>& set = pString->field()==Proto::EFields::MessageId ? _messagesSent : pString->field()==Proto::EFields::FileId ? _filesSent : _functionsSent;
+							UnorderedSet<ID>& set = pString->field()==Proto::EFields::MessageId ? _messagesSent : pString->field()==Proto::EFields::FileId ? _filesSent : _functionsSent;
 							if( !set.contains(pString->id()) )
 								t.add_messages()->set_allocated_string( pString.release() );
 						}
@@ -207,11 +207,8 @@ namespace Jde::Logging
 			Message{ rhs },
 			Timestamp{ rhs.Timestamp },
 			Variables{ rhs.Variables },
-			//_pFile{ rhs._pFile ? make_unique<string>(*rhs._pFile) : nullptr },
 			_pFunction{ rhs._pFunction ? make_unique<string>(*rhs._pFunction) : nullptr }
 		{
-			//if( _pFile )
-			//	File = *_pFile;
 			if( _pFunction )
 				Function = _pFunction->c_str();
 		}

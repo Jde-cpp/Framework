@@ -196,14 +196,14 @@ namespace Jde::DB
 				else
 					member = get<int>( value );
 			}
-			else if( index==EObject::Decimal2 )
-				member = (float)get<Decimal2>( value );
+			//else if( index==EObject::Decimal2 )
+			//	member = (float)get<Decimal2>( value );
 			else if( index==EObject::Double )
 				member = get<double>( value );
-			else if( index==EObject::DoubleOptional )
-				member = get<optional<double>>(value).value();
-			else if( index==EObject::DateOptional )
-				member = ToIsoString( get<optional<DB::DBTimePoint>>(value).value() );
+			//else if( index==EObject::DoubleOptional )
+			//	member = get<optional<double>>(value).value();
+			else if( index==EObject::Time )
+				member = ToIsoString( get<DB::DBTimePoint>(value) );
 			else if( index==EObject::StringPtr )
 			{
 				if( get<sp<string>>(value) )

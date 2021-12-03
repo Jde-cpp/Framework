@@ -34,23 +34,20 @@ namespace Jde
 			os << get<_int>(parameter);
 		else if( type==EObject::Uint )
 			os << get<uint>(parameter);
-		else if( type==EObject::Decimal2 )
-			os << get<Decimal2>( parameter );
+		//else if( type==EObject::Decimal2 )
+		//	os << get<Decimal2>( parameter );
 		else if( type==EObject::Double )
 			os << get<double>( parameter );
-		else if( type==EObject::DoubleOptional )
+	/*	else if( type==EObject::DoubleOptional )
 		{
 			var& value = get<optional<double>>(parameter);
 			if( value.has_value() )
 				os << value.value();
 			else
 				os << nullString;
-		}
-		else if( type==EObject::DateOptional )
-		{
-			var& value = get<optional<DBTimePoint>>( parameter );
-			os << ( value.has_value() ? ToIsoString(value.value()) : string(nullString) );
-		}
+		}*/
+		else if( type==EObject::Time )
+			os << ToIsoString( get<DBTimePoint>(parameter) );
 		else
 			throw Exception{ sl, Jde::ELogLevel::Debug, "{} not implemented", parameter.index() };
 		return os.str();

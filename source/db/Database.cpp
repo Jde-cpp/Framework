@@ -17,7 +17,7 @@ namespace Jde
 	using nlohmann::ordered_json;
 	static var& _logLevel{ Logging::TagLevel("sql") };
 
-	α DB::Message( sv sql, const vector<object>* pParameters, sv error )noexcept->string
+	α DB::Message( sv sql, const vector<object>* pParameters, string error )noexcept->string
 	{
 		var size = pParameters ? pParameters->size() : 0;
 		ostringstream os;
@@ -39,13 +39,13 @@ namespace Jde
 		Logging::Log( Logging::Message{l, Message(sql, pParameters, {}), sl} );
 	}
 
-	α DB::Log( sv sql, const vector<object>* pParameters, ELogLevel level, sv error, SL sl )noexcept->void
+	α DB::Log( sv sql, const vector<object>* pParameters, ELogLevel level, string error, SL sl )noexcept->void
 	{
-		Logging::Log( Logging::Message{level, Message(sql, pParameters, error), sl} );
+		Logging::Log( Logging::Message{level, Message(sql, pParameters, move(error)), sl} );
 	}
-	α DB::LogNoServer( sv sql, const vector<object>* pParameters, ELogLevel level, sv error, SL sl )noexcept->void
+	α DB::LogNoServer( string sql, const vector<object>* pParameters, ELogLevel level, string error, SL sl )noexcept->void
 	{
-		Logging::LogNoServer( Logging::Message{level, Message(sql, pParameters, error), sl} );
+		Logging::LogNoServer( Logging::Message{level, Message(move(sql), pParameters, move(error)), sl} );
 	}
 
 	class DataSourceApi

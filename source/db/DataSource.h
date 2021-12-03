@@ -67,8 +67,8 @@ namespace Jde::DB
 	struct Γ IDataSource : std::enable_shared_from_this<IDataSource>
 	{
 		virtual ~IDataSource()=0;
-		ⓣ SelectEnum( string tableName, SRCE )noexcept{ return SelectMap<T,string>( format("select id, name from {}", tableName), move(tableName), sl ); }
-		ⓣ SelectEnumSync( string tableName, SRCE )noexcept->sp<flat_map<T,string>>{ return Future<flat_map<T,string>>( SelectEnum<T>( move(tableName), sl) ).get(); }
+		ⓣ SelectEnum( str tableName, SRCE )noexcept{ return SelectMap<T,string>( format("select id, name from {}", tableName), tableName, sl ); }
+		ⓣ SelectEnumSync( str tableName, SRCE )noexcept->sp<flat_map<T,string>>{ ASSERT(tableName.size()); return Future<flat_map<T,string>>( SelectEnum<T>( move(tableName), sl) ).get(); }
 		ẗ SelectMap( string sql, SRCE )noexcept->SelectAwait<flat_map<K,V>>;
 		ẗ SelectMap( string sql, string cacheName, SRCE )noexcept->SelectCacheAwait<flat_map<K,V>>;
 		ⓣ SelectSet( string sql, vector<object>&& params, SL sl )noexcept->SelectAwait<flat_set<T>>;
@@ -76,11 +76,9 @@ namespace Jde::DB
 
 		β SchemaProc()noexcept->sp<ISchemaProc> =0;
 		α ScalerNonNull( string sql, vec<object> parameters, SRCE )noexcept(false)->uint;
-		//virtual void SetAsynchronous()noexcept(false)=0;
 
 		ⓣ TryScaler( string sql, vec<object> parameters, SRCE )noexcept->optional<T>;
 		ⓣ Scaler( string sql, vec<object> parameters, SRCE )noexcept(false)->optional<T>;
-		//virtual ⓣ ScalerCo( string&& sql, vec& parameters )noexcept(false){ throw Exception( "Not implemented" ); }
 
 		α TryExecute( string sql, SRCE )noexcept->optional<uint>;
 		α TryExecute( string sql, vec<object> parameters, SRCE )noexcept->optional<uint>;
@@ -134,7 +132,6 @@ namespace Jde::DB
 		ẗ ProcessMapRow( sp<void> p, const IRow& row )noexcept(false){ std::static_pointer_cast<flat_map<K,V>>(p)->emplace(row.Get<K>(0), row.Get<V>(1)); }
 		ⓣ ProcessSetRow( sp<void> p, const IRow& row )noexcept(false){ std::static_pointer_cast<flat_set<T>>(p)->emplace( row.Get<T>(0) ); }
 	}
-	// f = []( sp<void> p, const IRow& row )noexcept{ std::static_pointer_cast<T>(p)->emplace(row.Get<K>(0), row.Get<V>(1)); };
 
 	ẗ IDataSource::SelectMap( string sql, SL sl )noexcept->SelectAwait<flat_map<K,V>>
 	{

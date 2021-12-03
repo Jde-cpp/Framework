@@ -3,6 +3,7 @@
 
 namespace Jde::Coroutine
 {
+	static const LogTag& _logLevel{ Logging::TagLevel("threads") };
 	sp<CoWorker> CoWorker::_pInstance;
 	std::once_flag CoWorker::_singleThread;
 
@@ -25,11 +26,11 @@ namespace Jde::Coroutine
 	α CoWorker::Run()noexcept->void
 	{
 		Threading::SetThreadDscrptn( _name );
-		DBG( "{} - Starting"sv, _name );
+		LOG( "{} - Starting", _name );
 		while( !Threading::GetThreadInterruptFlag().IsSet() )
 		{
 			Process();
 		}
-		DBG( "{} - Ending"sv, _name );
+		LOG( "{} - Ending", _name );
 	}
 }

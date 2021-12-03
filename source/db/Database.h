@@ -12,10 +12,10 @@ namespace Jde::DB
 	Φ DataSource()noexcept(false)->sp<IDataSource>;
 	ⓣ SelectEnum( sv tableName, SRCE )noexcept(false)->up<IAwaitable>{ return DataSource()->SelectEnum<T>( tableName ); }//sp<flat_map<T,string>>
 
-	α Message( sv sql, const vector<object>* pParameters, sv error={} )noexcept->string;
+	α Message( sv sql, const vector<object>* pParameters, string error={} )noexcept->string;
 	Φ Log( sv sql, const vector<object>* pParameters, SL sl )noexcept->void;
-	α Log( sv sql, const vector<object>* pParameters, ELogLevel level, sv error, SL sl )noexcept->void;
-	α LogNoServer( sv sql, const vector<object>* pParameters, ELogLevel level, sv error, SL sl )noexcept->void;
+	α Log( sv sql, const vector<object>* pParameters, ELogLevel level, string error, SL sl )noexcept->void;
+	α LogNoServer( string sql, const vector<object>* pParameters, ELogLevel level, string error, SL sl )noexcept->void;
 	Φ DefaultSyntax()noexcept->sp<Syntax>;
 	Φ DataSource( path libraryName, sv connectionString )noexcept(false)->sp<IDataSource>;
 	Φ CreateSchema()noexcept(false)->void;

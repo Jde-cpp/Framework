@@ -1,4 +1,4 @@
-#include "gtest/gtest.h"
+﻿#include "gtest/gtest.h"
 #include "../source/um/UM.h"
 #include "../source/db/GraphQL.h"
 #include <jde/Log.h>
@@ -12,10 +12,10 @@ namespace Jde::DB
 	struct QLTests : public ::testing::Test
 	{
 	protected:
-		QLTests()noexcept {}
+		QLTests()noexcept{ UM::Configure(); }
 		~QLTests()noexcept override{}
 
-		void SetUp()noexcept override { UM::Configure(); }
+		void SetUp()noexcept override {}
 		void TearDown()noexcept override {}
 	};
 
@@ -123,7 +123,7 @@ namespace Jde::DB
 		var db = DB::Query( ql, 0 );
 		//Dbg( db.dump() );
 
-		auto expected = "{\"data\":{\"role\":{\"created\":\"2021-02-13T07:00:33Z\",\"groups\":[{\"created\":\"2021-02-13T07:00:33Z\",\"id\":1,\"name\":\"Everyone\",\"target\":\"everyone\"},{\"created\":\"2021-02-13T07:00:33Z\",\"id\":2,\"name\":\"Users\",\"target\":\"users\"}],\"id\":1,\"name\":\"User Management\",\"rolePermissions\":[{\"api\":{\"id\":1,\"name\":\"UM\"},\"id\":1,\"rights\":[\"Administer\",\"Write\",\"Read\"]}],\"target\":\"user_management\"}}}"_json;
+		auto expected = "{\"data\":{\"role\":{\"created\":\"2021-02-13T07:00:33Z\",\"groups\":[{\"created\":\"2021-02-13T07:00:33Z\",\"id\":1,\"name\":\"Everyone\",\"target\":\"everyone\"}],\"id\":1,\"name\":\"User Management\",\"rolePermissions\":[{\"api\":{\"id\":1,\"name\":\"UM\"},\"id\":1,\"rights\":[\"Administer\",\"Write\",\"Read\"]}],\"target\":\"user_management\"}}}"_json;
 		SetAttribute( db, expected, "created" );
 		SetAttribute( db, expected, "description" );
 		SetAttribute( db, expected, "id" );

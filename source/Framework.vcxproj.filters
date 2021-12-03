@@ -67,9 +67,6 @@
     <ClCompile Include="db\types\Table.cpp">
       <Filter>Source\db\types</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Windows\source\WindowsTimezone.cpp">
-      <Filter>Source\windows</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\Windows\source\WindowsUtilities.cpp">
       <Filter>Source\windows</Filter>
     </ClCompile>

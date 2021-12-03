@@ -28,9 +28,9 @@ function findExecutable
 function toBashDir
 {
 	windowsDir=$1;
-	echo toBashDir $1 $2
-   	local -n _bashDir=$2
-   	_bashDir=${windowsDir/:/}; _bashDir=${_bashDir//\\//}; _bashDir=${_bashDir/C/c};
+#	echo toBashDir $1 $2
+  	local -n _bashDir=$2
+  	_bashDir=${windowsDir/:/}; _bashDir=${_bashDir//\\//}; _bashDir=${_bashDir/C/c};
 	if [[ ${_bashDir:0:1} != "/" ]]; then _bashDir=/$_bashDir; fi;
 }
 if windows; then
@@ -51,7 +51,7 @@ function toWinDir
 	bashDir=$1;
 	local -n _winDir=$2
 	_winDir=${bashDir////\\};
-	if [[ $_winDir == \\c\\* ]]; then _winDir=c:${_winDir:2}; 
+	if [[ $_winDir == \\c\\* ]]; then _winDir=c:${_winDir:2};
 	elif [[ $_winDir == \"\\c\\* ]]; then _winDir=\"c:${_winDir:3}; fi;
 }
 

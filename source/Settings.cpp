@@ -76,8 +76,7 @@ namespace Jde
 	{
 		var executable = OSApp::Executable().filename();
 #ifdef _MSC_VER
-		var stem = executable.string().starts_with( "Jde." ) ? OSApp::Executable().stem().extension().string().substr(1) : OSApp::Executable().stem().string();
-		return stem;
+		return executable.string().starts_with( "Jde." ) ? OSApp::Executable().stem().extension().string().substr(1) : OSApp::Executable().stem().string();
 #else
 		return executable.string().starts_with( "Tests." ) ? executable.string() : OSApp::Executable().extension().string().substr( 1 );
 #endif
@@ -100,15 +99,14 @@ namespace Jde
 			var settingsPath = Path();
 			try
 			{
-				CHECK_PATH( settingsPath );
+				if( !fs::exists(settingsPath) )
+					throw std::exception{ fmt::format("'{}' does not exist", settingsPath.string()).c_str() };//pre-main, no logging
 				_pGlobal = mu<Jde::Settings::Container>( settingsPath );
-				LOG_MEMORY( ELogLevel::Information, "({}) Settings", settingsPath.string() );
+				LOG_MEMORY( "settings", ELogLevel::Information, "({}) Settings", settingsPath.string() );
 			}
 			catch( const std::exception& e )
 			{
-				//Logging::MessageBase m{ "({})Could not load settings - {}"sv, ELogLevel::Critical };
-				//Logging::LogMemory( m, {settingsPath.string(), e.what()} );
-				LOG_MEMORY( ELogLevel::Critical, "({})Could not load settings - {}", settingsPath.string(), e.what() );
+				LOG_MEMORY( "settings", ELogLevel::Critical, "({})Could not load settings - {}", settingsPath.string(), e.what() );
 				_pGlobal = std::make_unique<Jde::Settings::Container>( nlohmann::json{} );
 			}
 		}

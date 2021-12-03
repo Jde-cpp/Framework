@@ -218,7 +218,6 @@
     <ClCompile Include="..\..\Windows\source\WindowsApp.cpp" />
     <ClCompile Include="..\..\Windows\source\WindowsDrive.cpp" />
     <ClCompile Include="..\..\Windows\source\WindowsThread.cpp" />
-    <ClCompile Include="..\..\Windows\source\WindowsTimezone.cpp" />
     <ClCompile Include="..\..\Windows\source\WindowsUtilities.cpp" />
     <ClCompile Include="Cache.cpp" />
     <ClCompile Include="coroutine\Alarm.cpp" />

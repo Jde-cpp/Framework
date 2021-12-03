@@ -10,6 +10,7 @@
 
 clean=${1:-0};
 shouldFetch=${2:-1};
+tests=${3:-1}
 scriptDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 if [[ -z $sourceBuild ]]; then source $scriptDir/source-build.sh; fi;
 echo framework-build.sh clean=$clean shouldFetch=$shouldFetch
@@ -175,11 +176,12 @@ function frameworkProtoc
 	fi;
 	echo frameworkProtoc $cleanProtoc
 	if [ $cleanProtoc -eq 1 ]; then
-	   	protoc --cpp_out dllexport_decl=Γ:. -I$protobufInclude -I. messages.proto;
+	   	protoc --cpp_out dllexport_decl=JDE_EXPORT:. -I$protobufInclude -I. messages.proto;
 		if [ $? -ne 0 ]; then exit 1; fi;
+		sed -i -e 's/JDE_EXPORT/Γ/g' messages.pb.h;
+		sed -i '1s/^/\xef\xbb\xbf/' messages.pb.h;
 		if windows; then
 			echo `pwd`;
-			echo sed -i 's/PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT InstanceDefaultTypeInternal _Instance_default_instance_;/PROTOBUF_ATTRIBUTE_NO_DESTROY InstanceDefaultTypeInternal _Instance_default_instance_;/' messages.pb.cc;
 			sed -i 's/PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT InstanceDefaultTypeInternal _Instance_default_instance_;/PROTOBUF_ATTRIBUTE_NO_DESTROY InstanceDefaultTypeInternal _Instance_default_instance_;/' messages.pb.cc;
 			sed -i 's/PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT RequestStringDefaultTypeInternal _RequestString_default_instance_;/PROTOBUF_ATTRIBUTE_NO_DESTROY RequestStringDefaultTypeInternal _RequestString_default_instance_;/' messages.pb.cc;
 			sed -i 's/PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT CustomMessageDefaultTypeInternal _CustomMessage_default_instance_;/PROTOBUF_ATTRIBUTE_NO_DESTROY CustomMessageDefaultTypeInternal _CustomMessage_default_instance_;/' messages.pb.cc;
@@ -191,3 +193,5 @@ function frameworkProtoc
 fetchDefault Framework;
 frameworkProtoc;
 build Framework 0;
+cd ../tests;
+buildTest Framework Tests.Framework.exe

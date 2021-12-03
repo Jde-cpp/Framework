@@ -11,6 +11,8 @@
 #define var const auto
 namespace Jde
 {
+	static var _logLevel{ Logging::TagLevel("settings") };
+
 	using nlohmann::json;
 	using boost::container::flat_set;
 	namespace UM
@@ -79,7 +81,7 @@ namespace Jde
 		auto path = Settings::TryGet<fs::path>( "db/meta" ).value_or( "meta.json" );
 		if( !fs::exists(path) )
 			path = IApplication::ApplicationDataFolder()/path;
-		INFO( "db meta='{}'"sv, path.string() );
+		LOG( "db meta='{}'"sv, path.string() );
 		json j;
 		try
 		{

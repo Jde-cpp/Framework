@@ -67,15 +67,15 @@ namespace Jde::Threading
 		QueueMove<TArg> _queue;
 	};
 
-	
+
 	ⓣ TWorker<T>::Start()noexcept->sp<IWorker>
 	{
 		AtomicGuard l{ _mutex };
 		if( !_pInstance )
 		{
 			//pInstance = _pInstance = make_shared<T>();
-			const bool addThreads = Settings::TryGet<uint8>( format("workers/{}/threads", T::Name) ).value_or( 0 );
-			_pInstance = IApplication::AddPollster<T>( !addThreads );
+			//const bool addThreads = Settings::TryGet<uint8>( format("workers/{}/threads", T::Name) ).value_or( 0 );
+			_pInstance = IApplication::AddPollster<T>();
 			////var pSettings = Settings::TryGetSubcontainer<Settings::Container>(  );
 			//if( addThreads )
 			//	_pInstance->StartThread();

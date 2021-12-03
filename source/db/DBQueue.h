@@ -10,7 +10,7 @@ namespace Jde::DB
 {
 	struct Statement final
 	{
-		Statement( sv sql, const VectorPtr<object>& parameters, bool isStoredProc, SL sl );//TODO remove this.
+		Statement( string sql, const VectorPtr<object>& parameters, bool isStoredProc, SL sl );//TODO remove this.
 
 		string Sql;//const?
 		const VectorPtr<object> Parameters;
@@ -23,7 +23,7 @@ namespace Jde::DB
 	struct Γ DBQueue final : IShutdown//, std::enable_shared_from_this<DBQueue>
 	{
 		DBQueue( sp<IDataSource> spDataSource )noexcept;
-		α Push( sv statement, const VectorPtr<object>& parameters, bool isStoredProc=true, SRCE )noexcept->void;
+		α Push( string sql, const VectorPtr<object>& parameters, bool isStoredProc=true, SRCE )noexcept->void;
 		α Shutdown()noexcept->void override;
 	private:
 		α Run()noexcept->void;

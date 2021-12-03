@@ -8,10 +8,11 @@
 #define var const auto
 namespace Jde::Threading
 {
+	static const LogTag& _logLevel{ Logging::TagLevel("threads") };
 	sp<IWorker> IWorker::_pInstance;
 	std::atomic_flag IWorker::_mutex;
 	IWorker::IWorker( sv name )noexcept:
-		//Name{ name },
+		NameInstance{ name },
 		ThreadCount{ Settings::TryGet<uint8>(format("workers/{}/threads", name)).value_or(0) }
 	{}
 
@@ -64,7 +65,7 @@ namespace Jde::Threading
 		Threading::SetThreadDscrptn( NameInstance );
 		sp<IWorker> pKeepAlive;
 		var keepAlive = Settings::TryGet<Duration>( "WorkerkeepAlive" ).value_or( 5s );
-		DBG( "({})Starting Thread", NameInstance );
+		LOG( "({})Starting Thread", NameInstance );
 		while( !st.stop_requested() )
 		{
 			if( var p = Poll(); !p || *p )
@@ -80,6 +81,6 @@ namespace Jde::Threading
 			else
 				std::this_thread::yield();
 		}
-		DBG( "({})Ending Thread", NameInstance );
+		LOG( "({})Ending Thread", NameInstance );
 	}
 }
