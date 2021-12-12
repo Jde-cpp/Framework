@@ -100,13 +100,13 @@ namespace Jde
 			try
 			{
 				if( !fs::exists(settingsPath) )
-					throw std::exception{ fmt::format("'{}' does not exist", settingsPath.string()).c_str() };//pre-main, no logging
+					throw std::runtime_error{ "file does not exist" };
 				_pGlobal = mu<Jde::Settings::Container>( settingsPath );
-				LOG_MEMORY( "settings", ELogLevel::Information, "({}) Settings", settingsPath.string() );
+				LOG_MEMORY( {}, ELogLevel::Information, "({}) Settings", settingsPath.string() );
 			}
 			catch( const std::exception& e )
 			{
-				LOG_MEMORY( "settings", ELogLevel::Critical, "({})Could not load settings - {}", settingsPath.string(), e.what() );
+				LOG_MEMORY( {}, ELogLevel::Critical, "({})Could not load settings - {}", settingsPath.string(), e.what() );
 				_pGlobal = std::make_unique<Jde::Settings::Container>( nlohmann::json{} );
 			}
 		}

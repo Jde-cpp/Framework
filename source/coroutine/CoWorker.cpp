@@ -14,6 +14,7 @@ namespace Jde::Coroutine
 	}
 	α CoWorker::Shutdown()noexcept->void
 	{
+		LOG( "({})Shutdown", _name );
 		_pThread->Interrupt();
 		{
 			std::unique_lock<std::mutex> lk( _mtx );
@@ -21,6 +22,7 @@ namespace Jde::Coroutine
 		}
 		_pThread->Join();
 		_pInstance = nullptr;
+		LOG( "({})~Shutdown", _name );
 	}
 
 	α CoWorker::Run()noexcept->void

@@ -7,7 +7,7 @@ namespace Jde::Logging
 {
 	ELogLevel _serverLogLevel{ ELogLevel::None };
 	up<Logging::IServerSink> _pServerSink;
-	static var _logLevel{ Logging::TagLevel("logServer") };
+	static var _logLevel{ Logging::TagLevel("log-server") };
 }
 
 namespace Jde
@@ -23,11 +23,11 @@ namespace Jde::Logging
 	bool IServerSink::_enabled{ Settings::TryGet<PortType>("logging/server/port").value_or(0)!=0 };
 	IServerSink::~IServerSink()
 	{
-		DBGX( "{}"sv, "~IServerSink" );
+		LOGX( "~IServerSink" );
 		SetServer( nullptr );
-		DBGX( "{}"sv, "_pServerSink = nullptr" );
+		LOGX( "_pServerSink = nullptr" );
 	}
-
+	ServerSink::~ServerSink(){ LOGX("~ServerSink"); }
 	α ServerSink::Create()noexcept->ServerSink*
 	{
 		try
@@ -40,9 +40,9 @@ namespace Jde::Logging
 	}
 
 	ServerSink::ServerSink()noexcept(false):
-		ProtoBase{ "logging/server", 0 }//,don't wan't default port
+		ProtoBase{ "logging/server", 0 }//,don't wan't default port, no-port=don't use
 	{
-		INFO( "ServerSink::ServerSink( path='{}', Host='{}', Port='{}' )", "logging/server", Host, Port );
+		LOG( "ServerSink::ServerSink( Host='{}', Port='{}' )", Host, Port );
 	}
 
 	α ServerSink::OnConnected()noexcept->void{}
@@ -50,7 +50,7 @@ namespace Jde::Logging
 
 	α ServerSink::OnDisconnect()noexcept->void
 	{
-		DBG( "Disconnected from LogServer."sv );
+		LOG( "Disconnected from LogServer."sv );
 		_messagesSent.clear();
 		_filesSent.clear();
 		_functionsSent.clear();
@@ -81,7 +81,7 @@ namespace Jde::Logging
 			else if( item.has_acknowledgement() )
 			{
 				var& ack = item.acknowledgement();
-				DBGX( "Acknowledged - instance id={}"sv, ack.instanceid() );
+				Logging::LogNoServer( Logging::MessageBase("ServerSink::ServerSink( Host='{}', Port='{}' InstanceId={} )", ELogLevel::Information, MY_FILE, __func__, __LINE__), Host, Port, ack.instanceid() );
 				Proto::ToServer t;
 				auto pInstance = make_unique<Proto::Instance>();
 				_applicationName = IApplication::ApplicationName();

@@ -11,13 +11,14 @@ ENABLE_WARNINGS
 
 namespace Jde::IO::Sockets
 {
+	static const LogTag& _logLevel = Logging::TagLevel( "net" );
 	namespace net = boost::asio;
 	using tcp = net::ip::tcp;
 
 	struct ProtoClientSession
 	{
 		ProtoClientSession();
-		virtual ~ProtoClientSession(){ DBGX( "~ProtoClientSession -start"); _socket.close(); DBGX( "~ProtoClientSession-end"); };
+		virtual ~ProtoClientSession(){ LOGX( "~ProtoClientSession -start"); _socket.close(); LOGX( "~ProtoClientSession-end"); };
 		void Close( std::condition_variable* pCvClient=nullptr )noexcept;
 		virtual void OnConnected()noexcept{};
 		static uint32 MessageLength( char* readMessageSize )noexcept;

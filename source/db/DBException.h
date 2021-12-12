@@ -9,8 +9,8 @@ namespace Jde::DB
 {
 	struct Γ DBException final: IException
 	{
-		DBException( _int errorCode, sv sql, const vector<object>* pValues, str what, SRCE )noexcept;
-		DBException( sv sql, const vector<object>* pValues, str what, SRCE )noexcept:DBException{ 0, sql, pValues, what, sl }{};
+		DBException( _int errorCode, string sql, const vector<object>* pValues, string what, SRCE )noexcept;
+		DBException( string sql, const vector<object>* pValues, string what, SRCE )noexcept:DBException{ 0, move(sql), pValues, move(what), sl }{};
 		α Clone()noexcept->sp<IException> override{ return std::make_shared<DBException>(move(*this)); }
 		α Log()const noexcept->void override;
 		α what() const noexcept->const char* override;

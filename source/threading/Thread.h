@@ -17,18 +17,16 @@ namespace Jde::Threading
 		Startup = 1,
 		LogServer = 2,
 		CoroutinePool = 3,
-
 		AppSpecific = 1 << 10
-
 	};
 
 	Γ uint GetThreadId()noexcept;
 	Γ uint GetAppThreadHandle()noexcept;
-	Γ void SetThreadDscrptn( std::thread& thread, sv description )noexcept;
-	Γ void SetThreadDscrptn( sv description )noexcept;
+	Γ void SetThreadDscrptn( std::thread& thread, sv description )noexcept;//TODO move out of threading ns
+	Γ void SetThreadDscrptn( sv description )noexcept;//TODO move out of threading ns
 	Γ void SetThreadInfo( const ThreadParam& param )noexcept;
 	HThread BumpThreadHandle()noexcept;
-	Γ const char* GetThreadDescription()noexcept;
+	Γ const char* GetThreadDescription()noexcept;//TODO move out of threading ns & remove Get & abr description
 
 	void Run( const size_t maxWorkerCount, size_t runCount, std::function<void(size_t)> func )noexcept;
 	//taken from https://livebook.manning.com/#!/book/c-plus-plus-concurrency-in-action-second-edition/chapter-8/v-7/1

@@ -1,72 +1,17 @@
 ﻿#pragma once
 #include <jde/Log.h>
+#include "Await.h"
 #include "Row.h"
 #include "SchemaProc.h"
-#include "../Cache.h"
-#include "../coroutine/Awaitable.h"
 
 
 #define DBLOG(sql,params) Jde::DB::Log( sql, params, sl )
 namespace Jde::DB
 {
-	using RowΛ=function<void( const IRow& )noexcept(false)>;
-	template<class T> using CoRowΛ=function<void( sp<T> pCollection, const IRow& r )noexcept(false)>;
-	struct ISelect
-	{
-		β Results()->sp<void> = 0;
-		β OnRow( const IRow& r )->void = 0;
-	};
-
-	class ICacheAwait : public IAwaitable
-	{
-		using base=IAwaitable;
-	public:
-		ICacheAwait( string name, SL sl ):base{sl},_name{move(name)}{ ASSERT(_name.size()); }
-		virtual ~ICacheAwait()=0;
-		α await_ready()noexcept->bool{ _pValue = Cache::Get<void>( _name ); return !!_pValue; }
-		α await_resume()noexcept->TResult{ if( _pValue ) return TaskResult{ _pValue }; auto y = base::await_resume();  if( y.HasValue() ) Cache::Set<void>( _name, y.Get<void>(_sl) ); return y; }
-	private:
-		string _name;
-		sp<void> _pValue;
-	};
-	inline ICacheAwait::~ICacheAwait(){};
-
-	template<class T>
-	class ISelectAwait : public ISelect
-	{
-	protected:
-		ISelectAwait( IAwaitable& base, sp<IDataSource> ds, string sql, CoRowΛ<T> fnctn, vector<object> params )noexcept:_base{base},_ds{ds},_sql{move(sql)}, _fnctn{fnctn}, _params{move(params)}{}
-		virtual ~ISelectAwait()=0;
-		α Select( HCoroutine h )->Task2;
-		α Results()noexcept->sp<void> override{ return _pResult; }
-		α OnRow( const IRow& r )->void override{ _fnctn(_pResult,r); }
-
-		IAwaitable& _base;
-		sp<IDataSource> _ds;
-		sp<T> _pResult{ ms<T>() };
-		string _sql;
-		CoRowΛ<T> _fnctn;
-		vector<object> _params;
-	};
-	template<class T> ISelectAwait<T>::~ISelectAwait(){};
-	template<class T>
-	struct SelectCacheAwait final: ICacheAwait, ISelectAwait<T>
-	{
-		SelectCacheAwait( sp<IDataSource> ds, string sql, string cache, CoRowΛ<T> fnctn, vector<object> params, SL sl ):ICacheAwait{cache,sl},ISelectAwait<T>{ *this, ds, move(sql), fnctn, move(params) }{}
-		α await_suspend( HCoroutine h )noexcept->void override{ ICacheAwait::await_suspend( h ); ISelectAwait<T>::Select( move(h) ); }
-	};
-	template<class T>
-	struct SelectAwait final: IAwaitable, ISelectAwait<T>
-	{
-		SelectAwait( sp<IDataSource> ds, string sql, CoRowΛ<T> fnctn, vector<object> params, SL sl )noexcept:IAwaitable{sl},ISelectAwait<T>( *this, ds, move(sql), fnctn, move(params) ){}
-		α await_suspend( HCoroutine h )noexcept->void override{ IAwaitable::await_suspend( h ); ISelectAwait<T>::Select( move(h) ); }
-	};
-
-	using namespace Coroutine;
 	namespace Types{ struct IRow; }
 	struct Γ IDataSource : std::enable_shared_from_this<IDataSource>
 	{
-		virtual ~IDataSource()=0;
+		virtual ~IDataSource(){}//warning
 		ⓣ SelectEnum( str tableName, SRCE )noexcept{ return SelectMap<T,string>( format("select id, name from {}", tableName), tableName, sl ); }
 		ⓣ SelectEnumSync( str tableName, SRCE )noexcept->sp<flat_map<T,string>>{ ASSERT(tableName.size()); return Future<flat_map<T,string>>( SelectEnum<T>( move(tableName), sl) ).get(); }
 		ẗ SelectMap( string sql, SRCE )noexcept->SelectAwait<flat_map<K,V>>;
@@ -79,6 +24,7 @@ namespace Jde::DB
 
 		ⓣ TryScaler( string sql, vec<object> parameters, SRCE )noexcept->optional<T>;
 		ⓣ Scaler( string sql, vec<object> parameters, SRCE )noexcept(false)->optional<T>;
+		ⓣ ScalerCo( string sql, vec<object> parameters, SRCE )noexcept(false)->SelectAwait<uint>;
 
 		α TryExecute( string sql, SRCE )noexcept->optional<uint>;
 		α TryExecute( string sql, vec<object> parameters, SRCE )noexcept->optional<uint>;
@@ -101,7 +47,7 @@ namespace Jde::DB
 		α Catalog( string sql, SRCE )noexcept(false)->string;
 
 		α CS()const noexcept->str{ return _connectionString; }
-		β SetConnectionString( sv x )noexcept->void{ _connectionString = x; }
+		β SetConnectionString( string x )noexcept->void{ _connectionString = move(x); }
 
 		//bool Asynchronous{false};
 
@@ -109,22 +55,31 @@ namespace Jde::DB
 		string _connectionString;
 	private:
 		β SelectCo( ISelect* pAwait, string sql, vector<object>&& params, SRCE )noexcept->up<IAwaitable> = 0;
-		template<class T> friend class ISelectAwait;
+		friend struct ISelect;
 	};
-	inline IDataSource::~IDataSource(){};
-
-	ⓣ IDataSource::TryScaler( string sql, vec<object> parameters, SL sl )noexcept->optional<T>
+#define var const auto
+	ⓣ IDataSource::TryScaler( string sql, vec<object> params, SL sl )noexcept->optional<T>
 	{
-		optional<T> result;
-		Try( [&]{ Select( move(sql), [&result](const IRow& row){ result = row.Get<T>(0); }, parameters, sl);} );
-		return result;
+		try
+		{
+			return Scaler<T>( move(sql), params, sl );
+		}
+		catch( IException& )
+		{
+			return nullopt;
+		}
 	}
-
 	ⓣ IDataSource::Scaler( string sql, vec<object> parameters, SL sl )noexcept(false)->optional<T>
 	{
 		optional<T> result;
 		Select( move(sql), [&result](const IRow& row){ result = row.Get<T>(0); }, parameters, sl );
 		return result;
+	}
+
+	ⓣ IDataSource::ScalerCo( string sql, vec<object> params, SL sl )noexcept(false)->SelectAwait<uint>
+	{
+		auto f = []( sp<uint> pResult, const IRow& r ){ if( var p=r.GetUIntOpt(0); p ) pResult = ms<uint>(*p); };
+		return SelectAwait<uint>( shared_from_this(), move(sql), f, params, sl );
 	}
 
 	namespace zInternal
@@ -149,20 +104,9 @@ namespace Jde::DB
 	{
 		return SelectCacheAwait<flat_set<T>>( shared_from_this(), move(sql), move(cacheName), zInternal::ProcessSetRow<T>, move(params), sl );
 	}
-
-	ⓣ ISelectAwait<T>::Select( HCoroutine h )->Task2
+	Ξ ISelect::SelectCo( string sql, vector<object>&& params, SL sl )noexcept->up<IAwaitable>
 	{
-		try
-		{
-			//ms<TShared<T>>(), _fnctn
-			auto tr = co_await *_ds->SelectCo( this, move(_sql), move(_params), _base._sl );
-			//sp<T> p = tr. template Get<T>();
-			_base.Set( _pResult );
-		}
-		catch( IException& e )
-		{
-			_base.Set( e.Clone() );
-		}
-		h.resume();
+		return _ds->SelectCo( this, move(sql), move(params), sl );
 	}
 }
+#undef var

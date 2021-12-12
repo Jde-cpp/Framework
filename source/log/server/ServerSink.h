@@ -71,7 +71,7 @@ namespace Jde::Logging
 		using base=ProtoBase;
 		static α Create()noexcept->ServerSink*;
 		ServerSink()noexcept(false);
-		~ServerSink(){DBGX("{}"sv, "~ServerSink");}
+		~ServerSink();
 		α Log( Messages::ServerMessage& m )noexcept->void override{ Write( m, m.Timestamp, &m.Variables ); }
 		α Log( const MessageBase& m )noexcept->void override{ Write( m, Clock::now() ); }
 		α Log( const MessageBase& m, vector<string>& values )noexcept->void override{ Write( m, Clock::now(), &values ); };

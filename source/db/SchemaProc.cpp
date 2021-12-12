@@ -40,9 +40,9 @@ namespace Jde::DB
 		}
 		return name.str();
 	}
+#define _syntax DB::DefaultSyntax()
 	Schema ISchemaProc::CreateSchema( const ordered_json& j, path relativePath )noexcept(false)
 	{
-		var pSyntax = DB::DefaultSyntax();
 		var pDBTables = LoadTables();
 
 		auto dbIndexes = LoadIndexes();
@@ -82,12 +82,12 @@ namespace Jde::DB
 					var& dbTable = pNameDBTable->second;
 					var pDBColumn = dbTable.FindColumn( column.Name ); if( !pDBColumn ){ ERR("Could not find db column {}", column.Name); continue; }
 					if( pDBColumn->Default.empty() && column.Default.size() && column.Default!="$now" )
-						_pDataSource->TryExecute( pSyntax->AddDefault(tableName, column.Name, column.Default) );
+						_pDataSource->TryExecute( _syntax.AddDefault(tableName, column.Name, column.Default) );
 				}
 			}
 			else
 			{
-				_pDataSource->Execute( pTable->Create(*pSyntax) );
+				_pDataSource->Execute( pTable->Create(_syntax) );
 				DBG( "Created table '{}'."sv, tableName );
 				if( pTable->HaveSequence() )
 				{
@@ -100,15 +100,15 @@ namespace Jde::DB
 			{
 				if( find_if(dbIndexes.begin(), dbIndexes.end(), [&](var& db){ return db.TableName==index.TableName && db.Columns==index.Columns;} )!=dbIndexes.end() )
 					continue;
-				var name = UniqueIndexName( index, *this, pSyntax->UniqueIndexNames(), dbIndexes );
-				var indexCreate = index.Create( name, tableName, *pSyntax );
+				var name = UniqueIndexName( index, *this, _syntax.UniqueIndexNames(), dbIndexes );
+				var indexCreate = index.Create( name, tableName, _syntax );
 				_pDataSource->Execute( indexCreate );
 				dbIndexes.push_back( Index{name, tableName, index} );
 				DBG( "Created index '{}.{}'."sv, tableName, name );
 			}
 			if( var procName = pTable->InsertProcName(); procName.size() && procedures.find(procName)==procedures.end() )
 			{
-				var procCreate = pTable->InsertProcText( *pSyntax );
+				var procCreate = pTable->InsertProcText( _syntax );
 				_pDataSource->Execute( procCreate );
 				DBG( "Created proc '{}'."sv, pTable->InsertProcName() );
 			}
@@ -121,8 +121,8 @@ namespace Jde::DB
 				var procName = name.stem();
 				if( procedures.find(procName.string())!=procedures.end() )
 					continue;
-				if( pSyntax->ProcFileSuffix().size() )
-					name = name.parent_path()/( name.stem().string()+string{pSyntax->ProcFileSuffix()}+name.extension().string() );
+				if( _syntax.ProcFileSuffix().size() )
+					name = name.parent_path()/( name.stem().string()+string{_syntax.ProcFileSuffix()}+name.extension().string() );
 				var path = relativePath/name; THROW_IF( !fs::exists(path), "Could not find {}"sv, path.string() );
 				var text = IO::FileUtilities::Load( path );
 				DBG( "Executing '{}'"sv, path.string() );
@@ -205,7 +205,7 @@ namespace Jde::DB
 						params.push_back( ToObject(column.Type, *pData, column.Name) );
 					}
 					else
-						osInsertValues << ( column.Default=="$now" ? pSyntax->UtcNow() : column.Default );
+						osInsertValues << ( column.Default=="$now" ? _syntax.UtcNow() : column.Default );
 				}
 				if( _pDataSource->Scaler<uint>( osSelect.str(), selectParams)==0 )
 				{

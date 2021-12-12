@@ -9,6 +9,7 @@ ENABLE_WARNINGS
 namespace Jde::DB
 {
 	struct Syntax;
+	using nlohmann::json;
 	using DBClock=std::chrono::system_clock;
 	using DBTimePoint=DBClock::time_point;
 	enum class EObject: uint8 {Null,String,StringView,StringPtr,Bool,Int,Int64,Uint,Double,Time };
@@ -21,5 +22,5 @@ namespace Jde::DB
 	α ToString( EType type, const Syntax& syntax )noexcept->string;
 
 	α ToObject( EType type, const nlohmann::json& j, sv memberName, SRCE )noexcept(false)->object;
-
+	α ToJson( const object& obj, json& j )noexcept->void;
 }

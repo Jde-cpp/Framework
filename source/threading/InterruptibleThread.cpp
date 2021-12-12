@@ -3,7 +3,6 @@
 #define var const auto
 namespace Jde::Threading
 {
-	static var _logLevel{ Logging::TagLevel("threads") };
 	thread_local InterruptFlag ThreadInterruptFlag;
 	InterruptFlag& GetThreadInterruptFlag()noexcept{return ThreadInterruptFlag;}
 	void InterruptionPoint()noexcept(false)

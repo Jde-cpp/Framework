@@ -3,21 +3,22 @@
 
 namespace Jde::DB
 {
-	//struct Table;
 	struct Schema
 	{
-		static string FromJson( sv jsonName )noexcept;
-		static string ToJson( sv jsonName )noexcept;
-		static string ToSingular( sv plural )noexcept;
-		static string ToPlural( sv singular )noexcept;
-		sp<const Table> FindTableSuffix( sv suffix )const noexcept;
-		sp<const Table> FindDefTable( const Table& t1, const Table& t2 )const noexcept;
-		//FindJsonType( sv jsonType )const noexcept;
+		α FindTableSuffix( str suffix, SRCE )const noexcept(false)->const Table&;
+		α TryFindTableSuffix( str suffix )const noexcept->sp<const Table>;
+		α FindDefTable( const Table& t1, const Table& t2 )const noexcept->sp<const Table>;
+
 		flat_map<string, Column> Types;
 		flat_map<string, sp<const Table>> Tables;
+
+		Ω FromJson( sv jsonName )noexcept->string;
+		Ω ToJson( sv jsonName )noexcept->string;
+		Ω ToSingular( sv plural )noexcept->string;
+		Ω ToPlural( sv singular )noexcept->string;
 	};
 #define var const auto
-	inline string Schema::FromJson( sv jsonName )noexcept
+	Ξ Schema::FromJson( sv jsonName )noexcept->string
 	{
 		ostringstream sqlName;
 		for( var ch : jsonName )
@@ -29,7 +30,7 @@ namespace Jde::DB
 		}
 		return sqlName.str();
 	}
-	inline string Schema::ToJson( sv jsonName )noexcept
+	Ξ Schema::ToJson( sv jsonName )noexcept->string
 	{
 		ostringstream j;
 		bool upper = false;
@@ -49,32 +50,39 @@ namespace Jde::DB
 		}
 		return j.str();
 	}
-	inline string Schema::ToSingular( sv plural )noexcept
+	Ξ Schema::ToSingular( sv plural )noexcept->string
 	{
 		string result = plural.ends_with('s') ? string{plural.substr( 0, plural.size()-1 )} : string{plural};
 
 		return result;
 	}
-	inline string Schema::ToPlural( sv singular )noexcept
+	Ξ Schema::ToPlural( sv singular )noexcept->string
 	{
 		string result{ singular };
 		return result.ends_with('s') ? result : result+"s";
 	}
-	inline sp<const Table> Schema::FindTableSuffix( sv suffixNoUnder )const noexcept
+	Ξ Schema::TryFindTableSuffix( str suffix )const noexcept->sp<const Table>
 	{
-		var suffix = string{ "_"+string{suffixNoUnder} };
-		sp<const Table> result;
+		sp<const Table> y;
 		for( var& [name,pTable] : Tables )
 		{
-			if( name.ends_with(suffix) && name.size()>suffix.size()+1 && name.substr(0,name.size()-suffix.size()).find_first_of('_')==string::npos )
+		//	DEBUG_IF( name=="um_users" );
+		//	DBG( "{}", name.substr(0,name.size()-suffix.size()-1) );
+			if( name.ends_with(suffix) && name.size()>suffix.size()+2 && name[name.size()-suffix.size()-1]=='_' && name.substr(0,name.size()-suffix.size()-1).find_first_of('_')==string::npos )
 			{
-				result = pTable;
+				y = pTable;
 				break;
 			}
 		}
-		return result;
+		return y;
 	}
-	inline sp<const Table> Schema::FindDefTable( const Table& t1, const Table& t2 )const noexcept
+	Ξ Schema::FindTableSuffix( str suffix, SL sl )const noexcept(false)->const Table&
+	{
+		var y = TryFindTableSuffix( suffix );
+		if( !y ) throw Exception{ sl, ELogLevel::Debug, "Could not find table '{}' in schema", suffix };//mysql can't use THROW_IF
+		return *y;
+	}
+	Ξ Schema::FindDefTable( const Table& t1, const Table& t2 )const noexcept->sp<const Table>
 	{
 		sp<const Table> result;
 		var singularT1 = t1.FKName();

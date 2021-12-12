@@ -3,31 +3,21 @@
 #include "../um/UM.h"
 
 #define var const auto
+#define Φ Γ auto
 namespace Jde::DB
 {
 	struct Schema; struct IDataSource; struct Syntax; struct Column;
 	namespace GraphQL
 	{
-		α Schema()noexcept->Schema&;
 		α DataSource()noexcept->sp<IDataSource>;
 	}
 	α AppendQLSchema( const Schema& schema )noexcept->void;
 	α SetQLDataSource( sp<IDataSource> p )noexcept->void;
 	α ClearQLDataSource()noexcept->void;
-	enum class QLFieldKind : uint8
-	{
-		Scalar=0,
-		Object=1,
-		Interface=2,
-		Union=3,
-		Enum=4,
-		InputObject=5,
-		List=6,
-		NonNull=7
-	};
+	enum class QLFieldKind : uint8{ Scalar=0, Object=1, Interface=2, Union=3, Enum=4, InputObject=5, List=6, NonNull=7 };
 	constexpr array<sv,8> QLFieldKindStrings = { "SCALAR", "OBJECT", "INTERFACE", "UNION", "ENUM", "INPUT_OBJECT", "LIST", "NON_NULL" };
 
-	Γ α Query( sv query, UserPK userId )noexcept(false)->nlohmann::json;
+	Φ Query( sv query, UserPK userId )noexcept(false)->nlohmann::json;
 	struct ColumnQL final
 	{
 		string JsonName;
@@ -45,16 +35,7 @@ namespace Jde::DB
 		vector<ColumnQL> Columns;
 		vector<sp<const TableQL>> Tables;
 	};
-	enum class EMutationQL : uint8
-	{
-		Create=0,
-		Update=1,
-		Delete=2,
-		Restore=3,
-		Purge=4,
-		Add=5,
-		Remove=6
-	};
+	enum class EMutationQL : uint8{ Create=0, Update=1, Delete=2, Restore=3, Purge=4, Add=5, Remove=6 };
 	constexpr array<sv,7> MutationQLStrings = { "create", "update", "delete", "restore", "purge", "add", "remove" };
 	struct MutationQL final
 	{
@@ -75,6 +56,7 @@ namespace Jde::DB
 
 	RequestQL ParseQL( sv query )noexcept(false);
 
-	Γ void AddMutationListener( sv tablePrefix, function<void(const DB::MutationQL& m, PK id)> listener )noexcept;
+	Φ AddMutationListener( string tablePrefix, function<void(const DB::MutationQL& m, PK id)> listener )noexcept->void;
 }
 #undef var
+#undef Φ

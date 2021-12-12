@@ -11,8 +11,7 @@
 #define var const auto
 namespace Jde
 {
-	static var _logLevel{ Logging::TagLevel("settings") };
-
+	static const LogTag& _logLevel{ Logging::TagLevel("users") };
 	using nlohmann::json;
 	using boost::container::flat_set;
 	namespace UM
@@ -37,6 +36,18 @@ namespace Jde
 	flat_map<UM::RolePK,flat_map<UM::PermissionPK,UM::EAccess>> _rolePermissions; shared_mutex _rolePermissionMutex;
 	flat_map<UserPK, flat_map<UM::PermissionPK,UM::EAccess>> _userAccess; shared_mutex _userAccessMutex;
 
+	flat_map<sv, UM::IAuthorize*> _authorizers; shared_mutex _authorizerMutex;
+	UM::GroupAuthorize _groupAuthorize;
+/*	struct IAuthorize
+	{
+		β TestAccess( EAccess access, UserPK userId, sv tableName )noexcept(false)->void=0;
+	};*/
+	α UM::AddAuthorizer( UM::IAuthorize* p )noexcept->void{ _authorizers.emplace( p->TableName, p ); }//pre-main
+	α UM::FindAuthorizer( sv table )noexcept->IAuthorize*
+	{
+		auto p = _authorizers.find( table );
+		return p==_authorizers.end() ? nullptr : p->second;
+	}
 	α AssignUser( UserPK userId, const flat_set<UM::GroupPK>& groupIds )->void
 	{
 		for( var groupId : groupIds )
@@ -60,7 +71,7 @@ namespace Jde
 			sql << " where user_id=?";
 			params.push_back( DB::object{userId} );
 		}
-		DB::DataSource()->Select( sql.str(), [&](var& r)
+		DB::DataSource().Select( sql.str(), [&](var& r)
 		{
 			unique_lock l{_userGroupMutex};
 			_userGroups.try_emplace(r.GetUInt(0)).first->second.emplace( r.GetUInt(1) );
@@ -77,7 +88,7 @@ namespace Jde
 		if( _pSettings->ConnectionString.empty() )
 			_pSettings->ConnectionString = Settings::TryGet<string>( "db/connectionString" ).value_or( "" );
 		THROW_IF( _pSettings->ConnectionString.empty(), "no user management connection string." );
-		auto pDataSource = DB::DataSource();// _pSettings->LibraryName, _pSettings->ConnectionString );
+		auto pDataSource = DB::DataSourcePtr(); CHECK( pDataSource );
 		auto path = Settings::TryGet<fs::path>( "db/meta" ).value_or( "meta.json" );
 		if( !fs::exists(path) )
 			path = IApplication::ApplicationDataFolder()/path;
@@ -89,22 +100,22 @@ namespace Jde
 		}
 		catch( const std::exception& e )//nlohmann::detail::parse_error
 		{
-			throw IOException{ path, e.what(), source_location::current( SRCE_CUR.line()-4, __builtin_COLUMN(), SRCE_CUR.file_name(), SRCE_CUR.function_name()) };
+			throw IOException{ path, e.what(), SRCE_CUR };
 		}
-
-		var schema = pDataSource->SchemaProc()->CreateSchema( j, path.parent_path() );
+		auto& db = *pDataSource;
+		var schema = db.SchemaProc()->CreateSchema( j, path.parent_path() );
 		AppendQLSchema( schema );
 		SetQLDataSource( pDataSource );
 
-		var pApis = pDataSource->SelectEnumSync<uint>( "um_apis" );
+		var pApis = db.SelectEnumSync<uint>( "um_apis" );
 		auto pId = Find( *pApis, "UM" ); THROW_IF( !pId, "no user management in api table." );
-		var umPermissionId = pDataSource->Scaler<uint>( "select id from um_permissions where api_id=? and name is null", {*pId} ).value_or(0); THROW_IF( umPermissionId==0, "no user management permission." );
+		var umPermissionId = db.Scaler<uint>( "select id from um_permissions where api_id=? and name is null", {*pId} ).value_or(0); THROW_IF( umPermissionId==0, "no user management permission." );
 		for( var& table : schema.Tables )
 			_tablePermissions.try_emplace( table.first, umPermissionId );
 
 		AssignUserGroups();
-		pDataSource->Select( "select permission_id, role_id, right_id from um_role_permissions p join um_roles r on p.role_id=r.id where r.deleted is null", [&](const DB::IRow& r){_rolePermissions.try_emplace(r.GetUInt(1)).first->second.emplace( r.GetUInt(0), (UM::EAccess)r.GetUInt(2) );} );
-		pDataSource->Select( "select group_id, role_id from um_group_roles gr join um_groups g on gr.group_id=g.id and g.deleted is null join um_roles r on gr.role_id=r.id and r.deleted is null", [&](var& r){_groupRoles.try_emplace(r.GetUInt(0)).first->second.emplace( r.GetUInt(1) );} );
+		db.Select( "select permission_id, role_id, right_id from um_role_permissions p join um_roles r on p.role_id=r.id where r.deleted is null", [&](const DB::IRow& r){_rolePermissions.try_emplace(r.GetUInt(1)).first->second.emplace( r.GetUInt(0), (UM::EAccess)r.GetUInt(2) );} );
+		db.Select( "select group_id, role_id from um_group_roles gr join um_groups g on gr.group_id=g.id and g.deleted is null join um_roles r on gr.role_id=r.id and r.deleted is null", [&](var& r){_groupRoles.try_emplace(r.GetUInt(0)).first->second.emplace( r.GetUInt(1) );} );
 		for( var& [userId,groupIds] : _userGroups )
 			AssignUser( userId, groupIds );
 	}
@@ -116,10 +127,14 @@ namespace Jde
 		var pAccess = pUser->second.find( permissionId ); THROW_IF( pAccess==pUser->second.end(), "User '{}' does not have api '{}' access.", userId, permissionId );
 		THROW_IF( (pAccess->second & access)==EAccess::None, "User '{}' api '{}' access is limited to:  '{}'. requested:  '{}'.", userId, permissionId, (uint8)pAccess->second, (uint8)access );
 	}
-	α UM::TestAccess( EAccess access, UserPK userId, sv tableName )noexcept(false)->void
+	α TestAccess( str tableName, UserPK userId, UM::EAccess access )noexcept(false)->void
 	{
-		var pTable = _tablePermissions.find(string{tableName}); THROW_IF( pTable==_tablePermissions.end(), "Could not find table '{}'", tableName );
+		var pTable = _tablePermissions.find( tableName ); THROW_IF( pTable==_tablePermissions.end(), "Could not find table '{}'", tableName );
 		TestAccess( access, userId, pTable->second );
+	}
+	α UM::TestRead( str tableName, UserPK userId )noexcept(false)->void
+	{
+		Jde::TestAccess( tableName, userId, EAccess::Read );
 	}
 
 	α UM::ApplyMutation( const DB::MutationQL& m, PK id )noexcept(false)->void
@@ -165,7 +180,7 @@ namespace Jde
 				roleId = m.InputParam( "roleId" ).get<uint>();
 				permissionId = m.InputParam( "permissionId" ).get<uint>();
 			}
-			var access = (UM::EAccess)DB::DataSource()->Scaler<uint>( "select right_id from um_role_permissions where role_id=? and permission_id=?", std::vector<DB::object>{roleId, permissionId} ).value_or( 0 );
+			var access = (UM::EAccess)DB::DataSource().Scaler<uint>( "select right_id from um_role_permissions where role_id=? and permission_id=?", std::vector<DB::object>{roleId, permissionId} ).value_or( 0 );
 			{
 				unique_lock l{ _rolePermissionMutex };
 				_rolePermissions.try_emplace( roleId ).first->second[permissionId] = (Jde::UM::EAccess)access;
@@ -217,5 +232,12 @@ namespace Jde
 			j.at("metaDataPath").get_to( path );
 			settings.MetaDataPath = fs::path{ path };
 		}
+	}
+}
+namespace Jde::UM
+{
+	α IAuthorize::TestPurge( uint pk, UserPK userId, SL sl )noexcept(false)->void
+	{
+		THROW_IFSL( !CanPurge(pk, userId), "Access to purge record denied" );
 	}
 }

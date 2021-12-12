@@ -9,7 +9,7 @@ namespace Jde::DB
 	using nlohmann::json;
 	static const LogTag& _logLevel = Logging::TagLevel( "tests" );
 
-	struct QLTests : public ::testing::Test
+	struct QLTests : ::testing::Test
 	{
 	protected:
 		QLTests()noexcept{ UM::Configure(); }
@@ -59,7 +59,7 @@ namespace Jde::DB
 				{
 					for( uint i=0; i<value.size(); ++i )
 					{
-						if( value[i].is_object() )
+						if( value[i].is_object() && p->size()>i )
 							SetAttribute( value[i], p->at(i), attribute );
 					}
 				}
@@ -121,7 +121,7 @@ namespace Jde::DB
 	{
 		var ql = "query{ role(target:\"user_management\"){ id name created deleted updated description target groups{id name created deleted updated description target } rolePermissions{api{ id name } id name rights } } }"sv;
 		var db = DB::Query( ql, 0 );
-		//Dbg( db.dump() );
+		LOGS( db.dump() );
 
 		auto expected = "{\"data\":{\"role\":{\"created\":\"2021-02-13T07:00:33Z\",\"groups\":[{\"created\":\"2021-02-13T07:00:33Z\",\"id\":1,\"name\":\"Everyone\",\"target\":\"everyone\"}],\"id\":1,\"name\":\"User Management\",\"rolePermissions\":[{\"api\":{\"id\":1,\"name\":\"UM\"},\"id\":1,\"rights\":[\"Administer\",\"Write\",\"Read\"]}],\"target\":\"user_management\"}}}"_json;
 		SetAttribute( db, expected, "created" );

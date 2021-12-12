@@ -34,18 +34,8 @@ namespace Jde
 			os << get<_int>(parameter);
 		else if( type==EObject::Uint )
 			os << get<uint>(parameter);
-		//else if( type==EObject::Decimal2 )
-		//	os << get<Decimal2>( parameter );
 		else if( type==EObject::Double )
 			os << get<double>( parameter );
-	/*	else if( type==EObject::DoubleOptional )
-		{
-			var& value = get<optional<double>>(parameter);
-			if( value.has_value() )
-				os << value.value();
-			else
-				os << nullString;
-		}*/
 		else if( type==EObject::Time )
 			os << ToIsoString( get<DBTimePoint>(parameter) );
 		else
@@ -191,5 +181,34 @@ namespace Jde
 			}
 		}
 		return value;
+	}
+	α DB::ToJson( const object& v, json& j )noexcept->void
+	{
+		var index = (EObject)v.index();
+		if( index==EObject::String )
+			j = get<string>( v );
+		else if( index==EObject::Null )
+			j = {};
+		else if( index==EObject::StringView )
+			j = get<sv>( v );
+		else if( index==EObject::Bool )
+			j = get<bool>( v );
+		else if( index==EObject::Int64 )
+			j = get<_int>( v );
+		else if( index==EObject::Uint )
+			j = get<uint>( v );
+		else if( index==EObject::Int )
+			j = get<int>( v );
+		else if( index==EObject::Double )
+			j = get<double>( v );
+		else if( index==EObject::Time )
+			j = ToIsoString( get<DB::DBTimePoint>(v) );
+		else if( index==EObject::StringPtr )
+		{
+			if( var p=get<sp<string>>(v); p )
+				j = *p;
+		}
+		else
+			ERR( "{} not implemented"sv, (uint8)index );
 	}
 }

@@ -99,7 +99,7 @@ namespace Jde
 
 		Logging::_pOnceMessages = nullptr;
 		{
-			unique_lock l{ MemoryLogMutex }; 
+			unique_lock l{ MemoryLogMutex };
 			_pMemoryLog = nullptr;
 			_logMemory = false;
 		}
@@ -127,7 +127,7 @@ namespace Jde
 
 	α Logging::LogMemory()noexcept->bool{ return _logMemory; }
 
-	vector<spdlog::sink_ptr> LoadSinks()noexcept
+	α LoadSinks()noexcept->vector<spdlog::sink_ptr>
 	{
 		vector<spdlog::sink_ptr> sinks;
 		var sinkSettings = Settings::TryMembers( "logging" );
@@ -135,8 +135,17 @@ namespace Jde
 		{
 			spdlog::sink_ptr pSink;
 			string additional;
+			string pattern = sink.TryGet<string>( "pattern" ).value_or("");
 			if( name=="console" && IApplication::IsConsole() )
+			{
+				if( pattern.empty() )
+#ifdef NDEBUG
+					pattern = "%^%3!l%$-%H:%M:%S.%e \e]8;;file://%g#%#\a%v\e]8;;\a";
+#else
+					pattern = "%^%3!l%$-%H:%M:%S.%e %-64@  %v";
+#endif
 				pSink = make_shared<spdlog::sinks::stdout_color_sink_mt>();
+			}
 			else if( name=="file" )
 			{
 				auto pPath = sink.TryGet<fs::path>( "path" );
@@ -145,10 +154,11 @@ namespace Jde
 				var truncate = sink.TryGet<bool>( "truncate" ).value_or( true );
 				additional = format( " truncate='{}' path='{}'", truncate, path.string() );
 				pSink = make_shared<spdlog::sinks::basic_file_sink_mt>( path.string(), truncate );
+				if( pattern.empty() )
+					pattern = "%^%3!l%$-%H:%M:%S.%e %-64@ %v";
 			}
 			else
 				continue;
-			var pattern = sink.TryGet<string>( "pattern" ).value_or( "%^%3!l%$-%H:%M:%S.%e %-64@ %v" );
 			pSink->set_pattern( pattern );
 			var level = sink.TryGet<ELogLevel>( "level" ).value_or( ELogLevel::Debug );
 			pSink->set_level( (spdlog::level::level_enum)level );
@@ -192,7 +202,7 @@ namespace Jde
 					if( _sinks.size() )
 						_logger.log( spdlog::source_loc{m.File,(int)m.LineNumber,m.Function}, (spdlog::level::level_enum)m.Level, fmt::vformat(m.MessageView, fmt::basic_format_args<ctx>{args.data(), (int)args.size()}) );
 					else
-						std::cerr << fmt::vformat( m.MessageView, fmt::basic_format_args<ctx>{args.data(), (int)args.size()} );
+						std::cerr << fmt::vformat( m.MessageView, fmt::basic_format_args<ctx>{args.data(), (int)args.size()} ) << std::endl;
 				}
 				catch( const fmt::v8::format_error& e )
 				{
@@ -208,24 +218,24 @@ namespace Jde
 		LOG( "log minLevel='{}' flushOn='{}'", ELogLevelStrings[minLevel], ELogLevelStrings[(uint8)flushOn] );//TODO add flushon to Server
 	}
 
-	void Logging::LogServer( const MessageBase& m )noexcept
+	α Logging::LogServer( const MessageBase& m )noexcept->void
 	{
 		ASSERTX( Server() && m.Level!=ELogLevel::NoLog );
 		Server()->Log( m );
 	}
-	void Logging::LogServer( const MessageBase& m, vector<string>& values )noexcept
+	α Logging::LogServer( const MessageBase& m, vector<string>& values )noexcept->void
 	{
 		ASSERTX( Server() && m.Level!=ELogLevel::NoLog );
 		Server()->Log( m, values );
 	}
-	void Logging::LogServer( Messages::ServerMessage& m )noexcept
+	α Logging::LogServer( Messages::ServerMessage& m )noexcept->void
 	{
 		ASSERTX( Server() && m.Level!=ELogLevel::NoLog );
 		Server()->Log( m );
 	}
 
 	TimePoint Logging::StartTime()noexcept{ return _startTime;}
-	void SendStatus()noexcept
+	α SendStatus()noexcept->void
 	{
 		lock_guard l{_statusMutex};
 		vector<string> variables; variables.reserve( _status.details_size()+1 );
@@ -240,7 +250,7 @@ namespace Jde
 			Logging::Server()->SendStatus = true;
 		_lastStatusUpdate = Clock::now();
 	}
-	void Logging::SetLogLevel( ELogLevel client, ELogLevel server )noexcept
+	α Logging::SetLogLevel( ELogLevel client, ELogLevel server )noexcept->void
 	{
 		if( _logger.level()!=(spdlog::level::level_enum)client )
 		{
@@ -256,7 +266,7 @@ namespace Jde
 		}
 		SendStatus();
 	}
-	void Logging::SetStatus( const vector<string>& values )noexcept
+	α Logging::SetStatus( const vector<string>& values )noexcept->void
 	{
 		{
 			lock_guard l{_statusMutex};
@@ -268,19 +278,19 @@ namespace Jde
 		if( _lastStatusUpdate+10s<now )
 			SendStatus();
 	}
-	up<Logging::Proto::Status> Logging::GetStatus()noexcept
+	α Logging::GetStatus()noexcept->up<Logging::Proto::Status>
 	{
 		lock_guard l{_statusMutex};
 		return make_unique<Proto::Status>( _status );
 	}
 
-	bool Logging::ShouldLogOnce( const Logging::MessageBase& messageBase )noexcept
+	α Logging::ShouldLogOnce( const Logging::MessageBase& messageBase )noexcept->bool
 	{
 		std::unique_lock l( OnceMessageMutex );
 		auto& messages = _pOnceMessages->emplace( messageBase.FileId, set<string>{} ).first->second;
 		return messages.emplace(messageBase.MessageView).second;
 	}
-	void Logging::LogOnce( const Logging::MessageBase& messageBase )noexcept
+	α Logging::LogOnce( const Logging::MessageBase& messageBase )noexcept->void
 	{
 		if( ShouldLogOnce(messageBase) )
 			Log( move(messageBase) );
@@ -289,7 +299,7 @@ namespace Jde
 
 	spdlog::logger& Logging::Default()noexcept{ return _logger; }
 
-	void ClearMemoryLog()noexcept
+	α ClearMemoryLog()noexcept->void
 	{
 		unique_lock l{ Logging::MemoryLogMutex };
 		Logging::_pMemoryLog = Logging::_logMemory ? make_unique<vector<Logging::Messages::ServerMessage>>() : nullptr;
@@ -364,9 +374,9 @@ namespace Jde
 
 		Message::Message( const Message& x )noexcept:
 			MessageBase{ x },
+			Tag{ x.Tag },
 			_pMessage{ x._pMessage ? make_unique<string>(*x._pMessage) : nullptr },
-			_fileName{ x._fileName },
-			Tag{ x.Tag }
+			_fileName{ x._fileName }
 		{
 			File = _fileName.c_str();
 			if( _pMessage )
@@ -375,6 +385,5 @@ namespace Jde
 				MessageId = Calc32RunTime( MessageView );
 			}
 		}
-
 	}
 }

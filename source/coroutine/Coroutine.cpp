@@ -159,7 +159,7 @@ namespace Jde::Coroutine
 				_pQueue->Push( move(param) );
 				if( _pThread )
 					_pThread->Join();
-				_pThread = make_unique<Threading::InterruptibleThread>( Name, [this](){Run();} );
+				_pThread = make_unique<Threading::InterruptibleThread>( string{Name}, [this](){Run();} );
 			}
 		}
 		return pResult;

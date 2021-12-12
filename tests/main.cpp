@@ -26,7 +26,8 @@ int main( int argc, char **argv )
 		var filter = p ? *p : "*";
 		::testing::GTEST_FLAG( filter ) = filter;
 	   result = RUN_ALL_TESTS();
-		IApplication::CleanUp();
+		IApplication::Shutdown();
+		IApplication::Cleanup();
 	}
 	return result;
 }

@@ -5,7 +5,6 @@
 
 namespace Jde::Threading
 {
-	static var _logLevel{ Logging::TagLevel("interrupt") };
 	Interrupt::Interrupt( sv threadName, Duration duration, bool paused ):
 		_threadName{ threadName },
 		_paused{ paused },

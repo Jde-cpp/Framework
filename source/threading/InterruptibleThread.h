@@ -7,6 +7,8 @@
 
 namespace Jde::Threading  //TODO Reflection remove Threading from public items.
 {
+	static const LogTag& _logLevel = Logging::TagLevel( "threads" );
+
 	void InterruptionPoint()noexcept(false);
 	struct Γ InterruptFlag
 	{
@@ -29,7 +31,7 @@ namespace Jde::Threading  //TODO Reflection remove Threading from public items.
 	struct InterruptibleThread : public IShutdown
 	{
 		template<typename FunctionType>
-		InterruptibleThread( sv name, FunctionType f )noexcept;
+		InterruptibleThread( string name, FunctionType f )noexcept;
 		virtual Γ ~InterruptibleThread();
 		Γ void Interrupt()noexcept;
 		Γ void Join();
@@ -44,17 +46,17 @@ namespace Jde::Threading  //TODO Reflection remove Threading from public items.
 	};
 
 	template<typename FunctionType>
-	InterruptibleThread::InterruptibleThread( sv name, FunctionType f )noexcept:
-		Name{name}
+	InterruptibleThread::InterruptibleThread( string name_, FunctionType f )noexcept:
+		Name{ name_}
 	{
 		std::promise<InterruptFlag*> promise;
-		string nameCopy{ Name };
-		_internalThread = std::thread( [f,&promise, nameCopy]
+		_internalThread = std::thread( [f,&promise, name=move(name_)]
 		{
+			LOG( "~InterruptibleThread::f({})", name );
 			promise.set_value( &GetThreadInterruptFlag() );
-			SetThreadDscrptn( nameCopy );
+			SetThreadDscrptn( name );
 			f();
-			DBG( "~InterruptibleThread::f({})"sv, nameCopy );
+			LOG( "~InterruptibleThread::f({})", name );
 			GetThreadInterruptFlag().SetIsDone();
 		});
 		_pFlag = promise.get_future().get();

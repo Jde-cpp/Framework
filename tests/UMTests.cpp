@@ -16,8 +16,8 @@ namespace Jde::UM
 		UMTests()noexcept {}
 		~UMTests()noexcept override{}
 
-		void SetUp()noexcept override {}
-		void TearDown()noexcept override {}
+		α SetUp()noexcept->void override{}
+		α TearDown()noexcept->void override{}
 	};
 
 	TEST_F(UMTests, Schema)
@@ -25,7 +25,7 @@ namespace Jde::UM
 		Configure();
 	}
 
-	uint Crud( sv service, sv name, sv target, sv description, sv suffix={} )
+	α Crud( sv service, sv name, sv target, sv description, sv suffix={} )->uint
 	{
 		constexpr sv frmt = "{{ mutation {{ create{}(\"input\":{{ \"name\": \"{}\", \"target\": \"{}\", \"description\": \"{}\"{}}}){{ id }} }} }}"sv;
 		var query = format( frmt, service, name, target, description, suffix );
@@ -44,7 +44,7 @@ namespace Jde::UM
 
 		return id;
 	}
-	void Purge( sv service, uint id )
+	α Purge( sv service, uint id )->void
 	{
 		constexpr sv purgeFormat = "{{ mutation {{ purge{}(\"id\":{}) }} }}";
 		var purgeQuery = format( purgeFormat, service, id );
@@ -53,7 +53,7 @@ namespace Jde::UM
 
 		//DBG( purgeResult.dump() );
 	}
-	void AddRemove( sv service, sv childMember, sv parentMember, uint childId, uint parentId, sv suffix={} )
+	α AddRemove( sv service, sv childMember, sv parentMember, uint childId, uint parentId, sv suffix={} )->void
 	{
 		constexpr sv frmt = "{{ mutation {{ {}(\"input\":{{ \"{}\": {}, \"{}\": {}{}}} ) }} }}";
 		var query = format( frmt, service, childMember, childId, parentMember, parentId, suffix );
@@ -111,12 +111,12 @@ namespace Jde::UM
 		var updateDef = format( "{{ mutation {{ updateRolePermission(\"roleId\":{}, \"permissionId\":{}, \"input\":{{ \"rights\": [\"Administer\", \"Write\"]}}) }} }}", readUMRoleId, permissionId );
 		DB::Query( updateDef, 0 );
 
-		auto pDataSource = Jde::DB::DataSource();
-		if( !pDataSource->Scaler<uint>( format("select count(*) from um_group_roles where group_id={} and role_id={}", administersId, readUMRoleId), {}) )
+		auto& db = Jde::DB::DataSource();
+		if( !db.Scaler<uint>( format("select count(*) from um_group_roles where group_id={} and role_id={}", administersId, readUMRoleId), {}) )
 			AddRemove( "addGroupRole", "groupId", "roleId", administersId, readUMRoleId );
-		if( !pDataSource->Scaler<uint>( format("select count(*) from um_user_groups where user_id={} and group_id={}", authenticatedUserId, administersId), {}) )
+		if( !db.Scaler<uint>( format("select count(*) from um_user_groups where user_id={} and group_id={}", authenticatedUserId, administersId), {}) )
 			AddRemove( "addUserGroup", "userId", "groupId", authenticatedUserId, administersId );
-		if( !pDataSource->Scaler<uint>( format("select count(*) from um_role_permissions where role_id={} and permission_id={}", readUMRoleId, permissionId), {}) )
+		if( !db.Scaler<uint>( format("select count(*) from um_role_permissions where role_id={} and permission_id={}", readUMRoleId, permissionId), {}) )
 			AddRemove( "addRolePermission", "roleId", "permissionId", readUMRoleId, permissionId, format(", \"rightId\": 7") );
 
 		var updateDef2 = format( "{{ mutation {{ updateRolePermission(\"roleId\":{}, \"permissionId\":{}, \"input\":{{ \"rights\": [\"Administer\"]}}) }} }}", 3, 3 );

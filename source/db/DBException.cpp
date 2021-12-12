@@ -14,14 +14,12 @@ namespace Jde::DB
 		return y;
 	}
 
-	DBException::DBException( _int errorCode, sv sql, const std::vector<object>* pValues, str what, const source_location& sl )noexcept:
+	DBException::DBException( _int errorCode, string sql, const std::vector<object>* pValues, string what, const source_location& sl )noexcept:
 		IException{ what, sl },
 		Sql{ sql },
 		Parameters{ CopyParams(pValues) },
 		ErrorCode{ errorCode }
-	{
-		Log();
-	}
+	{}
 
 	α DBException::what()const noexcept->const char*
 	{
@@ -33,8 +31,8 @@ namespace Jde::DB
 	α DBException::Log()const noexcept->void
 	{
 		if( Sql.find("log_message_insert")==string::npos )
-			DB::Log( Sql, Parameters.size() ? &Parameters : nullptr, _level, _pInner ? string{_pInner->what()} : what(), _sl );
+			DB::Log( Sql, Parameters.size() ? &Parameters : nullptr, _level, _pInner ? string{_pInner->what()} : what(), _stack.front() );
 		else
-			DB::LogNoServer( Sql, &Parameters, ELogLevel::Error, what(), _sl );
+			DB::LogNoServer( Sql, &Parameters, ELogLevel::Error, what(), _stack.front() );
 	}
 }

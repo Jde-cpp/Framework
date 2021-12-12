@@ -16,22 +16,23 @@ namespace Jde
 	using DB::EObject;
 	using DB::EType;
 	sp<DB::IDataSource> _pDataSource;
+#define  _schema DB::DefaultSchema()
 	static const LogTag& _logLevel = Logging::TagLevel( "ql" );
 
 	α DB::SetQLDataSource( sp<DB::IDataSource> p )noexcept->void{ _pDataSource = p; }
 
 	α DB::ClearQLDataSource()noexcept->void{ _pDataSource = nullptr; }
 	flat_map<string,vector<function<void(const DB::MutationQL& m, PK id)>>> _applyMutationListeners;  shared_mutex _applyMutationListenerMutex;
-	α DB::AddMutationListener( sv tablePrefix, function<void(const DB::MutationQL& m, PK id)> listener )noexcept->void
+	α DB::AddMutationListener( string tablePrefix, function<void(const DB::MutationQL& m, PK id)> listener )noexcept->void
 	{
 		unique_lock l{_applyMutationListenerMutex};
-		auto& listeners = _applyMutationListeners.try_emplace( string{tablePrefix} ).first->second;
+		auto& listeners = _applyMutationListeners.try_emplace( move(tablePrefix) ).first->second;
 		listeners.push_back( listener );
 	}
-	DB::Schema _schema;
+
 	namespace DB::GraphQL
 	{
-		α Schema()noexcept->DB::Schema&{ return _schema;}
+		//α Schema()noexcept->DB::Schema&{ return _schema;}
 		α DataSource()noexcept->sp<IDataSource>{ return _pDataSource; }
 	}
 	α DB::AppendQLSchema( const DB::Schema& schema )noexcept->void
@@ -88,7 +89,7 @@ namespace DB
 	α Insert( const DB::Table& table, const DB::MutationQL& m )noexcept(false)->uint
 	{
 		ostringstream sql{ DB::Schema::ToSingular(table.Name), std::ios::ate }; sql << "_insert(";
-		std::vector<DB::object> parameters; parameters.reserve( table.Columns.size() );
+		vector<DB::object> parameters; parameters.reserve( table.Columns.size() );
 		var pInput = m.Args.find( "input" ); THROW_IF( pInput == m.Args.end(), "Could not find 'input' arg." );
 		for( var& c : table.Columns )
 		{
@@ -126,7 +127,7 @@ namespace DB
 	α Update( const DB::Table& table, const DB::MutationQL& m, const DB::Syntax& syntax )->uint
 	{
 		ostringstream sql{ format("update {} set ", table.Name), std::ios::ate };
-		std::vector<DB::object> parameters; parameters.reserve( table.Columns.size() );
+		vector<DB::object> parameters; parameters.reserve( table.Columns.size() );
 		var pInput = m.Args.find( "input" ); THROW_IF( pInput==m.Args.end(), "Could not find input argument. {}", m.Args.dump() );
 		string sqlUpdate;
 		vector<string> where; where.reserve(2);
@@ -186,32 +187,33 @@ namespace DB
 	{
 		var pId = m.Args.find( "id" ); THROW_IF( pId==m.Args.end(), "Could not find id argument. {}", m.Args.dump() );
 		var pColumn = find_if( table.Columns.begin(), table.Columns.end(), []( var& c ){ return c.Name=="deleted"; } ); THROW_IF( pColumn==table.Columns.end(), "Could not find 'deleted' column" );
-		std::vector<DB::object> parameters;
+		vector<DB::object> parameters;
 		parameters.push_back( ToObject(EType::ULong, *pId, "id") );
-		ostringstream sql{ "update ", std::ios::ate }; sql << table.Name << " set deleted=" << DB::DefaultSyntax()->UtcNow() << " where id=?";
+		ostringstream sql{ "update ", std::ios::ate }; sql << table.Name << " set deleted=" << DB::DefaultSyntax().UtcNow() << " where id=?";
 		return _pDataSource->Execute( sql.str(), parameters );
 	}
 	α Restore( const DB::Table& table, const DB::MutationQL& m )->uint
 	{
 		var pId = m.Args.find( "id" ); THROW_IF( pId==m.Args.end(), "Could not find id argument. {}", m.Args.dump() );
 		var pColumn = find_if( table.Columns.begin(), table.Columns.end(), []( var& c ){ return c.Name=="deleted"; } ); THROW_IF( pColumn==table.Columns.end(), "Could not find 'deleted' column" );
-		std::vector<DB::object> parameters;
+		vector<DB::object> parameters;
 		parameters.push_back( ToObject(EType::ULong, *pId, "id") );
 		ostringstream sql{ "update ", std::ios::ate }; sql << table.Name << " set deleted=null where id=?";
 		return _pDataSource->Execute( sql.str(), parameters );
 	}
-	α Purge( sv tableName, const DB::MutationQL& m )->uint
+	α Purge( sv tableName, const DB::MutationQL& m, UserPK userId, SRCE )noexcept(false)->uint
 	{
 		var pId = m.Args.find( "id" ); THROW_IF( pId==m.Args.end(), "Could not find id argument. {}", m.Args.dump() );
-		std::vector<DB::object> parameters;
+		vector<DB::object> parameters;
 		parameters.push_back( ToObject(EType::ULong, *pId, "id") );
-		ostringstream sql{ "delete from ", std::ios::ate }; sql << tableName << " where id=?";
-		return _pDataSource->Execute( sql.str(), parameters );
+		if( var p=UM::FindAuthorizer(tableName); p )
+			p->TestPurge( *pId, userId );
+		return _pDataSource->Execute( format("delete from {} where id=?", tableName), parameters, sl );
 	}
 
-	std::vector<DB::object> ChildParentParams( sv childId, sv parentId, const json& input )
+	α ChildParentParams( sv childId, sv parentId, const json& input )->vector<DB::object>
 	{
-		std::vector<DB::object> parameters;
+		vector<DB::object> parameters;
 		parameters.push_back( ToObject(EType::ULong, InputParam2(childId, input), childId) );
 		parameters.push_back( ToObject(EType::ULong, InputParam2(parentId, input), parentId) );
 		return parameters;
@@ -246,33 +248,32 @@ namespace DB
 
 	α Mutation( const DB::MutationQL& m, UserPK userId )noexcept(false)->uint
 	{
-		var pSyntax = DB::DefaultSyntax();
-		var pSchemaTable = _schema.FindTableSuffix( m.TableSuffix() ); THROW_IF( !pSchemaTable, "Could not find table suffixed with '{}' in schema", m.TableSuffix() );
-		TEST_ACCESS( "Write", pSchemaTable->Name, userId ); //TODO implement.
+		var& t = _schema.FindTableSuffix( m.TableSuffix() );
+		TEST_ACCESS( "Write", t.Name, userId ); //TODO implement.
 		uint result;
 		if( m.Type==DB::EMutationQL::Create )
-			result = Insert( *pSchemaTable, m );
+			result = Insert( t, m );
 		else if( m.Type==DB::EMutationQL::Update )
-			result = Update( *pSchemaTable, m, *pSyntax );
+			result = Update( t, m, DB::DefaultSyntax() );
 		else if( m.Type==DB::EMutationQL::Delete )
-			result = Delete( *pSchemaTable, m );
+			result = Delete( t, m );
 		else if( m.Type==DB::EMutationQL::Restore )
-			result = Restore( *pSchemaTable, m );
+			result = Restore( t, m );
 		else if( m.Type==DB::EMutationQL::Purge )
-			result = Purge( pSchemaTable->Name, m );
+			result = Purge( t.Name, m, userId );
 		else
 		{
 			if( m.Type==DB::EMutationQL::Add )
-				result = Add( *pSchemaTable, m.Input() );
+				result = Add( t, m.Input() );
 			else if( m.Type==DB::EMutationQL::Remove )
-				result = Remove( *pSchemaTable, m.Input() );
+				result = Remove( t, m.Input() );
 			else
 				throw "unknown type";
 		}
-		if( pSchemaTable->Name.starts_with("um_") )
+		if( t.Name.starts_with("um_") )
 			Try( [&]{UM::ApplyMutation( m, result );} );
 		shared_lock l{ _applyMutationListenerMutex };
-		if( var p = _applyMutationListeners.find(pSchemaTable->Prefix()); p!=_applyMutationListeners.end() )
+		if( var p = _applyMutationListeners.find(t.Prefix()); p!=_applyMutationListeners.end() )
 			std::for_each( p->second.begin(), p->second.end(), [&](var& f){f(m, result);} );
 
 		return result;
@@ -520,7 +521,7 @@ namespace DB
 		else if( table.JsonName=="__schema" )
 			QuerySchema( table, jData );
 		else
-			DB::GraphQL::Query( table, jData );
+			DB::GraphQL::Query( table, jData, userId );
 	}
 
 	α QueryTables( const vector<DB::TableQL>& tables, uint userId )noexcept(false)->json

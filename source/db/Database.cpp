@@ -7,7 +7,7 @@
 #include "../Settings.h"
 #include <jde/Dll.h>
 #include "Syntax.h"
-#include <boost/container/flat_map.hpp>
+#include <boost/pointer_cast.hpp>
 
 #define var const auto
 namespace Jde
@@ -58,10 +58,10 @@ namespace Jde
 		{}
 		decltype(GetDataSource) *GetDataSourceFunction;
 
-		α Emplace( sv connectionString )->sp<DB::IDataSource>
+		α Emplace( str connectionString )->sp<DB::IDataSource>
 		{
 			std::unique_lock l{ _connectionsMutex };
-			auto pDataSource = _pConnections->find( string(connectionString) );
+			auto pDataSource = _pConnections->find( connectionString );
 			if( pDataSource == _pConnections->end() )
 			{
 				auto pNew = sp<Jde::DB::IDataSource>{ GetDataSourceFunction() };
@@ -100,15 +100,17 @@ namespace Jde
 		}
 		DBG( "~CleanDataSources"sv );
 	}
+	#define db DataSource()
+	DB::Schema _schema;
+	α DB::DefaultSchema()noexcept(false)->Schema&{ return _schema; }
 	α DB::CreateSchema()noexcept(false)->void
 	{
-		auto pDataSource = DB::DataSource();
 		var path = Settings::Global().Get<fs::path>( "metaDataPath" );
 		INFO( "db meta='{}'"sv, path.string() );
 		ordered_json j = json::parse( IO::FileUtilities::Load(path) );
-		/*var schema =*/ pDataSource->SchemaProc()->CreateSchema( j, path.parent_path() );
+		_schema = db.SchemaProc()->CreateSchema( j, path.parent_path() );
 	}
-	α DB::DefaultSyntax()noexcept->sp<DB::Syntax>
+	α DB::DefaultSyntax()noexcept->const DB::Syntax&
 	{
 		if( !_pSyntax )
 		{
@@ -116,7 +118,7 @@ namespace Jde
 				? make_shared<Syntax>()
 				: make_shared<MySqlSyntax>();
 		}
-		return _pSyntax;
+		return *_pSyntax;
 	}
 
 	std::once_flag _singleShutdown;
@@ -127,20 +129,24 @@ namespace Jde
 		std::call_once( _singleShutdown, [](){ IApplication::AddShutdownFunction( DB::CleanDataSources ); } );
 	}
 
-	α DB::DataSource()noexcept(false)->sp<DB::IDataSource>
+	α DB::DataSourcePtr()noexcept->sp<IDataSource>
 	{
-		if( !_pDefault )
+		if( !_pDefault && !IApplication::ShuttingDown() )
 		{
 			Initialize( Settings::Get<string>("db/driver") );
-			var cs = Settings::Get<string>( "db/connectionString" );
+			string cs{ Settings::Get<string>("db/connectionString") };
 			var env = cs.find( '=' )==string::npos ? IApplication::Instance().GetEnvironmentVariable( cs ) : string{};
-			_pDefault->SetConnectionString( env.empty() ? cs : env );
+			_pDefault->SetConnectionString( move(env.empty() ? cs : env) );
 		}
-		THROW_IF( !_pDefault, "No default datasource" );
 		return _pDefault;
 	}
+	α DB::DataSource()noexcept(false)->IDataSource&
+	{
+		auto p = DataSourcePtr(); THROW_IF( !p, "No default datasource" );
+		return *p;
+	}
 
-	α DB::DataSource( path libraryName, sv connectionString )->sp<DB::IDataSource>
+	α DB::DataSource( path libraryName, string connectionString )->sp<DB::IDataSource>
 	{
 		sp<IDataSource> pDataSource;
 		std::unique_lock l{_dataSourcesMutex};
@@ -149,15 +155,21 @@ namespace Jde
 		auto pSource = _pDataSources->find( key );
 		if( pSource==_pDataSources->end() )
 			pSource = _pDataSources->emplace( key, make_shared<DataSourceApi>(libraryName) ).first;
-		return pSource->second->Emplace( connectionString );
+		return pSource->second->Emplace( move(connectionString) );
 	}
 
 //#define DS if( auto p = DataSource(); p ) p
-	α DB::Select( string sql, function<void(const IRow&)> f, SL sl )noexcept(false)->void{ DataSource()->Select(move(sql), f, sl); }
-	α DB::Select( string sql, function<void(const IRow&)> f, const vector<object>& values, SL sl )noexcept(false)->void{ DataSource()->Select(move(sql), f, values, sl); }
+	α DB::Select( string sql, function<void(const IRow&)> f, SL sl )noexcept(false)->void{ db.Select(move(sql), f, sl); }
+	α DB::Select( string sql, function<void(const IRow&)> f, const vector<object>& values, SL sl )noexcept(false)->void{ db.Select(move(sql), f, values, sl); }
+
+	α DB::IdFromName( sv tableName, string name, SL sl )noexcept->SelectAwait<uint>
+	{
+		return db.ScalerCo<uint>( format("select id from {} where name=?", tableName), {name}, sl );
+	}
+
 	α DB::Execute( string sql, vector<object>&& parameters, SL sl )noexcept(false)->uint
 	{
-		return DataSource()->Execute( move(sql), parameters, sl );
+		return db.Execute( move(sql), parameters, sl );
 	}
 
 	α DB::SelectName( string sql, uint id, sv cacheName, SL sl )noexcept(false)->CIString

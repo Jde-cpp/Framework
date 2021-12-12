@@ -94,11 +94,11 @@ namespace Jde::DB
 		else if( j.is_string() )
 			getType( j.get<string>() );
 	}
-	string Column::DataTypeString(const Syntax& syntax)const noexcept
+	α Column::DataTypeString(const Syntax& syntax)const noexcept->string
 	{
 		return MaxLength ? format( "{}({})", ToString(Type, syntax), *MaxLength ) : ToString( Type, syntax );
 	}
-	string Column::Create( const Syntax& syntax )const noexcept
+	α Column::Create( const Syntax& syntax )const noexcept->string
 	{
 		var null = IsNullable ? "null"sv : "not null"sv;
 		const string sequence = IsIdentity ?  " "+string{syntax.IdentityColumnSyntax()} : string{};
@@ -186,13 +186,13 @@ namespace Jde::DB
 		}
 	}
 
-	string Table::InsertProcName()const noexcept
+	α Table::InsertProcName()const noexcept->string
 	{
 		var haveSequence = std::find_if( Columns.begin(), Columns.end(), [](var& c){return c.IsIdentity;} )!=Columns.end();
 		return !haveSequence || CustomInsertProc ? string{} : format( "{}_insert", DB::Schema::ToSingular(Name) );
 	}
 
-	string Table::InsertProcText( const Syntax& syntax )const noexcept
+	α Table::InsertProcText( const Syntax& syntax )const noexcept->string
 	{
 		ostringstream osCreate, osInsert, osValues;
 		osCreate << "create procedure " << InsertProcName() << "(";
@@ -224,7 +224,7 @@ namespace Jde::DB
 		return osCreate.str();
 	}
 
-	string Table::Create( const Syntax& syntax )const noexcept
+	α Table::Create( const Syntax& syntax )const noexcept->string
 	{
 		ostringstream createStatement;
 		createStatement << "Create table " << Name << "(" << endl;
@@ -260,7 +260,7 @@ namespace Jde::DB
 		PrimaryKey{ y.PrimaryKey }
 	{}
 
-	string Index::Create( sv name, sv tableName, const Syntax& syntax )const noexcept
+	α Index::Create( sv name, sv tableName, const Syntax& syntax )const noexcept->string
 	{
 		string unique = Unique ? "unique" : "";
 		ostringstream os;
@@ -274,7 +274,7 @@ namespace Jde::DB
 		return os.str();
 	}
 
-	string ForeignKey::Create( sv name, sv columnName, const DB::Table& pkTable, sv foreignTable )noexcept(false)
+	α ForeignKey::Create( sv name, sv columnName, const DB::Table& pkTable, sv foreignTable )noexcept(false)->string
 	{
 		THROW_IF( pkTable.SurrogateKey.size()!=1, "{} has {} columns in pk, !1 has not implemented", pkTable.Name, pkTable.SurrogateKey.size() );
 		ostringstream os;
@@ -287,50 +287,50 @@ namespace Jde::DB
 		return pColumn==Columns.end() ? nullptr : &(*pColumn);
 	}
 
-	string ColumnStartingWith( const Table& table, sv part )
+	α ColumnStartingWith( const Table& table, sv part )->string
 	{
 		auto pColumn = find_if( table.Columns.begin(), table.Columns.end(), [&part](var& c){return c.Name.starts_with(part);} );
 		return pColumn==table.Columns.end() ? string{} : pColumn->Name;
 	}
 
-	string TableNamePart( const Table& table, uint8 index )noexcept(false)
+	α TableNamePart( const Table& table, uint8 index )noexcept(false)->string
 	{
 		var nameParts = Str::Split( table.NameWithoutType(), '_' );
 		return nameParts.size()>index ? DB::Schema::ToSingular( nameParts[index] ) : string{};
 	}
-	string Table::Prefix()const noexcept{ return TableNamePart(*this, 0); }
-	string Table::NameWithoutType()const noexcept{ var underscore = Name.find_first_of('_'); return Name.substr(underscore==string::npos ? 0 : underscore+1); }
+	α Table::Prefix()const noexcept->string{ return TableNamePart(*this, 0); }
+	α Table::NameWithoutType()const noexcept->string{ var underscore = Name.find_first_of('_'); return Name.substr(underscore==string::npos ? 0 : underscore+1); }
 
-	string Table::FKName()const noexcept{ return Schema::ToSingular(NameWithoutType())+"_id"; }
-	string Table::JsonTypeName()const noexcept
+	α Table::FKName()const noexcept->string{ return Schema::ToSingular(NameWithoutType())+"_id"; }
+	α Table::JsonTypeName()const noexcept->string
 	{
 		auto name = Schema::ToJson( Schema::ToSingular(NameWithoutType()) );
 		if( name.size() )
 			name[0] = (char)std::toupper( name[0] );
 		return name;
 	}
-	string Table::ChildId()const noexcept(false)
+	α Table::ChildId()const noexcept(false)->string
 	{
 		var part = TableNamePart( *this, 0 );
 		return part.empty() ? part : ColumnStartingWith( *this, part );
 	}
 
-	sp<const Table> Table::ChildTable( const DB::Schema& schema )const noexcept(false)
+	α Table::ChildTable( const DB::Schema& schema )const noexcept(false)->sp<const Table>
 	{
 		var part = TableNamePart( *this, 0 );
-		return part.empty() ? sp<const Table>{} : schema.FindTableSuffix( Schema::ToPlural(part) );
+		return part.empty() ? sp<const Table>{} : schema.TryFindTableSuffix( Schema::ToPlural(part) );
 	}
 
-	string Table::ParentId()const noexcept(false)
+	α Table::ParentId()const noexcept(false)->string
 	{
 		var part = TableNamePart( *this, 1 );
 		return part.empty() ? part : ColumnStartingWith( *this, part );
 	}
 
-	sp<const Table> Table::ParentTable( const DB::Schema& schema )const noexcept(false)
+	α Table::ParentTable( const DB::Schema& schema )const noexcept(false)->sp<const Table>
 	{
 		var part = TableNamePart( *this, 1 );
-		return part.empty() ? sp<const Table>{} : schema.FindTableSuffix( Schema::ToPlural(part) );
+		return part.empty() ? sp<const Table>{} : schema.TryFindTableSuffix( Schema::ToPlural(part) );
 	}
 
 }

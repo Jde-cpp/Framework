@@ -10,133 +10,141 @@
 #include <jde/Str.h>
 #define var const auto
 
-namespace Jde::IO
+namespace Jde
 {
-	namespace FileUtilities
+	α IO::FileSize( path path )noexcept(false)->uint
 	{
-		α ForEachItem( path path, std::function<void(const fs::directory_entry&)> function )noexcept(false)->void//__fs::filesystem::filesystem_error
-		{
-			for( var& dirEntry : fs::directory_iterator(path) )
-     			function( dirEntry );
-		}
-
-		up<std::set<fs::directory_entry>> GetDirectory( path directory )
-		{
-			auto items = make_unique<std::set<fs::directory_entry>>();
-			Jde::IO::FileUtilities::ForEachItem( directory, [&items]( fs::directory_entry item ){items->emplace(item);} );
-			return items;
-		}
-
-		up<std::set<fs::directory_entry>> GetDirectories( path directory, up<std::set<fs::directory_entry>> pItems )
-		{
-			if( !pItems )
-				pItems = make_unique<std::set<fs::directory_entry>>();
-			auto func = [&pItems]( fs::directory_entry item )
-			{
-				if( fs::is_directory(item) )
-				{
-					pItems->emplace( item );
-					pItems = GetDirectories( item.path(), move(pItems) );
-				}
-			};
-			Jde::IO::FileUtilities::ForEachItem( directory, func );
-			return pItems;
-		}
-
-		size_t GetFileSize( path path )noexcept(false)//fs::filesystem_error
+		try
 		{
 			return fs::file_size( fs::canonical(path) );
 		}
-
-		up<vector<char>> LoadBinary( path path )noexcept(false)//fs::filesystem_error
+		catch( fs::filesystem_error& e )
 		{
-			CHECK_PATH( path );
-			auto size = GetFileSize( path );
-			TRACE( "Opening {} - {} bytes "sv, path.string(), size );
-			std::ifstream f( path, std::ios::binary ); THROW_IFX( f.fail(), IOException(path, "Could not open file") );
-
-			return make_unique<vector<char>>( (std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>() );  //vexing parse
-		}
-		string Load( path path )noexcept(false)
-		{
-			CHECK_PATH( path );
-			auto size = GetFileSize( path );
-			TRACE( "Opening {} - {} bytes "sv, path.string(), size );
-			std::ifstream f( path, std::ios::binary ); THROW_IFX(f.fail(), IOException(path, "Could not open file") );
-			string result;
-			result.reserve( size );
-			result.assign( (std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>() );  //vexing parse
-			return result;
-		}
-		α SaveBinary( path path, const std::vector<char>& data )noexcept(false)->void
-		{
-			std::ofstream f( path, std::ios::binary );
-			THROW_IFX( f.fail(), IOException(path, "Could not open file") );
-
-			f.write( data.data(), data.size() );
-		}
-		α Save( path path, sv value, std::ios_base::openmode /*openMode*/, SL sl )noexcept(false)->void
-		{
-			Save( path, ms<string>(value), sl );
-			// if( !fs::exists(path.parent_path()) )
-			// {
-			// 	fs::create_directories( path.parent_path() );
-			// 	INFO( "Created directory '{}'", path.parent_path() );
-			// }
-			// std::ofstream f{ path, openMode }; THROW_IFX( f.fail(), IOException(path, "Could not open file", sl) );
-			// f.write( value.data(), value.size() );
-		}
-		α Save( path path, sp<string> value, SL sl )noexcept(false)->void
-		{
-			Future<sp<void>>( IO::Write(path, value, sl) ).get();
-		}
-		α Compression::Save( path path, const vector<char>& data )->void
-		{
-			SaveBinary( path, data );
-			Compress( path );
-		}
-		up<vector<char>> Compression::LoadBinary( path uncompressed, path compressed, bool setPermissions, bool leaveUncompressed )noexcept(false)
-		{
-			var compressedPath = compressed.string().size() ? compressed : uncompressed;
-			Extract( compressedPath );
-			fs::path uncompressedFile = uncompressed;
-			if( uncompressedFile.extension()==Extension() )
-				uncompressedFile.replace_extension( "" );
-			if( setPermissions )
-				fs::permissions( uncompressedFile, fs::perms::owner_read | fs::perms::group_read | fs::perms::others_read  );
-			auto pResult = FileUtilities::LoadBinary( uncompressedFile );
-			if( leaveUncompressed )
-				fs::remove( compressedPath );
-			else
-				fs::remove( uncompressedFile );
-			TRACE( "removed {}."sv, (leaveUncompressed ? compressedPath.string() : uncompressedFile.string()) );
-			return pResult;
-		}
-		fs::path Compression::Compress( path path, bool deleteAfter )noexcept(false)
-		{
-			var command = CompressCommand( path );
-			//LOGS( ELogLevel::Trace, command );
-			THROW_IF( system(command.c_str())==-1, "{} failed.", command );
-			if( deleteAfter && !CompressAutoDeletes() )
-			{
-				TRACE( "removed {}."sv, path.string() );
-				VERIFY( fs::remove(path) );
-			}
-			auto compressedFile = path;
-			return compressedFile.replace_extension( format("{}{}", path.extension().string(),Extension()) );
-		}
-		α Compression::Extract( path path )noexcept(false)->void
-		{
-			auto destination = string( path.parent_path().string() );
-			fs::path compressedFile = path;
-			if( compressedFile.extension()!=Extension() )
-				compressedFile.replace_extension( format("{}{}", compressedFile.extension().string(),Extension()) );
-
-			auto command = ExtractCommand( compressedFile, destination );// -y -bsp0 -bso0
-			THROW_IFX( system(command.c_str())==-1, IO_EX(path, "{} failed.", command) );
+			throw IOException( move(e) );
 		}
 	}
+}
+namespace Jde::IO::FileUtilities
+{
+	α ForEachItem( path path, std::function<void(const fs::directory_entry&)> function )noexcept(false)->void//__fs::filesystem::filesystem_error
+	{
+		for( var& dirEntry : fs::directory_iterator(path) )
+			function( dirEntry );
+	}
 
+	up<std::set<fs::directory_entry>> GetDirectory( path directory )
+	{
+		auto items = make_unique<std::set<fs::directory_entry>>();
+		Jde::IO::FileUtilities::ForEachItem( directory, [&items]( fs::directory_entry item ){items->emplace(item);} );
+		return items;
+	}
+
+	up<std::set<fs::directory_entry>> GetDirectories( path directory, up<std::set<fs::directory_entry>> pItems )
+	{
+		if( !pItems )
+			pItems = make_unique<std::set<fs::directory_entry>>();
+		auto func = [&pItems]( fs::directory_entry item )
+		{
+			if( fs::is_directory(item) )
+			{
+				pItems->emplace( item );
+				pItems = GetDirectories( item.path(), move(pItems) );
+			}
+		};
+		Jde::IO::FileUtilities::ForEachItem( directory, func );
+		return pItems;
+	}
+
+	up<vector<char>> LoadBinary( path path )noexcept(false)//fs::filesystem_error
+	{
+		CHECK_PATH( path );
+		auto size = FileSize( path );
+		TRACE( "Opening {} - {} bytes "sv, path.string(), size );
+		std::ifstream f( path, std::ios::binary ); THROW_IFX( f.fail(), IOException(path, "Could not open file") );
+
+		return make_unique<vector<char>>( (std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>() );  //vexing parse
+	}
+	string Load( path path )noexcept(false)
+	{
+		CHECK_PATH( path );
+		auto size = FileSize( path );
+		TRACE( "Opening {} - {} bytes "sv, path.string(), size );
+		std::ifstream f( path, std::ios::binary ); THROW_IFX(f.fail(), IOException(path, "Could not open file") );
+		string result;
+		result.reserve( size );
+		result.assign( (std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>() );  //vexing parse
+		return result;
+	}
+	α SaveBinary( path path, const std::vector<char>& data )noexcept(false)->void
+	{
+		std::ofstream f( path, std::ios::binary );
+		THROW_IFX( f.fail(), IOException(path, "Could not open file") );
+
+		f.write( data.data(), data.size() );
+	}
+	α Save( path path, sv value, std::ios_base::openmode /*openMode*/, SL sl )noexcept(false)->void
+	{
+		Save( path, ms<string>(value), sl );
+		// if( !fs::exists(path.parent_path()) )
+		// {
+		// 	fs::create_directories( path.parent_path() );
+		// 	INFO( "Created directory '{}'", path.parent_path() );
+		// }
+		// std::ofstream f{ path, openMode }; THROW_IFX( f.fail(), IOException(path, "Could not open file", sl) );
+		// f.write( value.data(), value.size() );
+	}
+	α Save( path path, sp<string> value, SL sl )noexcept(false)->void
+	{
+		Future<sp<void>>( IO::Write(path, value, sl) ).get();
+	}
+	α Compression::Save( path path, const vector<char>& data )->void
+	{
+		SaveBinary( path, data );
+		Compress( path );
+	}
+	up<vector<char>> Compression::LoadBinary( path uncompressed, path compressed, bool setPermissions, bool leaveUncompressed )noexcept(false)
+	{
+		var compressedPath = compressed.string().size() ? compressed : uncompressed;
+		Extract( compressedPath );
+		fs::path uncompressedFile = uncompressed;
+		if( uncompressedFile.extension()==Extension() )
+			uncompressedFile.replace_extension( "" );
+		if( setPermissions )
+			fs::permissions( uncompressedFile, fs::perms::owner_read | fs::perms::group_read | fs::perms::others_read  );
+		auto pResult = FileUtilities::LoadBinary( uncompressedFile );
+		if( leaveUncompressed )
+			fs::remove( compressedPath );
+		else
+			fs::remove( uncompressedFile );
+		TRACE( "removed {}."sv, (leaveUncompressed ? compressedPath.string() : uncompressedFile.string()) );
+		return pResult;
+	}
+	fs::path Compression::Compress( path path, bool deleteAfter )noexcept(false)
+	{
+		var command = CompressCommand( path );
+		//LOGS( ELogLevel::Trace, command );
+		THROW_IF( system(command.c_str())==-1, "{} failed.", command );
+		if( deleteAfter && !CompressAutoDeletes() )
+		{
+			TRACE( "removed {}."sv, path.string() );
+			VERIFY( fs::remove(path) );
+		}
+		auto compressedFile = path;
+		return compressedFile.replace_extension( format("{}{}", path.extension().string(),Extension()) );
+	}
+	α Compression::Extract( path path )noexcept(false)->void
+	{
+		auto destination = string( path.parent_path().string() );
+		fs::path compressedFile = path;
+		if( compressedFile.extension()!=Extension() )
+			compressedFile.replace_extension( format("{}{}", compressedFile.extension().string(),Extension()) );
+
+		auto command = ExtractCommand( compressedFile, destination );// -y -bsp0 -bso0
+		THROW_IFX( system(command.c_str())==-1, IO_EX(path, "{} failed.", command) );
+	}
+}
+namespace Jde::IO
+{
 	uint File::Merge( path file, const vector<char>& original, const vector<char>& newData )noexcept(false)
 	{
 		//DBG( file.string() );
@@ -177,7 +185,7 @@ namespace Jde::IO
 
 	std::string FileUtilities::ToString( path filePath )
 	{
-		auto fileSize = GetFileSize( filePath );
+		auto fileSize = FileSize( filePath );
 		std::ifstream t( filePath );
 		string str;
 		str.reserve( fileSize );

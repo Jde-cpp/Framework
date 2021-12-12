@@ -8,7 +8,6 @@
 #define var const auto
 namespace Jde::Threading
 {
-	static const LogTag& _logLevel{ Logging::TagLevel("threads") };
 	sp<IWorker> IWorker::_pInstance;
 	std::atomic_flag IWorker::_mutex;
 	IWorker::IWorker( sv name )noexcept:
@@ -21,7 +20,7 @@ namespace Jde::Threading
 	α IWorker::Initialize()noexcept->void
 	{
 	}
-	
+
 
 	α IWorker::StartThread()noexcept->void
 	{

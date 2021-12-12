@@ -17,13 +17,13 @@ namespace Jde::IO::Sockets
 	ProtoServer::~ProtoServer()
 	{}
 
-	void ProtoServer::Accept()noexcept
+	α ProtoServer::Accept()noexcept->void
 	{
 		_acceptor.async_accept( [this]( std::error_code ec, tcp::socket socket )noexcept
 		{
 			try
 			{
-				THROW_IFX( ec, CodeException(ec.value()==125 ? "Sever shutting down"sv : "Accept Failed"sv, move(ec), ec.value()==125 ? ELogLevel::Information : ELogLevel::Error) );
+				THROW_IFX( ec, CodeException(ec.value()==125 ? "Sever shutting down" : "Accept Failed", move(ec), ec.value()==125 ? ELogLevel::Information : ELogLevel::Error) );
 				var id = ++_id;
 				DBG( "({})Accepted Connection"sv, id );
 				unique_lock l{ _mutex };
@@ -41,7 +41,7 @@ namespace Jde::IO::Sockets
 		ReadHeader();
 	}
 
-	void ProtoSession::ReadHeader()noexcept
+	α ProtoSession::ReadHeader()noexcept->void
 	{
 		net::async_read( _socket, net::buffer(static_cast<void*>(_readMessageSize), sizeof(_readMessageSize)), [&]( std::error_code ec, uint headerLength )
 		{

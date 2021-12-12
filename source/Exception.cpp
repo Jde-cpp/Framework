@@ -12,33 +12,37 @@
 namespace Jde
 {
 	IException::IException( ELogLevel level, sv value, const source_location& sl )noexcept:
-		_sl{ sl },
+		_stack{ sl },
 		_level{level},
 		_what{value}
 	{}
 	IException::IException( vector<string>&& args, string&& format, const source_location& sl, ELogLevel level )noexcept:
-		_sl{ sl },
+		_stack{ sl },
 		_level{level},
 		_format{ move(format) },
 		_args{ move(args) }
 	{}
 
-	IException::IException( sv what, const source_location& sl )noexcept:
-		_sl{ sl },
-		_what{ what }
+	IException::IException( string what, const source_location& sl )noexcept:
+		_stack{ sl },
+		_what{ move(what) }
 	{}
 
 	IException::~IException()
-	{}
+	{
+		Log();
+	}
 
 	α IException::Log()const noexcept->void
 	{
-		if( _level==ELogLevel::NoLog ) return;
-		const string fileName{ strlen(_sl.file_name()) ? FileName(_sl.file_name()) : "{Unknown}\0"sv };
-		var functionName = strlen(_sl.file_name()) ? _sl.function_name() : "{Unknown}\0";
-		Logging::Default().log( spdlog::source_loc{fileName.c_str(), (int)_sl.line(), functionName}, (spdlog::level::level_enum)_level, what() );
+		if( _level==ELogLevel::NoLog )
+			return;
+		var& sl = _stack.front();
+		const string fileName{ strlen(sl.file_name()) ? FileName(sl.file_name()) : "{Unknown}\0"sv };
+		var functionName = strlen(sl.file_name()) ? sl.function_name() : "{Unknown}\0";
+		Logging::Default().log( spdlog::source_loc{fileName.c_str(), (int)sl.line(), functionName}, (spdlog::level::level_enum)_level, what() );
 		if( Logging::Server() )
-			Logging::LogServer( Logging::Messages::ServerMessage{Logging::Message{_level, what(), _sl}, vector<string>{_args}} );
+			Logging::LogServer( Logging::Messages::ServerMessage{Logging::Message{_level, what(), sl}, vector<string>{_args}} );
 	}
 
 	α IException::what()const noexcept->const char*
@@ -54,8 +58,8 @@ namespace Jde
 		return _what.c_str();
 	}
 
-	CodeException::CodeException( sv value, std::error_code&& code, ELogLevel level, const source_location& sl ):
-		IException{ value, sl },
+	CodeException::CodeException( string value, std::error_code&& code, ELogLevel level, const source_location& sl ):
+		IException{ move(value), sl },
 		_errorCode{ move(code) }
 	{
 		_level = level;
@@ -100,9 +104,7 @@ namespace Jde
 #else
 		IException{ {std::to_string(result), std::to_string(errno), move(msg)}, "result={}/error={} - {}", sl }
 #endif
-	{
-		Log();
-	}
+	{}
 
 	Exception::Exception( sv what, ELogLevel l, const source_location& sl )noexcept:
 		IException( l, what, sl )
@@ -125,8 +127,4 @@ namespace Jde
 			: format( "'{}' - {}", IException::what(), Path().string() );
 		return _what.c_str();
 	}
-
-	// α IOException::Log()const noexcept->void
-	// {
-	// }
 }

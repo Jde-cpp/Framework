@@ -56,8 +56,8 @@ namespace Jde::Coroutine
 		Task2::promise_type* _pPromise{ nullptr };
 	};
 	inline IAwaitable::~IAwaitable(){}
-
-	struct AsyncAwaitable final : IAwaitable
+	//run synchronous function in coroutine pool thread.
+	struct AsyncAwaitable final : IAwaitable//todo rename FromSyncAwait?
 	{
 		using base=IAwaitable;
 		AsyncAwaitable( function<sp<void>()> fnctn )noexcept:_fnctn{fnctn}{};
@@ -80,7 +80,9 @@ namespace Jde::Coroutine
 	};
 	template<class T>
 	struct Promise : std::promise<T>
-	{};
+	{
+		~Promise(){}
+	};
 	ⓣ CallAwaitable( up<Promise<sp<T>>> pPromise, IAwaitable&& a )->Task2
 	{
 		TaskResult r = co_await a;
@@ -88,12 +90,15 @@ namespace Jde::Coroutine
 			pPromise->set_value( r.Get<T>() );
 		else
 			pPromise->set_exception( r.Error()->Ptr() );
+		//var d = GetThreadDscrptn();
+		//SetThreadDscrptn( d.substr(0, d.size()-9) );todo make own future class, override get.
 	}
 	ⓣ Future( IAwaitable&& a )->std::future<sp<T>>
 	{
 		auto p = make_unique<Promise<sp<T>>>();
 		std::future<sp<T>> f = p->get_future();
 		CallAwaitable( move(p), move(a) );
+		//Threading::SetThreadDscrptn( format("{} - Future", Threading::GetThreadDescription()) );
 		return f;
 	}
 	ⓣ Future( up<IAwaitable> a )->std::future<sp<T>>
