@@ -14,11 +14,11 @@ pushd `pwd` > /dev/null;
 cd $REPO_DIR
 
 if windows; then
-	findExecutable MSBuild.exe '/c/Program\ Files\ \(X86\)/Microsoft\ Visual\ Studio/2019/BuildTools/MSBuild/Current/Bin' 0
-	findExecutable MSBuild.exe '/c/Program\ Files\ \(X86\)/Microsoft\ Visual\ Studio/2019/Enterprise/MSBuild/Current/Bin'
+	findExecutable MSBuild.exe '/c/Program\ Files/Microsoft\ Visual\ Studio/2022/BuildTools/MSBuild/Current/Bin' 0
+	findExecutable MSBuild.exe '/c/Program\ Files/Microsoft\ Visual\ Studio/2022/Enterprise/MSBuild/Current/Bin'
 	findExecutable cmake.exe '/c/Program\ Files/CMake/bin'
-	findExecutable cl.exe '/c/Program\ Files\ \(X86\)/Microsoft\ Visual\ Studio/2019/BuildTools/VC/Tools/MSVC/14.29.30133/bin/Hostx64/x64' 0
-	findExecutable cl.exe '/c/Program\ Files\ \(X86\)/Microsoft\ Visual\ Studio/2019/Enterprise/VC/Tools/MSVC/14.29.30133/bin/Hostx64/x64' 1
+	findExecutable cl.exe '/c/Program\ Files/Microsoft\ Visual\ Studio/2022/BuildTools/VC/Tools/MSVC/14.30.30705/bin/Hostx64/x64' 0
+	findExecutable cl.exe '/c/Program\ Files/Microsoft\ Visual\ Studio/2022/Enterprise/VC/Tools/MSVC/14.30.30705/bin/Hostx64/x64' 1
 	findExecutable vswhere.exe '/c/Program\ Files\ \(X86\)/Microsoft\ Visual\ Studio/installer' 0
 	#findExecutable protoc.exe $REPO_BASH/jde/Public/stage/Release;
 fi;
@@ -101,7 +101,7 @@ function buildWindows2
 function buildWindows
 {
 	dir=$1;
-	echo buildWindows $dir;
+	echo buildWindows - $dir;
 	if [[ ! -f "$dir.vcxproj.user" && -f "$dir.vcxproj._user" ]]; then
 		linkFile $dir.vcxproj._user $dir.vcxproj.user;	if [ $? -ne 0 ]; then echo `pwd`; echo FAILED:  linkFile $dir.vcxproj._user $dir.vcxproj.user; exit 1; fi;
 	fi;
@@ -163,6 +163,10 @@ function build
 function buildTest
 {
 	if windows; then
+		msbuild -t:restore
+		if [[ ! -f "Tests.$dir.vcxproj.user" && -f "Tests.$dir.vcxproj._user" ]]; then
+			linkFile Tests.$dir.vcxproj._user Tests.$dir.vcxproj.user;	if [ $? -ne 0 ]; then echo `pwd`; echo FAILED:  linkFile Tests.$dir.vcxproj._user Tests.$dir.vcxproj.user; exit 1; fi;
+		fi;
 		buildWindows $1 $2
 	else
 		buildLinux 1

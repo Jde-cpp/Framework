@@ -1,14 +1,15 @@
 ﻿#pragma once
 #include <numeric>
 
-namespace Jde::Math
+namespace Jde
 {
-	template<typename T=uint>
-	T URound( double value )
+	template<typename T=uint> α Round( double value )->T
 	{
 		return static_cast<T>( llround(value) );
 	}
-
+}
+namespace Jde::Math
+{
 	template<typename T>
 	struct StatResult
 	{

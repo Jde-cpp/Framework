@@ -11,23 +11,35 @@
 
 namespace Jde
 {
-	IException::IException( ELogLevel level, sv value, const source_location& sl )noexcept:
+	IException::IException( string value, ELogLevel level, uint code, SL sl )noexcept:
 		_stack{ sl },
-		_level{level},
-		_what{value}
+		_level{ level },
+		_what{ move(value) },
+		Code( code ? code : Calc32RunTime(value) )
 	{}
-	IException::IException( vector<string>&& args, string&& format, const source_location& sl, ELogLevel level )noexcept:
+	IException::IException( vector<string>&& args, string&& format, SL sl, uint c, ELogLevel level )noexcept:
 		_stack{ sl },
-		_level{level},
+		_level{ level },
 		_format{ move(format) },
-		_args{ move(args) }
+		_args{ move(args) },
+		Code( c ? c : Calc32RunTime(format) )
 	{}
 
-	IException::IException( string what, const source_location& sl )noexcept:
-		_stack{ sl },
-		_what{ move(what) }
-	{}
-
+	//IException::IException( string value, uint code, SRCE )noexcept;
+	//	IException{ ELogLevel::Debug, move(what), code, sl }
+	//{}
+	IException::IException( IException&& from )noexcept:
+		_stack{ move(from._stack) },
+		_level{ from._level },
+		_what{ move(from._what) },
+		_pInner{ move(from._pInner) },
+		_format{ move(from._format) },
+		_args{ move(from._args) },
+		Code{ from.Code }
+	{
+		ASSERT( _stack.stack.size() );
+		from._level=ELogLevel::NoLog;
+	}
 	IException::~IException()
 	{
 		Log();
@@ -58,23 +70,22 @@ namespace Jde
 		return _what.c_str();
 	}
 
-	CodeException::CodeException( string value, std::error_code&& code, ELogLevel level, const source_location& sl ):
-		IException{ move(value), sl },
+	CodeException::CodeException( string value, std::error_code&& code, ELogLevel level, SL sl ):
+		IException{ move(value), level, code.value(), sl },
 		_errorCode{ move(code) }
 	{
-		_level = level;
 	}
 
-	CodeException::CodeException( std::error_code&& code, ELogLevel level, const source_location& sl ):
+	CodeException::CodeException( std::error_code&& code, ELogLevel level, SL sl ):
 		CodeException( format("{}-{}", code.value(), code.message()), move(code), level, sl )
 	{}
 
-	BoostCodeException::BoostCodeException( const boost::system::error_code& errorCode, sv msg, const source_location& sl )noexcept:
-		IException{ string{msg}, sl },
-		_errorCode{ make_unique<boost::system::error_code>(errorCode) }
+	BoostCodeException::BoostCodeException( const boost::system::error_code& c, sv msg, SL sl )noexcept:
+		IException{ string{msg}, ELogLevel::Debug, c.value(), sl },
+		_errorCode{ make_unique<boost::system::error_code>(c) }
 	{}
-	BoostCodeException::BoostCodeException( const BoostCodeException& e )noexcept:
-		IException{ e },
+	BoostCodeException::BoostCodeException( BoostCodeException&& e )noexcept:
+		IException{ move(e) },
 		_errorCode{ make_unique<boost::system::error_code>(*e._errorCode) }
 	{}
 	BoostCodeException::~BoostCodeException()
@@ -98,23 +109,23 @@ namespace Jde
 		return format( "({}){} - {})", value, category.name(), message );
 	}
 
-	OSException::OSException( T result, string&& msg, const source_location& sl )noexcept:
+	OSException::OSException( T result, string&& msg, SL sl )noexcept:
 #ifdef _MSC_VER
-		IException{ {std::to_string(result), std::to_string(GetLastError()), move(msg)}, "result={}/error={} - {}", sl }
+		IException{ {std::to_string(result), std::to_string(GetLastError()), move(msg)}, "result={}/error={} - {}", sl, GetLastError() }
 #else
-		IException{ {std::to_string(result), std::to_string(errno), move(msg)}, "result={}/error={} - {}", sl }
+		IException{ {std::to_string(result), std::to_string(errno), move(msg)}, "result={}/error={} - {}", sl, errno }
 #endif
 	{}
 
-	Exception::Exception( sv what, ELogLevel l, const source_location& sl )noexcept:
-		IException( l, what, sl )
+	Exception::Exception( string what, ELogLevel l, SL sl )noexcept:
+		IException{ move(what), l, 0, sl }
 	{}
 
-	α IOException::ErrorCode()const noexcept->uint
+/*	α IOException::ErrorCode()const noexcept->uint
 	{
 		return  _pUnderLying ? _pUnderLying->code().value() : _errorCode;
 	}
-
+*/
 	α IOException::Path()const noexcept->path
 	{
 		return  _pUnderLying? _pUnderLying->path1() : _path;
@@ -122,8 +133,8 @@ namespace Jde
 
 	α IOException::what()const noexcept->const char*
 	{
-		_what = _pUnderLying ? _pUnderLying->what() : ErrorCode()
-			? format( "({}) {} - {} path='{}'", ErrorCode(), std::strerror(errno), IException::what(), Path().string() )
+		_what = _pUnderLying ? _pUnderLying->what() : Code
+			? format( "({}) {} - {} path='{}'", Code, std::strerror(errno), IException::what(), Path().string() )
 			: format( "'{}' - {}", IException::what(), Path().string() );
 		return _what.c_str();
 	}

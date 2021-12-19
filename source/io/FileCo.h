@@ -65,7 +65,7 @@ namespace Jde::IO
 		DriveAwaitable( path path, sp<vector<char>> data, SRCE )noexcept:base{ sl },_arg{ path, data }{}
 		DriveAwaitable( path path, sp<string> data, SRCE )noexcept:base{ sl },_arg{ path, data }{}
 		α await_ready()noexcept->bool override;
-		α await_suspend( typename base::THandle h )noexcept->void override;//{ base::await_suspend( h ); _pPromise = &h.promise(); }
+		α await_suspend( typename HCoroutine h )noexcept->void override;//{ base::await_suspend( h ); _pPromise = &h.promise(); }
 		α await_resume()noexcept->TaskResult override;
 	private:
 		sp<IException> ExceptionPtr;

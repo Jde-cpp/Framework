@@ -1,4 +1,4 @@
-#include "Table.h"
+﻿#include "Table.h"
 #include <jde/Str.h>
 #include "../DataType.h"
 #include "../Syntax.h"
@@ -33,8 +33,6 @@ namespace Jde::DB
 	{
 		auto getType = [this,&commonColumns, &schema, &parents]( sv typeName )
 		{
-			//if( typeName=="umAuthenticators?" )
-			//	__debugbreak();
 			IsNullable = typeName.ends_with( "?" );
 			if( IsNullable )
 				typeName = typeName.substr( 0, typeName.size()-1 );
@@ -65,8 +63,6 @@ namespace Jde::DB
 		};
 		if( j.is_object() )
 		{
-//			if( Name=="name" )
-//				Dbg( j.dump() );
 			if( j.contains("sequence") )
 			{
 				IsIdentity = j.find( "sequence" )->get<bool>();
@@ -332,5 +328,4 @@ namespace Jde::DB
 		var part = TableNamePart( *this, 1 );
 		return part.empty() ? sp<const Table>{} : schema.TryFindTableSuffix( Schema::ToPlural(part) );
 	}
-
 }

@@ -9,7 +9,7 @@ namespace Jde::Threading
 {
 	using boost::container::flat_multimap;
 	using namespace Coroutine;
-	struct Γ AlarmAwaitable final : CancelAwaitable<Task2>
+	struct Γ AlarmAwaitable final : CancelAwaitable
 	{
 		AlarmAwaitable( TimePoint& alarm, Handle& handle )noexcept:CancelAwaitable{handle}, _alarm{alarm}{}
 		//~AlarmAwaitable(){ /*DBG("({})AlarmAwaitable::~Awaitable"sv, std::this_thread::get_id());*/ }
@@ -32,12 +32,12 @@ namespace Jde::Threading
 		void Shutdown()noexcept override;
 		optional<bool> Poll()noexcept override;
 		optional<TimePoint> Next()noexcept;
-		static void Add( TimePoint t, AlarmAwaitable::THandle h, Handle myHandle )noexcept;
-		void Add2( TimePoint t, AlarmAwaitable::THandle h, Handle myHandle )noexcept;
+		static void Add( TimePoint t, HCoroutine h, Handle myHandle )noexcept;
+		void Add2( TimePoint t, HCoroutine h, Handle myHandle )noexcept;
 		void Cancel2( Handle handle )noexcept;
 
 		std::condition_variable _cv; mutable std::mutex _mtx;
-		flat_multimap<TimePoint,tuple<Handle,AlarmAwaitable::THandle>> _coroutines; mutex _coroutineMutex;
+		flat_multimap<TimePoint,tuple<Handle,HCoroutine>> _coroutines; mutex _coroutineMutex;
 		static constexpr Duration WakeDuration{5s};
 		friend AlarmAwaitable;
 	};

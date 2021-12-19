@@ -127,7 +127,7 @@ namespace Jde
 			fmt = format( "{:.1f}"sv, seconds );
 		else
 		{
-			var wholeSeconds = Math::URound(seconds);
+			var wholeSeconds = Round( seconds );
 			if( wholeSeconds < 60*60 )
 				fmt = format( "{:0>2}:{:0>2}", (wholeSeconds/60), (wholeSeconds%60) );
 			else if( wholeSeconds < 60*60*24 )

@@ -7,6 +7,8 @@ namespace Jde::Coroutine
 {
 	using ClientHandle = uint;
 	using HCoroutine = coroutine_handle<Task2::promise_type>;
+
+	/*https://stackoverflow.com/questions/44960760/msvc-dll-exporting-class-that-inherits-from-template-cause-lnk2005-already-defin
 	template<class TTask=Task2>
 	struct TAwaitable
 	{
@@ -18,7 +20,7 @@ namespace Jde::Coroutine
 
 		β await_ready()noexcept->bool{ return false; }
 		β await_resume()noexcept->TResult=0;
-		β await_suspend( coroutine_handle<typename TTask::promise_type> /*h*/ )noexcept->void{ OriginalThreadParamPtr = { Threading::GetThreadDescription(), Threading::GetAppThreadHandle() }; }
+		β await_suspend( coroutine_handle<typename TTask::promise_type> / *h* / )noexcept->void{ OriginalThreadParamPtr = { Threading::GetThreadDescription(), Threading::GetAppThreadHandle() }; }
 		α AwaitResume()noexcept->void
 		{
 			if( _name.size() )
@@ -32,17 +34,39 @@ namespace Jde::Coroutine
 		string ThreadName;
 		const string _name;
 	};
-
-	class IAwaitable : public TAwaitable<Task2>
+	template struct TAwaitable<Task2>;
+	*/
+	struct Await
 	{
-		using base=TAwaitable<Task2>;
-	public:
+		Await()noexcept=default;
+		Await( string name )noexcept:_name{move(name)}{};
+
+		β await_ready()noexcept->bool{ return false; }
+		β await_resume()noexcept->TaskResult=0;
+		β await_suspend( HCoroutine )noexcept->void=0;//->void{ OriginalThreadParamPtr = { Threading::GetThreadDescription(), Threading::GetAppThreadHandle() }; }
+		α AwaitSuspend()noexcept{ OriginalThreadParamPtr = { Threading::GetThreadDescription(), Threading::GetAppThreadHandle() }; }
+		α AwaitResume()noexcept->void
+		{
+			if( _name.size() )
+				DBG("({}){}::await_resume"sv, std::this_thread::get_id(), _name);
+			if( OriginalThreadParamPtr )
+				Threading::SetThreadInfo( *OriginalThreadParamPtr );
+		}
+	protected:
+		optional<Threading::ThreadParam> OriginalThreadParamPtr;
+//		uint ThreadHandle;
+//		string ThreadName;
+		const string _name;
+	};
+#define base Await
+	struct IAwaitable : public base
+	{
 		IAwaitable( SRCE )noexcept:_sl{sl}{};
-		IAwaitable( str name, SRCE )noexcept:base{name},_sl{sl}{};
+		IAwaitable( string name, SRCE )noexcept:base{move(name)},_sl{sl}{};
 		virtual ~IAwaitable()=0;
 		α await_suspend( HCoroutine h )noexcept->void override
 		{
-			base::await_suspend( h );
+			base::AwaitSuspend();
 			_pPromise = &h.promise();
 			if( auto& ro = _pPromise->get_return_object(); ro.HasResult() )
 				ro.Clear();
@@ -55,13 +79,14 @@ namespace Jde::Coroutine
 	protected:
 		Task2::promise_type* _pPromise{ nullptr };
 	};
+#undef base
 	inline IAwaitable::~IAwaitable(){}
 	//run synchronous function in coroutine pool thread.
 	struct AsyncAwaitable final : IAwaitable//todo rename FromSyncAwait?
 	{
 		using base=IAwaitable;
 		AsyncAwaitable( function<sp<void>()> fnctn )noexcept:_fnctn{fnctn}{};
-		α await_suspend( IAwaitable::THandle h )noexcept->void override{ base::await_suspend(h); CoroutinePool::Resume( move(h) ); }
+		α await_suspend( HCoroutine h )noexcept->void override{ base::await_suspend(h); CoroutinePool::Resume( move(h) ); }
 
 		TaskResult await_resume()noexcept override;
 	private:
@@ -72,9 +97,9 @@ namespace Jde::Coroutine
 	{
 		using base=IAwaitable;
 	public:
-		FunctionAwaitable( function<Task2(typename base::THandle)> fnctn, SRCE, str name={} )noexcept:base{name, sl}, _fnctn2{fnctn}{};
+		FunctionAwaitable( function<Task2(HCoroutine)> fnctn, SRCE, str name={} )noexcept:base{name, sl}, _fnctn2{fnctn}{};
 
-		α await_suspend( typename base::THandle h )noexcept->void override{ base::await_suspend( h ); _fnctn2( move(h) ); }
+		α await_suspend( HCoroutine h )noexcept->void override{ base::await_suspend( h ); _fnctn2( move(h) ); }
 	private:
 		function<Task2(HCoroutine)> _fnctn2;
 	};
@@ -122,15 +147,15 @@ namespace Jde::Coroutine
 		function<Task2(HCoroutine h)> _fnctn;
 	};
 
-	template<class T>
-	struct CancelAwaitable /*abstract*/ : TAwaitable<T>
+	//template<class T>
+	struct CancelAwaitable /*abstract*/ : Await
 	{
 		CancelAwaitable( ClientHandle& handle )noexcept:_hClient{ NextHandle() }{ handle = _hClient; }
 		virtual ~CancelAwaitable()=0;
 	protected:
 		const ClientHandle _hClient;
 	};
-	template<class T> CancelAwaitable<T>::~CancelAwaitable(){}
+	/*template<class T>*/ inline CancelAwaitable::~CancelAwaitable() {}
 
 	Ξ AsyncAwaitable::await_resume()noexcept->TaskResult
 	{

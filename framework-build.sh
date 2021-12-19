@@ -61,8 +61,8 @@ function winBoost
 {
 	lib=$1;
 	echo winBoost - $lib
-	winBoostConfig boost_$lib-vc142-mt-x64-1_77 release;
-	winBoostConfig boost_$lib-vc142-mt-gd-x64-1_77 debug;
+	winBoostConfig boost_$lib-vc143-mt-x64-1_78 release;
+	winBoostConfig boost_$lib-vc143-mt-gd-x64-1_78 debug;
 }
 if windows; then
 	pushd `pwd` > /dev/null;

@@ -17,14 +17,13 @@ namespace Jde
 	using nlohmann::ordered_json;
 	static var& _logLevel{ Logging::TagLevel("sql") };
 
-	α DB::Message( sv sql, const vector<object>* pParameters, string error )noexcept->string
+	α DB::LogDisplay( sv sql, const vector<object>* pParameters, string error )noexcept->string
 	{
-		var size = pParameters ? pParameters->size() : 0;
 		ostringstream os;
 		if( error.size() )
-			os << error << "\n";
+			os << move(error) << std::endl;
 		uint prevIndex=0;
-		for( uint sqlIndex=0, paramIndex=0; (sqlIndex=sql.find_first_of('?', prevIndex))!=string::npos && paramIndex<size; ++paramIndex, prevIndex=sqlIndex+1 )
+		for( uint sqlIndex=0, paramIndex=0, size = pParameters ? pParameters->size() : 0; (sqlIndex=sql.find_first_of('?', prevIndex))!=string::npos && paramIndex<size; ++paramIndex, prevIndex=sqlIndex+1 )
 		{
 			os << sql.substr( prevIndex, sqlIndex-prevIndex );
 			os << DB::ToString( (*pParameters)[paramIndex] );
@@ -36,16 +35,16 @@ namespace Jde
 	α DB::Log( sv sql, const vector<object>* pParameters, SL sl )noexcept->void
 	{
 		var l = _logLevel.Level;
-		Logging::Log( Logging::Message{l, Message(sql, pParameters, {}), sl} );
+		Logging::Log( Logging::Message{l, LogDisplay(sql, pParameters, {}), sl} );
 	}
 
 	α DB::Log( sv sql, const vector<object>* pParameters, ELogLevel level, string error, SL sl )noexcept->void
 	{
-		Logging::Log( Logging::Message{level, Message(sql, pParameters, move(error)), sl} );
+		Logging::Log( Logging::Message{level, LogDisplay(sql, pParameters, move(error)), sl} );
 	}
 	α DB::LogNoServer( string sql, const vector<object>* pParameters, ELogLevel level, string error, SL sl )noexcept->void
 	{
-		Logging::LogNoServer( Logging::Message{level, Message(move(sql), pParameters, move(error)), sl} );
+		Logging::LogNoServer( Logging::Message{level, LogDisplay(move(sql), pParameters, move(error)), sl} );
 	}
 
 	class DataSourceApi

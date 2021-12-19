@@ -3,6 +3,8 @@
 DISABLE_WARNINGS
 #include <nlohmann/json.hpp>
 ENABLE_WARNINGS
+#include <jde/Log.h>
+#include <jde/Assert.h>
 #include "../math/Decimal.h"
 
 
@@ -23,4 +25,19 @@ namespace Jde::DB
 
 	α ToObject( EType type, const nlohmann::json& j, sv memberName, SRCE )noexcept(false)->object;
 	α ToJson( const object& obj, json& j )noexcept->void;
+#define var const auto
+	Ξ ToUInt( const object& x )noexcept->uint
+	{
+		uint y; var i = (EObject)x.index();
+		if( i==EObject::Int )
+			y = get<int>( x );
+		else if( i==EObject::Int64 )
+			y = get<int>( x );
+		else if( i==EObject::Uint )
+			y = get<int>( x );
+		else
+			ASSERT( y=0 );
+		return y;
+	}
 }
+#undef var

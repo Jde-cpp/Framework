@@ -33,17 +33,17 @@ namespace Jde
 			is >> value;
 			var type = is.get();
 			if( type=='Y' )
-				duration += hours( Math::URound(value*365.25*24) );
+				duration += hours( Round(value*365.25*24) );
 			else if( !parsingTime && type=='M' )
-				duration += hours( Math::URound(value*30*24) );
+				duration += hours( Round(value*30*24) );
 			else if( type=='D' )
-				duration += hours( Math::URound(value*24) );
+				duration += hours( Round(value*24) );
 			else if( type=='H' )
-				duration += minutes( Math::URound(value*60) );
+				duration += minutes( Round(value*60) );
 			else if( type=='M' )
-				duration += seconds( Math::URound(value*60) );
+				duration += seconds( Round(value*60) );
 			else if( type=='S' )
-				duration += milliseconds( Math::URound(value*1000) );
+				duration += milliseconds( Round(value*1000) );
 		}
 		return duration;
 	}

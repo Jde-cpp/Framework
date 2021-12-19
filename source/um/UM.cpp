@@ -236,6 +236,7 @@ namespace Jde
 }
 namespace Jde::UM
 {
+#pragma warning(disable:4100)
 	α IAuthorize::TestPurge( uint pk, UserPK userId, SL sl )noexcept(false)->void
 	{
 		THROW_IFSL( !CanPurge(pk, userId), "Access to purge record denied" );

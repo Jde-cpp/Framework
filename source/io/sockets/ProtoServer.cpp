@@ -1,4 +1,4 @@
-#include "ProtoServer.h"
+﻿#include "ProtoServer.h"
 #include "../../threading/Thread.h"
 #include "../../threading/InterruptibleThread.h"
 #include "../../Settings.h"

@@ -12,7 +12,7 @@ namespace Jde::DB
 	ⓣ SelectEnum( sv tableName, SRCE )noexcept(false)->up<IAwaitable>{ return DataSource().SelectEnum<T>( tableName ); }//sp<flat_map<T,string>>
 	Φ IdFromName( sv tableName, string name, SRCE )noexcept->SelectAwait<uint>;
 
-	α Message( sv sql, const vector<object>* pParameters, string error={} )noexcept->string;
+	Φ LogDisplay( sv sql, const vector<object>* pParameters, string error={} )noexcept->string;
 	Φ Log( sv sql, const vector<object>* pParameters, SL sl )noexcept->void;
 	α Log( sv sql, const vector<object>* pParameters, ELogLevel level, string error, SL sl )noexcept->void;
 	α LogNoServer( string sql, const vector<object>* pParameters, ELogLevel level, string error, SL sl )noexcept->void;
@@ -28,7 +28,6 @@ namespace Jde::DB
 
 	ⓣ TryScaler( string sql, const vector<object>& parameters, SRCE )noexcept->optional<T>;
 	ⓣ Scaler( string sql, const vector<object>& parameters, SRCE )noexcept(false)->optional<T>;
-	//ⓣ ScalerCo( string&& sql, const vector<object>&& parameters, SRCE )noexcept(false);
 
 	Φ Select( string sql, std::function<void(const IRow&)> f, const vector<object>& values, SRCE )noexcept(false)->void;
 	Φ Select( string sql, std::function<void(const IRow&)> f, SRCE )noexcept(false)->void;
@@ -45,8 +44,6 @@ namespace Jde::DB
 namespace Jde
 {
 	using boost::container::flat_set;
-//#define RETURN(x) auto pDataSource = DataSource(); return !pDataSource ? x : pDataSource
-
 	ⓣ DB::Scaler( string sql, const vector<object>& parameters, SL sl )noexcept(false)->optional<T>
 	{
 		return DataSource().Scaler<T>( move(sql), parameters, sl );

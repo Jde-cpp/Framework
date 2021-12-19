@@ -166,9 +166,8 @@ namespace Jde::DB
 				{
 					if( var pFlagValues = flagValues.find(iColumn); pFlagValues!=flagValues.end() )
 					{
-						ASSERT( index==EObject::Uint );//what is int use case?
 						m = json::array();
-						uint remainingFlags = index==EObject::Uint ? get<uint>( value ) : get<int>( value );
+						uint remainingFlags = ToUInt( value );
 						for( uint iFlag=0x1; remainingFlags!=0; iFlag <<= 1 )
 						{
 							if( (remainingFlags & iFlag)==0 )
@@ -180,7 +179,7 @@ namespace Jde::DB
 							remainingFlags -= iFlag;
 						}
 					}
-					else if( pAuthorizer && memberName=="id" && !pAuthorizer->CanRead(userId, get<uint>(value)) )//TODO move to sql
+					else if( pAuthorizer && memberName=="id" && !pAuthorizer->CanRead(userId, ToUInt(value)) )//TODO move to sql
 						return false;
 					else
 						ToJson( value, m );

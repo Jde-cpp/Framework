@@ -81,7 +81,7 @@ namespace Jde::IO
 		}
 		return ExceptionPtr!=nullptr;
 	}
-	α DriveAwaitable::await_suspend( typename base::THandle h )noexcept->void
+	α DriveAwaitable::await_suspend( HCoroutine h )noexcept->void
 	{
 		base::await_suspend( h );
 		_arg.Send( move(h) );

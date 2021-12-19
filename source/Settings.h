@@ -161,6 +161,16 @@ namespace Jde::Settings
 	Ξ TryMembers( sv path )noexcept->flat_map<string,Container>{ return Global().TryMembers( path ); }
 	$ TryGet<ELogLevel>( sv path )noexcept->optional<ELogLevel>{ return Global().TryGet<ELogLevel>( path ); }
 	Ξ ForEach( sv path, function<void(sv, const nlohmann::json& v)> f )noexcept->void{ return Global().ForEach(path, f); }
+
+	Τ struct Item
+	{
+		Item( sv path, T dflt ):
+			Value{ TryGet<T>(path).value_or(dflt) }
+		{}
+		operator T(){return Value;}
+		const T Value;
+	};
+
 	ⓣ TryGetSubcontainer( sv container, sv path )noexcept->optional<T>
 	{
 		optional<T> v;

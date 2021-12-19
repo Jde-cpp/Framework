@@ -27,7 +27,6 @@ namespace Jde
 	private:
 		atomic_flag* _pValue;
 	};
-	//Ξ CoLock()noexcept{ return CoLockAwait{move(key)}; }
 	struct CoLock; struct CoGuard;
 	class Γ LockAwait : public Coroutine::IAwaitable
 	{
@@ -68,21 +67,19 @@ namespace Jde
 namespace Jde::Threading
 {
 	Φ UniqueLock( str key )noexcept->std::unique_lock<std::shared_mutex>;
-
-	class Γ LockKeyAwait : public Coroutine::TAwaitable<>
+#define base Coroutine::Await
+	struct Γ LockKeyAwait : base
 	{
-		using base=Coroutine::TAwaitable<>;
-	public:
 		LockKeyAwait( string key )noexcept:Key{move(key)}{}
 
 		α await_ready()noexcept->bool override;
 		α await_suspend( HCoroutine h )noexcept->void override;
 		α await_resume()noexcept->TaskResult override;
 	private:
-		base::THandle Handle{nullptr};
+		HCoroutine Handle{nullptr};
 		const string Key;
 	};
-
+#undef base
 	struct CoLockGuard final : boost::noncopyable
 	{
 		CoLockGuard( str Key, std::variant<LockKeyAwait*,coroutine_handle<>> )noexcept;

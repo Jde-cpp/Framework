@@ -1,4 +1,4 @@
-#include "Await.h"
+﻿#include "Await.h"
 #include "DataSource.h"
 
 namespace Jde::DB
@@ -9,7 +9,7 @@ namespace Jde::DB
 		return !!_pValue;
 	}
 
-	α ICacheAwait::await_resume()noexcept->TResult
+	α ICacheAwait::await_resume()noexcept->TaskResult
 	{
 		auto y = _pValue ? TaskResult{ _pValue } : base::await_resume();
 		if( !_pValue && y.HasValue() )

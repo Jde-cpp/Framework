@@ -74,7 +74,7 @@ namespace Jde::Threading
 		if( locks.size() )
 		{
 			ASSERT( locks.front().index()==1 );
-			Coroutine::CoroutinePool::Resume( move(get<1>(locks.front())) );
+			CoroutinePool::Resume( move(get<1>(locks.front())) );
 		}
 	}
 
@@ -85,9 +85,9 @@ namespace Jde::Threading
 		locks.push_back( this );
 		return locks.size()==1;
 	}
-	void LockKeyAwait::await_suspend( typename base::THandle h )noexcept
+	void LockKeyAwait::await_suspend( HCoroutine h )noexcept
 	{
-		base::await_suspend( h );
+		Await::AwaitSuspend();
 		AtomicGuard l( _coLocksLock ); ASSERT( _coLocks.find(Key)!=_coLocks.end() );
 		auto& locks = _coLocks.find( Key )->second;
 		for( uint i=0; !Handle && i<locks.size(); ++i )
@@ -97,9 +97,9 @@ namespace Jde::Threading
  		}
 		ASSERT( Handle );
 	}
-	LockKeyAwait::base::TResult LockKeyAwait::await_resume()noexcept
+	TaskResult LockKeyAwait::await_resume()noexcept
 	{
-		return Coroutine::TaskResult{ Handle ? make_shared<CoLockGuard>( Key, Handle ) : make_shared<CoLockGuard>( Key, this ) };
+		return TaskResult{ Handle ? make_shared<CoLockGuard>( Key, Handle ) : make_shared<CoLockGuard>( Key, this ) };
 	}
 
 #ifndef NDEBUG

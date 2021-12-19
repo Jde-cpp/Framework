@@ -3,6 +3,7 @@
 #include <jde/Log.h>
 #include <jde/Str.h>
 #include <jde/Exports.h>
+#include "Settings.h"
 #include "collections/Collections.h"
 
 namespace Jde
@@ -13,8 +14,11 @@ namespace Jde
 	{
 		~Cache(){ if( HaveLogger() ) DBG("~Cache"sv); }
 		Ω Has( str name )noexcept{ return Instance().InstanceHas( name ); }
+		Ω Duration( str /*name*/ )noexcept{ return Settings::TryGet<Jde::Duration>( "cache/default/duration" ).value_or( Duration::max() ); }
 		Ṫ Emplace( str name )noexcept->sp<T>{ return Instance().InstanceEmplace<T>( name ); }
 		Ṫ Get( str name )noexcept{ return Instance().InstanceGet<T>(name); }
+		Φ Double( string name )noexcept->double;
+		Φ SetDouble( string name, double v, TP t=TP::max() )noexcept->bool;
 		Ṫ Set( str name, sp<T> p )noexcept->sp<T>{ return Instance().InstanceSet<T>(name, p); }
 		Φ Clear( sv name )noexcept->bool{ return Instance().InstanceClear( name ); }
 		template<class K,class V> static α GetValue( str n, K id )noexcept->sp<V>{ return Instance().InstanceGetValue<K,V>( n, id ); }
@@ -61,8 +65,7 @@ namespace Jde
 		return pValue;
 	}
 
-	template<class T>
-	sp<T> Cache::InstanceSet( str name, sp<T> pValue )noexcept
+	ⓣ Cache::InstanceSet( str name, sp<T> pValue )noexcept->	sp<T> 
 	{
 		unique_lock l{_cacheLock};
 		if( !pValue )

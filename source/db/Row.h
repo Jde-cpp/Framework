@@ -42,9 +42,6 @@ namespace Jde::DB
 		friend α operator>>( const IRow& row, float& value )noexcept(false)->const IRow&{ value=static_cast<float>(row.GetDouble(row._index++)); return row; }
 		friend α operator>>( const IRow& row, optional<float>& value )noexcept(false)->const IRow&{ auto dValue = row.GetDoubleOpt(row._index++); if( dValue.has_value() ) value=static_cast<float>(dValue.value()); else value=std::nullopt; return row; }
 
-		friend α operator>>( const IRow& row, Decimal2& value  )noexcept(false)->const IRow&{ value = Decimal2( row.GetDouble(row._index++) ); return row; }
-		friend α operator>>( const IRow& row, optional<Decimal2>& value  )noexcept(false)->const IRow&{ const auto doubleValue = row.GetDoubleOpt(row._index++); value = doubleValue.has_value() ? Decimal2(value.value()) : optional<Decimal2>(); return row; }
-
 		friend α operator>>( const IRow& row, DBTimePoint& value)->const IRow&{ value=row.GetTimePoint(row._index++); return row; }
 		friend α operator>>( const IRow& row, optional<DBTimePoint>& value)->const IRow&{ value=row.GetTimePointOpt(row._index++); return row; }
 

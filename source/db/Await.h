@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Row.h"
 #include "../Cache.h"
 #include "../coroutine/Awaitable.h"
@@ -55,14 +55,15 @@ namespace Jde::DB
 		h.resume();
 	}
 /////////////////////////////////////////////////////////////////////////////////////////////////////
+	#define Φ Γ auto
 	class ICacheAwait : public IAwaitable
 	{
 		using base=IAwaitable;
 	public:
 		ICacheAwait( string name, SL sl ):base{sl},_name{move(name)}{ ASSERT(_name.size()); }
 		virtual ~ICacheAwait()=0;
-		α await_ready()noexcept->bool;
-		α await_resume()noexcept->TResult;
+		Φ await_ready()noexcept->bool;
+		Φ await_resume()noexcept->TaskResult;
 	private:
 		string _name;
 		sp<void> _pValue;
@@ -74,3 +75,4 @@ namespace Jde::DB
 		α await_suspend( HCoroutine h )noexcept->void override{ ICacheAwait::await_suspend( h ); TSelect<T>::Select( move(h) ); }
 	};
 }
+#undef Φ

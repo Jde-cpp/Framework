@@ -11,7 +11,7 @@ using namespace std::chrono;
 namespace Jde::Coroutine
 {
 	std::shared_mutex CoroutinePool::_mtx;
-	static var _logLevel{ Logging::TagLevel("coroutine") };
+	static var& _logLevel{ Logging::TagLevel("threads") };
 
 	sp<CoroutinePool> CoroutinePool::_pInstance;
 	std::atomic<uint> INDEX=0;
@@ -77,7 +77,12 @@ namespace Jde::Coroutine
 		return result;
 	}
 
-	sp<Settings::Container> CoroutinePool::_pSettings;
+	Settings::Item<uint16> CoroutinePool::MaxThreadCount{ "coroutinePool/maxThreadCount", 100 };
+	Settings::Item<Duration> CoroutinePool::WakeDuration{ "coroutinePool/wakeDuration", 5s };
+	Settings::Item<Duration> CoroutinePool::ThreadDuration{ "coroutinePool/threadDuration", 1s };
+	Settings::Item<Duration> CoroutinePool::PoolIdleThreshold{ "coroutinePool/poolIdleThreshold", 1s };
+
+
 	void CoroutinePool::Shutdown()noexcept
 	{
 		if( _pThread )
@@ -96,28 +101,9 @@ namespace Jde::Coroutine
 		}
 		{
 			unique_lock l{ _mtx };
-			if( !_pSettings )
-			{
-				auto addSettings = []()noexcept
-				{
-					LOG( "coroutinePool settings not found."sv );
-					nlohmann::json j2 = { {"maxThreadCount", 100}, {"threadDuration", "PT5S"}, {"poolIdleThreshold", "PT60S"} };
-					_pSettings = make_shared<Settings::Container>( j2 );
-				};
-				try
-				{
-					if( Settings::Global().Have("coroutinePool") )
-						_pSettings = Settings::Global().SubContainer( "coroutinePool" );
-					else
-						addSettings();
-				}
-				catch( IException& )
-				{
-					addSettings();
-				}
-			}
 			if( !_pInstance )
 			{
+				LOG( "MaxThreadCount={}, WakeDuration={} ThreadDuration={}, PoolIdleThreshold={}", (uint16)MaxThreadCount, Chrono::ToString(WakeDuration), Chrono::ToString(ThreadDuration), Chrono::ToString(PoolIdleThreshold) );
 				_pInstance = make_shared<CoroutinePool>();
 				IApplication::AddShutdown( _pInstance );
 			}
@@ -147,10 +133,9 @@ namespace Jde::Coroutine
 		}
 		if( pResult )
 		{
-			var max = MaxThreadCount();
-			if( _threads.size()<max )
+			if( _threads.size()<MaxThreadCount )
 			{
-				_threads.emplace_back( format("CoroutinePool[{}]", _threads.size()), PoolIdleThreshold(), move(*pResult) );
+				_threads.emplace_back( format("CoroutinePool[{}]", _threads.size()), PoolIdleThreshold, move(*pResult) );
 				pResult = {};
 			}
 			else if( !_pQueue )
@@ -169,13 +154,13 @@ namespace Jde::Coroutine
 	{
 		Threading::SetThreadInfo( Threading::ThreadParam{ string{Name}, (uint)Threading::EThread::CoroutinePool} );
 		LOG( "{} - Starting", Name );
-		TimePoint quitTime = Clock::now()+ThreadDuration();
+		TimePoint quitTime = Clock::now()+(Duration)ThreadDuration;
 		while( !Threading::GetThreadInterruptFlag().IsSet() ||  !_pQueue->empty() )
 		{
-			for( auto h = _pQueue->TryPop( WakeDuration() ); h; )
+			for( auto h = _pQueue->TryPop( WakeDuration ); h; )
 			{
 				h = StartThread( move(h.value()) );
-				quitTime = Clock::now()+ThreadDuration();
+				quitTime = Clock::now()+(Duration)ThreadDuration;
 			}
 			if( quitTime<Clock::now() )
 			{

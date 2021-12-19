@@ -31,12 +31,12 @@ namespace Jde::DB
 		α TryExecuteProc( string sql, vec<object> parameters, SRCE )noexcept->optional<uint>;
 
 		β Execute( string sql, SRCE )noexcept(false)->uint=0;
-		β Execute( string sql, vec<object> parameters, SRCE )noexcept(false)->uint = 0;
-		β Execute( string sql, const vector<object>* pParameters, RowΛ* f, bool isStoredProc=false, SRCE )noexcept(false)->uint = 0;
-		β ExecuteNoLog( string sql, const vector<object>* pParameters, RowΛ* f=nullptr, bool isStoredProc=false, SRCE )noexcept(false)->uint = 0;
+		β Execute( string sql, vec<object> parameters, SRCE )noexcept(false)->uint=0;
+		β Execute( string sql, const vector<object>* pParameters, RowΛ* f, bool isStoredProc=false, SRCE )noexcept(false)->uint=0;
+		β ExecuteNoLog( string sql, const vector<object>* pParameters, RowΛ* f=nullptr, bool isStoredProc=false, SRCE )noexcept(false)->uint=0;
 		β ExecuteProc( string sql, vec<object> parameters, SRCE )noexcept(false)->uint=0;
 		β ExecuteProc( string sql, vec<object> parameters, RowΛ f, SRCE )noexcept(false)->uint=0;
-		β ExecuteProcCo( string sql, vector<object> p, SRCE )noexcept->up<IAwaitable> = 0;
+		β ExecuteProcCo( string sql, vector<object> p, SRCE )noexcept->up<IAwaitable> =0;
 		β ExecuteProcNoLog( string sql, vec<object> parameters, SRCE )noexcept(false)->uint=0;
 
 		α Select( string sql, RowΛ f, vec<object> parameters, SRCE )noexcept(false)->void;
@@ -54,7 +54,7 @@ namespace Jde::DB
 	protected:
 		string _connectionString;
 	private:
-		β SelectCo( ISelect* pAwait, string sql, vector<object>&& params, SRCE )noexcept->up<IAwaitable> = 0;
+		β SelectCo( ISelect* pAwait, string sql, vector<object>&& params, SRCE )noexcept->up<IAwaitable> =0;
 		friend struct ISelect;
 	};
 #define var const auto
