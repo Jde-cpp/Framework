@@ -28,31 +28,30 @@ namespace Jde
 		atomic_flag* _pValue;
 	};
 	struct CoLock; struct CoGuard;
-	class Γ LockAwait : public Coroutine::IAwaitable
+	class Γ LockAwait : public Coroutine::IAwait
 	{
-		using base=Coroutine::IAwaitable;
+		using base=Coroutine::IAwait;
 	public:
 		LockAwait( CoLock& lock )noexcept:_lock{lock}{}
 		α await_ready()noexcept->bool override;
 		α await_suspend( HCoroutine h )noexcept->void override;
-		α await_resume()noexcept->TaskResult override{ return _pGuard ? TaskResult{move(_pGuard)} : base::await_resume(); }
+		α await_resume()noexcept->AwaitResult override{ return _pGuard ? AwaitResult{move(_pGuard)} : base::await_resume(); }
 	private:
 		CoLock& _lock;
-		sp<CoGuard> _pGuard;
+		up<CoGuard> _pGuard;
 	};
 
 	struct Γ CoLock
 	{
 		α Lock(){ return LockAwait{*this}; }
 	private:
-		α TestAndSet()->sp<CoGuard>;
-		α Push( HCoroutine h )->sp<CoGuard>;
+		α TestAndSet()->up<CoGuard>;
+		α Push( HCoroutine h )->up<CoGuard>;
 		α Clear()->void;
 
 		std::queue<HCoroutine> _queue; mutex _mutex;
 		atomic_flag _flag;
 		const bool _resumeOnPool{ false };
-		//sp<CoGuard> _pGuard;
 		friend class LockAwait; friend struct CoGuard;
 	};
 	struct Γ CoGuard
@@ -74,7 +73,7 @@ namespace Jde::Threading
 
 		α await_ready()noexcept->bool override;
 		α await_suspend( HCoroutine h )noexcept->void override;
-		α await_resume()noexcept->TaskResult override;
+		α await_resume()noexcept->AwaitResult override;
 	private:
 		HCoroutine Handle{nullptr};
 		const string Key;

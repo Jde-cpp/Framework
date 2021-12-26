@@ -1,4 +1,5 @@
-﻿/*
+﻿#pragma once
+/*
 Original code by Lee Thomason (www.grinninglizard.com)
 
 This software is provided 'as-is', without any express or implied
@@ -21,9 +22,6 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-#ifndef TINYXML2_INCLUDED
-#define TINYXML2_INCLUDED
-
 #if defined(ANDROID_NDK) || defined(__BORLANDC__) || defined(__QNXNTO__)
 #   include <ctype.h>
 #   include <limits.h>
@@ -42,6 +40,7 @@ distribution.
 #endif
 #include <stdint.h>
 #include <optional>
+#include <span>
 #include <jde/Str.h>
 /*
    TODO: intern strings instead of allocation.
@@ -100,9 +99,11 @@ static const int TIXML2_PATCH_VERSION = 0;
 // attack that can result from ill, malicious, or even correctly formed XML,
 // so there needs to be a limit in place.
 static const int TINYXML2_MAX_ELEMENT_DEPTH = 100;
-
+#define var const auto
 namespace tinyxml2
 {
+using Jde::sv;
+
 class XMLDocument;
 class XMLElement;
 class XMLAttribute;
@@ -148,8 +149,8 @@ public:
         _flags  = flags | NEEDS_FLUSH;
     }
 
-    const char* GetStr();
-
+	const char* GetStr();
+	α View()noexcept->sv;
     bool Empty() const {
         return _start == _end;
     }
@@ -764,6 +765,7 @@ public:
     /** Get the first child element, or optionally the first child
         element with the specified name.
     */
+	const XMLElement* FirstChildElement( sv n ) const;
     const XMLElement* FirstChildElement( const char* name = 0 ) const;
 
     XMLElement* FirstChildElement( const char* name = 0 )	{
@@ -815,6 +817,7 @@ public:
 
     /// Get the next (right) sibling element of this node, with an optionally supplied name.
     const XMLElement*	NextSiblingElement( const char* name = 0 ) const;
+	 α NextSiblingElement( sv name )const noexcept->const XMLElement*;
 
     XMLElement*	NextSiblingElement( const char* name = 0 )	{
         return const_cast<XMLElement*>(const_cast<const XMLNode*>(this)->NextSiblingElement( name ) );
@@ -931,7 +934,7 @@ public:
 		It is initially 0.
 	*/
 	void* GetUserData() const			{ return _userData; }
-
+	α Find( const std::span<sv>& entries )const noexcept->const XMLElement*;
 protected:
     explicit XMLNode( XMLDocument* );
     virtual ~XMLNode();
@@ -957,6 +960,7 @@ private:
     static void DeleteNode( XMLNode* node );
     void InsertChildPreamble( XMLNode* insertThis ) const;
     const XMLElement* ToElementWithName( const char* name ) const;
+	 α ToElementWithName( sv name )const->const XMLElement*;
 
     XMLNode( const XMLNode& );	// not supported
     XMLNode& operator=( const XMLNode& );	// not supported
@@ -1130,9 +1134,11 @@ class XMLAttribute
 public:
     /// The name of the attribute.
     const char* Name() const;
+	 sv name()const noexcept{ return _name.View(); }
 
     /// The value of the attribute.
     const char* Value() const;
+	 α value()const noexcept->sv{ return _value.View(); }
 
     /// Gets the line number the attribute is in, if the document was parsed from a file.
     int GetLineNum() const { return _parseLineNum; }
@@ -1256,10 +1262,26 @@ public:
     const char* Name() const		{
         return Value();
     }
+	 α name()const noexcept->sv{ return _value.View(); }
+
+	 α operator[](sv i)const noexcept->const XMLAttribute*;
+
+/*	 template<class T=sv> α Attr( sv n )const noexcept(false)->T
+	 {
+		 auto p = *this[i]; THROW_IF( !p, "Could not find attribute '{}'", n );
+		 return p->value();
+	 }
+	 template<class T=sv> α TryAttr( sv n )const noexcept(false)->optional<T>
+	 {
+		 return *this[i] ? *this[i]->value() : nullopt;
+	 }*/
+	 template<class T=sv> α Attr( sv n )const noexcept->T;
+
     /// Set the name of the element.
     void SetName( const char* str, bool staticMem=false )	{
         SetValue( str, staticMem );
     }
+
 
     virtual XMLElement* ToElement()				{
         return this;
@@ -1502,7 +1524,7 @@ public:
         return _rootAttribute;
     }
     /// Query a specific attribute in the list.
-	 const Jde::sv AttributeValue( const char* name ) const{ Jde::sv v; if( const auto p=FindAttribute(name); p ) v=p->Value(); return v; }
+	 //Attr α AttributeValue( sv name )const noexcept->sv{ sv v; if( const auto p=FindAttribute(name); p ) v=p->Value(); return v; }
     const XMLAttribute* FindAttribute( const char* name ) const;
 
     /** Convenience function for easy access to the text inside an element. Although easy
@@ -1617,21 +1639,22 @@ public:
 	/// See QueryIntText()
 	XMLError QueryInt64Text(int64_t* uval) const;
 
-	ⓣ TryChildTo( const char* elementName )noexcept->std::optional<T>
+	ⓣ TryChildTo( sv elementName )noexcept->T
    {
-      std::string s{ TryChildText(elementName) };
-		Jde::Str::Trim( s );
-      return s.size() ? Jde::Str::TryTo<T>( s ) : std::nullopt;
+      var s = TryChildText( elementName );
+		var trim = Jde::Str::Trim( s );
+      return Jde::To<T>( trim );
       //if( s.size() )
       //{
       //   auto trim = Jde::Str::Trim( std::string{s} );
-      //   return Jde::Str::TryTo<T>( trim );
+      //   return Jde::To<T>( trim );
       //}
       //return std::optional<T>{};
    }
-	std::string_view TryChildText( const char* elementName )noexcept;
-	std::string_view ChildText( const char* elementName )noexcept(false);
-	std::string_view TryChildAttribute( const char* elementName, const char* pAttribute )noexcept;
+
+	α TryChildText( sv elementName )noexcept->sv;
+	α ChildText( sv elementName )noexcept(false)->sv;
+	α TryChildAttribute( sv elementName, sv pAttribute )noexcept->sv;
 	/// See QueryIntText()
 	XMLError QueryUnsigned64Text(uint64_t* uval) const;
 	/// See QueryIntText()
@@ -1817,6 +1840,8 @@ public:
     const XMLElement* RootElement() const	{
         return FirstChildElement();
     }
+
+	 α Find( const std::span<sv>& entries )const noexcept->const XMLElement*;
 
     /** Print the Document. If the Printer is not provided, it will
         print to stdout. If you provide Printer, this can print to a file:
@@ -2375,10 +2400,20 @@ private:
 };
 
 
+	template<> Ξ XMLElement::Attr<sv>( sv n )const noexcept->sv{ return (*this)[n]->value(); }
+/*	template<> α XMLElement::Attr<double>( sv n )const noexcept->double
+	{
+		(*this)[n] ? strtod( (*this)[n]->value() ) : 0;
+	}*/
+	ⓣ XMLElement::Attr( sv n )const noexcept->T
+	{
+		return (*this)[n] ? Jde::To<T>((*this)[n]->value()) : T{};
+	}
+
+
 }	// tinyxml2
 
 #if defined(_MSC_VER)
 #   pragma warning(pop)
 #endif
-
-#endif // TINYXML2_INCLUDED
+#undef var

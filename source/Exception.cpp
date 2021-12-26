@@ -71,7 +71,7 @@ namespace Jde
 	}
 
 	CodeException::CodeException( string value, std::error_code&& code, ELogLevel level, SL sl ):
-		IException{ move(value), level, code.value(), sl },
+		IException{ move(value), level, (uint)code.value(), sl },
 		_errorCode{ move(code) }
 	{
 	}
@@ -81,7 +81,7 @@ namespace Jde
 	{}
 
 	BoostCodeException::BoostCodeException( const boost::system::error_code& c, sv msg, SL sl )noexcept:
-		IException{ string{msg}, ELogLevel::Debug, c.value(), sl },
+		IException{ string{msg}, ELogLevel::Debug, (uint)c.value(), sl },
 		_errorCode{ make_unique<boost::system::error_code>(c) }
 	{}
 	BoostCodeException::BoostCodeException( BoostCodeException&& e )noexcept:
@@ -109,11 +109,11 @@ namespace Jde
 		return format( "({}){} - {})", value, category.name(), message );
 	}
 
-	OSException::OSException( T result, string&& msg, SL sl )noexcept:
+	OSException::OSException( TErrorCode result, string&& msg, SL sl )noexcept:
 #ifdef _MSC_VER
 		IException{ {std::to_string(result), std::to_string(GetLastError()), move(msg)}, "result={}/error={} - {}", sl, GetLastError() }
 #else
-		IException{ {std::to_string(result), std::to_string(errno), move(msg)}, "result={}/error={} - {}", sl, errno }
+		IException{ {std::to_string(result), std::to_string(errno), move(msg)}, "result={}/error={} - {}", sl, (uint)errno }
 #endif
 	{}
 

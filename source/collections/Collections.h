@@ -25,10 +25,16 @@ namespace Jde
 	{
 		auto p = map.find( key );
 		if( p==map.end() )
-			p = map.try_emplace( key, make_shared<typename T::mapped_type::element_type>() ).first;
+			p = map.try_emplace( key, ms<typename T::mapped_type::element_type>() ).first;
 		return p->second;
 	}
-
+	ⓣ EmplaceUnique( T& map, typename T::key_type key )->typename T::mapped_type&
+	{
+		auto p = map.find( key );
+		if( p==map.end() )
+			p = map.try_emplace( key, mu<typename T::mapped_type::element_type>() ).first;
+		return p->second;
+	}
 
 	#define LAZY( x ) LazyWrap{ [&](){ return x;} }//doesn't work in ms
 	template<class F> struct LazyWrap //https://stackoverflow.com/questions/62577415/lazy-argument-evaluation-for-try-emplace
@@ -80,13 +86,14 @@ namespace Collections
 		return pResults;
 	}
 
-	ẗ Values( const std::map<K,V>& map )->up<std::vector<V>>
-	{
-		auto pResults = make_unique<std::vector<V>>(); pResults->reserve( map.size() );
-		for( const auto& keyValue : map )
-			pResults->push_back( keyValue.second );
 
-		return pResults;
+	ⓣ Values( const T& map )->std::vector<typename T::mapped_type>
+	{
+		std::vector<typename T::mapped_type> y;
+		for( const auto& keyValue : map )
+			y.push_back( keyValue.second );
+
+		return y;
 	}
 
 	template<template<class> class TCollection, class T>
@@ -225,15 +232,6 @@ namespace Collections
 		if( p == map.end() )
 			p = map.emplace( key, make_unique<V>() ).first;
 		return p->second;
-	}
-
-	template<template<class, class,class...> class M, class K, class V, class... Ts>
-	V& InsertShared( M<K,sp<V>,Ts...>& map, const K& key )noexcept
-	{
-		auto p = map.find( key );//M<K,sp<V>>::iterator
-		if( p == map.end() )
-			p = map.emplace( key, make_shared<V>() ).first;
-		return *p->second;
 	}
 }}
 #undef var

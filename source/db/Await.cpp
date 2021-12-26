@@ -9,11 +9,11 @@ namespace Jde::DB
 		return !!_pValue;
 	}
 
-	α ICacheAwait::await_resume()noexcept->TaskResult
+	α ICacheAwait::await_resume()noexcept->AwaitResult
 	{
-		auto y = _pValue ? TaskResult{ _pValue } : base::await_resume();
-		if( !_pValue && y.HasValue() )
-			Cache::Set<void>( _name, y.Get<void>(_sl) );
+		auto y = _pValue ? AwaitResult{ _pValue } : base::await_resume();
+		if( !_pValue && y.HasShared() )
+			Cache::Set<void>( _name, y.SP<void>() );
 		return y;
 	}
 }

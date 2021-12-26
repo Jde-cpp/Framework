@@ -11,7 +11,8 @@ namespace Jde::Coroutine
 	std::atomic<ClientHandle> TaskPromiseHandle{0};
 	α NextTaskPromiseHandle()noexcept->Handle{ return ++TaskPromiseHandle; }
 
-	α TaskResult::CheckUninitialized()noexcept->void
+	//function<void(const void*)> AwaitResult::Deleter=[]( const void* ){ CRITICAL( "memory leak" ); }
+	α AwaitResult::CheckUninitialized()noexcept->void
 	{
 		if( !Uninitialized() )
 		{
@@ -20,7 +21,7 @@ namespace Jde::Coroutine
 		}
 	}
 
-	α Task2::promise_type::unhandled_exception()noexcept->void
+	α Task::promise_type::unhandled_exception()noexcept->void
 	{
 		try
 		{

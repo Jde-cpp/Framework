@@ -5,7 +5,7 @@
 namespace Jde::Threading
 {
 	Alarm _instance;
-	void AlarmAwaitable::await_suspend( HCoroutine h )noexcept
+	void AlarmAwait::await_suspend( HCoroutine h )noexcept
 	{
 		Alarm::Add( _alarm, h, _hClient );
 	}

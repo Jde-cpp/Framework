@@ -1,5 +1,4 @@
-﻿
-namespace Jde::DB
+﻿namespace Jde::DB
 {
 #define $ const noexcept
 	struct Syntax
@@ -33,7 +32,7 @@ namespace Jde::DB
 		α HasUnsigned()$->bool override{ return true; }
 		α IdentityColumnSyntax()$->sv override{ return "AUTO_INCREMENT"sv; }
 		α IdentitySelect()$->sv override{ return "LAST_INSERT_ID()"sv; }
-		β Limit( str sql, uint limit )$->string{ return format("{} limit {}", sql, limit); }
+		β Limit( str sql, uint limit )$->string override{ return format("{} limit {}", sql, limit); }
 		α ProcEnd()$->sv override{ return "end"sv; }
 		α ProcParameterPrefix()$->sv override{ return ""sv; }
 		α ProcStart()$->sv override{ return "begin"sv; }
@@ -45,10 +44,11 @@ namespace Jde::DB
 		α ProcFileSuffix()$->sv override{ return ""; }
 	};
 
-	Ξ Syntax::Limit( str syntax, uint limit )const noexcept(false)->string
-	{ 
-		CHECK( syntax.size()>7 );
-		return format("{} top {} {}", syntax.substr(0,7), limit, syntax.substr(7) );
+	Ξ Syntax::Limit( str sql, uint limit )const noexcept(false)->string
+	{
+		if( sql.size()<7 )//mysql precludes using THROW, THROW_IF, CHECK
+			throw Jde::Exception{ SRCE_CUR, Jde::ELogLevel::Debug, "expecting sql length>7 - {}", sql };
+		return format("{} top {} {}", sql.substr(0,7), limit, sql.substr(7) );
 	};
 }
 #undef $

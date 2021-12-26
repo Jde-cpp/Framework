@@ -13,7 +13,7 @@ namespace Jde::DB
 	{
 		virtual ~IDataSource(){}//warning
 		ⓣ SelectEnum( str tableName, SRCE )noexcept{ return SelectMap<T,string>( format("select id, name from {}", tableName), tableName, sl ); }
-		ⓣ SelectEnumSync( str tableName, SRCE )noexcept->sp<flat_map<T,string>>{ ASSERT(tableName.size()); return Future<flat_map<T,string>>( SelectEnum<T>( move(tableName), sl) ).get(); }
+		ⓣ SelectEnumSync( str tableName, SRCE )noexcept->sp<flat_map<T,string>>{ ASSERT(tableName.size()); return SFuture<flat_map<T,string>>( SelectEnum<T>( move(tableName), sl) ).get(); }
 		ẗ SelectMap( string sql, SRCE )noexcept->SelectAwait<flat_map<K,V>>;
 		ẗ SelectMap( string sql, string cacheName, SRCE )noexcept->SelectCacheAwait<flat_map<K,V>>;
 		ⓣ SelectSet( string sql, vector<object>&& params, SL sl )noexcept->SelectAwait<flat_set<T>>;
@@ -24,7 +24,7 @@ namespace Jde::DB
 
 		ⓣ TryScaler( string sql, vec<object> parameters, SRCE )noexcept->optional<T>;
 		ⓣ Scaler( string sql, vec<object> parameters, SRCE )noexcept(false)->optional<T>;
-		ⓣ ScalerCo( string sql, vec<object> parameters, SRCE )noexcept(false)->SelectAwait<uint>;
+		ⓣ ScalerCo( string sql, vec<object> parameters, SRCE )noexcept(false)->SelectAwait<T>;
 
 		α TryExecute( string sql, SRCE )noexcept->optional<uint>;
 		α TryExecute( string sql, vec<object> parameters, SRCE )noexcept->optional<uint>;
@@ -36,7 +36,7 @@ namespace Jde::DB
 		β ExecuteNoLog( string sql, const vector<object>* pParameters, RowΛ* f=nullptr, bool isStoredProc=false, SRCE )noexcept(false)->uint=0;
 		β ExecuteProc( string sql, vec<object> parameters, SRCE )noexcept(false)->uint=0;
 		β ExecuteProc( string sql, vec<object> parameters, RowΛ f, SRCE )noexcept(false)->uint=0;
-		β ExecuteProcCo( string sql, vector<object> p, SRCE )noexcept->up<IAwaitable> =0;
+		β ExecuteProcCo( string sql, vector<object> p, SRCE )noexcept->up<IAwait> =0;
 		β ExecuteProcNoLog( string sql, vec<object> parameters, SRCE )noexcept(false)->uint=0;
 
 		α Select( string sql, RowΛ f, vec<object> parameters, SRCE )noexcept(false)->void;
@@ -54,7 +54,7 @@ namespace Jde::DB
 	protected:
 		string _connectionString;
 	private:
-		β SelectCo( ISelect* pAwait, string sql, vector<object>&& params, SRCE )noexcept->up<IAwaitable> =0;
+		β SelectCo( ISelect* pAwait, string sql, vector<object>&& params, SRCE )noexcept->up<IAwait> =0;
 		friend struct ISelect;
 	};
 #define var const auto
@@ -76,16 +76,16 @@ namespace Jde::DB
 		return result;
 	}
 
-	ⓣ IDataSource::ScalerCo( string sql, vec<object> params, SL sl )noexcept(false)->SelectAwait<uint>
+	ⓣ IDataSource::ScalerCo( string sql, vec<object> params, SL sl )noexcept(false)->SelectAwait<T>
 	{
-		auto f = []( sp<uint> pResult, const IRow& r ){ if( var p=r.GetUIntOpt(0); p ) pResult = ms<uint>(*p); };
-		return SelectAwait<uint>( shared_from_this(), move(sql), f, params, sl );
+		auto f = []( T& y, const IRow& r ){ y = r.Get<T>( 0 ); };
+		return SelectAwait<T>( shared_from_this(), move(sql), f, params, sl );
 	}
 
 	namespace zInternal
 	{
-		ẗ ProcessMapRow( sp<void> p, const IRow& row )noexcept(false){ std::static_pointer_cast<flat_map<K,V>>(p)->emplace(row.Get<K>(0), row.Get<V>(1)); }
-		ⓣ ProcessSetRow( sp<void> p, const IRow& row )noexcept(false){ std::static_pointer_cast<flat_set<T>>(p)->emplace( row.Get<T>(0) ); }
+		ẗ ProcessMapRow( flat_map<K,V>& y, const IRow& row )noexcept(false){ y.emplace( row.Get<K>(0), row.Get<V>(1) ); }
+		ⓣ ProcessSetRow( flat_set<T>& y, const IRow& row )noexcept(false){ y.emplace( row.Get<T>(0) ); }
 	}
 
 	ẗ IDataSource::SelectMap( string sql, SL sl )noexcept->SelectAwait<flat_map<K,V>>
@@ -104,7 +104,7 @@ namespace Jde::DB
 	{
 		return SelectCacheAwait<flat_set<T>>( shared_from_this(), move(sql), move(cacheName), zInternal::ProcessSetRow<T>, move(params), sl );
 	}
-	Ξ ISelect::SelectCo( string sql, vector<object>&& params, SL sl )noexcept->up<IAwaitable>
+	Ξ ISelect::SelectCo( string sql, vector<object>&& params, SL sl )noexcept->up<IAwait>
 	{
 		return _ds->SelectCo( this, move(sql), move(params), sl );
 	}

@@ -29,6 +29,7 @@ distribution.
 #include <jde/TypeDefs.h>
 #include <jde/Exception.h>
 
+using namespace std::literals::string_view_literals;
 #define var const auto
 #if defined(_MSC_VER) && (_MSC_VER >= 1400 ) && (!defined WINCE)
 	// Microsoft Visual Studio, version 2005 and higher. Not WinCE.
@@ -376,6 +377,12 @@ const char* StrPair::GetStr()
     return _start;
 }
 
+α StrPair::View()noexcept->sv
+{
+	if ( _flags & NEEDS_FLUSH )
+		GetStr();
+	return sv{ _start, (uint)(_end-_start) };
+}
 
 
 
@@ -988,7 +995,13 @@ XMLNode* XMLNode::InsertAfterChild( XMLNode* afterThis, XMLNode* addThis )
 
 
 
-
+const XMLElement* XMLNode::FirstChildElement( sv n ) const
+{
+	const XMLElement* f = nullptr;
+	for( auto p = _firstChild; p && !f; p = p->_next )
+		f = p->ToElementWithName( n );
+	return f;
+}
 const XMLElement* XMLNode::FirstChildElement( const char* name ) const
 {
     for( const XMLNode* node = _firstChild; node; node = node->_next ) {
@@ -1023,7 +1036,14 @@ const XMLElement* XMLNode::NextSiblingElement( const char* name ) const
     }
     return 0;
 }
+α XMLNode::NextSiblingElement( sv name )const noexcept->const XMLElement*
+{
+	const XMLElement* y = nullptr;
+   for( auto p = _next; p && !y; p = p->_next )
+		y = p->ToElementWithName( name );
 
+	return y;
+}
 
 const XMLElement* XMLNode::PreviousSiblingElement( const char* name ) const
 {
@@ -1193,6 +1213,12 @@ const XMLElement* XMLNode::ToElementWithName( const char* name ) const
        return element;
     }
     return 0;
+}
+
+α XMLNode::ToElementWithName( sv n )const->const XMLElement*
+{
+    var p = this->ToElement();
+	 return n.empty() || (p && p->name()==n) ? p : nullptr;
 }
 
 // --------- XMLText ---------- //
@@ -1578,6 +1604,16 @@ XMLElement::~XMLElement()
     }
 }
 
+α XMLElement::operator[]( sv n )const noexcept->const XMLAttribute*
+{
+	auto p = _rootAttribute;
+	for( ; p; p = p->_next )
+	{
+		if( p->name()==n )
+			break;
+	}
+	return p;
+}
 
 const XMLAttribute* XMLElement::FindAttribute( const char* name ) const
 {
@@ -1668,22 +1704,22 @@ const char* XMLElement::GetText() const
     }
     return 0;
 }
-std::string_view XMLElement::ChildText( const char* elementName )noexcept(false)
+α XMLElement::ChildText( sv elementName )noexcept(false)->sv
 {
 	auto p = FirstChildElement( elementName ); THROW_IF( !p, "Could not find {} in {}", elementName, Name() );
 	const char* psz = p->GetText();
 	return psz ? std::string_view{psz} : std::string_view{};
 }
-std::string_view XMLElement::TryChildText( const char* elementName )noexcept
+α XMLElement::TryChildText( sv elementName )noexcept->sv
 {
 	auto p = FirstChildElement( elementName );
 	const char* psz = p ? p->GetText() : nullptr;
-	return psz ? std::string_view{psz} : std::string_view{};
+	return psz ? sv{psz} : sv{};
 }
-std::string_view XMLElement::TryChildAttribute( const char* elementName, const char* attributeName )noexcept
+α XMLElement::TryChildAttribute( sv elementName, sv attributeName )noexcept->sv
 {
 	auto p = FirstChildElement( elementName );
-	return p ? p->AttributeValue( attributeName ) : std::string_view{};
+	return p ? p->Attr( attributeName ) : sv{};
 }
 void	XMLElement::SetText( const char* inText )
 {
@@ -2559,6 +2595,21 @@ void XMLDocument::PopDepth()
 {
 	TIXMLASSERT(_parsingDepth > 0);
 	--_parsingDepth;
+}
+α XMLNode::Find( const std::span<sv>& entries )const noexcept->const XMLElement*
+{
+	ASSERT( entries.size() );
+	var p = FirstChildElement( entries[0] );
+	return p && entries.size()>1 ? p->Find( {&entries[1], entries.size()-1} ) : p;
+}
+
+α XMLDocument::Find( const std::span<sv>& entries )const noexcept->const XMLElement*
+{
+
+	const XMLElement* y = nullptr;
+	if( auto pRoot = RootElement(); pRoot && entries.size() && pRoot->name()==entries[0] )
+		y = entries.size()==1 ? pRoot : pRoot->Find( {&entries[1], entries.size()-1} );
+	return y;
 }
 
 XMLPrinter::XMLPrinter( FILE* file, bool compact, int depth ) :

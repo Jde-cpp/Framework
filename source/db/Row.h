@@ -1,7 +1,6 @@
 ﻿#pragma once
 #include "DataType.h"
 #include <jde/Str.h>
-#include "../math/Decimal.h"
 
 namespace Jde::DB
 {
@@ -55,5 +54,4 @@ namespace Jde::DB
 	template<> Ξ IRow::Get<optional<uint32>>( uint position, SL sl )const->optional<uint32>{ const auto p = GetUIntOpt(position, sl); return p ? optional<uint32>{static_cast<uint32>(*p)} : optional<uint32>{}; }
 	template<> Ξ IRow::Get<uint8>( uint position, SL sl )const->uint8{ return (uint8)GetUInt16(position, sl); }
 	template<> Ξ IRow::Get<CIString>( uint position, SL sl )const->CIString{ return GetCIString(position, sl); }
-
 }

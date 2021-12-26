@@ -43,7 +43,7 @@ namespace Jde::IO
 		//~FileIOArg(){ DBG("FileIOArg::~FileIOArg"sv); }
 		α Open()noexcept(false)->void;
 		α HandleChunkComplete( IFileChunkArg* pChunkArg )noexcept->bool;
-		α Send( coroutine_handle<Task2::promise_type>&& h )noexcept->void;
+		α Send( coroutine_handle<Task::promise_type>&& h )noexcept->void;
 		α SetWorker( sp<Threading::IWorker> p ){ _pWorkerKeepAlive=p; }
 		α Data()noexcept{ return std::visit( [](auto&& x){return x->data();}, Buffer ); }
 		α Size()const noexcept{ return std::visit( [](auto&& x){return x->size();}, Buffer ); }
@@ -52,24 +52,25 @@ namespace Jde::IO
 		fs::path Path;
 		std::variant<sp<vector<char>>,sp<string>> Buffer;
 		vector<up<IFileChunkArg>> Chunks;
-		coroutine_handle<Task2::promise_type> CoHandle;
+		coroutine_handle<Task::promise_type> CoHandle;
 		HFile Handle{0};
 	private:
 		sp<Threading::IWorker> _pWorkerKeepAlive;
 	};
 
-	struct Γ DriveAwaitable final : IAwaitable
+	struct Γ DriveAwaitable final : IAwait
 	{
-		using base=IAwaitable;
-		DriveAwaitable( path path, bool vector, SRCE )noexcept:base{ sl },_arg{ path, vector }{}
-		DriveAwaitable( path path, sp<vector<char>> data, SRCE )noexcept:base{ sl },_arg{ path, data }{}
-		DriveAwaitable( path path, sp<string> data, SRCE )noexcept:base{ sl },_arg{ path, data }{}
+		using base=IAwait;
+		DriveAwaitable( path path, bool vector, bool cache, SRCE )noexcept:base{ sl },_arg{ path, vector },_cache{cache}{}
+		DriveAwaitable( path path, sp<vector<char>> data, SRCE )noexcept:base{ sl },_arg{ path, data },_cache{false}{}
+		DriveAwaitable( path path, sp<string> data, SRCE )noexcept:base{ sl },_arg{ path, data },_cache{false}{}
 		α await_ready()noexcept->bool override;
-		α await_suspend( typename HCoroutine h )noexcept->void override;//{ base::await_suspend( h ); _pPromise = &h.promise(); }
-		α await_resume()noexcept->TaskResult override;
+		α await_suspend( HCoroutine h )noexcept->void override;//{ base::await_suspend( h ); _pPromise = &h.promise(); }
+		α await_resume()noexcept->AwaitResult override;
 	private:
 		sp<IException> ExceptionPtr;
 		FileIOArg _arg;
+		bool _cache;
 	};
 
 	struct DriveWorker : Threading::IPollWorker

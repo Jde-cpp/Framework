@@ -28,15 +28,15 @@ namespace Jde
 		if( (_pGuard = _lock.Push(h)) )
 			h.resume();
 	}
-	α CoLock::TestAndSet()->sp<CoGuard>
+	α CoLock::TestAndSet()->up<CoGuard>
 	{
 		lock_guard l{ _mutex };
-		return _flag.test_and_set(std::memory_order_acquire) ? sp<CoGuard>{} : sp<CoGuard>( new CoGuard(*this) );
+		return _flag.test_and_set(std::memory_order_acquire) ? up<CoGuard>{} : up<CoGuard>( new CoGuard(*this) );
 	}
-	α CoLock::Push( HCoroutine h )->sp<CoGuard>
+	α CoLock::Push( HCoroutine h )->up<CoGuard>
 	{
 		lock_guard l{ _mutex };
-		var p = _flag.test_and_set(std::memory_order_acquire) ? sp<CoGuard>{} : sp<CoGuard>{ new CoGuard(*this) };
+		auto p = _flag.test_and_set(std::memory_order_acquire) ? up<CoGuard>{} : up<CoGuard>{ new CoGuard(*this) };
 		if( !p )
 			_queue.push( move(h) );
 		return p;
@@ -48,7 +48,7 @@ namespace Jde
 		{
 			auto h = _queue.front();
 			_queue.pop();
-			h.promise().get_return_object().SetResult( sp<CoGuard>{ new CoGuard(*this) } );
+			h.promise().get_return_object().SetResult( up<CoGuard>{ new CoGuard(*this) } );
 			if( _resumeOnPool )
 				CoroutinePool::Resume( move(h) );
 			else
@@ -97,9 +97,9 @@ namespace Jde::Threading
  		}
 		ASSERT( Handle );
 	}
-	TaskResult LockKeyAwait::await_resume()noexcept
+	AwaitResult LockKeyAwait::await_resume()noexcept
 	{
-		return TaskResult{ Handle ? make_shared<CoLockGuard>( Key, Handle ) : make_shared<CoLockGuard>( Key, this ) };
+		return AwaitResult{ Handle ? mu<CoLockGuard>( Key, Handle ) : mu<CoLockGuard>( Key, this ) };
 	}
 
 #ifndef NDEBUG
@@ -107,14 +107,14 @@ namespace Jde::Threading
 	void Threading::MyLock::SetDefaultLogLevel( ELogLevel logLevel )noexcept{ _defaultLogLevel=logLevel; }
 	ELogLevel Threading::MyLock::GetDefaultLogLevel()noexcept{ return _defaultLogLevel; }
 #endif
-	static boost::container::flat_map<string,sp<std::shared_mutex>> _mutexes;
-	std::mutex _mutex;
-	std::unique_lock<std::shared_mutex> UniqueLock( str key )noexcept
+	static boost::container::flat_map<string,sp<shared_mutex>> _mutexes;
+	mutex _mutex;
+	unique_lock<shared_mutex> UniqueLock( str key )noexcept
 	{
 		unique_lock l{_mutex};
 
 		auto p = _mutexes.find( key );
-		auto pKeyMutex = p == _mutexes.end() ? _mutexes.emplace( key, make_shared<std::shared_mutex>() ).first->second : p->second;
+		auto pKeyMutex = p == _mutexes.end() ? _mutexes.emplace( key, ms<shared_mutex>() ).first->second : p->second;
 		for( auto pExisting = _mutexes.begin(); pExisting != _mutexes.end();  )
 			pExisting = pExisting->first!=key && pExisting->second.use_count()==1 && pExisting->second->try_lock() ? _mutexes.erase( pExisting ) : std::next( pExisting );
 		l.unlock();

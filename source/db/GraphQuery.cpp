@@ -231,7 +231,10 @@ namespace Jde::DB
 					subSql << endl << "where\t" << where2;
 				flat_map<uint,sp<flat_map<uint,string>>> subFlagValues;
 				for( var& [index,pTable] : subFlags )
-					subFlagValues[index+2] = Future<flat_map<uint,string>>( _db->SelectEnum<uint>(pTable->Name) ).get();
+				{
+					SelectCacheAwait<flat_map<uint,string>> a = _db->SelectEnum<uint>( pTable->Name );
+					subFlagValues[index+2] = SFuture<flat_map<uint,string>>( move(a) ).get();
+				}
 				auto& rows = subTables.emplace( pQLTable->JsonName, flat_multimap<uint,json>{} ).first->second;
 				auto forEachRow = [&]( const DB::IRow& row )
 				{

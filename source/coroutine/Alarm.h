@@ -9,13 +9,12 @@ namespace Jde::Threading
 {
 	using boost::container::flat_multimap;
 	using namespace Coroutine;
-	struct Γ AlarmAwaitable final : CancelAwaitable
+	struct Γ AlarmAwait final : CancelAwait
 	{
-		AlarmAwaitable( TimePoint& alarm, Handle& handle )noexcept:CancelAwaitable{handle}, _alarm{alarm}{}
-		//~AlarmAwaitable(){ /*DBG("({})AlarmAwaitable::~Awaitable"sv, std::this_thread::get_id());*/ }
+		AlarmAwait( TimePoint& alarm, Handle& handle )noexcept:CancelAwait{handle}, _alarm{alarm}{}
 		bool await_ready()noexcept override{ return _alarm<Clock::now(); }
-		void await_suspend( coroutine_handle<Task2::promise_type> h )noexcept override;
-		TaskResult await_resume()noexcept override{ DBG("({})AlarmAwaitable::await_resume"sv, std::this_thread::get_id()); return {}; }//returns the result value for co_await expression.
+		void await_suspend( coroutine_handle<Task::promise_type> h )noexcept override;
+		α await_resume()noexcept->AwaitResult override{ DBG("({})AlarmAwait::await_resume"sv, std::this_thread::get_id()); return {}; }//returns the result value for co_await expression.
 	private:
 		TimePoint _alarm;
 	};
@@ -25,7 +24,7 @@ namespace Jde::Threading
 		using base=Threading::TWorker<Alarm>;
 		Alarm():base{}{};
 		~Alarm(){  DBG("Alarm::~Alarm"sv); }
-		static auto Wait( TimePoint t, Handle& handle )noexcept{ return AlarmAwaitable{t, handle}; }
+		static auto Wait( TimePoint t, Handle& handle )noexcept{ return AlarmAwait{t, handle}; }
 		static void Cancel( Handle handle )noexcept;
 		static constexpr sv Name{ "Alarm" };
 	private:
@@ -39,6 +38,6 @@ namespace Jde::Threading
 		std::condition_variable _cv; mutable std::mutex _mtx;
 		flat_multimap<TimePoint,tuple<Handle,HCoroutine>> _coroutines; mutex _coroutineMutex;
 		static constexpr Duration WakeDuration{5s};
-		friend AlarmAwaitable;
+		friend AlarmAwait;
 	};
 }

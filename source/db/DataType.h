@@ -5,8 +5,6 @@ DISABLE_WARNINGS
 ENABLE_WARNINGS
 #include <jde/Log.h>
 #include <jde/Assert.h>
-#include "../math/Decimal.h"
-
 
 namespace Jde::DB
 {
@@ -32,9 +30,9 @@ namespace Jde::DB
 		if( i==EObject::Int )
 			y = get<int>( x );
 		else if( i==EObject::Int64 )
-			y = get<int>( x );
+			y = get<_int>( x );
 		else if( i==EObject::Uint )
-			y = get<int>( x );
+			y = get<uint>( x );
 		else
 			ASSERT( y=0 );
 		return y;

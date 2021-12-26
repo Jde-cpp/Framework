@@ -15,7 +15,7 @@ namespace Jde::DB
 	}
 
 	DBException::DBException( int32 errorCode, string sql, const std::vector<object>* pValues, string what, SL sl )noexcept:
-		IException{ what, ELogLevel::Debug, errorCode, sl },
+		IException{ what, ELogLevel::Debug, (uint)errorCode, sl },
 		Sql{ sql },
 		Parameters{ CopyParams(pValues) }
 	{}

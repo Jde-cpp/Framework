@@ -79,14 +79,14 @@ namespace Jde::Logging
 		α OnDisconnect()noexcept->void override;
 		α OnConnected()noexcept->void override;
 		α SendCustom( uint32 requestId, str bytes )noexcept->void override;
-		α SetCustomFunction( function<Coroutine::Task2(uint32,string&&)>&& fnctn )noexcept{_customFunction=fnctn;}
+		α SetCustomFunction( function<Coroutine::Task(uint32,string&&)>&& fnctn )noexcept{_customFunction=fnctn;}
 	private:
 		α Write( const MessageBase& message, TimePoint time, vector<string>* pValues=nullptr )noexcept->void;
 		α OnReceive( Logging::Proto::FromServer& fromServer )noexcept->void override;
 		uint _instanceId{0};
 		atomic<bool> _stringsLoaded{false};
 		string _applicationName;
-		function<Coroutine::Task2(uint32,string&&)> _customFunction;
+		function<Coroutine::Task(uint32,string&&)> _customFunction;
 		Proto::ToServer _buffer; std::atomic_flag _bufferMutex;
 	};
 }

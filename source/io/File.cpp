@@ -95,7 +95,7 @@ namespace Jde::IO::FileUtilities
 	}
 	α Save( path path, sp<string> value, SL sl )noexcept(false)->void
 	{
-		Future<sp<void>>( IO::Write(path, value, sl) ).get();
+		VFuture( IO::Write(path, value, sl) ).get();
 	}
 	α Compression::Save( path path, const vector<char>& data )->void
 	{

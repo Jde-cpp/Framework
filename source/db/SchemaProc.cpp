@@ -8,7 +8,6 @@
 #include "Syntax.h"
 #include "types/Table.h"
 
-
 #define var const auto
 namespace Jde::DB
 {
@@ -43,7 +42,7 @@ namespace Jde::DB
 #define _syntax DB::DefaultSyntax()
 	Schema ISchemaProc::CreateSchema( const ordered_json& j, path relativePath )noexcept(false)
 	{
-		var pDBTables = LoadTables();
+		var dbTables = LoadTables();
 
 		auto dbIndexes = LoadIndexes();
 		var fks = LoadForeignKeys();
@@ -75,7 +74,7 @@ namespace Jde::DB
 		}
 		for( var& [tableName, pTable] : schema.Tables )
 		{
-			if( var pNameDBTable=pDBTables->find(tableName); pNameDBTable!=pDBTables->end() )
+			if( var pNameDBTable=dbTables.find(tableName); pNameDBTable!=dbTables.end() )
 			{
 				for( auto& column : pTable->Columns )
 				{

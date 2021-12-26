@@ -1,4 +1,5 @@
 ﻿#include "FileCo.h"
+#include "../Cache.h"
 #include <signal.h>
 
 #define var const auto
@@ -71,15 +72,30 @@ namespace Jde::IO
 
 	α DriveAwaitable::await_ready()noexcept->bool
 	{
+		bool cache = false;
 		try
 		{
-			_arg.Open();
+			if( auto p = _cache ? Cache::Get<sp<void>>(_arg.Path) : sp<void>{}; p )//TODO lock the file
+			{
+				cache = true;
+				if( auto pT = _arg.Buffer.index()==0 ? static_pointer_cast<vector<char>>(p) : sp<vector<char>>{}; pT )
+					_arg.Buffer = pT;
+				else if( auto pT = _arg.Buffer.index()==1 ? static_pointer_cast<string>(p) : sp<string>{}; pT )
+					_arg.Buffer = pT;
+				else
+				{
+					cache = false;
+					ERR( "could not cast cache vector='{}'", _arg.Buffer.index()==0 );
+				}
+			}
+			if( !cache )
+				_arg.Open();
 		}
 		catch( IOException& e )
 		{
 			ExceptionPtr = e.Clone();
 		}
-		return ExceptionPtr!=nullptr;
+		return ExceptionPtr!=nullptr || cache;
 	}
 	α DriveAwaitable::await_suspend( HCoroutine h )noexcept->void
 	{

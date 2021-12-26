@@ -57,10 +57,10 @@ namespace Jde::IO
 			// for( var& dir : *pDirs )
 			// 	add( dir.path() );
 		}
-		catch( const IOException& e )
+		catch( IOException& e )
 		{
 			close(_fd);
-			throw e;
+			throw move(e);
 		}
 		DBG( "DiskWatcher::DiskWatcher on {}"sv, path.c_str() );
 		_pThread = make_shared<Jde::Threading::InterruptibleThread>( "Diskwatcher", [&](){ Run();} );

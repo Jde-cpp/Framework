@@ -6,17 +6,17 @@ namespace Jde{ using namespace Jde::Coroutine; }
 namespace Jde::Coroutine
 {
 	using ClientHandle = uint;
-	using HCoroutine = coroutine_handle<Task2::promise_type>;
+	using HCoroutine = coroutine_handle<Task::promise_type>;
 
 	/*https://stackoverflow.com/questions/44960760/msvc-dll-exporting-class-that-inherits-from-template-cause-lnk2005-already-defin
-	template<class TTask=Task2>
-	struct TAwaitable
+	template<class TTask=Task>
+	struct TAwait
 	{
 		using TResult=typename TTask::TResult;
 		using TPromise=typename TTask::promise_type;
 		using THandle=coroutine_handle<TPromise>;
-		TAwaitable()noexcept=default;
-		TAwaitable( string name )noexcept:_name{move(name)}{};
+		TAwait()noexcept=default;
+		TAwait( string name )noexcept:_name{move(name)}{};
 
 		β await_ready()noexcept->bool{ return false; }
 		β await_resume()noexcept->TResult=0;
@@ -34,7 +34,7 @@ namespace Jde::Coroutine
 		string ThreadName;
 		const string _name;
 	};
-	template struct TAwaitable<Task2>;
+	template struct TAwait<Task>;
 	*/
 	struct Await
 	{
@@ -42,7 +42,7 @@ namespace Jde::Coroutine
 		Await( string name )noexcept:_name{move(name)}{};
 
 		β await_ready()noexcept->bool{ return false; }
-		β await_resume()noexcept->TaskResult=0;
+		β await_resume()noexcept->AwaitResult=0;
 		β await_suspend( HCoroutine )noexcept->void=0;//->void{ OriginalThreadParamPtr = { Threading::GetThreadDescription(), Threading::GetAppThreadHandle() }; }
 		α AwaitSuspend()noexcept{ OriginalThreadParamPtr = { Threading::GetThreadDescription(), Threading::GetAppThreadHandle() }; }
 		α AwaitResume()noexcept->void
@@ -54,89 +54,117 @@ namespace Jde::Coroutine
 		}
 	protected:
 		optional<Threading::ThreadParam> OriginalThreadParamPtr;
-//		uint ThreadHandle;
-//		string ThreadName;
 		const string _name;
 	};
-#define base Await
-	struct IAwaitable : public base
+#define Base Await
+	struct IAwait : public Base
 	{
-		IAwaitable( SRCE )noexcept:_sl{sl}{};
-		IAwaitable( string name, SRCE )noexcept:base{move(name)},_sl{sl}{};
-		virtual ~IAwaitable()=0;
+		IAwait( SRCE )noexcept:_sl{sl}{};
+		IAwait( string name, SRCE )noexcept:Base{move(name)},_sl{sl}{};
+		virtual ~IAwait()=0;
 		α await_suspend( HCoroutine h )noexcept->void override
 		{
-			base::AwaitSuspend();
+			Base::AwaitSuspend();
 			_pPromise = &h.promise();
 			if( auto& ro = _pPromise->get_return_object(); ro.HasResult() )
 				ro.Clear();
 		}
-		α await_resume()noexcept->TaskResult override{ AwaitResume(); return _pPromise->get_return_object().GetResult(); }
-		α Set( std::variant<sp<void>,sp<TaskResult::TException>>&& x )->void{ ASSERT( _pPromise ); _pPromise->get_return_object().SetResult( move(x) ); }
-		α Get()noexcept(false)->sp<void>{ ASSERT( _pPromise ); return _pPromise->get_return_object().Get( _sl ); }
+		α await_resume()noexcept->AwaitResult override{ AwaitResume(); return move(_pPromise->get_return_object().Result()); }
+		//α Set( AwaitResult::Value&& x )->void{ ASSERT( _pPromise ); _pPromise->get_return_object().SetResult( move(x) ); }
+		ⓣ Set( up<T>&& p )->void{ ASSERT( _pPromise ); _pPromise->get_return_object().SetResult<T>( move(p) ); }
+		//α Get()noexcept(false)->sp<void>{ ASSERT( _pPromise ); return _pPromise->get_return_object().Get( _sl ); }
 
 		source_location _sl;
 	protected:
-		Task2::promise_type* _pPromise{ nullptr };
+		Task::promise_type* _pPromise{ nullptr };
 	};
-#undef base
-	inline IAwaitable::~IAwaitable(){}
+	inline IAwait::~IAwait(){}
+
 	//run synchronous function in coroutine pool thread.
-	struct AsyncAwaitable final : IAwaitable//todo rename FromSyncAwait?
+	Τ struct PoolAwait final : IAwait//todo rename FromSyncAwait?
 	{
-		using base=IAwaitable;
-		AsyncAwaitable( function<sp<void>()> fnctn )noexcept:_fnctn{fnctn}{};
+		using base=IAwait;
+		PoolAwait( function<up<T>()> fnctn )noexcept:_fnctn{fnctn}{};
 		α await_suspend( HCoroutine h )noexcept->void override{ base::await_suspend(h); CoroutinePool::Resume( move(h) ); }
 
-		TaskResult await_resume()noexcept override;
+		AwaitResult await_resume()noexcept override;
 	private:
-		function<sp<void>()> _fnctn;
+		function<up<T>()> _fnctn;
 	};
-
-	class FunctionAwaitable /*final*/ : public IAwaitable
+	//assynchronous function continues at end
+	class FunctionAwait /*final*/ : public IAwait
 	{
-		using base=IAwaitable;
+		using base=IAwait;
 	public:
-		FunctionAwaitable( function<Task2(HCoroutine)> fnctn, SRCE, str name={} )noexcept:base{name, sl}, _fnctn2{fnctn}{};
+		FunctionAwait( function<Task(HCoroutine)> fnctn, SRCE, str name={} )noexcept:base{name, sl}, _fnctn2{fnctn}{};
 
 		α await_suspend( HCoroutine h )noexcept->void override{ base::await_suspend( h ); _fnctn2( move(h) ); }
 	private:
-		function<Task2(HCoroutine)> _fnctn2;
+		function<Task(HCoroutine)> _fnctn2;
 	};
-	template<class T>
-	struct Promise : std::promise<T>
+/*	template<class T>
+	struct Task : std::promise<T>
 	{
-		~Promise(){}
-	};
-	ⓣ CallAwaitable( up<Promise<sp<T>>> pPromise, IAwaitable&& a )->Task2
+		~Task(){}
+	};*/
+
+	ⓣ CallAwait( std::promise<up<T>>&& p_, IAwait&& a )->Task
 	{
-		TaskResult r = co_await a;
+		auto p = move( p_ );
+		AwaitResult r = co_await a;
+		ASSERT( !r.HasShared() );
 		if( r.HasValue() )
-			pPromise->set_value( r.Get<T>() );
+			p.set_value( r.UP<T>() );
 		else
-			pPromise->set_exception( r.Error()->Ptr() );
-		//var d = GetThreadDscrptn();
-		//SetThreadDscrptn( d.substr(0, d.size()-9) );todo make own future class, override get.
+			p.set_exception( r.Error()->Ptr() );
 	}
-	ⓣ Future( IAwaitable&& a )->std::future<sp<T>>
+
+	ⓣ Future( IAwait&& a )->std::future<up<T>>
 	{
-		auto p = make_unique<Promise<sp<T>>>();
-		std::future<sp<T>> f = p->get_future();
-		CallAwaitable( move(p), move(a) );
-		//Threading::SetThreadDscrptn( format("{} - Future", Threading::GetThreadDescription()) );
+		auto p = std::promise<up<T>>();
+		std::future<up<T>> f = p.get_future();
+		CallAwait( move(p), move(a) );
 		return f;
 	}
-	ⓣ Future( up<IAwaitable> a )->std::future<sp<T>>
+
+	Ξ CallVAwait( std::promise<void>&& p_, IAwait&& a )->Task
 	{
-		auto p = make_unique<Promise<sp<T>>>();
-		std::future<sp<T>> f = p->get_future();
-		CallAwaitable( move(p), move(*a) );
+		auto p = move( p_ );
+		AwaitResult r = co_await a;
+		if( r.HasError() )
+			p.set_exception( r.Error()->Ptr() );
+	}
+
+	Ξ VFuture( IAwait&& a )->std::future<void>
+	{
+		std::promise<void> p;
+		std::future<void> f = p.get_future();
+		CallVAwait( move(p), move(a) );
 		return f;
 	}
-	struct AWrapper final : IAwaitable
+
+	ⓣ CallAwait( std::promise<sp<T>>&& p_, IAwait&& a )->Task
 	{
-		using base=IAwaitable;
-		AWrapper( function<Task2(HCoroutine h)> fnctn, str name={} )noexcept:base{name}, _fnctn{fnctn}{};
+		auto p = move( p_ );
+		AwaitResult r = co_await a;
+		if( r.HasShared() )
+			p.set_value( r.SP<T>(a._sl) );
+		else
+			p.set_exception( r.Error()->Ptr() );
+	}
+
+	ⓣ SFuture( IAwait&& a )->std::future<sp<T>>
+	{
+		std::promise<sp<T>> p;
+		std::future<sp<T>> f = p.get_future();
+		CallAwait( move(p), move(a) );
+		return f;
+	}
+
+	struct AWrapper final : IAwait
+	{
+		using base=IAwait;
+		AWrapper( function<Task(HCoroutine h)> fnctn, str name={} )noexcept:base{name}, _fnctn{fnctn}{};
 
 		α await_suspend( HCoroutine h )noexcept->void override
 		{
@@ -144,29 +172,30 @@ namespace Jde::Coroutine
 			_fnctn( move(h) );
 		}
 	private:
-		function<Task2(HCoroutine h)> _fnctn;
+		function<Task(HCoroutine h)> _fnctn;
 	};
 
 	//template<class T>
-	struct CancelAwaitable /*abstract*/ : Await
+	struct CancelAwait /*abstract*/ : Await
 	{
-		CancelAwaitable( ClientHandle& handle )noexcept:_hClient{ NextHandle() }{ handle = _hClient; }
-		virtual ~CancelAwaitable()=0;
+		CancelAwait( ClientHandle& handle )noexcept:_hClient{ NextHandle() }{ handle = _hClient; }
+		virtual ~CancelAwait()=0;
 	protected:
 		const ClientHandle _hClient;
 	};
-	/*template<class T>*/ inline CancelAwaitable::~CancelAwaitable() {}
+	/*template<class T>*/ inline CancelAwait::~CancelAwait() {}
 
-	Ξ AsyncAwaitable::await_resume()noexcept->TaskResult
+	ⓣ PoolAwait<T>::await_resume()noexcept->AwaitResult
 	{
 		AwaitResume();
 		try
 		{
-			return TaskResult{ _fnctn() };
+			return AwaitResult{ _fnctn().release() };
 		}
 		catch( IException& e )
 		{
-			return TaskResult{ e.Clone() };
+			return AwaitResult{ e.Move() };
 		}
 	}
 }
+#undef Base
