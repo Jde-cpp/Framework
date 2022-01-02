@@ -163,10 +163,11 @@ function build
 function buildTest
 {
 	if windows; then
-		msbuild -t:restore
+		MSBuild.exe -t:restore -p:RestorePackagesConfig=true
 		if [[ ! -f "Tests.$dir.vcxproj.user" && -f "Tests.$dir.vcxproj._user" ]]; then
 			linkFile Tests.$dir.vcxproj._user Tests.$dir.vcxproj.user;	if [ $? -ne 0 ]; then echo `pwd`; echo FAILED:  linkFile Tests.$dir.vcxproj._user Tests.$dir.vcxproj.user; exit 1; fi;
 		fi;
+
 		buildWindows $1 $2
 	else
 		buildLinux 1

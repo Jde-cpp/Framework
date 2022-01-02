@@ -8,7 +8,7 @@ namespace Jde::DB
 	struct IDataSource; struct Syntax;
 	Φ DataSource()noexcept(false)->IDataSource&;
 	Φ DataSource( path libraryName, string connectionString )noexcept(false)->sp<IDataSource>;
-	Φ DataSourcePtr()noexcept->sp<IDataSource>;
+	Φ DataSourcePtr()noexcept(false)->sp<IDataSource>;
 	ⓣ SelectEnum( sv tableName, SRCE )noexcept(false)->up<IAwait>{ return DataSource().SelectEnum<T>( tableName ); }//sp<flat_map<T,string>>
 	Φ IdFromName( sv tableName, string name, SRCE )noexcept->SelectAwait<uint>;
 
@@ -23,13 +23,14 @@ namespace Jde::DB
 	Φ ShutdownClean( function<void()>& shutdown )noexcept->void;
 
 	Ξ ExecuteProc( string sql, vector<object>&& parameters, SRCE )noexcept(false)->uint{ return DataSource().ExecuteProc( move(sql), parameters, sl ); }
-	Ξ ExecuteProcCo( string&& sql, const vector<object>&& parameters, SRCE )noexcept{ return DataSource().ExecuteProcCo( move(sql), move(parameters), sl ); }
+	Ξ ExecuteProcCo( string&& sql, vec<object>&& parameters, SRCE )noexcept{ return DataSource().ExecuteProcCo( move(sql), move(parameters), sl ); }
 	Φ Execute( string sql, vector<object>&& parameters, SRCE )noexcept(false)->uint;
 
-	ⓣ TryScaler( string sql, const vector<object>& parameters, SRCE )noexcept->optional<T>;
-	ⓣ Scaler( string sql, const vector<object>& parameters, SRCE )noexcept(false)->optional<T>;
+	ⓣ TryScaler( string sql, vec<object>& parameters, SRCE )noexcept->optional<T>;
+	ⓣ Scaler( string sql, vec<object>& parameters, SRCE )noexcept(false)->optional<T>;
+	ⓣ ScalerCo( string sql, vec<object> parameters, SRCE )noexcept(false)->SelectAwait<T>;
 
-	Φ Select( string sql, std::function<void(const IRow&)> f, const vector<object>& values, SRCE )noexcept(false)->void;
+	Φ Select( string sql, std::function<void(const IRow&)> f, vec<object>& values, SRCE )noexcept(false)->void;
 	Φ Select( string sql, std::function<void(const IRow&)> f, SRCE )noexcept(false)->void;
 	Φ SelectIds( string sql, const std::set<uint>& ids, std::function<void(const IRow&)> f, SRCE )noexcept(false)->void;
 
@@ -44,14 +45,17 @@ namespace Jde::DB
 namespace Jde
 {
 	using boost::container::flat_set;
-	ⓣ DB::Scaler( string sql, const vector<object>& parameters, SL sl )noexcept(false)->optional<T>
+	ⓣ DB::Scaler( string sql, vec<object>& parameters, SL sl )noexcept(false)->optional<T>
 	{
 		return DataSource().Scaler<T>( move(sql), parameters, sl );
 	}
-	ⓣ DB::TryScaler( string sql, const vector<object>& parameters, SL sl )noexcept->optional<T>
+	ⓣ DB::TryScaler( string sql, vec<object>& parameters, SL sl )noexcept->optional<T>
 	{
 		return DataSource().TryScaler<T>( move(sql), parameters, sl );
 	}
-
+	ⓣ DB::ScalerCo( string sql, vec<object> parameters, SL sl )noexcept(false)->SelectAwait<T>
+	{
+		return DataSource().ScalerCo<T>( move(sql), parameters, sl );
+	}
 #undef  Φ
 }

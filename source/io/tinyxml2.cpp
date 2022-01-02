@@ -1,4 +1,4 @@
-/*
+﻿/*
 Original code by Lee Thomason (www.grinninglizard.com)
 
 This software is provided 'as-is', without any express or implied
@@ -381,7 +381,7 @@ const char* StrPair::GetStr()
 {
 	if ( _flags & NEEDS_FLUSH )
 		GetStr();
-	return sv{ _start, (uint)(_end-_start) };
+	return sv{ _start, (Jde::uint)(_end-_start) };
 }
 
 

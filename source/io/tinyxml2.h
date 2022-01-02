@@ -92,7 +92,7 @@ static const int TIXML2_PATCH_VERSION = 0;
 #define TINYXML2_MAJOR_VERSION 8
 #define TINYXML2_MINOR_VERSION 0
 #define TINYXML2_PATCH_VERSION 0
-
+#define Φ Γ auto
 // A fixed element depth limit is problematic. There needs to be a
 // limit to avoid a stack overflow. However, that limit varies per
 // system, and the capacity of the stack. On the other hand, it's a trivial
@@ -150,7 +150,7 @@ public:
     }
 
 	const char* GetStr();
-	α View()noexcept->sv;
+	Φ View()noexcept->sv;
     bool Empty() const {
         return _start == _end;
     }
@@ -2417,3 +2417,4 @@ private:
 #   pragma warning(pop)
 #endif
 #undef var
+#undef Φ

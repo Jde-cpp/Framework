@@ -66,29 +66,8 @@ namespace Jde
 namespace Jde::Threading
 {
 	Φ UniqueLock( str key )noexcept->std::unique_lock<std::shared_mutex>;
-#define base Coroutine::Await
-	struct Γ LockKeyAwait : base
-	{
-		LockKeyAwait( string key )noexcept:Key{move(key)}{}
 
-		α await_ready()noexcept->bool override;
-		α await_suspend( HCoroutine h )noexcept->void override;
-		α await_resume()noexcept->AwaitResult override;
-	private:
-		HCoroutine Handle{nullptr};
-		const string Key;
-	};
-#undef base
-	struct CoLockGuard final : boost::noncopyable
-	{
-		CoLockGuard( str Key, std::variant<LockKeyAwait*,coroutine_handle<>> )noexcept;
-		~CoLockGuard();
-	private:
-		std::variant<LockKeyAwait*,coroutine_handle<>> Handle;
-		string Key;
-	};
-
-	Ξ CoLockKey( string key )noexcept{ return LockKeyAwait{move(key)}; }
+	
 
 #ifndef NDEBUG //TODORefactor move somewhere else
 	struct MyLock

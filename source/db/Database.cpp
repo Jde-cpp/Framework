@@ -104,7 +104,7 @@ namespace Jde
 	α DB::DefaultSchema()noexcept(false)->Schema&{ return _schema; }
 	α DB::CreateSchema()noexcept(false)->void
 	{
-		var path = Settings::Global().Get<fs::path>( "metaDataPath" );
+		var path = Settings::Global().Getɛ<fs::path>( "metaDataPath" );
 		INFO( "db meta='{}'"sv, path.string() );
 		ordered_json j = json::parse( IO::FileUtilities::Load(path) );
 		_schema = db.SchemaProc()->CreateSchema( j, path.parent_path() );
@@ -113,7 +113,7 @@ namespace Jde
 	{
 		if( !_pSyntax )
 		{
-			_pSyntax = Settings::Get<string>("db/driver")=="Jde.DB.Odbc.dll"
+			_pSyntax = Settings::Getɛ<string>("db/driver")=="Jde.DB.Odbc.dll"
 				? make_shared<Syntax>()
 				: make_shared<MySqlSyntax>();
 		}
@@ -128,13 +128,13 @@ namespace Jde
 		std::call_once( _singleShutdown, [](){ IApplication::AddShutdownFunction( DB::CleanDataSources ); } );
 	}
 
-	α DB::DataSourcePtr()noexcept->sp<IDataSource>
+	α DB::DataSourcePtr()noexcept(false)->sp<IDataSource>
 	{
-		if( !_pDefault && !IApplication::ShuttingDown() )
+		if( !_pDefault /*&& !IApplication::ShuttingDown()*/ )
 		{
-			Initialize( Settings::Get<string>("db/driver") );
-			string cs{ Settings::Get<string>("db/connectionString") };
-			var env = cs.find( '=' )==string::npos ? IApplication::Instance().GetEnvironmentVariable( cs ) : string{};
+			Initialize( Settings::Getɛ<string>("db/driver") );
+			string cs{ Settings::Getɛ<string>("db/connectionString") };
+			var env = cs.find( '=' )==string::npos ? OSApp::EnvironmentVariable( cs ) : string{};
 			_pDefault->SetConnectionString( move(env.empty() ? cs : env) );
 		}
 		return _pDefault;

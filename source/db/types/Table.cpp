@@ -4,7 +4,6 @@
 #include "../Syntax.h"
 #include "Schema.h"
 
-
 #define var const auto
 
 namespace Jde::DB
@@ -177,8 +176,8 @@ namespace Jde::DB
 			}
 			else if( attribute=="customInsertProc" )
 				CustomInsertProc = value.get<bool>();
-			else if( attribute!="usePrefix" )
-				ASSERT( false );
+			else
+				ASSERT_DESC( attribute=="usePrefix", format("Unknown table attribute:  '{}'", attribute) );
 		}
 	}
 

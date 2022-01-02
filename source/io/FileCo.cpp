@@ -7,31 +7,31 @@ namespace Jde::IO
 {
 	α IFileChunkArg::Handle()noexcept->HFile&{ return _fileIOArg.Handle; }
 	uint32 _chunkSize=0;
-	α DriveWorker::ChunkSize()noexcept->uint32{ return _chunkSize==0 ? (_chunkSize=Settings::TryGet<uint32>("workers/drive/chunkSize").value_or(1 << 19)) : _chunkSize; }
+	α DriveWorker::ChunkSize()noexcept->uint32{ return _chunkSize==0 ? (_chunkSize=Settings::Get<uint32>("workers/drive/chunkSize").value_or(1 << 19)) : _chunkSize; }
 
 	uint8 _threadSize=0;
-	α DriveWorker::ThreadSize()noexcept->uint8{ return _threadSize==0 ? (_threadSize=Settings::TryGet<uint8>("workers/drive/threadSize").value_or(5)) : _threadSize; }
+	α DriveWorker::ThreadSize()noexcept->uint8{ return _threadSize==0 ? (_threadSize=Settings::Get<uint8>("workers/drive/threadSize").value_or(5)) : _threadSize; }
 
 	void DriveWorker::Initialize()noexcept
 	{
 		IWorker::Initialize();
 	}
 
-	FileIOArg::FileIOArg( path path, bool vec )noexcept:
+	FileIOArg::FileIOArg( fs::path path, bool vec )noexcept:
 		IsRead{ true },
-		Path{ path }
+		Path{ move(path) }
 	{
 		if( vec )
 			Buffer = make_shared<vector<char>>();
 		else
 			Buffer = make_shared<string>();
 	}
-	FileIOArg::FileIOArg( path path, sp<vector<char>> pVec )noexcept:
-		Path{ path },
+	FileIOArg::FileIOArg( fs::path path, sp<vector<char>> pVec )noexcept:
+		Path{ move(path) },
 		Buffer{ pVec }
 	{}
-	FileIOArg::FileIOArg( path path, sp<string> pData )noexcept:
-		Path{ path },
+	FileIOArg::FileIOArg( fs::path path, sp<string> pData )noexcept:
+		Path{ move(path) },
 		Buffer{ pData }
 	{}
 
@@ -75,7 +75,7 @@ namespace Jde::IO
 		bool cache = false;
 		try
 		{
-			if( auto p = _cache ? Cache::Get<sp<void>>(_arg.Path) : sp<void>{}; p )//TODO lock the file
+			if( auto p = _cache ? Cache::Get<sp<void>>(_arg.Path.string()) : sp<void>{}; p )//TODO lock the file
 			{
 				cache = true;
 				if( auto pT = _arg.Buffer.index()==0 ? static_pointer_cast<vector<char>>(p) : sp<vector<char>>{}; pT )

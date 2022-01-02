@@ -1,97 +1,118 @@
 {
 	"$types":
 	{
+		"id": "uint32",
 		"name":{ "length": 255 },
 		"$target":{ "length": 255 },
-		"description":{ "length": 2048 }
+		"description":{ "length": 2048 },
+		"created": { "type": "dateTime", "default":"$now", "insertable":false, "updateable":false },
+		"updated": { "type": "dateTime", "default":"$now", "insertable":false, "updateable":false }
 	},
 	"$values":
 	{
-		"id": "uint",
-		"name": "name",
-		"$surrogateKey":["id"],
-		"$naturalKey":["name"]
+		"columns": [
+			{ "name": "id", "type": "id" },
+			{ "name": "name", "type": "name"}
+		],
+		"surrogateKey":["id"],
+		"naturalKey":["name"]
 	},
 	"$data":
 	{
-		"id":{ "sequence": true },
-		"name": "name",
-		"$surrogateKey":["id"],
-		"$naturalKey":["name"]
+		"columns": [
+			{ "name": "id", "sequence": true },
+			{ "name": "name", "type": "name"}
+		],
+		"surrogateKey":["id"],
+		"naturalKey":["name"]
 	},
 	"$nk":
 	{
-		"$parent": "$data",
-		"attributes": "uint?",
-		"created": { "type": "dateTime", "default":"$now", "insertable":false, "updateable":false },
-		"updated": { "type": "dateTime?", "insertable": false, "updateable": false },
-		"deleted": { "type": "dateTime?", "insertable": false, "updateable": false }
+		"parent": "$data",
+		"columns": [
+			{ "name": "attributes", "type": "uint16?" },
+			{ "name": "created", "type": "created" },
+			{ "name": "updated", "type": "dateTime?", "insertable": false, "updateable": false },
+			{ "name": "deleted", "type": "dateTime?", "insertable": false, "updateable": false }
+		]
 	},
 	"$description":
 	{
-		"$parent": "$nk",
-		"target": "$target",
-		"description": "description?",
-		"$naturalKey": ["target"]
-	},
-	"umUsers":
-	{
-		"$parent": "$description",
-		"authenticatorId": "umAuthenticators"
-	},
-	"umAuthenticators":
-	{
-		"$parent": "$values",
-		"$data": ["None", "Google"]
-	},
-	"umGroups":
-	{
-		"$parent": "$description",
-		"$data": [{"id":1, "attributes":5, "name":"Everyone", "target":"everyone" }, {"id":2, "attributes":6, "name":"Users", "target":"users"}]
-	},
-	"umUserGroups":
-	{
-		"userId": "umUsers",
-		"groupId": "umGroups",
-		"$surrogateKey":["userId", "groupId"]
-	},
-	"umRoles":
-	{
-		"$parent": "$description",
-		"$data": [{"id":1, "attributes":4, "name":"User Management", "target": "user_management" }]
-	},
-	"umGroupRoles":
-	{
-		"groupId": "umGroups",
-		"roleId": "umRoles",
-		"$surrogateKey":["groupId","roleId"],
-		"$data": [{"groupId":1, "roleId":1 }]
-	},
-	"umRights":
-	{
-		"$parent": "$values",
-		"$flagsData": ["None","Administer", "Write", "Read"]
-	},
-	"umRolePermissions":
-	{
-		"roleId": "umRoles",
-		"permissionId": "umPermissions",
-		"rightId": "umRights",
-		"$surrogateKey":["roleId","permissionId"],
-		"$data": [{"roleId":1, "permissionId":1, "rightId": 7}]
+		"parent": "$nk",
+		"columns": [
+			{ "name": "target", "type": "$target?" },
+			{ "name": "description", "type": "description?" }
+		],
+		"naturalKey":["target"]
 	},
 	"umApis":
 	{
-		"$parent": "$values",
-		"$data": ["None","UM", "Web", "Tws", "Blockly"]
+		"parent": "$values",
+		"data": ["None","UM", "Web", "Tws", "Blockly"]
+	},
+	"umUsers":
+	{
+		"parent": "$description",
+		"columns": [
+			{ "name": "authenticatorId", "type": "umAuthenticators?" }
+		]
+	},
+	"umAuthenticators":
+	{
+		"parent": "$values",
+		"data": ["None", "Google"]
+	},
+	"umGroups":
+	{
+		"parent": "$description",
+		"data": [{"id":1, "attributes":5, "name":"Everyone", "target":"everyone" }, {"id":2, "attributes":6, "name":"Users", "target":"users"}]
+	},
+	"umUserGroups":
+	{
+		"columns": [
+			{ "name": "userId", "type": "umUsers" },
+			{ "name": "groupId", "type": "umGroups" }
+		],
+		"surrogateKey":["userId", "groupId"]
+	},
+	"umRoles":
+	{
+		"parent": "$description",
+		"data": [{"id":1, "attributes":4, "name":"User Management", "target": "user_management" }]
+	},
+	"umGroupRoles":
+	{
+		"columns": [
+			{ "name": "groupId", "type": "umGroups" },
+			{ "name": "roleId", "type": "umRoles" }
+		],
+		"surrogateKey":["groupId","roleId"],
+		"data": [{"groupId":1, "roleId":1 }]
 	},
 	"umPermissions":
 	{
-		"id":{ "sequence": true },
-		"apiId": "umApis",
-		"name": "name?",
-		"$surrogateKey":["id"],
-		"$naturalKey":["apiId","name"],
-		"$data": [{"id":1, "apiId":1}]
+		"columns": [
+			{ "name": "id", "sequence": true },
+			{ "name": "apiId", "type": "umApis" },
+			{ "name": "name", "type": "name?" }
+		],
+		"surrogateKey":["id"],
+		"naturalKey":["apiId","name"],
+		"data": [{"id":1, "apiId":1}, {"id":2, "apiId":3} ]
+	},
+	"umRights":
+	{
+		"parent": "$values",
+		"flagsData": ["None","Administer", "Write", "Read"]
+	},
+	"umRolePermissions":
+	{
+		"columns": [
+			{ "name": "roleId", "type": "umRoles", "updateable":false },
+			{ "name": "permissionId", "type": "umPermissions", "updateable":false },
+			{ "name": "rightId", "type": "umRights", "default":"4" }
+		],
+		"surrogateKey":["roleId","permissionId"],
+		"data": [{"roleId":1, "permissionId":1, "rightId": 7}]
 	}
 }

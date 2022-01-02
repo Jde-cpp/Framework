@@ -14,7 +14,7 @@ namespace Jde
 	{
 		~Cache(){ if( HaveLogger() ) DBG("~Cache"sv); }
 		Ω Has( str name )noexcept{ return Instance().InstanceHas( name ); }
-		Ω Duration( str /*name*/ )noexcept{ return Settings::TryGet<Jde::Duration>( "cache/default/duration" ).value_or( Duration::max() ); }
+		Ω Duration( str /*name*/ )noexcept{ return Settings::Get<Jde::Duration>( "cache/default/duration" ).value_or( Duration::max() ); }
 		Ṫ Emplace( str name )noexcept->sp<T>{ return Instance().InstanceEmplace<T>( name ); }
 		Ṫ Get( str name )noexcept{ return Instance().InstanceGet<T>(name); }
 		Φ Double( string name )noexcept->double;

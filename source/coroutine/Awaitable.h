@@ -69,7 +69,7 @@ namespace Jde::Coroutine
 			if( auto& ro = _pPromise->get_return_object(); ro.HasResult() )
 				ro.Clear();
 		}
-		α await_resume()noexcept->AwaitResult override{ AwaitResume(); return move(_pPromise->get_return_object().Result()); }
+		α await_resume()noexcept->AwaitResult override{ AwaitResume(); ASSERT(_pPromise); return move(_pPromise->get_return_object().Result()); }
 		//α Set( AwaitResult::Value&& x )->void{ ASSERT( _pPromise ); _pPromise->get_return_object().SetResult( move(x) ); }
 		ⓣ Set( up<T>&& p )->void{ ASSERT( _pPromise ); _pPromise->get_return_object().SetResult<T>( move(p) ); }
 		//α Get()noexcept(false)->sp<void>{ ASSERT( _pPromise ); return _pPromise->get_return_object().Get( _sl ); }
@@ -81,16 +81,33 @@ namespace Jde::Coroutine
 	inline IAwait::~IAwait(){}
 
 	//run synchronous function in coroutine pool thread.
-	Τ struct PoolAwait final : IAwait//todo rename FromSyncAwait?
+	Τ struct TPoolAwait final : IAwait//todo rename FromSyncAwait?
 	{
 		using base=IAwait;
-		PoolAwait( function<up<T>()> fnctn )noexcept:_fnctn{fnctn}{};
+		TPoolAwait( function<up<T>()> fnctn )noexcept:_fnctn{fnctn}{};
 		α await_suspend( HCoroutine h )noexcept->void override{ base::await_suspend(h); CoroutinePool::Resume( move(h) ); }
 
-		AwaitResult await_resume()noexcept override;
+		α await_resume()noexcept->AwaitResult override;
 	private:
 		function<up<T>()> _fnctn;
 	};
+	struct PoolAwait final : IAwait//todo rename FromSyncAwait?
+	{
+		using base=IAwait;
+		PoolAwait( function<void()> fnctn )noexcept:_fnctn{fnctn}{};
+		α await_suspend( HCoroutine h )noexcept->void override{ base::await_suspend(h); CoroutinePool::Resume( move(h) ); }
+		α await_resume()noexcept->AwaitResult override
+		{ 
+			AwaitResume();
+			AwaitResult y{};
+			try{ _fnctn(); }
+			catch( IException& e ){ y.Set( e.Move() ); }
+			return y;
+		}
+	private:
+		function<void()> _fnctn;
+	};
+
 	//assynchronous function continues at end
 	class FunctionAwait /*final*/ : public IAwait
 	{
@@ -112,7 +129,7 @@ namespace Jde::Coroutine
 	{
 		auto p = move( p_ );
 		AwaitResult r = co_await a;
-		ASSERT( !r.HasShared() );
+		ASSERTSL( !r.HasShared(), a._sl );
 		if( r.HasValue() )
 			p.set_value( r.UP<T>() );
 		else
@@ -133,6 +150,8 @@ namespace Jde::Coroutine
 		AwaitResult r = co_await a;
 		if( r.HasError() )
 			p.set_exception( r.Error()->Ptr() );
+		else
+			p.set_value();
 	}
 
 	Ξ VFuture( IAwait&& a )->std::future<void>
@@ -147,6 +166,7 @@ namespace Jde::Coroutine
 	{
 		auto p = move( p_ );
 		AwaitResult r = co_await a;
+		ASSERT( !r.HasValue() )
 		if( r.HasShared() )
 			p.set_value( r.SP<T>(a._sl) );
 		else
@@ -185,7 +205,7 @@ namespace Jde::Coroutine
 	};
 	/*template<class T>*/ inline CancelAwait::~CancelAwait() {}
 
-	ⓣ PoolAwait<T>::await_resume()noexcept->AwaitResult
+	ⓣ TPoolAwait<T>::await_resume()noexcept->AwaitResult
 	{
 		AwaitResume();
 		try

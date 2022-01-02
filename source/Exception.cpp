@@ -25,9 +25,6 @@ namespace Jde
 		Code( c ? c : Calc32RunTime(format) )
 	{}
 
-	//IException::IException( string value, uint code, SRCE )noexcept;
-	//	IException{ ELogLevel::Debug, move(what), code, sl }
-	//{}
 	IException::IException( IException&& from )noexcept:
 		_stack{ move(from._stack) },
 		_level{ from._level },
@@ -121,21 +118,18 @@ namespace Jde
 		IException{ move(what), l, 0, sl }
 	{}
 
-/*	α IOException::ErrorCode()const noexcept->uint
-	{
-		return  _pUnderLying ? _pUnderLying->code().value() : _errorCode;
-	}
-*/
 	α IOException::Path()const noexcept->path
 	{
 		return  _pUnderLying? _pUnderLying->path1() : _path;
 	}
-
-	α IOException::what()const noexcept->const char*
+	α IOException::SetWhat()const noexcept->void
 	{
 		_what = _pUnderLying ? _pUnderLying->what() : Code
 			? format( "({}) {} - {} path='{}'", Code, std::strerror(errno), IException::what(), Path().string() )
 			: format( "'{}' - {}", IException::what(), Path().string() );
+	}
+	α IOException::what()const noexcept->const char*
+	{
 		return _what.c_str();
 	}
 }

@@ -38,10 +38,7 @@ namespace Jde
 
 	flat_map<sv, UM::IAuthorize*> _authorizers; shared_mutex _authorizerMutex;
 	UM::GroupAuthorize _groupAuthorize;
-/*	struct IAuthorize
-	{
-		β TestAccess( EAccess access, UserPK userId, sv tableName )noexcept(false)->void=0;
-	};*/
+
 	α UM::AddAuthorizer( UM::IAuthorize* p )noexcept->void{ _authorizers.emplace( p->TableName, p ); }//pre-main
 	α UM::FindAuthorizer( sv table )noexcept->IAuthorize*
 	{
@@ -222,7 +219,7 @@ namespace Jde
 		{
 			string connectionString;
 			j.at("connectionString").get_to( connectionString );
-			settings.ConnectionString = IApplication::Instance().GetEnvironmentVariable( connectionString );
+			settings.ConnectionString = OSApp::EnvironmentVariable( connectionString );
 		}
 		if( j.find("libraryName")!=j.end() )
 			j.at("libraryName").get_to( settings.LibraryName );

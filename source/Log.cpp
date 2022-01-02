@@ -22,7 +22,7 @@ namespace Jde::Logging
 	up<vector<Logging::Messages::ServerMessage>> _pMemoryLog; shared_mutex MemoryLogMutex;
 	auto _pOnceMessages = make_unique<flat_map<uint,set<string>>>(); std::shared_mutex OnceMessageMutex;
 	static const LogTag& _statusLevel = Logging::TagLevel( "status" );
-	static const LogTag& _logLevel = Logging::TagLevel( "status" );
+	static const LogTag& _logLevel = Logging::TagLevel( "settings" );
 
 	α SetTag( sv tag, vector<LogTag>& existing )noexcept->sv
 	{
@@ -135,7 +135,7 @@ namespace Jde
 		{
 			spdlog::sink_ptr pSink;
 			string additional;
-			string pattern = sink.TryGet<string>( "pattern" ).value_or("");
+			string pattern = sink.Get<string>( "pattern" ).value_or("");
 			if( name=="console" && IApplication::IsConsole() )
 			{
 				if( pattern.empty() )
@@ -148,10 +148,10 @@ namespace Jde
 			}
 			else if( name=="file" )
 			{
-				auto pPath = sink.TryGet<fs::path>( "path" );
+				auto pPath = sink.Get<fs::path>( "path" );
 				var fileNameWithExt = Settings::FileStem()+".log";
 				var path = pPath && !pPath->empty() ? *pPath/fileNameWithExt : OSApp::ApplicationDataFolder()/"logs"/fileNameWithExt;
-				var truncate = sink.TryGet<bool>( "truncate" ).value_or( true );
+				var truncate = sink.Get<bool>( "truncate" ).value_or( true );
 				additional = format( " truncate='{}' path='{}'", truncate, path.string() );
 				pSink = make_shared<spdlog::sinks::basic_file_sink_mt>( path.string(), truncate );
 				if( pattern.empty() )
@@ -160,7 +160,7 @@ namespace Jde
 			else
 				continue;
 			pSink->set_pattern( pattern );
-			var level = sink.TryGet<ELogLevel>( "level" ).value_or( ELogLevel::Debug );
+			var level = sink.Get<ELogLevel>( "level" ).value_or( ELogLevel::Debug );
 			pSink->set_level( (spdlog::level::level_enum)level );
 			//LOG_MEMORY( ELogLevel::Information, "({})level='{}' pattern='{}'{}", name, ToString(level), pattern, additional );
 			LogMemoryDetail( Logging::Message{"settings", ELogLevel::Information, "({})level='{}' pattern='{}'{}"}, name, ToString(level), pattern, additional );
@@ -176,10 +176,10 @@ namespace Jde
 	{
 		_status.set_starttime( (google::protobuf::uint32)Clock::to_time_t(_startTime) );
 
-		_logMemory = Settings::TryGet<bool>("logging/memory").value_or( false );
+		_logMemory = Settings::Get<bool>("logging/memory").value_or( false );
 		var minLevel = std::accumulate( _sinks.begin(), _sinks.end(), (uint8)ELogLevel::None, [](uint8 min, auto& p){return std::min((uint8)p->level(),min);} );
 		_logger.set_level( (spdlog::level::level_enum)minLevel );
-		var flushOn = Settings::TryGet<ELogLevel>( "logging/flushOn" ).value_or( ELogLevel::Information );
+		var flushOn = Settings::Get<ELogLevel>( "logging/flushOn" ).value_or( ELogLevel::Information );
 		_logger.flush_on( (spdlog::level::level_enum)flushOn );
 		auto pServer = IServerSink::Enabled() ? ServerSink::Create() : nullptr;
 

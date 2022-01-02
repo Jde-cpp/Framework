@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Table.h"
 
 namespace Jde::DB
@@ -66,8 +66,6 @@ namespace Jde::DB
 		sp<const Table> y;
 		for( var& [name,pTable] : Tables )
 		{
-		//	DEBUG_IF( name=="um_users" );
-		//	DBG( "{}", name.substr(0,name.size()-suffix.size()-1) );
 			if( name.ends_with(suffix) && name.size()>suffix.size()+2 && name[name.size()-suffix.size()-1]=='_' && name.substr(0,name.size()-suffix.size()-1).find_first_of('_')==string::npos )
 			{
 				y = pTable;
@@ -100,6 +98,5 @@ namespace Jde::DB
 		}
 		return result;
 	}
-
 #undef var
 }

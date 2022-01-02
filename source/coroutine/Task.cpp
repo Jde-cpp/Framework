@@ -11,16 +11,38 @@ namespace Jde::Coroutine
 	std::atomic<ClientHandle> TaskPromiseHandle{0};
 	α NextTaskPromiseHandle()noexcept->Handle{ return ++TaskPromiseHandle; }
 
-	//function<void(const void*)> AwaitResult::Deleter=[]( const void* ){ CRITICAL( "memory leak" ); }
 	α AwaitResult::CheckUninitialized()noexcept->void
 	{
 		if( !Uninitialized() )
 		{
-			auto p = get<sp<void>>( _result );
-			CRITICAL( "index={} p={}", _result.index(), p );
+			//auto p = get<sp<void>>( _result );
+			CRITICAL( "index={}", _result.index() );
 		}
 	}
+	atomic<uint> TaskIndex{ 0 };
+/*	Task::Task()noexcept:i{++TaskIndex}
+	{
+		DBG( "({:x}-{}) created", (uint)this, i );
+		if( i==7 )
+			BREAK;
+	}
+	Task::Task( Task&& x )noexcept:
+		_result{ move(x._result) }
+	{ 
+		i = ++TaskIndex;
+		DBG( "({:x}-{}) moved ({:x})-{}", (uint)this, i, (uint)&x, x.i );
+	}
+	Task::Task( const Task& x )noexcept:
+		i{++TaskIndex}
+	{
+		DBG( "({:x}-{}) copied ({:x})-{}", (uint)this, i, (uint)&x, x.i );
+	}
 
+	Task::~Task()noexcept
+	{
+		DBG( "({:x}-{}) removed", (uint)this, i );
+	}
+	*/
 	α Task::promise_type::unhandled_exception()noexcept->void
 	{
 		try

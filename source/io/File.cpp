@@ -85,17 +85,10 @@ namespace Jde::IO::FileUtilities
 	α Save( path path, sv value, std::ios_base::openmode /*openMode*/, SL sl )noexcept(false)->void
 	{
 		Save( path, ms<string>(value), sl );
-		// if( !fs::exists(path.parent_path()) )
-		// {
-		// 	fs::create_directories( path.parent_path() );
-		// 	INFO( "Created directory '{}'", path.parent_path() );
-		// }
-		// std::ofstream f{ path, openMode }; THROW_IFX( f.fail(), IOException(path, "Could not open file", sl) );
-		// f.write( value.data(), value.size() );
 	}
-	α Save( path path, sp<string> value, SL sl )noexcept(false)->void
+	α Save( fs::path path, sp<string> value, SL sl )noexcept(false)->void
 	{
-		VFuture( IO::Write(path, value, sl) ).get();
+		VFuture( IO::Write(move(path), value, sl) ).get();
 	}
 	α Compression::Save( path path, const vector<char>& data )->void
 	{

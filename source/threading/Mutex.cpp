@@ -60,48 +60,6 @@ namespace Jde
 }
 namespace Jde::Threading
 {
-	flat_map<string,std::deque<std::variant<LockKeyAwait*,coroutine_handle<>>>> _coLocks; std::atomic_flag _coLocksLock;
-
-	CoLockGuard::CoLockGuard( str key, std::variant<LockKeyAwait*,coroutine_handle<>> h )noexcept:
-		Handle{h},
-		Key{key}
-	{}
-	CoLockGuard::~CoLockGuard()
-	{
-		AtomicGuard l( _coLocksLock ); ASSERT( _coLocks.find(Key)!=_coLocks.end() && _coLocks.find(Key)->second.size() );
-		auto& locks = _coLocks.find( Key )->second; ASSERT( locks[0]==Handle );
-		locks.pop_front();
-		if( locks.size() )
-		{
-			ASSERT( locks.front().index()==1 );
-			CoroutinePool::Resume( move(get<1>(locks.front())) );
-		}
-	}
-
-	bool LockKeyAwait::await_ready()noexcept
-	{
-		AtomicGuard l( _coLocksLock );
-		auto& locks = _coLocks.try_emplace( Key ).first->second;
-		locks.push_back( this );
-		return locks.size()==1;
-	}
-	void LockKeyAwait::await_suspend( HCoroutine h )noexcept
-	{
-		Await::AwaitSuspend();
-		AtomicGuard l( _coLocksLock ); ASSERT( _coLocks.find(Key)!=_coLocks.end() );
-		auto& locks = _coLocks.find( Key )->second;
-		for( uint i=0; !Handle && i<locks.size(); ++i )
-		{
-			if( locks[i].index()==0 && get<LockKeyAwait*>(locks[i])==this )
-				locks[i] = Handle = h;
- 		}
-		ASSERT( Handle );
-	}
-	AwaitResult LockKeyAwait::await_resume()noexcept
-	{
-		return AwaitResult{ Handle ? mu<CoLockGuard>( Key, Handle ) : mu<CoLockGuard>( Key, this ) };
-	}
-
 #ifndef NDEBUG
 	ELogLevel Threading::MyLock::_defaultLogLevel{ ELogLevel::Trace };
 	void Threading::MyLock::SetDefaultLogLevel( ELogLevel logLevel )noexcept{ _defaultLogLevel=logLevel; }

@@ -37,9 +37,9 @@ namespace Jde::IO
 
 	struct FileIOArg final//: boost::noncopyable
 	{
-		FileIOArg( path path, bool vec )noexcept;
-		FileIOArg( path path, sp<vector<char>> pVec )noexcept;
-		FileIOArg( path path, sp<string> pData )noexcept;
+		FileIOArg( fs::path path, bool vec )noexcept;
+		FileIOArg( fs::path path, sp<vector<char>> pVec )noexcept;
+		FileIOArg( fs::path path, sp<string> pData )noexcept;
 		//~FileIOArg(){ DBG("FileIOArg::~FileIOArg"sv); }
 		α Open()noexcept(false)->void;
 		α HandleChunkComplete( IFileChunkArg* pChunkArg )noexcept->bool;
@@ -61,9 +61,9 @@ namespace Jde::IO
 	struct Γ DriveAwaitable final : IAwait
 	{
 		using base=IAwait;
-		DriveAwaitable( path path, bool vector, bool cache, SRCE )noexcept:base{ sl },_arg{ path, vector },_cache{cache}{}
-		DriveAwaitable( path path, sp<vector<char>> data, SRCE )noexcept:base{ sl },_arg{ path, data },_cache{false}{}
-		DriveAwaitable( path path, sp<string> data, SRCE )noexcept:base{ sl },_arg{ path, data },_cache{false}{}
+		DriveAwaitable( fs::path path, bool vector, bool cache, SRCE )noexcept:base{ sl },_arg{ move(path), vector },_cache{cache}{}
+		DriveAwaitable( fs::path path, sp<vector<char>> data, SRCE )noexcept:base{ sl },_arg{ move(path), data },_cache{false}{}
+		DriveAwaitable( fs::path path, sp<string> data, SRCE )noexcept:base{ sl },_arg{ move(path), data },_cache{false}{}
 		α await_ready()noexcept->bool override;
 		α await_suspend( HCoroutine h )noexcept->void override;//{ base::await_suspend( h ); _pPromise = &h.promise(); }
 		α await_resume()noexcept->AwaitResult override;

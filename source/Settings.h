@@ -4,6 +4,7 @@
 #include <jde/Exports.h>
 #include <jde/Exception.h>
 #include <jde/Str.h>
+#include <jde/App.h>
 
 #pragma warning(push)
 #pragma warning( disable : 4715)
@@ -32,8 +33,8 @@ namespace Jde::Settings
 
 		α SubContainer( sv entry )const noexcept(false)->sp<Container>;
 		α TrySubContainer( sv entry )const noexcept->optional<Container>;
-		ⓣ Get( sv path, SRCE )const noexcept(false)->T;
-		ⓣ TryGet( sv path )const noexcept->optional<T>;
+		ⓣ Getɛ( sv path, SRCE )const noexcept(false)->T;
+		template<class T=string> auto Get( sv path )const noexcept->optional<T>;
 
 		α& Json()noexcept{ /*ASSERT(_pJson);*/ return *_pJson; }
 	private:
@@ -44,24 +45,24 @@ namespace Jde::Settings
 
 	α FileStem()noexcept->string;
 	#define $ template<> Ξ
-	$ Container::Get<TimePoint>( sv path, const source_location& sl )const noexcept(false)->TimePoint{ return DateTime{ Get<string>(path, sl) }.GetTimePoint(); }
-	$ Container::Get<fs::path>( sv path, const source_location& )const noexcept(false)->fs::path{ var p = TryGet<string>(path); return p.has_value() ? fs::path{*p} : fs::path{}; }
+	$ Container::Getɛ<TimePoint>( sv path, const source_location& sl )const noexcept(false)->TimePoint{ return DateTime{ Getɛ<string>(path, sl) }.GetTimePoint(); }
+	$ Container::Getɛ<fs::path>( sv path, const source_location& )const noexcept(false)->fs::path{ var p = Get<string>(path); return p.has_value() ? fs::path{*p} : fs::path{}; }
 
-	ⓣ Container::Get( sv path, const source_location& sl )const noexcept(false)->T
+	ⓣ Container::Getɛ( sv path, const source_location& sl )const noexcept(false)->T
 	{
-		auto p = TryGet<T>( path ); if( !p ) throw Exception{ sl, ELogLevel::Debug, "'{}' was not found in settings.", path };//mysql precludes using THROW_IF
+		auto p = Get<T>( path ); if( !p ) throw Exception{ sl, ELogLevel::Debug, "'{}' was not found in settings.", path };//mysql precludes using THROW_IF
 		return *p;
 	}
 
-	$ Container::TryGet<Duration>( sv path )const noexcept->optional<Duration>
+	$ Container::Get<Duration>( sv path )const noexcept->optional<Duration>
 	{
-		var strng = TryGet<string>( path );
+		var strng = Get<string>( path );
 		optional<std::chrono::system_clock::duration> result;
 		if( strng.has_value() )
 			Try( [strng, &result](){ result = Chrono::ToDuration(*strng);} );
 		return  result;
 	}
-	$ Container::TryGet<ELogLevel>( sv path )const noexcept->optional<ELogLevel>
+	$ Container::Get<ELogLevel>( sv path )const noexcept->optional<ELogLevel>
 	{
 		optional<ELogLevel> level;
 		if( auto p = FindPath(path); p )
@@ -87,13 +88,13 @@ namespace Jde::Settings
 		return members;
 	}
 
-	$ Container::TryGet<fs::path>( sv path )const noexcept->optional<fs::path>
+	$ Container::Get<fs::path>( sv path )const noexcept->optional<fs::path>
 	{
-		var p = TryGet<string>( path );
+		var p = Get<string>( path );
 		return p ? optional<fs::path>(*p) : nullopt;
 	}
 
-	ⓣ Container::TryGet( sv path )const noexcept->optional<T>
+	ⓣ Container::Get( sv path )const noexcept->optional<T>
 	{
 		auto p = FindPath( path );
 		try
@@ -155,17 +156,25 @@ namespace Jde::Settings
 	}
 
 
-	ⓣ Get( sv path, SRCE )noexcept(false){ return Global().Get<T>( path, sl ); }
-	ⓣ TryGet( sv path )noexcept->optional<T>{ return Global().TryGet<T>( path ); }
-	$ TryGet<Duration>( sv path )noexcept->optional<Duration>{ return Global().TryGet<Duration>( path ); }
+	ⓣ Getɛ( sv path, SRCE )noexcept(false){ return Global().Getɛ<T>( path, sl ); }
+	ⓣ Get( sv path )noexcept->optional<T>{ return Global().Get<T>( path ); }
+	$ Get<Duration>( sv path )noexcept->optional<Duration>{ return Global().Get<Duration>( path ); }
 	Ξ TryMembers( sv path )noexcept->flat_map<string,Container>{ return Global().TryMembers( path ); }
-	$ TryGet<ELogLevel>( sv path )noexcept->optional<ELogLevel>{ return Global().TryGet<ELogLevel>( path ); }
+	$ Get<ELogLevel>( sv path )noexcept->optional<ELogLevel>{ return Global().Get<ELogLevel>( path ); }
 	Ξ ForEach( sv path, function<void(sv, const nlohmann::json& v)> f )noexcept->void{ return Global().ForEach(path, f); }
+
+	Ξ Env( sv path )noexcept->string
+	{ 
+		auto p = Global().Get<string>( path ); 
+		if( p && p->starts_with("$(") && p->size()>3 )
+			p = OSApp::EnvironmentVariable( p->substr(2, p->size()-3) );
+		return p.value_or( string{} );
+	}
 
 	Τ struct Item
 	{
 		Item( sv path, T dflt ):
-			Value{ TryGet<T>(path).value_or(dflt) }
+			Value{ Get<T>(path).value_or(dflt) }
 		{}
 		operator T(){return Value;}
 		const T Value;
@@ -175,7 +184,7 @@ namespace Jde::Settings
 	{
 		optional<T> v;
 		if( auto pSub=Global().TrySubContainer( container ); pSub )
-			v = pSub->TryGet<T>( path );
+			v = pSub->Get<T>( path );
 		return v;
 	}
 

@@ -191,8 +191,8 @@ namespace Jde::Coroutine
 		}
 		var path = fs::path( fs::temp_directory_path()/"test.dat" );
 		fs::remove( path );
-		Future<sp<void>>( IO::Write(path, pBuffer) ).get();
-		var pRead = Future<vector<char>>( IO::Read(path) ).get();
+		VFuture( IO::Write(path, pBuffer) ).get();
+		var pRead = SFuture<vector<char>>( IO::Read(path) ).get();
 		bool equal = *pBuffer==*pRead;
 		ASSERT_TRUE( equal );
 	}

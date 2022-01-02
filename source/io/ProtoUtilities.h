@@ -21,7 +21,7 @@ namespace Jde::IO::Proto
 
 	ⓣ ToVector( const google::protobuf::RepeatedPtrField<T>& x )noexcept->vector<T>;
 
-	α Save( const google::protobuf::MessageLite& msg, path path, SL )noexcept(false)->void;
+	α Save( const google::protobuf::MessageLite& msg, fs::path path, SL )noexcept(false)->void;
 	α ToString( const google::protobuf::MessageLite& msg )noexcept(false)->string;
 	α SizePrefixed( const google::protobuf::MessageLite& m )noexcept(false)->tuple<up<google::protobuf::uint8[]>,uint>;
 	α ToTimestamp( TimePoint t )->up<google::protobuf::Timestamp>;
@@ -57,11 +57,11 @@ namespace Jde::IO
 		var result = m.SerializeToArray( pDestination, (int)length ); THROW_IF( !result, "Could not serialize to an array" );
 		return make_tuple( move(pData), size );
 	}
-	Ξ Proto::Save( const google::protobuf::MessageLite& msg, path path, SRCE )noexcept(false)->void
+	Ξ Proto::Save( const google::protobuf::MessageLite& msg, fs::path path, SRCE )noexcept(false)->void
 	{
 		var p = ms<string>();
 		msg.SerializeToString( p.get() );
-		FileUtilities::Save( path, p, sl );
+		FileUtilities::Save( move(path), p, sl );
 	}
 
 	ⓣ Proto::Deserialize( const vector<char>& data )noexcept(false)->up<T>
