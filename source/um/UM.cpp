@@ -83,10 +83,10 @@ namespace Jde
 		if( !_pSettings->Use )
 			return;
 		if( _pSettings->ConnectionString.empty() )
-			_pSettings->ConnectionString = Settings::TryGet<string>( "db/connectionString" ).value_or( "" );
+			_pSettings->ConnectionString = Settings::Get<string>( "db/connectionString" ).value_or( "" );
 		THROW_IF( _pSettings->ConnectionString.empty(), "no user management connection string." );
 		auto pDataSource = DB::DataSourcePtr(); CHECK( pDataSource );
-		auto path = Settings::TryGet<fs::path>( "db/meta" ).value_or( "meta.json" );
+		auto path = Settings::Get<fs::path>( "db/meta" ).value_or( "meta.json" );
 		if( !fs::exists(path) )
 			path = IApplication::ApplicationDataFolder()/path;
 		LOG( "db meta='{}'"sv, path.string() );

@@ -39,12 +39,12 @@ namespace Jde::IO::Sockets
 	}
 
 	ISocket::ISocket( str settingsPath, PortType defaultPort )noexcept(false):
-		Port{ CheckPort(Settings::TryGet<PortType>(settingsPath+"/port").value_or(defaultPort)) }
+		Port{ CheckPort(Settings::Get<PortType>(settingsPath+"/port").value_or(defaultPort)) }
 	{}
 
 	IClientSocket::IClientSocket( str settingsPath, PortType defaultPort )noexcept(false):
 		ISocket{ settingsPath, defaultPort },
-		Host{ Settings::TryGet<string>(settingsPath+"/host").value_or("localhost") }
+		Host{ Settings::Get<string>(settingsPath+"/host").value_or("localhost") }
 	{
 		TRACE( "IClientSocket::IClientSocket( path='{}', Host='{}', Port='{}' )", settingsPath, Host, Port );
 	}
@@ -53,6 +53,4 @@ namespace Jde::IO::Sockets
 	{
 		LOG( "IClientSocket::~IClientSocket" );
 	}
-
-
 }

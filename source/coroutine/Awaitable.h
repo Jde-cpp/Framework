@@ -97,7 +97,7 @@ namespace Jde::Coroutine
 		PoolAwait( function<void()> fnctn )noexcept:_fnctn{fnctn}{};
 		α await_suspend( HCoroutine h )noexcept->void override{ base::await_suspend(h); CoroutinePool::Resume( move(h) ); }
 		α await_resume()noexcept->AwaitResult override
-		{ 
+		{
 			AwaitResume();
 			AwaitResult y{};
 			try{ _fnctn(); }
@@ -109,7 +109,7 @@ namespace Jde::Coroutine
 	};
 
 	//assynchronous function continues at end
-	class FunctionAwait /*final*/ : public IAwait
+	class FunctionAwait /*final*/ : public IAwait//TODO AsyncAwait?
 	{
 		using base=IAwait;
 	public:
@@ -132,7 +132,7 @@ namespace Jde::Coroutine
 		ASSERTSL( !r.HasShared(), a._sl );
 		if( r.HasValue() )
 			p.set_value( r.UP<T>() );
-		else
+		else if( r.HasError() )
 			p.set_exception( r.Error()->Ptr() );
 	}
 

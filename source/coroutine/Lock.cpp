@@ -30,12 +30,17 @@ namespace Jde
 		Await::AwaitSuspend();
 		AtomicGuard l( _coLocksLock ); ASSERT( _coLocks.find(Key)!=_coLocks.end() );
 		auto& locks = _coLocks.find( Key )->second;
-		for( uint i=0; !Handle && i<locks.size(); ++i )
+		if( locks.size()==1 )//if other locks freed after await_ready
+			h.resume();
+		else
 		{
-			if( locks[i].index()==0 && get<LockKeyAwait*>(locks[i])==this )
-				locks[i] = Handle = h;
- 		}
-		ASSERT( Handle );
+			for( uint i=0; !Handle && i<locks.size(); ++i )
+			{
+				if( locks[i].index()==0 && get<LockKeyAwait*>(locks[i])==this )
+					locks[i] = Handle = h;
+			}
+			ASSERT( Handle );
+		}
 	}
 	α LockKeyAwait::await_resume()noexcept->AwaitResult
 	{

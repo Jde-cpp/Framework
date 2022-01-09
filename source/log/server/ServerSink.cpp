@@ -13,14 +13,14 @@ namespace Jde::Logging
 namespace Jde
 {
 	α Logging::Server()noexcept->up<Logging::IServerSink>&{ return _pServerSink; }
-	α Logging::SetServer( up<Logging::IServerSink> p )noexcept->void{ _pServerSink=move(p); if( _pServerSink ) _serverLogLevel=Settings::TryGet<ELogLevel>("logging/server/level").value_or(ELogLevel::Error); }
+	α Logging::SetServer( up<Logging::IServerSink> p )noexcept->void{ _pServerSink=move(p); if( _pServerSink ) _serverLogLevel=Settings::Get<ELogLevel>("logging/server/level").value_or(ELogLevel::Error); }
 	α Logging::ServerLevel()noexcept->ELogLevel{ return _serverLogLevel; }
 	α Logging::SetServerLevel( ELogLevel serverLevel )noexcept->void{ _serverLogLevel=serverLevel; }
 }
 
 namespace Jde::Logging
 {
-	bool IServerSink::_enabled{ Settings::TryGet<PortType>("logging/server/port").value_or(0)!=0 };
+	bool IServerSink::_enabled{ Settings::Get<PortType>("logging/server/port").value_or(0)!=0 };
 	IServerSink::~IServerSink()
 	{
 		LOGX( "~IServerSink" );

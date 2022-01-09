@@ -30,7 +30,8 @@ namespace Jde::DB
 
 	void DBQueue::Push( string sql, const VectorPtr<object>& parameters, bool isStoredProc, SL sl )noexcept
 	{
-		RETURN_IF( _stopped, "pushing '{}' when stopped", sql );
+		if( _stopped )
+			return;
 		// if( !_stopped )
 		// 	_queue.Push( ms<Statement>(sql, parameters, isStoredProc) );
 		// else

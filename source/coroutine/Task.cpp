@@ -1,4 +1,5 @@
 ﻿#include <jde/coroutine/Task.h>
+#include <nlohmann/json.hpp>
 
 namespace Jde::Coroutine
 {
@@ -28,7 +29,7 @@ namespace Jde::Coroutine
 	}
 	Task::Task( Task&& x )noexcept:
 		_result{ move(x._result) }
-	{ 
+	{
 		i = ++TaskIndex;
 		DBG( "({:x}-{}) moved ({:x})-{}", (uint)this, i, (uint)&x, x.i );
 	}
@@ -57,6 +58,10 @@ namespace Jde::Coroutine
 		{
 			e.Log();
 			CRITICAL( "unhandled - {}", e.what() );
+		}
+		catch( const nlohmann::json::exception& e )
+		{
+			CRITICAL( "json exception - {}"sv, e.what() );
 		}
 		catch( const std::exception& e )
 		{

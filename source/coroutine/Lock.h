@@ -2,27 +2,23 @@
 #include "Awaitable.h"
 #include "boost/noncopyable.hpp"
 
-//#define Φ Γ auto
 namespace Jde
 {
 	using namespace Coroutine;
 	struct Γ LockKeyAwait final : Await
 	{
 		LockKeyAwait( string key, bool shared )noexcept:Key{move(key)}, _shared{shared}{}
-		~LockKeyAwait(){ DBG( "~LockKeyAwait" ); }
+		//~LockKeyAwait(){ DBG( "~LockKeyAwait" ); }
 
 		α await_ready()noexcept->bool override;
 		α await_suspend( HCoroutine h )noexcept->void override;
 		α await_resume()noexcept->AwaitResult override;
 	private:
 		HCoroutine Handle{nullptr};
-		const bool _shared;
 		const string Key;
+		const bool _shared;//TODO implement
 	};
-#undef base
 	Ξ CoLockKey( string key, bool shared )noexcept{ return LockKeyAwait{move(key), shared}; }
-
-
 
 	struct CoLockGuard final : boost::noncopyable
 	{
@@ -44,9 +40,9 @@ namespace Jde
 		α ReadyResult()noexcept->sp<AwaitResult>{ ASSERT(!_pReadyResult); _pReadyResult = ms<AwaitResult>(); return _pReadyResult; }
 	private:
 		const string _key;
-		const bool _shared;
 		sp<AwaitResult> _pReadyResult;
 		function<void(AwaitResult&)> _f;
+		const bool _shared;
 		up<CoLockGuard> _pLock;
 	};
 }
