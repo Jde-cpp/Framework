@@ -10,10 +10,10 @@ namespace Jde
 	{
 		up<Settings::Container> _pGlobal;
 
-		Container::Container( path jsonFile )noexcept(false):
+		Container::Container( path jsonFile, SL sl )noexcept(false):
 			_pJson{ make_unique<nlohmann::json>() }
 		{
-			CHECK_PATH( jsonFile );
+			CHECK_PATH( jsonFile, sl );
 			var fileString = jsonFile.string();
 			std::ifstream is( fileString.c_str() ); THROW_IF( is.bad(), "Could not open file:  {}", jsonFile.string() );
 			is >> *_pJson;

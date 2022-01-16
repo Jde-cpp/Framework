@@ -144,18 +144,19 @@ namespace Jde
 #else
 					pattern = "%^%3!l%$-%H:%M:%S.%e %-64@  %v";
 #endif
-				pSink = make_shared<spdlog::sinks::stdout_color_sink_mt>();
+				pSink = ms<spdlog::sinks::stdout_color_sink_mt>();
 			}
 			else if( name=="file" )
 			{
 				auto pPath = sink.Get<fs::path>( "path" );
-				var fileNameWithExt = Settings::FileStem()+".log";
+				var markdown = sink.Get<bool>( "md" );
+				var fileNameWithExt = Settings::FileStem()+( markdown ? ".md" : ".log" );
 				var path = pPath && !pPath->empty() ? *pPath/fileNameWithExt : OSApp::ApplicationDataFolder()/"logs"/fileNameWithExt;
 				var truncate = sink.Get<bool>( "truncate" ).value_or( true );
 				additional = format( " truncate='{}' path='{}'", truncate, path.string() );
-				pSink = make_shared<spdlog::sinks::basic_file_sink_mt>( path.string(), truncate );
+				pSink = ms<spdlog::sinks::basic_file_sink_mt>( path.string(), truncate );
 				if( pattern.empty() )
-					pattern = "%^%3!l%$-%H:%M:%S.%e %-64@ %v";
+					pattern = markdown ? "%^%3!l%$-%H:%M:%S.%e [%v](%@)  " : "%^%3!l%$-%H:%M:%S.%e %-64@ %v";
 			}
 			else
 				continue;

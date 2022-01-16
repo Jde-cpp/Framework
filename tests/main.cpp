@@ -22,7 +22,7 @@ int main( int argc, char **argv )
 	Startup( argc, argv );
 	auto result = EXIT_FAILURE;
 	{
-		var p=Settings::TryGet<string>( "testing/tests" );
+		var p=Settings::Get<string>( "testing/tests" );
 		var filter = p ? *p : "*";
 		::testing::GTEST_FLAG( filter ) = filter;
 	   result = RUN_ALL_TESTS();

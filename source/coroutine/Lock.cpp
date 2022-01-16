@@ -1,8 +1,10 @@
 ﻿#include "Lock.h"
 #include "../threading/Mutex.h"
 
+#define var const auto
 namespace Jde
 {
+	static var& _logLevel{ Logging::TagLevel("locks") };
 	flat_map<string,std::deque<std::variant<LockKeyAwait*,coroutine_handle<>>>> _coLocks; std::atomic_flag _coLocksLock;
 	α TryLock( string key, bool /*shared*/ )noexcept->up<CoLockGuard>
 	{
@@ -11,7 +13,6 @@ namespace Jde
 		up<CoLockGuard> y;
 		if( locks.size()==0 )
 		{
-			//std::variant<LockKeyAwait*,coroutine_handle<>> v{ (LockKeyAwait*)nullptr };
 			locks.push_back( nullptr );
 			y = mu<CoLockGuard>( move(key), nullptr );
 		}
@@ -23,6 +24,8 @@ namespace Jde
 		AtomicGuard l( _coLocksLock );
 		auto& locks = _coLocks.try_emplace( Key ).first->second;
 		locks.push_back( this );
+		var ready = locks.size()==1;
+		LOG( "({})LockKeyAwait::await_ready={} size={}", Key, ready, locks.size() );
 		return locks.size()==1;
 	}
 	α LockKeyAwait::await_suspend( HCoroutine h )noexcept->void
@@ -31,7 +34,10 @@ namespace Jde
 		AtomicGuard l( _coLocksLock ); ASSERT( _coLocks.find(Key)!=_coLocks.end() );
 		auto& locks = _coLocks.find( Key )->second;
 		if( locks.size()==1 )//if other locks freed after await_ready
+		{
+			l.unlock();
 			h.resume();
+		}
 		else
 		{
 			for( uint i=0; !Handle && i<locks.size(); ++i )
@@ -40,6 +46,7 @@ namespace Jde
 					locks[i] = Handle = h;
 			}
 			ASSERT( Handle );
+			LOG( "({})LockKeyAwait::await_suspend size={}", Key, locks.size() );
 		}
 	}
 	α LockKeyAwait::await_resume()noexcept->AwaitResult
@@ -50,7 +57,9 @@ namespace Jde
 	CoLockGuard::CoLockGuard( string key, std::variant<LockKeyAwait*,coroutine_handle<>> h )noexcept:
 		Handle{h},
 		Key{ move(key) }
-	{}
+	{
+		LOG( "({})CoLockGuard() index={}", Key, h.index() );
+	}
 	CoLockGuard::~CoLockGuard()
 	{
 		AtomicGuard l( _coLocksLock ); ASSERT( _coLocks.find(Key)!=_coLocks.end() && _coLocks.find(Key)->second.size() );
@@ -58,9 +67,12 @@ namespace Jde
 		locks.pop_front();
 		if( locks.size() )
 		{
-			ASSERT( locks.front().index()==1 );
-			CoroutinePool::Resume( move(get<1>(locks.front())) );
+			if( locks.front().index()==1 )
+				CoroutinePool::Resume( move(get<1>(locks.front())) );
+			else
+				LOG( "({})CoLockGuard - size={}, next is awaitable, should continue.", Key, locks.size() );
 		}
+		LOG( "~CoLockGuard( {} )", Key );
 	}
 
 	α LockWrapperAwait::await_ready()noexcept->bool

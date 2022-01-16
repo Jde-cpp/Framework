@@ -94,7 +94,7 @@ namespace Jde::Coroutine
 	struct PoolAwait final : IAwait//todo rename FromSyncAwait?
 	{
 		using base=IAwait;
-		PoolAwait( function<void()> fnctn )noexcept:_fnctn{fnctn}{};
+		PoolAwait( function<void()> fnctn, SRCE )noexcept:base{sl},_fnctn{fnctn}{};
 		α await_suspend( HCoroutine h )noexcept->void override{ base::await_suspend(h); CoroutinePool::Resume( move(h) ); }
 		α await_resume()noexcept->AwaitResult override
 		{
@@ -169,8 +169,10 @@ namespace Jde::Coroutine
 		ASSERT( !r.HasValue() )
 		if( r.HasShared() )
 			p.set_value( r.SP<T>(a._sl) );
-		else
+		else if( r.HasError() )
 			p.set_exception( r.Error()->Ptr() );
+		else
+			ASSERT( false );
 	}
 
 	ⓣ SFuture( IAwait&& a )->std::future<sp<T>>

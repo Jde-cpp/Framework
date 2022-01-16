@@ -65,6 +65,7 @@ namespace Jde::Threading
 		sp<IWorker> pKeepAlive;
 		var keepAlive = Settings::Get<Duration>( "WorkerkeepAlive" ).value_or( 5s );
 		LOG( "({})Starting Thread", NameInstance );
+		_lastRequest = Clock::now();
 		while( !st.stop_requested() )
 		{
 			if( var p = Poll(); !p || *p )

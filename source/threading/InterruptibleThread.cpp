@@ -33,7 +33,7 @@ namespace Jde::Threading
 	{
 		if( ShouldJoin )
 			Join();
-		LOG(  "~InterruptibleThread({})", Name );
+		//LOG(  "~InterruptibleThread({})", Name );
 	}
 	void InterruptibleThread::Interrupt()noexcept
 	{

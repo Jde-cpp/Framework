@@ -5,6 +5,7 @@
 #define var const auto
 namespace Jde::IO
 {
+	static const LogTag& _logLevel{ Logging::TagLevel("io") };
 	α IFileChunkArg::Handle()noexcept->HFile&{ return _fileIOArg.Handle; }
 	uint32 _chunkSize=0;
 	α DriveWorker::ChunkSize()noexcept->uint32{ return _chunkSize==0 ? (_chunkSize=Settings::Get<uint32>("workers/drive/chunkSize").value_or(1 << 19)) : _chunkSize; }
@@ -75,8 +76,10 @@ namespace Jde::IO
 		bool cache = false;
 		try
 		{
-			if( auto p = _cache ? Cache::Get<sp<void>>(_arg.Path.string()) : sp<void>{}; p )//TODO lock the file
+			var path = _arg.Path.string();
+			if( auto p = _cache ? Cache::Get<sp<void>>(path) : sp<void>{}; p )//TODO lock the file
 			{
+				LOG( "({})Open from cache", path );
 				cache = true;
 				if( auto pT = _arg.Buffer.index()==0 ? static_pointer_cast<vector<char>>(p) : sp<vector<char>>{}; pT )
 					_arg.Buffer = pT;

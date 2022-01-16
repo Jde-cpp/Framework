@@ -76,6 +76,7 @@ namespace Jde::Threading
 		for( auto pExisting = _mutexes.begin(); pExisting != _mutexes.end();  )
 			pExisting = pExisting->first!=key && pExisting->second.use_count()==1 && pExisting->second->try_lock() ? _mutexes.erase( pExisting ) : std::next( pExisting );
 		l.unlock();
+		LOG( "UniqueLock( '{}' )", key );
 		return unique_lock{ *pKeyMutex };
 	}
 }

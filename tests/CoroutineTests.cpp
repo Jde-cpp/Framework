@@ -4,13 +4,17 @@
 #include "../source/coroutine/Coroutine.h"
 #include "../source/threading/Mutex.h"
 #include "../source/log/server/ServerSink.h"
+#include "../source/coroutine/Lock.h"
 #include <jde/io/File.h>
 #ifdef _MSC_VER
 	#include "../../Windows/source/WindowsDrive.h"
 #endif
+
 #define var const auto
 namespace Jde::Coroutine
 {
+	static const LogTag& _logLevel = Logging::TagLevel( "tests" );
+
 	struct CoroutineTests : public ::testing::Test
 	{
 	protected:
@@ -195,5 +199,47 @@ namespace Jde::Coroutine
 		var pRead = SFuture<vector<char>>( IO::Read(path) ).get();
 		bool equal = *pBuffer==*pRead;
 		ASSERT_TRUE( equal );
+	}
+
+	α LockTest( sv symbol, uint i, bool singleThread=true, stop_token st={} )->Task
+	{
+		if( !singleThread )
+			Threading::SetThreadDscrptn( format("{} - Starting",i) );
+		var id = std::this_thread::get_id();
+		var _ = ( co_await CoLockKey( format("Twitter::Search.{}", symbol), true) ).UP<CoLockGuard>();
+		if( !singleThread )
+			Threading::SetThreadDscrptn( format("{} - Running",i) );
+		if( singleThread )
+		{
+			ASSERT( id==std::this_thread::get_id() );
+		}
+		else
+		{
+			while( !st.stop_requested() )
+				std::this_thread::sleep_for( 1ms );
+		}
+		LOG( "({})Test - Done", i );
+		co_return;
+	}
+	TEST_F(CoroutineTests, Locks)
+	{
+		//for( uint i=0; i<5; ++i )
+		//	LockTest( "TSLA", i );
+		
+		array<up<std::jthread>,10> threads;
+		for( uint i=0; i<threads.size(); ++i )
+		{	
+			threads[i] = mu<jthread>( [i](stop_token st){ LockTest("TSLA", i, false, st); } );
+		}
+		std::this_thread::sleep_for( 1s );
+		for( uint i=0; i<threads.size(); ++i )
+			threads[i]->request_stop();
+		for( uint i=0; i<threads.size(); ++i )
+		{
+			threads[i]->join();
+			LOG( "({})Test - join complete", i );
+			std::this_thread::sleep_for( 1ms );
+		}
+		std::this_thread::sleep_for( 1min );
 	}
 }

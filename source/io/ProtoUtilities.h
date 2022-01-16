@@ -11,9 +11,9 @@
 #define var const auto
 namespace Jde::IO::Proto
 {
-	ⓣ Load( path path )noexcept(false)->up<T>;
+	ⓣ Load( path path, SRCE )noexcept(false)->up<T>;
 	ⓣ TryLoad( path path )noexcept->up<T>;
-	ⓣ Load( path path, T& p )noexcept(false)->void;
+	ⓣ Load( path path, T& p, SRCE )noexcept(false)->void;
 	ⓣ LoadXZ( path path )noexcept(false)->AWrapper;//sp<T>
 
 	ⓣ Deserialize( const vector<char>& data )noexcept(false)->up<T>;
@@ -76,29 +76,29 @@ namespace Jde::IO
 		Internal::Deserialize<T>( p, size, y );
 		return y;
 	}
-	ⓣ Proto::Load( path path, T& proto )noexcept(false)->void
+	ⓣ Proto::Load( path path, T& proto, SL sl )noexcept(false)->void
 	{
 		up<vector<char>> pBytes;
 		try
 		{
-			pBytes = IO::FileUtilities::LoadBinary( path );
+			pBytes = IO::FileUtilities::LoadBinary( path, sl );
 		}
 		catch( fs::filesystem_error& e )
 		{
 			throw IOException( move(e) );
 		}
-		if( !pBytes )
+		if( !pBytes || !pBytes->size() )
 		{
 			fs::remove( path );
-			throw IOException{ path, "has 0 bytes. Removed" };
+			throw IOException{ path, "has 0 bytes. Removed", sl };
 		}
 		Internal::Deserialize( (google::protobuf::uint8*)pBytes->data(), (uint32)pBytes->size(), proto );
 	}
 
-	ⓣ Proto::Load( path path )noexcept(false)->up<T>
+	ⓣ Proto::Load( path path, SL sl )noexcept(false)->up<T>
 	{
 		auto p = make_unique<T>();
-		Load( path, *p );
+		Load( path, *p, sl );
 		return p;
 	}
 

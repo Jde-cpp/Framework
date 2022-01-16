@@ -28,7 +28,7 @@ namespace Jde::Coroutine
 		TCoWorker( sv name )noexcept:CoWorker{name}{};
 		template<typename TAwaitable2=TAwaitable>
 		struct Handles{ coroutine_handle<Task::promise_type> HCo; Coroutine::ClientHandle HClient; };
-		virtual ~TCoWorker()noexcept{ DBG("TCoWorker::~TCoWorker({})"sv, _name); }
+		virtual ~TCoWorker()noexcept{ /*DBG("TCoWorker::~TCoWorker({})"sv, _name);*/ }
 		static sp<TDerived> Instance()noexcept{ return std::static_pointer_cast<TDerived>(_pInstance); }
 	protected:
 		static constexpr Duration WakeDuration{5s};

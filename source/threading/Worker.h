@@ -39,7 +39,7 @@ namespace Jde::Threading
 		void Sleep()noexcept override;
 	protected:
 		void Run( stop_token st )noexcept override;
-		atomic<TimePoint> _lastRequest{ Clock::now() };
+		atomic<TimePoint> _lastRequest;
 	private:
 		atomic<uint> _calls{0};
 	};
@@ -71,7 +71,7 @@ namespace Jde::Threading
 	ⓣ TWorker<T>::Start()noexcept->sp<IWorker>
 	{
 		AtomicGuard l{ _mutex };
-		if( !_pInstance )
+		if( !_pInstance || !_pInstance->HasThread() )
 		{
 			//pInstance = _pInstance = make_shared<T>();
 			//const bool addThreads = Settings::TryGet<uint8>( format("workers/{}/threads", T::Name) ).value_or( 0 );
@@ -93,7 +93,7 @@ namespace Jde::Threading
 		if( auto p=Start(); p )
 		{
 			if( p->HasThread() )
-				p->SetWorker( x );
+				p->SetWorker( x ); //keepalive
 //			else
 //				IApplication::AddActiveWorker( p.get() );
 			p->Queue().Push( move(x) );
@@ -109,7 +109,7 @@ namespace Jde::Threading
 		}
 		return handled;
 	}
+}
 #undef TARG
 #undef var
 #undef $
-}

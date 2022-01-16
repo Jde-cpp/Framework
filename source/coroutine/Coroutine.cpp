@@ -1,10 +1,5 @@
 ﻿#include "Coroutine.h"
 #include "../threading/InterruptibleThread.h"
-#ifdef _MSC_VER
-	using std::stop_token;
-#else
-	using Jde::stop_token;
-#endif
 #define var const auto
 
 using namespace std::chrono;

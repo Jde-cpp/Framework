@@ -23,6 +23,20 @@ namespace Jde
 			throw IOException( move(e) );
 		}
 	}
+	α IO::Copy( fs::path from, fs::path to, SL sl_ )->PoolAwait
+	{
+		return PoolAwait( [f=move(from), t=move(to), sl=sl_]()noexcept(false)
+		{
+			std::error_code e;
+			fs::copy_file( f, t, e ); 
+			THROW_IFX( e, IOException(fs::filesystem_error("copy file failed", f, t, e), sl) );
+		}, sl_);
+	}
+	α IO::CopySync( fs::path from, fs::path to, SL sl )->void
+	{
+		VFuture( Copy(move(from), move(to), sl) ).get();
+	}
+
 }
 namespace Jde::IO::FileUtilities
 {
@@ -34,7 +48,7 @@ namespace Jde::IO::FileUtilities
 
 	up<std::set<fs::directory_entry>> GetDirectory( path directory )
 	{
-		auto items = make_unique<std::set<fs::directory_entry>>();
+		auto items = mu<std::set<fs::directory_entry>>();
 		Jde::IO::FileUtilities::ForEachItem( directory, [&items]( fs::directory_entry item ){items->emplace(item);} );
 		return items;
 	}
@@ -42,7 +56,7 @@ namespace Jde::IO::FileUtilities
 	up<std::set<fs::directory_entry>> GetDirectories( path directory, up<std::set<fs::directory_entry>> pItems )
 	{
 		if( !pItems )
-			pItems = make_unique<std::set<fs::directory_entry>>();
+			pItems = mu<std::set<fs::directory_entry>>();
 		auto func = [&pItems]( fs::directory_entry item )
 		{
 			if( fs::is_directory(item) )
@@ -55,18 +69,18 @@ namespace Jde::IO::FileUtilities
 		return pItems;
 	}
 
-	up<vector<char>> LoadBinary( path path )noexcept(false)//fs::filesystem_error
+	up<vector<char>> LoadBinary( path path, SL sl )noexcept(false)//fs::filesystem_error
 	{
-		CHECK_PATH( path );
+		CHECK_PATH( path, sl );
 		auto size = FileSize( path );
 		TRACE( "Opening {} - {} bytes "sv, path.string(), size );
-		std::ifstream f( path, std::ios::binary ); THROW_IFX( f.fail(), IOException(path, "Could not open file") );
+		std::ifstream f( path, std::ios::binary ); THROW_IFX( f.fail(), IOException(path, "Could not open file", sl) );
 
-		return make_unique<vector<char>>( (std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>() );  //vexing parse
+		return mu<vector<char>>( (std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>() );  //vexing parse
 	}
-	string Load( path path )noexcept(false)
+	string Load( path path, SL sl )noexcept(false)
 	{
-		CHECK_PATH( path );
+		CHECK_PATH( path, sl );
 		auto size = FileSize( path );
 		TRACE( "Opening {} - {} bytes "sv, path.string(), size );
 		std::ifstream f( path, std::ios::binary ); THROW_IFX(f.fail(), IOException(path, "Could not open file") );

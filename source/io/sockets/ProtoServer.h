@@ -13,16 +13,16 @@ namespace Jde::IO::Sockets
 	using SessionPK=uint32;
 	struct ProtoSession;
 
-	#define 🚪 Γ auto
-	struct ProtoServer : public ISocket
+	#define Φ Γ auto
+	struct ProtoServer : ISocket
 	{
 		Γ ProtoServer( PortType defaultPort )noexcept;
 		Γ virtual ~ProtoServer();
-		virtual up<ProtoSession> CreateSession( tcp::socket&& socket, SessionPK id )noexcept=0;
-		void RemoveSession( SessionPK id )noexcept{ unique_lock l{_mutex}; _sessions.erase(id); }
+		β CreateSession( tcp::socket&& socket, SessionPK id )noexcept->up<ProtoSession> =0;
+		α RemoveSession( SessionPK id )noexcept{ unique_lock l{_mutex}; _sessions.erase(id); }
 
 	protected:
-		🚪 Accept()noexcept->void;
+		Φ Accept()noexcept->void;
 		std::atomic<SessionPK> _id{0};
 		sp<IOContextThread> _pIOContext;
 		tcp::acceptor _acceptor;
@@ -36,13 +36,13 @@ namespace Jde::IO::Sockets
 		ProtoSession( tcp::socket&& socket, SessionPK id )noexcept;
 		virtual ~ProtoSession()=default;
 		SessionPK Id;
-		virtual void OnDisconnect()noexcept=0;
+		β OnDisconnect()noexcept->void=0;
 	protected:
-		void ReadHeader()noexcept;
+		α ReadHeader()noexcept->void;
 		tcp::socket _socket;
 		const static LogTag& _logLevel;
 	private:
-		virtual void ReadBody( uint messageLength )noexcept=0;
+		β ReadBody( uint messageLength )noexcept->void=0;
 		char _readMessageSize[4];
 	};
 
@@ -51,14 +51,11 @@ namespace Jde::IO::Sockets
 	template<class TToServer, class TFromServer>
 	struct TProtoSession: public ProtoSession
 	{
-		TProtoSession( tcp::socket&& socket, SessionPK id )noexcept:
-			ProtoSession{ move(socket), id }
-		{}
-
+		TProtoSession( tcp::socket&& socket, SessionPK id )noexcept:ProtoSession{ move(socket), id } {}
 	protected:
-		virtual void OnReceive( TToServer&& pValue )noexcept(false)=0;
-		void ReadBody( uint messageLength )noexcept override;
-		void Write( const TFromServer& message )noexcept;
+		β OnReceive( TToServer&& pValue )noexcept(false)->void=0;
+		α ReadBody( uint messageLength )noexcept->void override;
+		α Write( const TFromServer& message )noexcept->void;
 		vector<google::protobuf::uint8> _message;
 	};
 
@@ -97,6 +94,6 @@ namespace Jde::IO::Sockets
 	}
 
 #pragma endregion
-#undef 🚪
+#undef Φ
 #undef $
 }

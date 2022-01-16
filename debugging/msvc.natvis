@@ -23,7 +23,11 @@
 		<!-- <DisplayString>{{xxxsize = {m_flat_tree.m_data.m_seq.m_holder.m_size}}}</DisplayString> -->
 	</Type>
 	<Type Name="boost::container::dtl::flat_tree&lt;*&gt;::container_type">
-		<DisplayString>{{container_type}}</DisplayString>
+		<DisplayString>{{xxxxcontainer_type}}</DisplayString>
+		<!-- <DisplayString>{{xxxsize = {m_flat_tree.m_data.m_seq.m_holder.m_size}}}</DisplayString> -->
+	</Type>
+	<Type Name="boost::container::dtl::flat_tree&lt;*&gt;">
+		<DisplayString>{{xxxxdtl::flat_tree}}</DisplayString>
 		<!-- <DisplayString>{{xxxsize = {m_flat_tree.m_data.m_seq.m_holder.m_size}}}</DisplayString> -->
 	</Type>
 	<Type Name="boost::container::vector&lt;*&gt;::alloc_holder_t">
