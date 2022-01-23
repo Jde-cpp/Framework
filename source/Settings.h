@@ -19,8 +19,19 @@ namespace Jde
 namespace Jde::Settings
 {
 	α Path()noexcept->fs::path;
+	struct JsonNumber
+	{
+		using Variant=std::variant<double,_int,uint>;
+		JsonNumber( json j )noexcept(false);
+		JsonNumber( double v )noexcept:Value{v}{};
+		JsonNumber( _int v )noexcept:Value{v}{};
+		JsonNumber( uint v )noexcept:Value{v}{};
+
+		Variant Value;
+	};
 	struct Γ Container
 	{
+		using Variant=std::variant<nullptr_t,string,JsonNumber>;
 		Container( const json& json )noexcept;
 		Container( path jsonFile, SRCE )noexcept(false);
 		α TryMembers( sv path )noexcept->flat_map<string,Container>;
@@ -28,6 +39,7 @@ namespace Jde::Settings
 		α FindPath( sv path )const noexcept->optional<json>;
 		ⓣ TryArray( sv path )noexcept->vector<T>;
 		ⓣ Map( sv path )noexcept->flat_map<string,T>;
+		Variant operator[]( sv path )noexcept(false);
 
 		α ForEach( sv path, function<void(sv, const nlohmann::json&)> f )noexcept->void;
 
@@ -111,10 +123,10 @@ namespace Jde::Settings
 	$ Container::TryArray<Container>( sv path )noexcept->vector<Container>
 	{
 		vector<Container> values;
-		if( auto p = FindPath( path ); p )
+		if( auto p = FindPath(path); p )
 		{
 			for( auto& i : p->items() )
-				values.emplace_back( i );
+				values.emplace_back( i.value() );
 		}
 		return values;
 	}
@@ -164,8 +176,8 @@ namespace Jde::Settings
 	Ξ ForEach( sv path, function<void(sv, const nlohmann::json& v)> f )noexcept->void{ return Global().ForEach(path, f); }
 
 	Ξ Env( sv path )noexcept->string
-	{ 
-		auto p = Global().Get<string>( path ); 
+	{
+		auto p = Global().Get<string>( path );
 		if( p && p->starts_with("$(") && p->size()>3 )
 			p = OSApp::EnvironmentVariable( p->substr(2, p->size()-3) );
 		return p.value_or( string{} );

@@ -19,7 +19,7 @@
 		</Expand>
 	</Type>
 	<Type Name="boost::container::flat_map&lt;*,*,*,*&gt;">
-		<DisplayString>{{size=={m_flat_tree.m_data.m_seq.m_holder.m_size}}}</DisplayString>
+		<DisplayString>{{size={m_flat_tree.m_data.m_seq.m_holder.m_size}}}</DisplayString>
 		<Expand>
 			<ArrayItems>
 				<Size>m_flat_tree.m_data.m_seq.m_holder.m_size</Size>

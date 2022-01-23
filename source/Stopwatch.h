@@ -43,7 +43,7 @@ namespace Jde
 		void UnPause();
 		void Restart(){ _start = std::chrono::steady_clock::now(); }
 	private:
-		static void Output( sv what, const SDuration& elapsed, bool logMemory );
+		static void Output( sv what, const SDuration& elapsed, bool logMemory, SRCE );
 
 		const std::string _what;
 		const std::string _instance;
@@ -61,5 +61,4 @@ namespace Jde
 		STimePoint _startPause;
 		SDuration _elapsedPause{0};
 	};
-
 }

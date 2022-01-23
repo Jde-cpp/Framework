@@ -115,7 +115,7 @@ namespace Jde::IO
 
 	struct IDrive : std::enable_shared_from_this<IDrive>
 	{
-		β Recursive( path path )noexcept(false)->flat_map<string,IDirEntryPtr> =0;
+		β Recursive( path path, SRCE )noexcept(false)->flat_map<string,IDirEntryPtr> =0;
 		β Get( path path )noexcept(false)->IDirEntryPtr=0;
 		β Save( path path, const vector<char>& bytes, const IDirEntry& dirEntry )noexcept(false)->IDirEntryPtr=0;
 		β CreateFolder( path path, const IDirEntry& dirEntry )->IDirEntryPtr=0;

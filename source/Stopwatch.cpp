@@ -87,12 +87,12 @@ namespace Jde
 		_previousProgressElapsed = elapsed;
 		return result;
 	}
-	void Stopwatch::Output( sv what, const SDuration& elapsed, bool logMemory )
+	void Stopwatch::Output( sv what, const SDuration& elapsed, bool logMemory, SL sl )
 	{
 		if( logMemory )
-			DBG( "{{}) time:  {} - {} Gigs"sv, what, FormatSeconds(elapsed), IApplication::MemorySize()/std::pow(2,30) );
+			Logging::Log( Logging::Message{ELogLevel::Debug, "{{}) time:  {} - {} Gigs", sl}, what, FormatSeconds(elapsed), IApplication::MemorySize()/std::pow(2,30) );
 		else
-			DBG( "({}) time:  {}"sv, what, FormatSeconds(elapsed) );
+			Logging::Log( Logging::Message{ELogLevel::Debug, "({}) time:  {}", sl}, what, FormatSeconds(elapsed) );
 	}
 	void Stopwatch::Finish( bool /*remove=true*/ )
 	{

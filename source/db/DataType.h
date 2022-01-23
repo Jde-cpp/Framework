@@ -37,5 +37,6 @@ namespace Jde::DB
 			ASSERT( y=0 );
 		return y;
 	}
+	Ξ ToInt( const object& x )noexcept->_int{ return (_int)ToUInt(x); }
 }
 #undef var

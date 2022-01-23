@@ -21,7 +21,7 @@ namespace Jde::DB
 	struct ColumnQL final
 	{
 		string JsonName;
-		Column* SchemaColumnPtr{nullptr};
+		mutable const Column* SchemaColumnPtr{nullptr};
 		Ω QLType( const DB::Column& db, SRCE )noexcept(false)->string;
 	};
 

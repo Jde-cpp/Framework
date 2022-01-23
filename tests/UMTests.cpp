@@ -44,12 +44,12 @@ namespace Jde::UM
 
 		return id;
 	}
-	α Purge( sv service, uint id )->void
+	α Purge( sv service, uint id, uint userId )->void
 	{
 		constexpr sv purgeFormat = "{{ mutation {{ purge{}(\"id\":{}) }} }}";
 		var purgeQuery = format( purgeFormat, service, id );
 		//DBG( purgeQuery );
-		var purgeResult = DB::Query( purgeQuery, 0 );
+		var purgeResult = DB::Query( purgeQuery, userId );
 
 		//DBG( purgeResult.dump() );
 	}
@@ -76,6 +76,11 @@ namespace Jde::UM
 		Configure();
 
 		//bool create = true;
+		json jRolePermissions = DB::Query( "query{ role(filter:{target:{ eq:\"read-role-id\"}}){ id name attributes created updated deleted target description  accountRoles{id name attributes created updated deleted target description rights } groups{id name attributes created updated deleted target description } rolePermissions{id api name rights } } } )", 0 );
+		LOGS( jRolePermissions.dump() );
+		auto v = Settings::Container{jRolePermissions}.TryArray<Settings::Container>("data/role/rolePermissions").front()["api"];
+		ASSERT_EQ( v.index(), 1 );
+		ASSERT_EQ( get<string>( v ), "UM" );
 
 		json j1 = DB::Query( "query{ role(filter:{id:{eq:8}}){ rolePermissions{api{ id name } id name rights } } }", 0 );
 		LOGS( j1.dump() );
@@ -89,6 +94,7 @@ namespace Jde::UM
 
 		auto administersId = Query( "group", "UnitTestAdminGroup" ); if( !administersId ) administersId = Crud( "Group", "UnitTestAdminGroup", "UnitTestAdminGroup", "UnitTestAdminGroup desc" );
 		auto readUMRoleId = Query( "role", "UnitTestRole" ); if( !readUMRoleId ) readUMRoleId = Crud( "Role", "UnitTestRole", "unittest_role_1", "unittest1 role desc" );
+
 		//Give administrator UM rights.
 		//Revoke low's write UM Rights.
 		//Try to edit.
@@ -130,11 +136,11 @@ namespace Jde::UM
 		AddRemove( "removeUserGroup", "userId", "groupId", authenticatedUserId, administersId );
 		AddRemove( "removeRolePermission", "roleId", "permissionId", readUMRoleId, permissionId );
 
-		Purge( "Group", administersId );
-		Purge( "User", adminUserId );
-		Purge( "User", authenticatedUserId );
-		Purge( "Role", readUMRoleId );
-		Purge( "Permission", permissionId );
+		Purge( "Group", administersId, adminUserId );
+		Purge( "User", authenticatedUserId, adminUserId );
+		Purge( "Role", readUMRoleId, adminUserId );
+		Purge( "Permission", permissionId, adminUserId );
+		Purge( "User", adminUserId, adminUserId );
 
 /*		var updateFormat = "{{ mutation {{ updateUser(\"id\":{}, \"input\":{{ \"description\": \"{}\"}}) }} }}";
 		var updateQuery = format( updateFormat, id, "Unit Test User Update" );

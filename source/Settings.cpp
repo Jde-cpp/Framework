@@ -52,6 +52,29 @@ namespace Jde
 			}
 			return result;
 		}
+
+		JsonNumber::JsonNumber( json j )noexcept(false)
+		{
+			if( j.is_number_float() )
+				Value = j.get<double>();
+			else if( j.is_number_unsigned() )
+				Value = j.get<uint>();
+			else
+				THROW( "{} not implemented", (uint)j.type() );
+		}
+		Container::Variant Container::operator[]( sv path )noexcept(false)
+		{
+			auto j = FindPath( path );
+			Variant result;
+			if( j )
+			{
+				if( j->is_string() )
+					result = j->get<string>();
+				else
+					result = JsonNumber{ *j };
+			}
+			return result;
+		}
 	}
 
 	α Settings::Set( sv path, const fs::path& value )noexcept->void

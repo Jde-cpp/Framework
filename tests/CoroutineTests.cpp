@@ -225,10 +225,10 @@ namespace Jde::Coroutine
 	{
 		//for( uint i=0; i<5; ++i )
 		//	LockTest( "TSLA", i );
-		
-		array<up<std::jthread>,10> threads;
+
+		array<up<jthread>,10> threads;
 		for( uint i=0; i<threads.size(); ++i )
-		{	
+		{
 			threads[i] = mu<jthread>( [i](stop_token st){ LockTest("TSLA", i, false, st); } );
 		}
 		std::this_thread::sleep_for( 1s );
