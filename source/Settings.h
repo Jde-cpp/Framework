@@ -1,4 +1,5 @@
 ﻿#pragma once
+#include <variant>
 #include "DateTime.h"
 #include <jde/Assert.h>
 #include <jde/Exports.h>
@@ -169,7 +170,7 @@ namespace Jde::Settings
 
 
 	ⓣ Getɛ( sv path, SRCE )noexcept(false){ return Global().Getɛ<T>( path, sl ); }
-	ⓣ Get( sv path )noexcept->optional<T>{ return Global().Get<T>( path ); }
+	template<class T=string> auto Get( sv path )noexcept->optional<T>{ return Global().Get<T>( path ); }
 	$ Get<Duration>( sv path )noexcept->optional<Duration>{ return Global().Get<Duration>( path ); }
 	Ξ TryMembers( sv path )noexcept->flat_map<string,Container>{ return Global().TryMembers( path ); }
 	$ Get<ELogLevel>( sv path )noexcept->optional<ELogLevel>{ return Global().Get<ELogLevel>( path ); }

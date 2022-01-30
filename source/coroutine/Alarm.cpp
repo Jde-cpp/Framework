@@ -4,6 +4,7 @@
 
 namespace Jde::Threading
 {
+	const LogTag& Alarm::_logLevel{ Logging::TagLevel("alarm") };
 	Alarm _instance;
 	void AlarmAwait::await_suspend( HCoroutine h )noexcept
 	{
@@ -19,7 +20,7 @@ namespace Jde::Threading
 		{
 			unique_lock l{_coroutineMutex};
 			_coroutines.emplace( t, make_tuple(myHandle, h) );
-			DBG( "Alarm::Add2({})"sv, Chrono::ToString(Clock::now()-t) );
+			LOG( "Alarm::Add2({})"sv, Chrono::ToString(Clock::now()-t) );
 		}
 		if( t-Clock::now()<WakeDuration )
 		{
@@ -38,12 +39,12 @@ namespace Jde::Threading
 		unique_lock l{ _coroutineMutex };
 		if( auto p = std::find_if(_coroutines.begin(), _coroutines.end(), [h](var x){ return get<0>(x.second)==h;}); p!=_coroutines.end() )
 		{
-			DBG( "Cancel({})"sv, h );
+			LOG( "Cancel({})"sv, h );
 			get<1>( p->second ).destroy();
 			_coroutines.erase( p );
 		}
 		else
-			DBG( "Could not find handle {}."sv, h );
+			LOG( "Could not find handle {}."sv, h );
 	}
 
 	optional<TimePoint> Alarm::Next()noexcept
@@ -61,7 +62,7 @@ namespace Jde::Threading
 			var next = Next().value_or(dflt);
 			var until = std::min( dflt, next );
 			if( ++i%10==0 )
-				DBG( "Alarm wait until:  {}"sv, ToIsoString(until) );
+				LOG( "Alarm wait until:  {}"sv, ToIsoString(until) );
 			/*var status =*/ _cv.wait_for( lk, until-now );
 		}
 		unique_lock l{ _coroutineMutex };

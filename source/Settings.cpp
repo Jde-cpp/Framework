@@ -122,10 +122,12 @@ namespace Jde
 			var settingsPath = Path();
 			try
 			{
+				LOG_MEMORY( {}, ELogLevel::Information, "current_path={}", std::filesystem::current_path() );
 				if( !fs::exists(settingsPath) )
 					throw std::runtime_error{ "file does not exist" };
 				_pGlobal = mu<Jde::Settings::Container>( settingsPath );
-				LOG_MEMORY( {}, ELogLevel::Information, "({}) Settings", settingsPath.string() );
+				LOG_MEMORY( {}, ELogLevel::Information, "Settings path={}", settingsPath.string() );
+				
 			}
 			catch( const std::exception& e )
 			{

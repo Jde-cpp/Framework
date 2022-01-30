@@ -170,7 +170,11 @@ namespace Jde::Coroutine
 		if( r.HasShared() )
 			p.set_value( r.SP<T>(a._sl) );
 		else if( r.HasError() )
-			p.set_exception( r.Error()->Ptr() );
+		{
+			up<IException> e = r.Error();
+			std::exception_ptr e2 = e->Ptr();
+			p.set_exception( e2 );
+		}
 		else
 			ASSERT( false );
 	}
@@ -186,7 +190,8 @@ namespace Jde::Coroutine
 	struct AWrapper final : IAwait
 	{
 		using base=IAwait;
-		AWrapper( function<Task(HCoroutine h)> fnctn, str name={} )noexcept:base{name}, _fnctn{fnctn}{};
+		AWrapper( function<Task(HCoroutine h)> fnctn, string name={} )noexcept:base{move(name)}, _fnctn{fnctn}{ DBG("({})AWrapper(0x{:x})", _name, (uint)this); };
+		~AWrapper(){ DBG("({})~AWrapper(0x{:x})", _name, (uint)this); }
 
 		α await_suspend( HCoroutine h )noexcept->void override
 		{

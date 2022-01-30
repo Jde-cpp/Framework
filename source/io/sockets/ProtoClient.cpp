@@ -29,7 +29,7 @@ namespace Jde::IO::Sockets
 				else if( ec.value()==125 )
 					LOG( "_socket.close() ec='{}'", CodeException::ToString(ec) );
 				else
-					ERR( "Client::ReadHeader Failed - '{}' closing"sv, ec.value() );
+					ERR( "Client::ReadHeader Failed - ({}){} closing"sv, ec.value(), ec.message() );
 			}
 			else if( !headerLength )
 				ERR( "Failed no length"sv );
@@ -63,6 +63,21 @@ namespace Jde::IO::Sockets
 			Process( pBuffer, messageLength );
 			ReadHeader();
 		}
+	}
+	α ProtoClientSession::Write( up<google::protobuf::uint8[]> p, uint c )noexcept->void
+	{
+		auto b = net::buffer( p.get(), c );
+		net::async_write( _socket, b, [this, _=move(p), c, b2=move(b)]( std::error_code ec, uint length )
+		{
+			if( ec )
+			{
+				DBG( "({})Write message returned '{}'."sv, ec.value(), ec.message() );
+				_socket.close();
+				_pIOContext = nullptr;
+			}
+			else if( c!=length )
+				ERRX( "bufferSize!=length, {}!={}", c, length );
+		});
 	}
 /////////////////////////////////////////////////////////////////////////////////////
 	ProtoClient::ProtoClient( str settingsPath, PortType defaultPort )noexcept(false):

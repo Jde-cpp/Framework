@@ -140,7 +140,10 @@ namespace Jde::DB
 					const string colName{ Schema::FromJson(it.get<string>()) };
 					SurrogateKey.push_back( colName );
 					if( auto p=find_if(Columns.begin(), Columns.end(), [&colName](var& x){return x.Name==colName;} ); p!=Columns.end() )
+					{
 						p->IsId = true;
+						p->Updateable = false;
+					}
 				}
 				Indexes.push_back( Index{"pk", Name, true, &SurrogateKey} );
 			}

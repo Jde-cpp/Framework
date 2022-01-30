@@ -11,7 +11,7 @@ namespace Jde::IO::Sockets
 	ProtoServer::ProtoServer( PortType port )noexcept:
 		ISocket{ port },
 		_pIOContext{ IOContextThread::Instance() },
-		_acceptor{ _pIOContext->Context(), tcp::endpoint{tcp::v4(), port} }
+		_acceptor{ _pIOContext->Context(), tcp::endpoint{ Settings::Get("net/ip").value_or("v6")=="v6" ? tcp::v6() : tcp::v4(), port } }
 	{}
 
 	ProtoServer::~ProtoServer()
@@ -59,6 +59,18 @@ namespace Jde::IO::Sockets
 				if( e.Level()<ELogLevel::Error )
 					OnDisconnect();
 			}
+		});
+	}
+	
+	α ProtoSession::Write( up<google::protobuf::uint8[]> p, uint c )noexcept->void
+	{
+		auto b = net::buffer( p.get(), c );
+		net::async_write( _socket, b, [_=move(p), b2=move(b)]( std::error_code ec, std::size_t length )
+		{
+			if( ec )
+				DBG( "({})Write message returned '{}'."sv, ec.value(), ec.message() );
+			else
+				LOGL( ELogLevel::Trace, "Session::Write length:  '{}'."sv, length );
 		});
 	}
 }

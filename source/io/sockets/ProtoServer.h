@@ -39,6 +39,8 @@ namespace Jde::IO::Sockets
 		β OnDisconnect()noexcept->void=0;
 	protected:
 		α ReadHeader()noexcept->void;
+		α Write( up<google::protobuf::uint8[]> p, uint c )noexcept->void;
+
 		tcp::socket _socket;
 		const static LogTag& _logLevel;
 	private:
@@ -84,13 +86,7 @@ namespace Jde::IO::Sockets
 	$ Write( const TFromServer& value )noexcept->void
 	{
 		auto [p,size] = IO::Proto::SizePrefixed( value );
-		net::async_write( _socket, net::buffer(p.get(), size), [x=move(p)]( std::error_code ec, std::size_t length )
-		{
-			if( ec )
-				DBG( "({})Write message returned '{}'."sv, 5, ec.value() );
-			else
-				TRACE( "Session::Write length:  '{}'."sv, length );
-		});
+		ProtoSession::Write( move(p), size );
 	}
 
 #pragma endregion

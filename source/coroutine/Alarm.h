@@ -38,6 +38,7 @@ namespace Jde::Threading
 		std::condition_variable _cv; mutable std::mutex _mtx;
 		flat_multimap<TimePoint,tuple<Handle,HCoroutine>> _coroutines; mutex _coroutineMutex;
 		static constexpr Duration WakeDuration{5s};
+		static const LogTag& _logLevel;
 		friend AlarmAwait;
 	};
 }

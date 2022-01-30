@@ -23,6 +23,8 @@ namespace Jde::Logging
 	auto _pOnceMessages = make_unique<flat_map<uint,set<string>>>(); std::shared_mutex OnceMessageMutex;
 	static const LogTag& _statusLevel = Logging::TagLevel( "status" );
 	static const LogTag& _logLevel = Logging::TagLevel( "settings" );
+	const ELogLevel _breakLevel{ Settings::Get<ELogLevel>("logging/breakLevel").value_or(ELogLevel::Warning) };
+	ELogLevel BreakLevel()noexcept{ return _breakLevel; }
 
 	α SetTag( sv tag, vector<LogTag>& existing )noexcept->sv
 	{
@@ -71,7 +73,7 @@ namespace Jde::Logging
 		for( var& tag : settings )
 		{
 			var t = SetTag( tag, tags );
-			if( t.size() )
+			if( t.size() && tag[0]!='_' )
 				tagIds.push_back( t );
 		}
 		//LOG_MEMORY( "settings", ELogLevel::Information, "({}) Settings", settingsPath.string() );
@@ -156,7 +158,7 @@ namespace Jde
 				additional = format( " truncate='{}' path='{}'", truncate, path.string() );
 				pSink = ms<spdlog::sinks::basic_file_sink_mt>( path.string(), truncate );
 				if( pattern.empty() )
-					pattern = markdown ? "%^%3!l%$-%H:%M:%S.%e [%v](%@)  " : "%^%3!l%$-%H:%M:%S.%e %-64@ %v";
+					pattern = markdown ? "%^%3!l%$-%H:%M:%S.%e [%v](%@)\\" : "%^%3!l%$-%H:%M:%S.%e %-64@ %v";
 			}
 			else
 				continue;

@@ -26,6 +26,7 @@ namespace Jde::IO::Sockets
 		virtual void OnDisconnect()noexcept=0;
 		α ReadHeader()noexcept->void;
 		α ReadBody( int messageLength )noexcept->void;
+		α Write( up<google::protobuf::uint8[]> p, uint c )noexcept->void;
 		virtual void Process( google::protobuf::uint8* pData, int size )noexcept=0;
 
 		sp<IOContextThread> _pIOContext;
@@ -67,21 +68,10 @@ namespace Jde::IO::Sockets
 		{}
 	}
 
-	$::Write( const TOut& msg )noexcept->void
+	$::Write( const TOut& m )noexcept->void
 	{
-		auto data = IO::Proto::SizePrefixed( msg );
-		auto pBuffer = move( get<0>(data) ); var bufferSize = get<1>( data );
-		net::async_write( _socket, net::buffer(pBuffer.get(), bufferSize), [this, _=move(pBuffer), bufferSize]( std::error_code ec, uint length )
-		{
-			if( ec )
-			{
-				ERRX( "async_write Failed - {}"sv, ec.value() );
-				_socket.close();
-				_pIOContext = nullptr;
-			}
-			else if( bufferSize!=length )
-				ERRX( "bufferSize!=length" );
-		});
+		auto [p,size] = IO::Proto::SizePrefixed( m );
+		ProtoClientSession::Write( move(p), size );
 	}
 }
 #undef var
