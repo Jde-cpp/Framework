@@ -296,7 +296,7 @@ namespace Jde::DB
 		var nameParts = Str::Split( table.NameWithoutType(), '_' );
 		return nameParts.size()>index ? DB::Schema::ToSingular( nameParts[index] ) : string{};
 	}
-	α Table::Prefix()const noexcept->string{ return TableNamePart(*this, 0); }
+	α Table::Prefix()const noexcept->string{ return Str::Split( Name, '_' )[0]; }
 	α Table::NameWithoutType()const noexcept->string{ var underscore = Name.find_first_of('_'); return Name.substr(underscore==string::npos ? 0 : underscore+1); }
 
 	α Table::FKName()const noexcept->string{ return Schema::ToSingular(NameWithoutType())+"_id"; }

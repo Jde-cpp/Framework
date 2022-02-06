@@ -17,7 +17,7 @@ namespace Jde::Logging
 	Γ α Server()noexcept->up<Logging::IServerSink>&; Γ α SetServer( up<Logging::IServerSink> p )noexcept->void;
 	Γ α ServerLevel()noexcept->ELogLevel; Γ α SetServerLevel( ELogLevel serverLevel )noexcept->void;
 
-	struct Γ IServerSink : private boost::noncopyable
+	struct Γ IServerSink //: private boost::noncopyable debugging issues
 	{
 		using ID=uint32;
 		IServerSink()noexcept=default;

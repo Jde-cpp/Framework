@@ -52,7 +52,7 @@ namespace Jde::DB
 		}
 		catch( IException& e )
 		{
-			_base.Set( e.Move() );
+			_base.SetException( e.Move() );
 		}
 		h.resume();
 	}

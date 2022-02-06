@@ -131,7 +131,10 @@ namespace Jde::Settings
 		}
 		return values;
 	}
-	Γ α Set( sv path, const fs::path& value )noexcept->void;
+	//Γ α Set( sv path, path value )noexcept->void;
+
+	α Save( const json& j, sv what, SRCE )noexcept(false)->void;
+	α Set( sv what, const Container::Variant& v, bool save=true, SRCE )noexcept(false)->void;
 
 	ⓣ TryArray( sv path )noexcept{ return Global().TryArray<T>(path); }
 
@@ -176,12 +179,21 @@ namespace Jde::Settings
 	$ Get<ELogLevel>( sv path )noexcept->optional<ELogLevel>{ return Global().Get<ELogLevel>( path ); }
 	Ξ ForEach( sv path, function<void(sv, const nlohmann::json& v)> f )noexcept->void{ return Global().ForEach(path, f); }
 
-	Ξ Env( sv path )noexcept->string
+	Ξ Env( sv path )noexcept->optional<string>
 	{
-		auto p = Global().Get<string>( path );
+		auto p = Global().Get( path );
 		if( p && p->starts_with("$(") && p->size()>3 )
 			p = OSApp::EnvironmentVariable( p->substr(2, p->size()-3) );
-		return p.value_or( string{} );
+		return p;
+	}
+
+	Ξ Envɛ( sv path )noexcept->string
+	{
+		auto p = Global().Get( path );
+		if( p && p->starts_with("$(") && p->size()>3 )
+			p = OSApp::EnvironmentVariable( p->substr(2, p->size()-3) );
+		if( !p ) throw Jde::Exception{ SRCE_CUR, Jde::ELogLevel::Debug, "{} not found", path }; //can't use THROW_IF
+		return *p;
 	}
 
 	Τ struct Item

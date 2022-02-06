@@ -18,22 +18,25 @@ namespace Jde::IO
 		IWorker::Initialize();
 	}
 
-	FileIOArg::FileIOArg( fs::path path, bool vec )noexcept:
+	FileIOArg::FileIOArg( fs::path path, bool vec, SL sl )noexcept:
 		IsRead{ true },
-		Path{ move(path) }
+		Path{ move(path) },
+		_sl{ sl }
 	{
 		if( vec )
 			Buffer = make_shared<vector<char>>();
 		else
 			Buffer = make_shared<string>();
 	}
-	FileIOArg::FileIOArg( fs::path path, sp<vector<char>> pVec )noexcept:
+	FileIOArg::FileIOArg( fs::path path, sp<vector<char>> pVec, SL sl )noexcept:
 		Path{ move(path) },
-		Buffer{ pVec }
+		Buffer{ pVec },
+		_sl{ sl }
 	{}
-	FileIOArg::FileIOArg( fs::path path, sp<string> pData )noexcept:
+	FileIOArg::FileIOArg( fs::path path, sp<string> pData, SL sl )noexcept:
 		Path{ move(path) },
-		Buffer{ pData }
+		Buffer{ pData },
+		_sl{ sl }
 	{}
 
 	bool FileIOArg::HandleChunkComplete( IFileChunkArg* pChunkArg )noexcept

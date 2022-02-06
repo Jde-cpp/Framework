@@ -16,6 +16,7 @@ namespace Jde
 	α Logging::SetServer( up<Logging::IServerSink> p )noexcept->void{ _pServerSink=move(p); if( _pServerSink ) _serverLogLevel=Settings::Get<ELogLevel>("logging/server/level").value_or(ELogLevel::Error); }
 	α Logging::ServerLevel()noexcept->ELogLevel{ return _serverLogLevel; }
 	α Logging::SetServerLevel( ELogLevel serverLevel )noexcept->void{ _serverLogLevel=serverLevel; }
+	α Logging::ClientLevel()noexcept->ELogLevel{ return Settings::Get<ELogLevel>("logging/file/level").value_or(ELogLevel::Debug); }
 }
 
 namespace Jde::Logging
@@ -82,15 +83,16 @@ namespace Jde::Logging
 			{
 				var& ack = item.acknowledgement();
 				Logging::LogNoServer( Logging::MessageBase("ServerSink::ServerSink( Host='{}', Port='{}' InstanceId={} )", ELogLevel::Information, MY_FILE, __func__, __LINE__), Host, Port, ack.instanceid() );
-				Proto::ToServer t;
-				auto pInstance = make_unique<Proto::Instance>();
-				_applicationName = IApplication::ApplicationName();
-				pInstance->set_applicationname( _applicationName );
-				pInstance->set_hostname( IApplication::HostName() );
-				pInstance->set_processid( (int32)OSApp::ProcessId() );
-				pInstance->set_starttime( (google::protobuf::uint32)Clock::to_time_t(Logging::StartTime()) );
 
-				t.add_messages()->set_allocated_instance( pInstance.release() );
+				auto p = make_unique<Proto::Instance>();
+				p->set_application( _applicationName = IApplication::ApplicationName() );
+				p->set_host( IApplication::HostName() );
+				p->set_pid( (int32)OSApp::ProcessId() );
+				p->set_server_log_level( (Logging::Proto::ELogLevel)Logging::ServerLevel() );
+				p->set_client_log_level( (Logging::Proto::ELogLevel)Logging::ClientLevel() );
+				p->set_start_time( (google::protobuf::uint32)Clock::to_time_t(Logging::StartTime()) );
+				Proto::ToServer t;
+				t.add_messages()->set_allocated_instance( p.release() );
 				base::Write( move(t) );
 				_instanceId = ack.instanceid();
 			}

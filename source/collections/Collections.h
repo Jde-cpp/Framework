@@ -86,6 +86,16 @@ namespace Collections
 		return pResults;
 	}
 
+	ẗ Keys( const flat_map<K,V>& map, function<bool(const V&)> f )noexcept->flat_set<K>
+	{
+		flat_set<K> y;
+		for( var& kv : map )
+		{
+			if( f(kv.second) )
+				y.emplace( kv.first );
+		}
+		return y;
+	}
 
 	ⓣ Values( const T& map )->std::vector<typename T::mapped_type>
 	{

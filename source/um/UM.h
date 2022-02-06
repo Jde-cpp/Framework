@@ -3,7 +3,7 @@
 #include <jde/TypeDefs.h>
 #include <jde/Exception.h>
 
-namespace Jde::DB{ struct MutationQL; }
+namespace Jde::DB{ struct MutationQL; enum class EMutationQL : uint8; }
 
 #define Φ Γ auto
 namespace Jde::UM
@@ -28,6 +28,8 @@ namespace Jde::UM
 		β CanRead( uint /*pk*/, UserPK /*userId*/ )noexcept->bool { return true; }
 		β CanPurge( uint /*pk*/, UserPK /*userId*/ )noexcept->bool{ return true; }
 		α TestPurge( uint pk, UserPK userId, SRCE )noexcept(false)->void;
+		β Test( DB::EMutationQL ql, UserPK userId, SRCE )noexcept(false)->void=0;
+		//β Invalidate( SRCE )noexcept(false)->void=0;
 		sv TableName;
 	};
 	inline IAuthorize::~IAuthorize(){};
@@ -35,6 +37,7 @@ namespace Jde::UM
 	{
 		GroupAuthorize():IAuthorize{"um_groups"}{}
 		β CanPurge( uint pk, UserPK )noexcept->bool override{ return pk!=1 && pk!=2; };
+		β Test( DB::EMutationQL ql, UserPK userId, SRCE )noexcept(false)->void override{};//TODO Remove
 		sv TableName;
 	};
 }

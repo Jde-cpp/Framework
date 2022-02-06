@@ -37,9 +37,9 @@ namespace Jde::IO
 
 	struct FileIOArg final//: boost::noncopyable
 	{
-		FileIOArg( fs::path path, bool vec )noexcept;
-		FileIOArg( fs::path path, sp<vector<char>> pVec )noexcept;
-		FileIOArg( fs::path path, sp<string> pData )noexcept;
+		FileIOArg( fs::path path, bool vec, SRCE )noexcept;
+		FileIOArg( fs::path path, sp<vector<char>> pVec, SRCE )noexcept;
+		FileIOArg( fs::path path, sp<string> pData, SRCE )noexcept;
 		//~FileIOArg(){ DBG("FileIOArg::~FileIOArg"sv); }
 		α Open()noexcept(false)->void;
 		α HandleChunkComplete( IFileChunkArg* pChunkArg )noexcept->bool;
@@ -54,6 +54,7 @@ namespace Jde::IO
 		vector<up<IFileChunkArg>> Chunks;
 		coroutine_handle<Task::promise_type> CoHandle;
 		HFile Handle{0};
+		source_location _sl;
 	private:
 		sp<Threading::IWorker> _pWorkerKeepAlive;
 	};

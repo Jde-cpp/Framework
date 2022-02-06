@@ -76,7 +76,6 @@ namespace Jde::Logging
 			if( t.size() && tag[0]!='_' )
 				tagIds.push_back( t );
 		}
-		//LOG_MEMORY( "settings", ELogLevel::Information, "({}) Settings", settingsPath.string() );
 		LOG_MEMORY( "settings", ELogLevel::Information, &tags==&_tags ? "FileTags:  {}." : "ServerTags:  {}.", Str::AddCommas(tagIds) );
 	}
 }
@@ -165,7 +164,6 @@ namespace Jde
 			pSink->set_pattern( pattern );
 			var level = sink.Get<ELogLevel>( "level" ).value_or( ELogLevel::Debug );
 			pSink->set_level( (spdlog::level::level_enum)level );
-			//LOG_MEMORY( ELogLevel::Information, "({})level='{}' pattern='{}'{}", name, ToString(level), pattern, additional );
 			LogMemoryDetail( Logging::Message{"settings", ELogLevel::Information, "({})level='{}' pattern='{}'{}"}, name, ToString(level), pattern, additional );
 			sinks.push_back( pSink );
 		}
@@ -258,6 +256,8 @@ namespace Jde
 		if( _logger.level()!=(spdlog::level::level_enum)client )
 		{
 			INFO( "Setting log level from '{}' to '{}'", Str::FromEnum(ELogLevelStrings, _logger.level()), Str::FromEnum(ELogLevelStrings, client) );
+			Settings::Set( "logging/console/level", string{ToString(client)}, false );
+			Settings::Set( "logging/file/level", string{ToString(client)} );
 			//TODO remvoe comment _logger.set_level( (spdlog::level::level_enum)client );
 		}
 		if( Server() )
@@ -350,10 +350,7 @@ namespace Jde
 		{
 			File = _fileName.c_str();
 		}
-/*		Message::Message( sv m, ELogLevel l, const char* file, const char* function, uint_least32_t line )noexcept:
-			MessageBase( m, l, file, function, line )
-		{}
-*/
+
 		Message::Message( ELogLevel level, string message, const source_location& sl )noexcept:
 			MessageBase( level, sl ),
 			_pMessage{ make_unique<string>(move(message)) },

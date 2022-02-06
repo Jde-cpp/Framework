@@ -22,17 +22,18 @@ namespace Jde
 	α DB::SetQLDataSource( sp<DB::IDataSource> p )noexcept->void{ _pDataSource = p; }
 
 	α DB::ClearQLDataSource()noexcept->void{ _pDataSource = nullptr; }
-	flat_map<string,vector<function<void(const DB::MutationQL& m, PK id)>>> _applyMutationListeners;  shared_mutex _applyMutationListenerMutex;
+	up<flat_map<string,vector<function<void(const DB::MutationQL& m, PK id)>>>> _applyMutationListeners;  shared_mutex _applyMutationListenerMutex;
 	α DB::AddMutationListener( string tablePrefix, function<void(const DB::MutationQL& m, PK id)> listener )noexcept->void
 	{
 		unique_lock l{_applyMutationListenerMutex};
-		auto& listeners = _applyMutationListeners.try_emplace( move(tablePrefix) ).first->second;
+		if( !_applyMutationListeners )
+			_applyMutationListeners = mu<flat_map<string,vector<function<void(const DB::MutationQL& m, PK id)>>>>();
+		auto& listeners = _applyMutationListeners->try_emplace( move(tablePrefix) ).first->second;
 		listeners.push_back( listener );
 	}
 
 	namespace DB::GraphQL
 	{
-		//α Schema()noexcept->DB::Schema&{ return _schema;}
 		α DataSource()noexcept->sp<IDataSource>{ return _pDataSource; }
 	}
 	α DB::AppendQLSchema( const DB::Schema& schema )noexcept->void
@@ -250,7 +251,8 @@ namespace DB
 	α Mutation( const DB::MutationQL& m, UserPK userId )noexcept(false)->uint
 	{
 		var& t = _schema.FindTableSuffix( m.TableSuffix() );
-		TEST_ACCESS( "Write", t.Name, userId ); //TODO implement.
+		//TEST_ACCESS( "Write", t.Name, userId ); //TODO implement.
+		var pAuthorizer = UM::FindAuthorizer(t.Name); if( pAuthorizer ) pAuthorizer->Test( m.Type, userId );
 		uint result;
 		if( m.Type==DB::EMutationQL::Create )
 			result = Insert( t, m );
@@ -269,12 +271,13 @@ namespace DB
 			else if( m.Type==DB::EMutationQL::Remove )
 				result = Remove( t, m.Input() );
 			else
-				throw "unknown type";
+				THROW( "unknown type" );
 		}
 		if( t.Name.starts_with("um_") )
 			Try( [&]{UM::ApplyMutation( m, result );} );
 		shared_lock l{ _applyMutationListenerMutex };
-		if( var p = _applyMutationListeners.find(t.Prefix()); p!=_applyMutationListeners.end() )
+		//var x = _foo._applyMutationListeners.find( t.Prefix() );
+		if( var p = _applyMutationListeners->find(t.Prefix()); p!=_applyMutationListeners->end() )
 			std::for_each( p->second.begin(), p->second.end(), [&](var& f){f(m, result);} );
 
 		return result;

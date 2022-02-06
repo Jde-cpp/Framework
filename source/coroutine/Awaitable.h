@@ -47,8 +47,8 @@ namespace Jde::Coroutine
 		α AwaitSuspend()noexcept{ OriginalThreadParamPtr = { Threading::GetThreadDescription(), Threading::GetAppThreadHandle() }; }
 		α AwaitResume()noexcept->void
 		{
-			if( _name.size() )
-				DBG("({}){}::await_resume"sv, std::this_thread::get_id(), _name);
+//			if( _name.size() )
+//				DBG("({}){}::await_resume"sv, std::this_thread::get_id(), _name);
 			if( OriginalThreadParamPtr )
 				Threading::SetThreadInfo( *OriginalThreadParamPtr );
 		}
@@ -72,6 +72,7 @@ namespace Jde::Coroutine
 		α await_resume()noexcept->AwaitResult override{ AwaitResume(); ASSERT(_pPromise); return move(_pPromise->get_return_object().Result()); }
 		//α Set( AwaitResult::Value&& x )->void{ ASSERT( _pPromise ); _pPromise->get_return_object().SetResult( move(x) ); }
 		ⓣ Set( up<T>&& p )->void{ ASSERT( _pPromise ); _pPromise->get_return_object().SetResult<T>( move(p) ); }
+		α SetException( up<IException> p )->void{ ASSERT( _pPromise ); _pPromise->get_return_object().SetResult( move(*p) ); }
 		//α Get()noexcept(false)->sp<void>{ ASSERT( _pPromise ); return _pPromise->get_return_object().Get( _sl ); }
 
 		source_location _sl;
@@ -101,7 +102,10 @@ namespace Jde::Coroutine
 			AwaitResume();
 			AwaitResult y{};
 			try{ _fnctn(); }
-			catch( IException& e ){ y.Set( e.Move() ); }
+			catch( IException& e )
+			{
+				y.Set( move(*e.Move()) );
+			}
 			return y;
 		}
 	private:
@@ -190,8 +194,8 @@ namespace Jde::Coroutine
 	struct AWrapper final : IAwait
 	{
 		using base=IAwait;
-		AWrapper( function<Task(HCoroutine h)> fnctn, string name={} )noexcept:base{move(name)}, _fnctn{fnctn}{ DBG("({})AWrapper(0x{:x})", _name, (uint)this); };
-		~AWrapper(){ DBG("({})~AWrapper(0x{:x})", _name, (uint)this); }
+		AWrapper( function<Task(HCoroutine h)> fnctn, string name={} )noexcept:base{move(name)}, _fnctn{fnctn}{ /*DBG("({})AWrapper(0x{:x})", _name, (uint)this);*/ };
+		~AWrapper(){ /*DBG("({})~AWrapper(0x{:x})", _name, (uint)this);*/ }
 
 		α await_suspend( HCoroutine h )noexcept->void override
 		{

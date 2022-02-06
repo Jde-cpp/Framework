@@ -21,11 +21,12 @@ enum ELogLevel
 
 message Instance
 {
-	string ApplicationName=1;
-	string HostName=2;
-	int32 ProcessId=3;
-	//ELogLevel dbLogLevel=4;
-	uint32 StartTime=5;
+	string application=1;
+	string host=2;
+	int32 pid=3;
+	ELogLevel server_log_level=4;
+	ELogLevel client_log_level=5;
+	uint32 start_time=6;
 }
 
 message Message
@@ -162,4 +163,3 @@ message FromServer
 {
 	repeated FromServerUnion Messages = 1;
 }
-

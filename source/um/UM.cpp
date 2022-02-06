@@ -104,7 +104,7 @@ namespace Jde
 		AppendQLSchema( schema );
 		SetQLDataSource( pDataSource );
 
-		var pApis = db.SelectEnumSync<uint>( "um_apis" );
+		var pApis = db.SelectEnumSync<uint,string>( "um_apis" );
 		auto pId = Find( *pApis, "UM" ); THROW_IF( !pId, "no user management in api table." );
 		var umPermissionId = db.Scaler<uint>( "select id from um_permissions where api_id=? and name is null", {*pId} ).value_or(0); THROW_IF( umPermissionId==0, "no user management permission." );
 		for( var& table : schema.Tables )

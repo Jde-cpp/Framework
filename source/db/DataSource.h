@@ -12,8 +12,8 @@ namespace Jde::DB
 	struct Γ IDataSource : std::enable_shared_from_this<IDataSource>
 	{
 		virtual ~IDataSource(){}//warning
-		ⓣ SelectEnum( str tableName, SRCE )noexcept{ return SelectMap<T,string>( format("select id, name from {}", tableName), tableName, sl ); }
-		ⓣ SelectEnumSync( str tableName, SRCE )noexcept->sp<flat_map<T,string>>{ ASSERT(tableName.size()); return SFuture<flat_map<T,string>>( SelectEnum<T>( move(tableName), sl) ).get(); }
+		template<class K=uint,class V=string> α SelectEnum( str tableName, SRCE )noexcept{ return SelectMap<K,V>( format("select id, name from {}", tableName), tableName, sl ); }
+		ẗ SelectEnumSync( sv tableName, SRCE )noexcept(false)->sp<flat_map<K,V>>{ ASSERT(tableName.size()); return SFuture<flat_map<K,V>>( SelectEnum<K,V>( string{tableName}, sl) ).get(); }
 		ẗ SelectMap( string sql, SRCE )noexcept->SelectAwait<flat_map<K,V>>;
 		ẗ SelectMap( string sql, string cacheName, SRCE )noexcept->SelectCacheAwait<flat_map<K,V>>;
 		ⓣ SelectSet( string sql, vector<object>&& params, SL sl )noexcept->SelectAwait<flat_set<T>>;

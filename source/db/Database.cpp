@@ -132,10 +132,10 @@ namespace Jde
 	{
 		if( !_pDefault /*&& !IApplication::ShuttingDown()*/ )
 		{
-			Initialize( Settings::Getɛ<string>("db/driver") );
-			string cs{ Settings::Getɛ<string>("db/connectionString") };
-			var env = cs.find( '=' )==string::npos ? OSApp::EnvironmentVariable( cs ) : string{};
-			_pDefault->SetConnectionString( move(env.empty() ? cs : env) );
+			Initialize( Settings::Env("db/driver").value_or("Jde.DB.Odbc.dll") );
+			string cs{ Settings::Env("db/connectionString").value_or("DSN=Jde_Log_Connection") };
+			//var env = cs.find( '=' )==string::npos ? OSApp::EnvironmentVariable( cs ) : string{};
+			_pDefault->SetConnectionString( move(cs) );
 		}
 		return _pDefault;
 	}
