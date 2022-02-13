@@ -74,6 +74,12 @@ namespace Jde
 			_userGroups.try_emplace(r.GetUInt(0)).first->second.emplace( r.GetUInt(1) );
 		}, params );
 	}
+	α SetRolePermissions()noexcept(false)->void
+	{
+		unique_lock _{ _rolePermissionMutex };
+		_rolePermissions.clear();
+		DB::DataSource().Select( "select permission_id, role_id, right_id from um_role_permissions p join um_roles r on p.role_id=r.id where r.deleted is null", [&](const DB::IRow& r){_rolePermissions.try_emplace(r.GetUInt(1)).first->second.emplace( r.GetUInt(0), (UM::EAccess)r.GetUInt(2) );} );
+	}
 	α UM::Configure()noexcept(false)->void
 	{
 		var& globalSettings = Settings::Global().Json();
@@ -111,7 +117,7 @@ namespace Jde
 			_tablePermissions.try_emplace( table.first, umPermissionId );
 
 		AssignUserGroups();
-		db.Select( "select permission_id, role_id, right_id from um_role_permissions p join um_roles r on p.role_id=r.id where r.deleted is null", [&](const DB::IRow& r){_rolePermissions.try_emplace(r.GetUInt(1)).first->second.emplace( r.GetUInt(0), (UM::EAccess)r.GetUInt(2) );} );
+		SetRolePermissions();
 		db.Select( "select group_id, role_id from um_group_roles gr join um_groups g on gr.group_id=g.id and g.deleted is null join um_roles r on gr.role_id=r.id and r.deleted is null", [&](var& r){_groupRoles.try_emplace(r.GetUInt(0)).first->second.emplace( r.GetUInt(1) );} );
 		for( var& [userId,groupIds] : _userGroups )
 			AssignUser( userId, groupIds );
@@ -164,30 +170,29 @@ namespace Jde
 		}
 		else if( m.JsonName=="rolePermission" )
 		{
-			uint roleId, permissionId;
-			if( m.Type==DB::EMutationQL::Update )
-			{
-				var pPermissionId = m.Args.find("permissionId"); THROW_IF( pPermissionId==m.Args.end(), "could not find permissionId in mutation" );
-				var pRoleId = m.Args.find("roleId"); THROW_IF( pRoleId==m.Args.end(), "could not find roleId in mutation" );
-				roleId = pRoleId->get<uint>();
-				permissionId = pPermissionId->get<uint>();
-			}
-			else
-			{
-				roleId = m.InputParam( "roleId" ).get<uint>();
-				permissionId = m.InputParam( "permissionId" ).get<uint>();
-			}
-			var access = (UM::EAccess)DB::DataSource().Scaler<uint>( "select right_id from um_role_permissions where role_id=? and permission_id=?", std::vector<DB::object>{roleId, permissionId} ).value_or( 0 );
-			{
-				unique_lock l{ _rolePermissionMutex };
-				_rolePermissions.try_emplace( roleId ).first->second[permissionId] = (Jde::UM::EAccess)access;
-			}
+			SetRolePermissions();
+			var pRoleId = m.Args.find( "roleId" ); THROW_IF( pRoleId==m.Args.end(), "could not find roleId in mutation" );
+			//uint roleId, permissionId;
+			//if( m.Type==DB::EMutationQL::Update )
+			//{
+			//	var pPermissionId = m.Args.find("permissionId"); THROW_IF( pPermissionId==m.Args.end(), "could not find permissionId in mutation" );
+			//	var pRoleId = m.Args.find("roleId"); THROW_IF( pRoleId==m.Args.end(), "could not find roleId in mutation" );
+			//	roleId = pRoleId->get<uint>();
+			//	permissionId = pPermissionId->get<uint>();
+			//	var access = (UM::EAccess)DB::DataSource().Scaler<uint>( "select right_id from um_role_permissions where role_id=? and permission_id=?", std::vector<DB::object>{roleId, permissionId} ).value_or( 0 );
+			//	{
+			//		unique_lock l{ _rolePermissionMutex };
+			//		_rolePermissions.try_emplace( roleId ).first->second[permissionId] = (Jde::UM::EAccess)access;
+			//	}
+			//}
+			//else
+			//	SetRolePermissions();
 			flat_set<uint> groupIds;
 			{
 				shared_lock l{ _groupRoleMutex };
 				for( var& [groupId,roleIds] : _groupRoles )
 				{
-					if( find(roleIds.begin(), roleIds.end(), roleId)!=roleIds.end() )
+					if( find(roleIds.begin(), roleIds.end(), *pRoleId)!=roleIds.end() )
 						groupIds.emplace( groupId );
 				}
 			}

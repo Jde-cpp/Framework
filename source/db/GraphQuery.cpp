@@ -49,62 +49,78 @@ namespace Jde::DB
 	}
 #define _db DataSource()
 #define _syntax DB::DefaultSyntax()
-	α ColumnSql( const DB::TableQL& table2, const DB::Table& dbTable, const DB::Table* pDefTable, vector<uint>& dates, flat_map<uint,sp<const DB::Table>>& flags, sv defaultPrefix, bool excludeId, uint* pIndex, string* pSubsequentJoin, vector<tuple<string,string>>* pJsonMembers )->string
+	α AddColumn( const ColumnQL& c, const DB::TableQL& qlTable, const DB::Table& dbTable, vector<string>& columns, const DB::Table* pDefTable, vector<uint>& dates, flat_map<uint,sp<const DB::Table>>& flags, sv defaultPrefix, bool excludeId, uint* pIndex, string* pSubsequentJoin, vector<tuple<string,string>>* pJsonMembers )->void
 	{
-		uint index2=0;
+		auto columnName = DB::Schema::FromJson( c.JsonName );
+		if( columnName=="id" && excludeId )
+			return;
+		auto findColumn = []( const DB::Table& t, str n ){ auto p = t.FindColumn( n ); if( !p ) p = t.FindColumn( n+"_id" ); return p; }; //+_id for enums
+		auto pSchemaColumn = findColumn( dbTable, columnName );
+		if( !pDefTable && pSchemaColumn && pSchemaColumn->PKTable.size() )//enumeration pSchemaColumn==authenticator_id
+		{
+			auto p = _schema.Tables.find( pSchemaColumn->PKTable ); CHECK( p!=_schema.Tables.end() );//um_authenticators
+			pDefTable = &*p->second;
+			var fkName = pSchemaColumn->Name;
+			var join = pSchemaColumn->IsNullable ? "left "sv : sv{};
+			auto pOther = findColumn( *pDefTable, DB::Schema::ToSingular("name") ); CHECK( pOther );
+			columnName = format( "{}.{} {}", pDefTable->Name, pOther->Name, columnName );
+			*pSubsequentJoin += format( "\t{0}join {1} on {1}.id={2}.{3}"sv, join, pDefTable->Name, defaultPrefix, fkName );
+		}
+		else if( pDefTable && !pSchemaColumn )
+		{
+			pSchemaColumn = findColumn( *pDefTable, columnName );
+			if( !pSchemaColumn )
+			{
+				pSchemaColumn = findColumn( *pDefTable, DB::Schema::ToSingular(columnName) ); THROW_IF( !pSchemaColumn, "Could not find column '{}.{}'", pDefTable->Name, columnName );
+				var p = _schema.Tables.find( pSchemaColumn->PKTable ); THROW_IF( p==_schema.Tables.end(), "Could not find flags pk table for {}.{}", pDefTable->Name, columnName );
+				flags.emplace( columns.size(), p->second );//*pIndex
+			}
+			columnName = format( "{}.{}", pDefTable->Name, pSchemaColumn->Name );
+		}
+		else if( pSchemaColumn )
+		{
+			if( pSchemaColumn->IsEnum )
+			{
+				c.SchemaColumnPtr = pSchemaColumn;
+				var p = _schema.Tables.find( pSchemaColumn->PKTable ); THROW_IF( p==_schema.Tables.end(), "Could not find flags pk table for {}.{}", pDefTable->Name, columnName );
+				flags.emplace( *pIndex, p->second );
+			}
+			else if( pSchemaColumn->QLAppend.size() && !qlTable.FindColumn(pSchemaColumn->QLAppend) )
+			{
+				if( var name{ format("{}.{}", defaultPrefix, DB::Schema::FromJson(pSchemaColumn->QLAppend)) }; std::find(columns.begin(), columns.end(), name)==columns.end() )
+				{
+					columns.push_back( name );//add db column, doesn't add qlColumn
+					c.SchemaColumnPtr = pSchemaColumn;
+					c.SchemaColumnPtr->TablePtr = &dbTable;
+				}
+				//qlTable.Columns.emplace_back( ColumnQL{pSchemaColumn->QLAppend} );
+				//AddColumn( qlTable.Columns.back(), qlTable, dbTable, columns, pDefTable, dates, flags, defaultPrefix, excludeId, pIndex, pSubsequentJoin, pJsonMembers );
+			}
+
+			columnName = format( "{}.{}", defaultPrefix, pSchemaColumn->Name );
+		}
+		THROW_IF( !pSchemaColumn, "Could not find column '{}.{}'", pDefTable->Name, columnName );//Could not find column 'um_role_permissions.api'" thrown in the test body
+
+		var dateTime = pSchemaColumn->Type==EType::DateTime;
+		if( dateTime )
+			dates.push_back( *pIndex );
+		columns.push_back( dateTime ? _syntax.DateTimeSelect(columnName) : columnName );
+		if( pJsonMembers )
+			pJsonMembers->push_back( make_tuple(qlTable.JsonName, c.JsonName) );//DB::Schema::ToJson(pSchemaColumn->Name))
+
+		++(*pIndex);
+	}
+
+	α ColumnSql( const DB::TableQL& qlTable, const DB::Table& dbTable, const DB::Table* pDefTable, vector<uint>& dates, flat_map<uint,sp<const DB::Table>>& flags, sv defaultPrefix, bool excludeId, uint* pIndex, string* pSubsequentJoin, vector<tuple<string,string>>* pJsonMembers )->string
+	{
+		uint index2 = 0;
 		if( !pIndex )
 			pIndex = &index2;
 		vector<string> columns;
-		for( var& column : table2.Columns )
-		{
-			auto columnName = DB::Schema::FromJson( column.JsonName );
-			if( columnName=="id" && excludeId )
-				continue;
-			auto findColumn = []( const DB::Table& t, str c ){ auto p = t.FindColumn( c ); if( !p ) p = t.FindColumn( c+"_id" ); return p; }; //+_id for enums
-			auto pSchemaColumn = findColumn( dbTable, columnName );
-			if( !pDefTable && pSchemaColumn && pSchemaColumn->PKTable.size() )//enumeration pSchemaColumn==authenticator_id
-			{
-				auto p = _schema.Tables.find( pSchemaColumn->PKTable ); CHECK( p!=_schema.Tables.end() );//um_authenticators
-				pDefTable = &*p->second;
-				var fkName = pSchemaColumn->Name;
-				var join = pSchemaColumn->IsNullable ? "left "sv : sv{};
-				auto pOther = findColumn( *pDefTable, DB::Schema::ToSingular("name") ); CHECK( pOther );
-				columnName = format( "{}.{} {}", pDefTable->Name, pOther->Name, columnName );
-				*pSubsequentJoin += format( "\t{0}join {1} on {1}.id={2}.{3}"sv, join, pDefTable->Name, defaultPrefix, fkName );
-			}
-			else if( pDefTable && !pSchemaColumn )
-			{
-				pSchemaColumn = findColumn( *pDefTable, columnName );
-				if( !pSchemaColumn )
-				{
-					pSchemaColumn = findColumn( *pDefTable, DB::Schema::ToSingular(columnName) ); THROW_IF( !pSchemaColumn, "Could not find column '{}.{}'", pDefTable->Name, columnName );
-					var p = _schema.Tables.find( pSchemaColumn->PKTable ); THROW_IF( p==_schema.Tables.end(), "Could not find flags pk table for {}.{}", pDefTable->Name, columnName );
-					flags.emplace( *pIndex, p->second );
-				}
-				columnName = format( "{}.{}", pDefTable->Name, pSchemaColumn->Name );
-			}
-			else if( pSchemaColumn )
-			{
-				if( pSchemaColumn->IsEnum )
-				{
-					column.SchemaColumnPtr = pSchemaColumn;
-					var p = _schema.Tables.find( pSchemaColumn->PKTable ); THROW_IF( p==_schema.Tables.end(), "Could not find flags pk table for {}.{}", pDefTable->Name, columnName );
-					flags.emplace( *pIndex, p->second );
-				}
-				columnName = format( "{}.{}", defaultPrefix, pSchemaColumn->Name );
-			}
-			THROW_IF( !pSchemaColumn, "Could not find column '{}.{}'", pDefTable->Name, columnName );//Could not find column 'um_role_permissions.api'" thrown in the test body
+		for( var& c : qlTable.Columns )
+			AddColumn( c, qlTable, dbTable, columns, pDefTable, dates, flags, defaultPrefix, excludeId, pIndex, pSubsequentJoin, pJsonMembers );
 
-			var dateTime = pSchemaColumn->Type==EType::DateTime;
-			if( dateTime )
-				dates.push_back( *pIndex );
-			columns.push_back( dateTime ? _syntax.DateTimeSelect(columnName) : columnName );
-			if( pJsonMembers )
-				pJsonMembers->push_back( make_tuple(table2.JsonName, column.JsonName) );//DB::Schema::ToJson(pSchemaColumn->Name))
-
-			++(*pIndex);
-		}
-		for( var& childTable : table2.Tables )
+		for( var& childTable : qlTable.Tables )
 		{
 			var childDbName = childTable->DBName();
 			var& pkTable = _schema.FindTableSuffix( childDbName );
@@ -148,7 +164,7 @@ namespace Jde::DB
 		if( columnSqlValue.size() )
 			sql << "select " << columnSqlValue;
 
-		var addId = table.Tables.size() && !table.ContainsColumn("id") && table.Columns.size();
+		var addId = table.Tables.size() && !table.FindColumn("id") && table.Columns.size();
 		if( addId )
 			sql << ", id";
 		var& tableName = schemaTable.Name;
@@ -218,7 +234,7 @@ namespace Jde::DB
 		flat_map<string,flat_multimap<uint,json>> subTables;
 		auto selectSubTables = [&subTables, &colToJson, &parameters]( const vector<sp<const DB::TableQL>>& tables, const DB::Table& parentTable, sv where2 )
 		{
-			for( var& pQLTable : tables )
+			for( auto& pQLTable : tables )
 			{
 				auto pSubTable = &_schema.FindTableSuffix( pQLTable->DBName() );
 				const DB::Table* pDefTable;
@@ -269,7 +285,17 @@ namespace Jde::DB
 						for( var& column : columns )
 						{
 							auto i = checkId && column.JsonName=="id" ? 1 : (index2++)+2;
-							colToJson( row, i, jRow, "", column.JsonName, subDates, subFlagValues, &column );
+							if( column.SchemaColumnPtr && column.SchemaColumnPtr->QLAppend.size() && column.SchemaColumnPtr->TablePtr )
+							{
+								var pk = ToUInt( row[i++] ); ++index2;
+								var pColumn = column.SchemaColumnPtr->TablePtr->FindColumn( DB::Schema::FromJson(column.SchemaColumnPtr->QLAppend) );  CHECK( pColumn && pColumn->IsEnum );
+								var pEnum = SelectEnumSync( pColumn->PKTable ); CHECK( pEnum->find(pk)!=pEnum->end() );
+								colToJson( row, i, jRow, "", column.JsonName, subDates, subFlagValues, &column );
+								var name = jRow[column.JsonName].is_null() ? string{} : jRow[column.JsonName].get<string>();
+								jRow[column.JsonName] = name.empty() ? pEnum->find(pk)->second : format( "{}\\{}", pEnum->find(pk)->second, name );
+							}
+							else
+								colToJson( row, i, jRow, "", column.JsonName, subDates, subFlagValues, &column );
 						}
 					};
 					rowToJson2( pQLTable->Columns, true, jSubRow, index );
@@ -326,8 +352,20 @@ namespace Jde::DB
 				json jRow; bool authorized=true;
 				for( uint i=0; i<jsonMembers.size() && authorized; ++i )
 				{
-					var parent = get<0>( jsonMembers[i] );
-					authorized = colToJson( row, i, jRow, parent==jsonTableName ? sv{} : parent, get<1>(jsonMembers[i]), dates, {} );
+					var [parent, column] = jsonMembers[i];
+					if( var pColumn = table.JsonName==parent ? table.FindColumn(column) : nullptr; pColumn && pColumn->SchemaColumnPtr && pColumn->SchemaColumnPtr->QLAppend.size() )
+					{
+						var pk = ToUInt( row[i++] );
+						var pAppend = pColumn->SchemaColumnPtr->TablePtr->FindColumn( DB::Schema::FromJson(pColumn->SchemaColumnPtr->QLAppend) );  CHECK( pAppend && pAppend->IsEnum );
+						var pEnum = SelectEnumSync( pAppend->PKTable ); CHECK( pEnum->find(pk)!=pEnum->end() );
+						colToJson( row, i, jRow, {}, column, dates, {} );
+						var name = jRow[column].is_null() ? string{} : jRow[column].get<string>();
+						jRow[column] = name.empty() ? pEnum->find(pk)->second : format( "{}\\{}", pEnum->find(pk)->second, name );
+
+					}
+					else
+					//var column = get<1>( jsonMembers[i] );
+						authorized = colToJson( row, i, jRow, parent==jsonTableName ? sv{} : parent, column, dates, {} );
 				}
 				if( authorized )
 				{

@@ -95,7 +95,7 @@ namespace Jde::DB
 	constexpr uint UserId = 0;
 	α FetchUser()
 	{
-		constexpr sv ql = "query{ user(name:\"JohnSmith@google.com\") { id name attributes created deleted updated description target authenticator } }";
+		constexpr sv ql = "query{ user(filter:{target:{ eq:\"jsmith\"}}){ id name attributes created updated deleted target description authenticator  groups{id name attributes created updated deleted target description } } }";
 		return DB::Query( ql, UserId );
 	}
 	TEST_F( QLTests, CreateUser )
@@ -105,6 +105,14 @@ namespace Jde::DB
 		if( var p=results.find("data")->find("user"); p!=results.find("data")->end() )
 		{
 			uint id = p->find( "id" )->get<uint>();
+			if( var pGroup = p->find("groups"); pGroup!=p->end() )
+			{
+				for( uint i=0; i<pGroup->size(); ++i )
+				{
+					if( (*pGroup)[i]["target"].get<string>()!="everyone" )//everyone
+						DB::Query( format("{{ mutation{{ removeUserGroup(\"input\":{{ \"userId\": {}, \"groupId\": {}}}) }} }}", id, (*pGroup)[i]["id"].get<uint>()), UserId );
+				}
+			}
 			DB::Query( format("{{ mutation {{ deleteUser(\"id\":{}) }} }}", id), UserId );
 			DB::Query( format("{{ mutation {{ purgeUser(\"id\":{}) }} }}", id), UserId );
 		}
@@ -121,13 +129,14 @@ namespace Jde::DB
 	{
 		var ql = "query{ role(target:\"user_management\"){ id name created deleted updated description target groups{id name created deleted updated description target } rolePermissions{api{ id name } id name rights } } }"sv;
 		var db = DB::Query( ql, 0 );
-		LOGS( db.dump() );
 
-		auto expected = "{\"data\":{\"role\":{\"created\":\"2021-02-13T07:00:33Z\",\"groups\":[{\"created\":\"2021-02-13T07:00:33Z\",\"id\":1,\"name\":\"Everyone\",\"target\":\"everyone\"}],\"id\":1,\"name\":\"User Management\",\"rolePermissions\":[{\"api\":{\"id\":1,\"name\":\"UM\"},\"id\":1,\"rights\":[\"Administer\",\"Write\",\"Read\"]}],\"target\":\"user_management\"}}}"_json;
+		auto expected = "{\"data\":{\"role\":{\"created\":\"2022-01-10T09:11:57Z\",\"groups\":[{\"created\":\"2022-01-10T09:11:55Z\",\"id\":1,\"name\":\"Everyone\",\"target\":\"everyone\"},{\"created\":\"2022-01-10T09:11:55Z\",\"id\":2,\"name\":\"Users\",\"target\":\"users\"}],\"id\":1,\"name\":\"User Management\",\"rolePermissions\":[{\"api\":{\"id\":1,\"name\":\"UM\"},\"id\":1,\"rights\":[\"Administer\",\"Write\",\"Read\"]}],\"target\":\"user_management\"}}}"_json;
 		SetAttribute( db, expected, "created" );
 		SetAttribute( db, expected, "description" );
 		SetAttribute( db, expected, "id" );
 		var expected2 = expected.dump(); var actual = db.dump();
+		LOGS( actual );
+		LOGS( expected2 );
 		ASSERT_EQ( actual, expected2 );
 	}
 
@@ -140,6 +149,15 @@ namespace Jde::DB
 		ASSERT_EQ( actual, expected );
 	}
 
+	TEST_F( QLTests, RoleFetch )
+	{
+		//var ql = "query( { __type(name: \"Role\") { fields { name type { name kind ofType{name kind} } } } } )"sv;
+		var ql = "query( { __type(name: \"RolePermission\") { fields { name type { name kind ofType{name kind} } } } } )";
+		var items = DB::Query( ql, 0 );
+		Dbg( items.dump() );
+		//ASSERT_EQ( items.dump(), "{\"data\":{\"__type\":{\"enumValues\":[{\"name\":\"None\"},{\"name\":\"UM\"},{\"name\":\"Web\"},{\"name\":\"Tws\"},{\"name\":\"Blockly\"}]}}}" );
+	}
+	
 
 	TEST_F( QLTests, EnumFetchApi)
 	{

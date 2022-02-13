@@ -29,7 +29,7 @@ namespace Jde::IO::Sockets
 				else if( ec.value()==125 )
 					LOG( "_socket.close() ec='{}'", CodeException::ToString(ec) );
 				else
-					ERR( "Client::ReadHeader Failed - ({}){} closing"sv, ec.value(), ec.message() );
+					DBG( "Client::ReadHeader Failed - ({}){} closing"sv, ec.value(), ec.message() );
 			}
 			else if( !headerLength )
 				ERR( "Failed no length"sv );

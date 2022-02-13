@@ -187,7 +187,7 @@ namespace Jde::Settings
 		return p;
 	}
 
-	Ξ Envɛ( sv path )noexcept->string
+	Ξ Envɛ( sv path )noexcept(false)->string
 	{
 		auto p = Global().Get( path );
 		if( p && p->starts_with("$(") && p->size()>3 )

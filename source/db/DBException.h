@@ -12,7 +12,7 @@ namespace Jde::DB
 		DBException( int32 errorCode, string sql, const vector<object>* pValues, string what, SRCE )noexcept;
 		DBException( string sql, const vector<object>* pValues, string what, SRCE )noexcept:DBException{ 0, move(sql), pValues, move(what), sl }{}
 		DBException( DBException&& from )noexcept:IException{move(from)}, Sql{from.Sql}, Parameters{from.Parameters}{}
-		~DBException()noexcept{ Log(); _level=ELogLevel::NoLog; };
+		~DBException()noexcept{ Log(); SetLevel( ELogLevel::NoLog ); };
 
 		α Log()const noexcept->void override;
 		α what() const noexcept->const char* override;

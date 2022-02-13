@@ -1,0 +1,34 @@
+{
+	"testing":
+	{
+		"_tests": "*",
+		"tests": "QLTests.RoleFetch"
+	},
+	"db":
+	{
+		"driver": "$(JDE_DB_DRIVER)",
+		"connectionString": "$(TWS_CONNECTION)",
+		"meta": "$(UM_META)",
+		"_meta": "../source/um/um-meta.json"
+	},
+	"twitter":
+	{
+		"apiKey": "$(TwitterApiKey)",
+		"apiSecretKey": "$(TwitterApiKeySecret)",
+		"bearerToken":  "$(TwitterBearerToken)",
+		"accessToken":  "$(TwitterAccessToken)",
+		"accessTokenSecret": "$(TwitterAccessTokenSecret)",
+		"backupPath": "/mnt/2TB/tweets"
+	},
+	"logging":
+	{
+		"tags": [ "settings", "ql", "_threads", "tests" ],
+		"console":{},
+		"file":{ "path": ".." },
+		"server": { "port": 4321, "level": "Debug", "diagnosticsLevel": "Debug", "tags": {"threads":"Debug"} }
+	},
+	"workers":
+	{
+		"drive":{ "threads":  1 }
+	}
+}

@@ -5,11 +5,11 @@
 
 namespace Jde
 {
-#ifndef MSC_VER
-	string OSApp::CompanyName()noexcept{ return "Jde-Cpp"; }
-#endif
  	void Startup( int argc, char **argv )noexcept
 	{
+#ifdef _MSC_VER
+		ASSERT( Settings::Get<uint>("workers/drive/threads")>0 )
+#endif
 		ASSERT( argc>1 && string{argv[1]}=="-c" )
 		OSApp::Startup( argc, argv, "Tests.Framework"sv, "Unit Tests description" );
 	}

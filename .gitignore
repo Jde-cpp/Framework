@@ -52,7 +52,6 @@ source/stdafx.h
 source/packages/*
 *.user
 */.vs/*
-tests/Tests.Framework.sln
 */.bin/*
 tests/Debug/*
 tests/packages/*

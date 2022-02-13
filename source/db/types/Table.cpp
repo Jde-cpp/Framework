@@ -84,6 +84,8 @@ namespace Jde::DB
 					Insertable = j.find("insertable")->get<bool>();
 				if( j.contains("updateable") )
 					Updateable = j.find("updateable")->get<bool>();
+				if( j.contains("qlAppend") )
+					QLAppend = j.find("qlAppend")->get<string>();
 			}
 		}
 		else if( j.is_string() )

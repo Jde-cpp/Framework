@@ -28,7 +28,7 @@ namespace Jde::DB
 	struct TableQL final
 	{
 		α DBName()const noexcept->string;
-		bool ContainsColumn( sv jsonName )const noexcept{ return find_if( Columns.begin(), Columns.end(), [&](var& c){return c.JsonName==jsonName;})!=Columns.end(); }
+		const ColumnQL* FindColumn( sv jsonName )const noexcept{ auto p = find_if( Columns.begin(), Columns.end(), [&](var& c){return c.JsonName==jsonName;}); return p==Columns.end() ? nullptr : &*p; }
 		sp<const TableQL> FindTable( sv jsonTableName )const noexcept{ auto p = find_if( Tables.begin(), Tables.end(), [&](var t){return t->JsonName==jsonTableName;}); return p==Tables.end() ? sp<const TableQL>{} : *p; }
 		string JsonName;
 		nlohmann::json Args;

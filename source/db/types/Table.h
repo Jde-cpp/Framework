@@ -24,6 +24,7 @@ namespace Jde::DB
 		bool IsNullable{ false };
 		mutable bool IsFlags{ false };
 		mutable bool IsEnum{ false };
+		mutable const Table* TablePtr{ nullptr };
 		EType Type{ EType::UInt };
 		optional<uint> MaxLength;
 		bool IsIdentity{ false };
@@ -33,8 +34,9 @@ namespace Jde::DB
 		bool Insertable{ true };
 		bool Updateable{ true };
 		string PKTable;
+		string QLAppend;//also select this column in ql query
 	};
-	struct Table;
+
 	struct  Γ Index
 	{
 		Index( sv indexName, sv tableName, bool primaryKey, vector<CIString>* pColumns=nullptr, bool unique=true, optional<bool> clustered=optional<bool>{} )noexcept;//, bool clustered=false
@@ -63,6 +65,7 @@ namespace Jde::DB
 		α NameWithoutType()const noexcept->string;//users in um_users.
 		α Prefix()const noexcept->string;//um in um_users.
 		α JsonTypeName()const noexcept->string;
+
 		α FKName()const noexcept->string;
 		bool IsMap()const noexcept{ return ChildId().size() && ParentId().size(); }
 		α ChildId()const noexcept(false)->string;
@@ -80,7 +83,6 @@ namespace Jde::DB
 		flat_map<uint,string> FlagsData;
 		vector<nlohmann::json> Data;
 		bool CustomInsertProc{false};
-
 	};
 	struct ForeignKey
 	{

@@ -10,7 +10,7 @@ namespace Jde::DB
 	Φ DataSource( path libraryName, string connectionString )noexcept(false)->sp<IDataSource>;
 	Φ DataSourcePtr()noexcept(false)->sp<IDataSource>;
 	ⓣ SelectEnum( sv tableName, SRCE )noexcept(false)->up<IAwait>{ return DataSource().SelectEnum<T>( tableName ); }//sp<flat_map<T,string>>
-	template<class K=uint,class V=string> α SelectEnumSync( sv tableName, SRCE )noexcept(false)->sp<flat_map<K,V>>{ return DataSource().SelectEnumSync<K,V>( tableName ); }//sp<flat_map<T,string>>
+	template<class K=uint,class V=string> α SelectEnumSync( sv tableName, SRCE )noexcept(false)->sp<flat_map<K,V>>{ return DataSource().SelectEnumSync<K,V>( tableName, sl ); }//sp<flat_map<T,string>>
 	Φ IdFromName( sv tableName, string name, SRCE )noexcept->SelectAwait<uint>;
 
 	Φ LogDisplay( sv sql, const vector<object>* pParameters, string error={} )noexcept->string;

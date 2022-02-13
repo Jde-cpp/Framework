@@ -13,21 +13,27 @@ namespace Jde
 {
 	IException::IException( string value, ELogLevel level, uint code, SL sl )noexcept:
 		_stack{ sl },
-		_level{ level },
+		_level2{ level },
 		_what{ move(value) },
 		Code( code ? code : Calc32RunTime(value) )
-	{}
+	{
+		if( level>Logging::BreakLevel() )
+			BREAK;
+	}
 	IException::IException( vector<string>&& args, string&& format, SL sl, uint c, ELogLevel level )noexcept:
 		_stack{ sl },
-		_level{ level },
+		_level2{ level },
 		_format{ move(format) },
 		_args{ move(args) },
 		Code( c ? c : Calc32RunTime(format) )
-	{}
+	{
+		if( level>Logging::BreakLevel() )
+			BREAK;
+	}
 
 	IException::IException( IException&& from )noexcept:
 		_stack{ move(from._stack) },
-		_level{ from._level },
+		_level2{ from.Level() },
 		_what{ move(from._what) },
 		_pInner{ move(from._pInner) },
 		_format{ move(from._format) },
@@ -35,7 +41,7 @@ namespace Jde
 		Code{ from.Code }
 	{
 		ASSERT( _stack.stack.size() );
-		from._level=ELogLevel::NoLog;
+		from.SetLevel( ELogLevel::NoLog );
 	}
 	IException::~IException()
 	{
@@ -44,14 +50,14 @@ namespace Jde
 
 	α IException::Log()const noexcept->void
 	{
-		if( _level==ELogLevel::NoLog )
+		if( Level()==ELogLevel::NoLog )
 			return;
 		var& sl = _stack.front();
 		const string fileName{ strlen(sl.file_name()) ? FileName(sl.file_name()) : "{Unknown}\0"sv };
 		var functionName = strlen(sl.file_name()) ? sl.function_name() : "{Unknown}\0";
-		Logging::Default().log( spdlog::source_loc{fileName.c_str(), (int)sl.line(), functionName}, (spdlog::level::level_enum)_level, what() );
+		Logging::Default().log( spdlog::source_loc{fileName.c_str(), (int)sl.line(), functionName}, (spdlog::level::level_enum)Level(), what() );
 		if( Logging::Server() )
-			Logging::LogServer( Logging::Messages::ServerMessage{Logging::Message{_level, what(), sl}, vector<string>{_args}} );
+			Logging::LogServer( Logging::Messages::ServerMessage{Logging::Message{Level(), what(), sl}, vector<string>{_args}} );
 	}
 
 	α IException::what()const noexcept->const char*

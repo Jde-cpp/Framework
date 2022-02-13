@@ -37,7 +37,7 @@ namespace Jde::UM
 	{
 		GroupAuthorize():IAuthorize{"um_groups"}{}
 		β CanPurge( uint pk, UserPK )noexcept->bool override{ return pk!=1 && pk!=2; };
-		β Test( DB::EMutationQL ql, UserPK userId, SRCE )noexcept(false)->void override{};//TODO Remove
+		β Test( DB::EMutationQL, UserPK, SL )noexcept(false)->void override{};//TODO Remove
 		sv TableName;
 	};
 }
