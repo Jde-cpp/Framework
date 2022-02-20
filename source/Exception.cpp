@@ -13,19 +13,19 @@ namespace Jde
 {
 	IException::IException( string value, ELogLevel level, uint code, SL sl )noexcept:
 		_stack{ sl },
-		_level2{ level },
 		_what{ move(value) },
-		Code( code ? code : Calc32RunTime(value) )
+		Code( code ? code : Calc32RunTime(value) ),
+		_level2{ level }
 	{
 		if( level>Logging::BreakLevel() )
 			BREAK;
 	}
 	IException::IException( vector<string>&& args, string&& format, SL sl, uint c, ELogLevel level )noexcept:
 		_stack{ sl },
-		_level2{ level },
 		_format{ move(format) },
 		_args{ move(args) },
-		Code( c ? c : Calc32RunTime(format) )
+		Code( c ? c : Calc32RunTime(format) ),
+		_level2{ level }
 	{
 		if( level>Logging::BreakLevel() )
 			BREAK;
@@ -33,12 +33,12 @@ namespace Jde
 
 	IException::IException( IException&& from )noexcept:
 		_stack{ move(from._stack) },
-		_level2{ from.Level() },
 		_what{ move(from._what) },
 		_pInner{ move(from._pInner) },
 		_format{ move(from._format) },
 		_args{ move(from._args) },
-		Code{ from.Code }
+		Code{ from.Code },
+		_level2{ from.Level() }
 	{
 		ASSERT( _stack.stack.size() );
 		from.SetLevel( ELogLevel::NoLog );

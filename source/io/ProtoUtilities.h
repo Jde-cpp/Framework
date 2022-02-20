@@ -14,7 +14,7 @@ namespace Jde::IO::Proto
 	ⓣ Load( path path, SRCE )noexcept(false)->up<T>;
 	ⓣ TryLoad( path path )noexcept->up<T>;
 	ⓣ Load( path path, T& p, SRCE )noexcept(false)->void;
-	ⓣ LoadXZ( path path )noexcept(false)->AWrapper;//sp<T>
+	ⓣ LoadXZ( path path )noexcept(false)->AsyncAwait;//sp<T>
 
 	ⓣ Deserialize( const vector<char>& data )noexcept(false)->up<T>;
 	ⓣ Deserialize( const google::protobuf::uint8* p, int size )noexcept(false)->T;

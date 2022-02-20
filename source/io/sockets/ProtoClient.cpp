@@ -71,7 +71,7 @@ namespace Jde::IO::Sockets
 		{
 			if( ec )
 			{
-				DBG( "({})Write message returned '{}'."sv, ec.value(), ec.message() );
+				LOGX( "({})Write message returned '{}'.", ec.value(), ec.message() );
 				_socket.close();
 				_pIOContext = nullptr;
 			}
@@ -86,7 +86,7 @@ namespace Jde::IO::Sockets
 		Connect();
 	}
 
-	α ProtoClient::Connect()noexcept(false)->void 
+	α ProtoClient::Connect()noexcept(false)->void
 	{
 		if( !_pIOContext )
 			_pIOContext = IOContextThread::Instance();

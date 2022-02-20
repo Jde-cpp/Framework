@@ -55,9 +55,11 @@ namespace Jde::Coroutine
 			else
 				ERR( "unhandled_exception - no exception"sv );
 		}
-		catch( const IException& e )
+		catch( IException& e )
 		{
 			e.Log();
+			if( _pReturnObject )
+				_pReturnObject->SetResult( move(e) );
 			CRITICAL( "unhandled - {}", e.what() );
 		}
 		catch( const nlohmann::json::exception& e )

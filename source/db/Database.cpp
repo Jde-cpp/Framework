@@ -85,6 +85,7 @@ namespace Jde
 		DBG( "CleanDataSources"sv );
 		DB::ClearQLDataSource();
 		_pDefault = nullptr;
+		DBG( "_pDefault=nullptr" );
 		for( auto p=_pDBShutdowns->begin(); p!=_pDBShutdowns->end(); p=_pDBShutdowns->erase(p) )
 			(*p)();
 		_pDBShutdowns = nullptr;
@@ -124,8 +125,11 @@ namespace Jde
 	α Initialize( path libraryName )noexcept(false)->void
 	{
 		static DataSourceApi api{ libraryName };
-		_pDefault = sp<Jde::DB::IDataSource>{ api.GetDataSourceFunction() };
-		std::call_once( _singleShutdown, [](){ IApplication::AddShutdownFunction( DB::CleanDataSources ); } );
+		//_pDefault = sp<Jde::DB::IDataSource>{ api.GetDataSourceFunction() };//needs to be deleted before api
+		_pDefault = sp<Jde::DB::IDataSource>{ api.GetDataSourceFunction(), [](auto p) {
+         //  delete p;  needs to be deleted before api
+      } };
+		//std::call_once( _singleShutdown, [](){ IApplication::AddShutdownFunction( DB::CleanDataSources ); } );
 	}
 
 	α DB::DataSourcePtr()noexcept(false)->sp<IDataSource>

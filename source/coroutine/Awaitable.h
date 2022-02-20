@@ -112,17 +112,6 @@ namespace Jde::Coroutine
 		function<void()> _fnctn;
 	};
 
-	//assynchronous function continues at end
-	class FunctionAwait /*final*/ : public IAwait//TODO AsyncAwait?
-	{
-		using base=IAwait;
-	public:
-		FunctionAwait( function<Task(HCoroutine)> fnctn, SRCE, str name={} )noexcept:base{name, sl}, _fnctn2{fnctn}{};
-
-		α await_suspend( HCoroutine h )noexcept->void override{ base::await_suspend( h ); _fnctn2( move(h) ); }
-	private:
-		function<Task(HCoroutine)> _fnctn2;
-	};
 /*	template<class T>
 	struct Task : std::promise<T>
 	{
@@ -191,11 +180,34 @@ namespace Jde::Coroutine
 		return f;
 	}
 
-	struct AWrapper final : IAwait
+	//assynchronous function continues at end
+	class AsyncAwait /*final*/ : public IAwait
 	{
 		using base=IAwait;
-		AWrapper( function<Task(HCoroutine h)> fnctn, string name={} )noexcept:base{move(name)}, _fnctn{fnctn}{ /*DBG("({})AWrapper(0x{:x})", _name, (uint)this);*/ };
-		~AWrapper(){ /*DBG("({})~AWrapper(0x{:x})", _name, (uint)this);*/ }
+	public:
+		AsyncAwait( function<Task(HCoroutine)> fnctn, SRCE, str name={} )noexcept:base{name, sl}, _fnctn{fnctn}{};
+
+		α await_suspend( HCoroutine h )noexcept->void override{ base::await_suspend( h ); _fnctn( move(h) ); }
+	protected:
+		function<Task(HCoroutine)> _fnctn;
+	};
+
+	class CacheAwait final : public AsyncAwait
+	{
+		using base=AsyncAwait;
+	public:
+		CacheAwait( sp<void*> pCache, function<Task(HCoroutine)> fnctn, SRCE, str name={} )noexcept:base{fnctn, sl, name}, _pCache{pCache}{}
+		α await_ready()noexcept->bool override{ return _pCache.get(); }
+		α await_suspend( HCoroutine h )noexcept->void override{ base::await_suspend( h ); _fnctn( move(h) ); }
+		α await_resume()noexcept->AwaitResult override{ return _pCache ? AwaitResult{_pCache} : base::await_resume(); }
+	private:
+		sp<void*> _pCache;
+	};
+/*struct AWrapper final : IAwait
+	{
+		using base=IAwait;
+		AWrapper( function<Task(HCoroutine h)> fnctn, string name={} )noexcept:base{move(name)}, _fnctn{fnctn}{ / *DBG("({})AWrapper(0x{:x})", _name, (uint)this);* / };
+		~AWrapper(){ / *DBG("({})~AWrapper(0x{:x})", _name, (uint)this);* / }
 
 		α await_suspend( HCoroutine h )noexcept->void override
 		{
@@ -205,7 +217,7 @@ namespace Jde::Coroutine
 	private:
 		function<Task(HCoroutine h)> _fnctn;
 	};
-
+*/
 	//template<class T>
 	struct CancelAwait /*abstract*/ : Await
 	{
