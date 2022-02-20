@@ -193,5 +193,6 @@ function frameworkProtoc
 fetchDefault Framework;
 frameworkProtoc;
 build Framework 0;
-cd ../tests;
-buildTest Framework Tests.Framework.exe
+
+#cd ../tests;
+#buildTest Framework Tests.Framework.exe

@@ -17,8 +17,10 @@ namespace Jde
 		Code( code ? code : Calc32RunTime(value) ),
 		_level2{ level }
 	{
+#ifndef NDEBUG
 		if( level>Logging::BreakLevel() )
 			BREAK;
+#endif
 	}
 	IException::IException( vector<string>&& args, string&& format, SL sl, uint c, ELogLevel level )noexcept:
 		_stack{ sl },
@@ -27,8 +29,10 @@ namespace Jde
 		Code( c ? c : Calc32RunTime(format) ),
 		_level2{ level }
 	{
+#ifndef NDEBUG
 		if( level>Logging::BreakLevel() )
 			BREAK;
+#endif
 	}
 
 	IException::IException( IException&& from )noexcept:
