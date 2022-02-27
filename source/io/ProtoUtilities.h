@@ -12,13 +12,13 @@
 namespace Jde::IO::Proto
 {
 	ⓣ Load( path path, SRCE )noexcept(false)->up<T>;
-	ⓣ TryLoad( path path )noexcept->up<T>;
+	ⓣ TryLoad( path path, SRCE )noexcept->up<T>;
 	ⓣ Load( path path, T& p, SRCE )noexcept(false)->void;
 	ⓣ LoadXZ( path path )noexcept(false)->AsyncAwait;//sp<T>
 
 	ⓣ Deserialize( const vector<char>& data )noexcept(false)->up<T>;
 	ⓣ Deserialize( const google::protobuf::uint8* p, int size )noexcept(false)->T;
-
+	ⓣ Deserialize( string&& x )noexcept(false)->T;
 	ⓣ ToVector( const google::protobuf::RepeatedPtrField<T>& x )noexcept->vector<T>;
 
 	α Save( const google::protobuf::MessageLite& msg, fs::path path, SL )noexcept(false)->void;
@@ -76,6 +76,14 @@ namespace Jde::IO
 		Internal::Deserialize<T>( p, size, y );
 		return y;
 	}
+	ⓣ Proto::Deserialize( string&& x )noexcept(false)->T
+	{
+		T y;
+		Internal::Deserialize<T>( (google::protobuf::uint8*)x.data(), (int)x.size(), y );
+		x.clear();
+		return y;
+	}
+
 	ⓣ Proto::Load( path path, T& proto, SL sl )noexcept(false)->void
 	{
 		up<vector<char>> pBytes;
@@ -102,14 +110,14 @@ namespace Jde::IO
 		return p;
 	}
 
-	ⓣ Proto::TryLoad( path path )noexcept->up<T>
+	ⓣ Proto::TryLoad( path path, SL sl )noexcept->up<T>
 	{
 		up<T> pValue{};
 		if( fs::exists(path) )
 		{
 			try
 			{
-				pValue = Load<T>( path );
+				pValue = Load<T>( path, sl );
 			}
 			catch( const IException& )
 			{}

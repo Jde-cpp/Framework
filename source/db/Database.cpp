@@ -113,11 +113,7 @@ namespace Jde
 	α DB::DefaultSyntax()noexcept->const DB::Syntax&
 	{
 		if( !_pSyntax )
-		{
-			_pSyntax = Settings::Getɛ<string>("db/driver")=="Jde.DB.Odbc.dll"
-				? make_shared<Syntax>()
-				: make_shared<MySqlSyntax>();
-		}
+			_pSyntax = Driver()=="Jde.DB.Odbc.dll" ? make_shared<Syntax>() : make_shared<MySqlSyntax>();
 		return *_pSyntax;
 	}
 
@@ -126,7 +122,7 @@ namespace Jde
 	{
 		static DataSourceApi api{ libraryName };
 		//_pDefault = sp<Jde::DB::IDataSource>{ api.GetDataSourceFunction() };//needs to be deleted before api
-		_pDefault = sp<Jde::DB::IDataSource>{ api.GetDataSourceFunction(), [](auto p) {
+		_pDefault = sp<Jde::DB::IDataSource>{ api.GetDataSourceFunction(), [](auto) {
          //  delete p;  needs to be deleted before api
       } };
 		//std::call_once( _singleShutdown, [](){ IApplication::AddShutdownFunction( DB::CleanDataSources ); } );
@@ -136,7 +132,7 @@ namespace Jde
 	{
 		if( !_pDefault /*&& !IApplication::ShuttingDown()*/ )
 		{
-			Initialize( Settings::Env("db/driver").value_or("Jde.DB.Odbc.dll") );
+			Initialize( Driver() );
 			string cs{ Settings::Env("db/connectionString").value_or("DSN=Jde_Log_Connection") };
 			//var env = cs.find( '=' )==string::npos ? OSApp::EnvironmentVariable( cs ) : string{};
 			_pDefault->SetConnectionString( move(cs) );

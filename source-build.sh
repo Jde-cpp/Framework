@@ -101,11 +101,11 @@ function buildWindows2
 function buildWindows
 {
 	dir=$1;
-	echo buildWindows - $dir;
+	echo buildWindows - $dir clean=$clean;
 	if [[ ! -f "$dir.vcxproj.user" && -f "$dir.vcxproj._user" ]]; then
+		echo 'linked $dir.vcxproj.user to $dir.vcxproj._user'
 		linkFile $dir.vcxproj._user $dir.vcxproj.user;	if [ $? -ne 0 ]; then echo `pwd`; echo FAILED:  linkFile $dir.vcxproj._user $dir.vcxproj.user; exit 1; fi;
 	fi;
-	echo clean=$clean;
 	if [ ${clean:-1} -eq 1 ]; then
 		echo rm -r -f $dir/.bin;
 		rm -r -f .bin;

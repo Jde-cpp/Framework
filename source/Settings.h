@@ -179,11 +179,15 @@ namespace Jde::Settings
 	$ Get<ELogLevel>( sv path )noexcept->optional<ELogLevel>{ return Global().Get<ELogLevel>( path ); }
 	Ξ ForEach( sv path, function<void(sv, const nlohmann::json& v)> f )noexcept->void{ return Global().ForEach(path, f); }
 
-	Ξ Env( sv path )noexcept->optional<string>
+	Ξ Env( sv path, SRCE )noexcept->optional<string>
 	{
 		auto p = Global().Get( path );
 		if( p && p->starts_with("$(") && p->size()>3 )
-			p = OSApp::EnvironmentVariable( p->substr(2, p->size()-3) );
+		{
+			p = OSApp::EnvironmentVariable( p->substr(2, p->size()-3), sl );
+			if( p->size()==0 )
+				p = nullopt;
+		}
 		return p;
 	}
 

@@ -183,7 +183,7 @@ namespace Jde::DB
 			if( var index{(EObject)value.index()}; index!=EObject::Null )
 			{
 				auto& m = objectName.empty() ? obj[string{memberName}] : obj[string{objectName}][string{memberName}];
-				if( index==EObject::Uint || index==EObject::Int )
+				if( index==EObject::UInt64 || index==EObject::Int32 )
 				{
 					if( var pFlagValues = flagValues.find(iColumn); pFlagValues!=flagValues.end() )
 					{
@@ -208,7 +208,7 @@ namespace Jde::DB
 						}
 					}
 					else if( pAuthorizer && memberName=="id" && !pAuthorizer->CanRead(userId, ToUInt(value)) )//TODO move to sql
-						return false;
+						return false;//TODO uncomment
 /*					else if( pMember && pMember->SchemaColumnPtr && pMember->SchemaColumnPtr->IsEnum )
 					{
 						if( var pFlagValues = flagValues.find(iColumn); pFlagValues!=flagValues.end() )

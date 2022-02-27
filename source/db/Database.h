@@ -9,6 +9,7 @@ namespace Jde::DB
 	Φ DataSource()noexcept(false)->IDataSource&;
 	Φ DataSource( path libraryName, string connectionString )noexcept(false)->sp<IDataSource>;
 	Φ DataSourcePtr()noexcept(false)->sp<IDataSource>;
+	Ξ Driver()ι->string{ return Settings::Env("db/driver").value_or("Jde.DB.Odbc.dll"); }
 	ⓣ SelectEnum( sv tableName, SRCE )noexcept(false)->up<IAwait>{ return DataSource().SelectEnum<T>( tableName ); }//sp<flat_map<T,string>>
 	template<class K=uint,class V=string> α SelectEnumSync( sv tableName, SRCE )noexcept(false)->sp<flat_map<K,V>>{ return DataSource().SelectEnumSync<K,V>( tableName, sl ); }//sp<flat_map<T,string>>
 	Φ IdFromName( sv tableName, string name, SRCE )noexcept->SelectAwait<uint>;
@@ -28,7 +29,7 @@ namespace Jde::DB
 	Φ Execute( string sql, vector<object>&& parameters, SRCE )noexcept(false)->uint;
 
 	ⓣ TryScaler( string sql, vec<object>& parameters, SRCE )noexcept->optional<T>;
-	ⓣ Scaler( string sql, vec<object>& parameters, SRCE )noexcept(false)->optional<T>;
+	ⓣ Scaler( string sql, vec<object>& parameters={}, SRCE )noexcept(false)->optional<T>;
 	ⓣ ScalerCo( string sql, vec<object> parameters, SRCE )noexcept(false)->SelectAwait<T>;
 
 	Φ Select( string sql, std::function<void(const IRow&)> f, vec<object>& values, SRCE )noexcept(false)->void;

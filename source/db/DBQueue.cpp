@@ -40,9 +40,9 @@ namespace Jde::DB
 		try
 		{
 			if( pStatement->IsStoredProc )
-				_spDataSource->ExecuteProcNoLog( pStatement->Sql, *pStatement->Parameters, sl );
+				_spDataSource->ExecuteProcNoLog( move(pStatement->Sql), *pStatement->Parameters, sl );
 			else
-				_spDataSource->ExecuteNoLog( pStatement->Sql, pStatement->Parameters.get(), nullptr, false, sl );
+				_spDataSource->ExecuteNoLog( move(pStatement->Sql), pStatement->Parameters.get(), nullptr, false, sl );
 		}
 		catch( const IException& )
 		{

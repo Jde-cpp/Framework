@@ -15,25 +15,16 @@ namespace Jde
 		_stack{ sl },
 		_what{ move(value) },
 		Code( code ? code : Calc32RunTime(value) ),
-		_level2{ level }
-	{
-#ifndef NDEBUG
-		if( level>Logging::BreakLevel() )
-			BREAK;
-#endif
-	}
+		_level{ level }
+	{}
+	
 	IException::IException( vector<string>&& args, string&& format, SL sl, uint c, ELogLevel level )noexcept:
 		_stack{ sl },
 		_format{ move(format) },
 		_args{ move(args) },
 		Code( c ? c : Calc32RunTime(format) ),
-		_level2{ level }
-	{
-#ifndef NDEBUG
-		if( level>Logging::BreakLevel() )
-			BREAK;
-#endif
-	}
+		_level{ level }
+	{}
 
 	IException::IException( IException&& from )noexcept:
 		_stack{ move(from._stack) },
@@ -42,7 +33,7 @@ namespace Jde
 		_format{ move(from._format) },
 		_args{ move(from._args) },
 		Code{ from.Code },
-		_level2{ from.Level() }
+		_level{ from.Level() }
 	{
 		ASSERT( _stack.stack.size() );
 		from.SetLevel( ELogLevel::NoLog );
@@ -52,6 +43,16 @@ namespace Jde
 		Log();
 	}
 
+	α IException::BreakLog()const noexcept->void
+	{
+#ifndef NDEBUG
+		if( Level()>Logging::BreakLevel() )
+		{
+			Log();
+			BREAK;
+		}
+#endif
+	}
 	α IException::Log()const noexcept->void
 	{
 		if( Level()==ELogLevel::NoLog )
@@ -141,5 +142,37 @@ namespace Jde
 	α IOException::what()const noexcept->const char*
 	{
 		return _what.c_str();
+	}
+
+	α NetException::Log( string extra )const noexcept->void
+	{
+		if( Level()==ELogLevel::NoLog )
+			return;
+		var sl = _stack.front();
+		if( string{sl.file_name()}.ends_with("construct_at") || Level()>=Logging::BreakLevel() )
+			BREAK;
+		Logging::Default().log( spdlog::source_loc{FileName(sl.file_name()).c_str(), (int)sl.line(), sl.function_name()}, (spdlog::level::level_enum)Level(), extra.size() ? format("{}\n{}", extra, _what) : _what );
+		SetLevel( ELogLevel::NoLog );
+		//if( Logging::Server() )
+		//	Logging::LogServer( Logging::Messages::Message{Logging::Message2{_level, _what, _sl.file_name(), _sl.function_name(), _sl.line()}, vector<string>{_args}} );
+
+//#ifdef _MSC_VER
+		try
+		{
+			var path = fs::temp_directory_path()/"ssl_error_response.json";
+			auto l{ Threading::UniqueLock(path.string()) };
+			std::ofstream os{ path };
+			os << Result;
+		}
+		catch( std::exception& e )
+		{
+			ERR( "could not save error result:  {}", e.what() );
+		}
+/*#else
+		constexpr sv fileName = "/tmp/ssl_error_response.json";
+		auto l{ Threading::UniqueLock(string{fileName}) };
+		std::ofstream os{ fileName };
+		os << Result;
+#endif*/
 	}
 }

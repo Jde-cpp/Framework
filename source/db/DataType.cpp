@@ -8,39 +8,25 @@
 namespace Jde
 {
 	using nlohmann::json;
-	α DB::ToString( const object& parameter, SL sl )noexcept(false)->string
+
+	struct Visit
 	{
-		ostringstream os;
-		constexpr sv nullString = "null"sv;
-		const EObject type = (EObject)parameter.index();
-		if( type==EObject::Null )
-			os << nullString;
-		else if( type==EObject::String )
-			os << get<string>(parameter);
-		else if( type==EObject::StringView )
-			os << get<sv>(parameter);
-		else if( type==EObject::StringPtr )
-		{
-			if( var& pValue = get<sp<string>>(parameter); pValue )
-				os << *pValue;
-			else
-				os << nullString;
-		}
-		else if( type==EObject::Bool )
-			os << get<bool>(parameter);
-		else if( type==EObject::Int )
-			os << get<int>(parameter);
-		else if( type==EObject::Int64 )
-			os << get<_int>(parameter);
-		else if( type==EObject::Uint )
-			os << get<uint>(parameter);
-		else if( type==EObject::Double )
-			os << get<double>( parameter );
-		else if( type==EObject::Time )
-			os << ToIsoString( get<DBTimePoint>(parameter) );
-		else
-			throw Exception{ sl, Jde::ELogLevel::Debug, "{} not implemented", parameter.index() };
-		return os.str();
+		template<class T>
+		α operator()( T x )ι->string{ return std::to_string(x); }
+		template<>
+		α operator()(nullptr_t )ι->string{ return "null"; }
+		template<>
+		α operator()( string x )ι->string{ return move(x); }
+		template<>
+		α operator()( sv x )ι->string{ return string{x}; }
+		template<>
+		α operator()( sp<string> x )ι->string{ return *x; }
+		template<>
+		α operator()( DB::DBTimePoint x )ι->string{ return ToIsoString( x ); }
+	};
+	α DB::ToString( const object& p )noexcept(false)->string
+	{
+		return std::visit( Visit{}, p );
 	}
 
 	α  DB::ToType( sv t )noexcept->DB::EType
@@ -195,9 +181,9 @@ namespace Jde
 			j = get<bool>( v );
 		else if( index==EObject::Int64 )
 			j = get<_int>( v );
-		else if( index==EObject::Uint )
+		else if( index==EObject::UInt64 )
 			j = get<uint>( v );
-		else if( index==EObject::Int )
+		else if( index==EObject::Int32 )
 			j = get<int>( v );
 		else if( index==EObject::Double )
 			j = get<double>( v );

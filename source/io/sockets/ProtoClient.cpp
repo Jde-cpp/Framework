@@ -100,7 +100,7 @@ namespace Jde::IO::Sockets
 		}
 		catch( const boost::system::system_error& e )
 		{
-			THROW( "Could not connect {}", e.what() );
+			throw NetException{ format("{}:{}", Host, Port), {}, (uint)e.code().value(), string{e.what()}, Jde::ELogLevel::Warning };
 		}
 	}
 }

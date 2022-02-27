@@ -12,9 +12,9 @@ namespace Jde::DB
 	using nlohmann::json;
 	using DBClock=std::chrono::system_clock;
 	using DBTimePoint=DBClock::time_point;
-	enum class EObject: uint8 {Null,String,StringView,StringPtr,Bool,Int,Int64,Uint,Double,Time };
-	using object=std::variant<std::nullptr_t,string,sv,sp<string>,bool,int,_int,uint,double,DBTimePoint>;
-	α ToString( const object& parameter, SRCE )noexcept(false)->string;
+	enum class EObject: uint8 {Null,String,StringView,StringPtr,Bool,Int32,Int64,UInt32,UInt64,Double,Time };
+	using object=std::variant<std::nullptr_t,string,sv,sp<string>,bool,int,_int,uint32,uint,double,DBTimePoint>;
+	α ToString( const object& parameter )noexcept(false)->string;
 
 	enum class EType:uint8{None,Int16,Int,UInt,SmallFloat,Float,Bit,Decimal,Int8,Long,ULong,Guid,Binary,VarBinary,VarTChar,VarWChar,Numeric,DateTime,Cursor,TChar,VarChar,RefCursor,SmallDateTime,WChar,NText,Text,Image,Blob,Money,Char,TimeSpan,Uri,UInt8,UInt16 };
 
@@ -27,11 +27,11 @@ namespace Jde::DB
 	Ξ ToUInt( const object& x )noexcept->uint
 	{
 		uint y; var i = (EObject)x.index();
-		if( i==EObject::Int )
+		if( i==EObject::Int32 )
 			y = get<int>( x );
 		else if( i==EObject::Int64 )
 			y = get<_int>( x );
-		else if( i==EObject::Uint )
+		else if( i==EObject::UInt64 )
 			y = get<uint>( x );
 		else
 			ASSERT( y=0 );
