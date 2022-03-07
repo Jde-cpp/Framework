@@ -16,7 +16,7 @@ namespace Jde
 		template<>
 		α operator()(nullptr_t )ι->string{ return "null"; }
 		template<>
-		α operator()( string x )ι->string{ return move(x); }
+		α operator()( string x )ι->string{ return x; }
 		template<>
 		α operator()( sv x )ι->string{ return string{x}; }
 		template<>

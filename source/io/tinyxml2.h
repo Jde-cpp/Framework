@@ -817,7 +817,7 @@ public:
 
     /// Get the next (right) sibling element of this node, with an optionally supplied name.
     const XMLElement*	NextSiblingElement( const char* name = 0 ) const;
-	 α NextSiblingElement( sv name )const noexcept->const XMLElement*;
+	 α NextSiblingElement( sv name )Ι->const XMLElement*;
 
     XMLElement*	NextSiblingElement( const char* name = 0 )	{
         return const_cast<XMLElement*>(const_cast<const XMLNode*>(this)->NextSiblingElement( name ) );
@@ -934,7 +934,10 @@ public:
 		It is initially 0.
 	*/
 	void* GetUserData() const			{ return _userData; }
-	α Find( const std::span<sv>& entries )const noexcept->const XMLElement*;
+	α Find( const std::span<sv>& entries )Ι->const XMLElement*;//[child][grandChild][great-grandChild]
+	α FindText( sv elementText, sv elementName={} )Ι->const XMLElement*;//"<p>value</p>=Find(p, value"
+	α FindText( const std::span<sv>& entries )Ι->const XMLElement*;
+	α Parent( sv elementName )Ι->const XMLElement*;
 protected:
     explicit XMLNode( XMLDocument* );
     virtual ~XMLNode();
@@ -1134,11 +1137,11 @@ class XMLAttribute
 public:
     /// The name of the attribute.
     const char* Name() const;
-	 sv name()const noexcept{ return _name.View(); }
+	 sv name()Ι{ return _name.View(); }
 
     /// The value of the attribute.
     const char* Value() const;
-	 α value()const noexcept->sv{ return _value.View(); }
+	 α value()Ι->sv{ return _value.View(); }
 
     /// Gets the line number the attribute is in, if the document was parsed from a file.
     int GetLineNum() const { return _parseLineNum; }
@@ -1262,20 +1265,20 @@ public:
     const char* Name() const		{
         return Value();
     }
-	 α name()const noexcept->sv{ return _value.View(); }
+	 α name()Ι->sv{ return _value.View(); }
 
-	 α operator[](sv i)const noexcept->const XMLAttribute*;
+	 α operator[](sv i)Ι->const XMLAttribute*;
 
-/*	 template<class T=sv> α Attr( sv n )const noexcept(false)->T
+/*	 template<class T=sv> α Attr( sv n )Ι(false)->T
 	 {
 		 auto p = *this[i]; THROW_IF( !p, "Could not find attribute '{}'", n );
 		 return p->value();
 	 }
-	 template<class T=sv> α TryAttr( sv n )const noexcept(false)->optional<T>
+	 template<class T=sv> α TryAttr( sv n )Ι(false)->optional<T>
 	 {
 		 return *this[i] ? *this[i]->value() : nullopt;
 	 }*/
-	 template<class T=sv> α Attr( sv n )const noexcept->T;
+	 template<class T=sv> α Attr( sv n )Ι->T;
 
     /// Set the name of the element.
     void SetName( const char* str, bool staticMem=false )	{
@@ -1524,7 +1527,7 @@ public:
         return _rootAttribute;
     }
     /// Query a specific attribute in the list.
-	 //Attr α AttributeValue( sv name )const noexcept->sv{ sv v; if( const auto p=FindAttribute(name); p ) v=p->Value(); return v; }
+	 //Attr α AttributeValue( sv name )Ι->sv{ sv v; if( const auto p=FindAttribute(name); p ) v=p->Value(); return v; }
     const XMLAttribute* FindAttribute( const char* name ) const;
 
     /** Convenience function for easy access to the text inside an element. Although easy
@@ -1557,6 +1560,8 @@ public:
     */
     const char* GetText() const;
 
+	α Text()const noexcept->sv;
+	α FirstText()const noexcept->sv; //<td><font>findMe
     /** Convenience function for easy access to the text inside an element. Although easy
     	and concise, SetText() is limited compared to creating an XMLText child
     	and mutating it directly.
@@ -1751,7 +1756,7 @@ class Γ XMLDocument : public XMLNode
     friend class XMLDeclaration;
     friend class XMLUnknown;
 public:
-    XMLDocument( std::string_view value )noexcept(false);
+    XMLDocument( std::string_view value, SRCE )noexcept(false);
     XMLDocument( bool processEntities = true, Whitespace whitespaceMode = PRESERVE_WHITESPACE );
     ~XMLDocument();
 
@@ -1841,7 +1846,7 @@ public:
         return FirstChildElement();
     }
 
-	 α Find( const std::span<sv>& entries )const noexcept->const XMLElement*;
+	 α Find( const std::span<sv>& entries )Ι->const XMLElement*;
 
     /** Print the Document. If the Printer is not provided, it will
         print to stdout. If you provide Printer, this can print to a file:
@@ -2400,12 +2405,12 @@ private:
 };
 
 
-	template<> Ξ XMLElement::Attr<sv>( sv n )const noexcept->sv{ return (*this)[n]->value(); }
-/*	template<> α XMLElement::Attr<double>( sv n )const noexcept->double
+	template<> Ξ XMLElement::Attr<sv>( sv n )Ι->sv{ return (*this)[n]->value(); }
+/*	template<> α XMLElement::Attr<double>( sv n )Ι->double
 	{
 		(*this)[n] ? strtod( (*this)[n]->value() ) : 0;
 	}*/
-	ⓣ XMLElement::Attr( sv n )const noexcept->T
+	ⓣ XMLElement::Attr( sv n )Ι->T
 	{
 		return (*this)[n] ? Jde::To<T>((*this)[n]->value()) : T{};
 	}

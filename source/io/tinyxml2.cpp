@@ -1036,7 +1036,7 @@ const XMLElement* XMLNode::NextSiblingElement( const char* name ) const
     }
     return 0;
 }
-α XMLNode::NextSiblingElement( sv name )const noexcept->const XMLElement*
+α XMLNode::NextSiblingElement( sv name )Ι->const XMLElement*
 {
 	const XMLElement* y = nullptr;
    for( auto p = _next; p && !y; p = p->_next )
@@ -1604,7 +1604,7 @@ XMLElement::~XMLElement()
     }
 }
 
-α XMLElement::operator[]( sv n )const noexcept->const XMLAttribute*
+α XMLElement::operator[]( sv n )Ι->const XMLAttribute*
 {
 	auto p = _rootAttribute;
 	for( ; p; p = p->_next )
@@ -1704,6 +1704,28 @@ const char* XMLElement::GetText() const
     }
     return 0;
 }
+α XMLElement::Text()const noexcept->sv
+{
+	const XMLNode* node = FirstChild();
+	for( ; node && node->ToComment(); node = node->NextSibling() );
+
+	sv y;
+	if( var psz = node && node->ToText() ? node->Value() : nullptr; psz )
+		y = sv{ psz,strlen(psz) };
+	return y;
+}
+
+α XMLElement::FirstText()const noexcept->sv
+{
+	sv text;
+	for( auto c = FirstChildElement(); c && text.empty(); c = c->NextSiblingElement() )
+	{
+		if( (text = c->Text()).empty() )
+			text = c->FirstText();
+	}
+	return text;
+}
+
 α XMLElement::ChildText( sv elementName )noexcept(false)->sv
 {
 	auto p = FirstChildElement( elementName ); THROW_IF( !p, "Could not find {} in {}", elementName, Name() );
@@ -2196,10 +2218,16 @@ const char* XMLDocument::_errorNames[XML_ERROR_COUNT] = {
 	"XML_ELEMENT_DEPTH_EXCEEDED"
 };
 
-XMLDocument::XMLDocument( std::string_view value )noexcept(false):
+XMLDocument::XMLDocument( std::string_view value, Jde::SL sl )noexcept(false):
 	XMLDocument{}
 {
-	var result = Parse( value.data(), value.size() ); THROW_IF( result, ErrorStr() );
+	if( Parse(value.data(), value.size()) )
+	{
+		//std::ofstream os{"/tmp/v.xml"};
+		//os << value;
+		//os.close();
+		throw Jde::Exception{ sl, Jde::ELogLevel::Debug, "Could not parse '{}' - '{}'", value.substr(0, 100), ErrorStr() };
+	}
 }
 XMLDocument::XMLDocument( bool processEntities, Whitespace whitespaceMode ) :
     XMLNode( 0 ),
@@ -2596,19 +2624,57 @@ void XMLDocument::PopDepth()
 	TIXMLASSERT(_parsingDepth > 0);
 	--_parsingDepth;
 }
-α XMLNode::Find( const std::span<sv>& entries )const noexcept->const XMLElement*
+α XMLNode::Find( const std::span<sv>& entries )Ι->const XMLElement*
 {
 	ASSERT( entries.size() );
 	var p = FirstChildElement( entries[0] );
 	return p && entries.size()>1 ? p->Find( {&entries[1], entries.size()-1} ) : p;
 }
 
-α XMLDocument::Find( const std::span<sv>& entries )const noexcept->const XMLElement*
+α XMLDocument::Find( const std::span<sv>& entries )Ι->const XMLElement*
 {
 
 	const XMLElement* y = nullptr;
 	if( auto pRoot = RootElement(); pRoot && entries.size() && pRoot->name()==entries[0] )
 		y = entries.size()==1 ? pRoot : pRoot->Find( {&entries[1], entries.size()-1} );
+	return y;
+}
+α XMLNode::FindText( sv elementText, sv elementName )Ι->const XMLElement* //"<p>value</p>=Find(p, value)"
+{
+	const XMLElement* y = nullptr;
+	for( const XMLNode* n=FirstChild(); !y && n; n=n->NextSibling() )
+	{
+		// if( const XMLElement* p=n->ToElement(); p && (elementName.empty() || p->Name()==elementName) )
+		// 	DBG( "{}", p->Text() );
+		if( const XMLElement* p=n->ToElement(); p && (elementName.empty() || p->Name()==elementName) && Jde::Str::Replace(p->Text(),"\n", "")==elementText )
+			y = p;
+		else
+			y = n->FindText( elementText, elementName );
+	}
+	return y;
+}
+α XMLNode::FindText( const std::span<sv>& entries )Ι->const XMLElement*
+{
+	const XMLElement* y = nullptr;
+	var compare = [&entries]( std::vector<sv>&& v ){ return v.size()==entries.size() && std::equal(v.begin(), v.end(), entries.begin()); };
+	for( const XMLNode* n=FirstChild(); !y && n; n=n->NextSibling() )
+	{
+		if( const XMLElement* p=n->ToElement(); p && compare(Jde::Str::Words(p->Text())) )
+			y = p;
+		else
+			y = n->FindText( entries );
+	}
+	return y;
+}
+
+α XMLNode::Parent( sv elementName )Ι->const XMLElement*
+{
+	const XMLElement* y = nullptr;
+	for( const XMLNode* p=Parent(); !y && p; p=p->Parent() )
+	{
+		if( const XMLElement* e=p->ToElement(); e && e->Name()==elementName )
+			y = e;
+	}
 	return y;
 }
 

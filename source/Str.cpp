@@ -4,9 +4,10 @@
 #include <functional>
 #include <locale>
 
+#define var const auto
+
 namespace Jde
 {
-
 	α ci_char_traits::compare( const char* s1, const char* s2, size_t n )noexcept->int
 	{
 		while( n-- != 0 )
@@ -103,17 +104,31 @@ namespace Jde
 		return Transform( source, ::tolower );
 	}
 
-	string Str::ToUpper( sv source )noexcept
+	α Str::ToUpper( sv source )noexcept->string
 	{
 		return Transform( source, ::toupper );
 	}
 
-	sv Str::NextWord( sv x )noexcept
+	α Str::NextWord( sv x )noexcept->sv
 	{
 		uint iStart = 0;
 		for( ;iStart<x.size() && x[iStart]>0 && ::isspace(x[iStart]); ++iStart );//msvc asserts if ch<0
 		uint iEnd=iStart;
 		for( ;iEnd<x.size() && (x[iEnd]<0 || !::isspace(x[iEnd])); ++iEnd );
 		return x.substr( iStart, iEnd>iStart ? iEnd-iStart : 0 );
+	}
+
+	α Str::Words( sv x )noexcept->vector<sv>
+	{
+		vector<sv> results;
+		for( uint iStart{0}, iEnd; iStart<x.size(); iStart=iEnd )
+		{
+			for( ;iStart<x.size() && x[iStart]>0 && ::isspace(x[iStart]); ++iStart );//msvc asserts if ch<0
+			iEnd=iStart;
+			for( ;iEnd<x.size() && (x[iEnd]<0 || !::isspace(x[iEnd])); ++iEnd );
+			if( var length = iEnd>iStart ? iEnd-iStart : 0; length )
+				results.push_back( x.substr(iStart, length) );
+		}
+		return results;
 	}
 }

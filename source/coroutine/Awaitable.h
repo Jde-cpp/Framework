@@ -137,6 +137,26 @@ namespace Jde::Coroutine
 		return f;
 	}
 
+	Ξ BCallAwait( std::promise<bool>&& p_, IAwait&& a )->Task
+	{
+		auto p = move( p_ );
+		AwaitResult r = co_await a;
+		if( r.HasBool() )
+			p.set_value( r.Bool() );
+		else if( r.HasError() )
+			p.set_exception( r.Error()->Ptr() );
+		else
+			p.set_exception( Exception{ a._sl, "no bool.  HasValue={}, HasShared={}", r.HasValue(), r.HasShared() }.Ptr() );
+	}
+
+	Ξ BFuture( IAwait&& a )->std::future<bool>
+	{
+		auto p = std::promise<bool>();
+		std::future<bool> f = p.get_future();
+		BCallAwait( move(p), move(a) );
+		return f;
+	}
+
 	Ξ CallVAwait( std::promise<void>&& p_, IAwait&& a )->Task
 	{
 		auto p = move( p_ );

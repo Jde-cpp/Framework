@@ -1,5 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+	<Type Name="std::__1::vector&lt;*&gt;">
+		<DisplayString>{{size={__end_-__begin_}}}</DisplayString>
+		<Expand>
+			<ArrayItems>
+				<Size>__end_-__begin_</Size>
+				<ValuePointer>__begin_</ValuePointer>
+			</ArrayItems>
+		</Expand>
+	</Type>
 	<Type Name="std::__1::__vector_base&lt;*&gt;">
 		<DisplayString>{{size={__end_-__begin_}}}</DisplayString>
 		<Expand>

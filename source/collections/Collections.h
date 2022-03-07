@@ -40,24 +40,40 @@ namespace Jde
 	template<class F> struct LazyWrap //https://stackoverflow.com/questions/62577415/lazy-argument-evaluation-for-try-emplace
 	{
 		LazyWrap( F&& f ):_f(f) {}
-		template<class T> operator T() { return _f(); }
+		Τ operator T() { return _f(); }
 		F _f;
 	};
 
-	template<class T> struct SPCompare
+	Τ struct SPCompare
 	{
 		α operator()( const sp<T>& a, const sp<T>& b )const noexcept->bool{ return *a < *b; }
 		α operator()(const sp<T>& a, const T& b)const noexcept->bool{ return *a < b; }
 		α operator()( const T& a, const sp<T>& b)const noexcept->bool{ return a < *b; }
 	};
 
-	ẗ TryGetValue( const flat_map<K,V>& map, const K& key, V deflt )->V
+	ẗ TryGetValue( const flat_map<K,V>& map, const K& key, V dflt={} )->V
 	{
 		const auto& pItem = map.find(key);
-		return pItem==map.end() ? deflt : *pItem;
+		return pItem==map.end() ? dflt : pItem->second;
 	}
 
-namespace Collections
+	template<class Y, class T>
+	Y VMap( const vector<T>& v, function<Y(const T&)> f )ι
+	{
+		vector<Y> y;
+		std::for_each( v.begin(), v.end(), [f,&y](var& i){ y.push_back( f(i) );} );
+		return y;
+	}
+
+	ⓣ Replace( T& map, const typename T::key_type& key, typename T::mapped_type&& value )->void
+	{
+		if( auto p = map.find(key); p!=map.end() )
+			p->second = move( value );
+		else
+			map.emplace( key, move(value) );
+	}
+}
+namespace Jde::Collections
 {
 	uint32 Crc( const vector<string> values )noexcept;
 	std::vector<uint> Indexes( const std::vector<string>& population, const std::vector<string>& subset )noexcept;
@@ -243,5 +259,5 @@ namespace Collections
 			p = map.emplace( key, make_unique<V>() ).first;
 		return p->second;
 	}
-}}
+}
 #undef var

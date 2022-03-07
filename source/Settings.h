@@ -38,7 +38,7 @@ namespace Jde::Settings
 		α TryMembers( sv path )noexcept->flat_map<string,Container>;
 		α Have( sv path )noexcept->bool;
 		α FindPath( sv path )const noexcept->optional<json>;
-		ⓣ TryArray( sv path )noexcept->vector<T>;
+		ⓣ TryArray( sv path, vector<T> dflt )noexcept->vector<T>;
 		ⓣ Map( sv path )noexcept->flat_map<string,T>;
 		Variant operator[]( sv path )noexcept(false);
 
@@ -121,7 +121,7 @@ namespace Jde::Settings
 		}
 	}
 
-	$ Container::TryArray<Container>( sv path )noexcept->vector<Container>
+	$ Container::TryArray<Container>( sv path, vector<Container> dflt )noexcept->vector<Container>
 	{
 		vector<Container> values;
 		if( auto p = FindPath(path); p )
@@ -129,6 +129,9 @@ namespace Jde::Settings
 			for( auto& i : p->items() )
 				values.emplace_back( i.value() );
 		}
+		else
+			values = move( dflt );
+
 		return values;
 	}
 	//Γ α Set( sv path, path value )noexcept->void;
@@ -136,9 +139,9 @@ namespace Jde::Settings
 	α Save( const json& j, sv what, SRCE )noexcept(false)->void;
 	α Set( sv what, const Container::Variant& v, bool save=true, SRCE )noexcept(false)->void;
 
-	ⓣ TryArray( sv path )noexcept{ return Global().TryArray<T>(path); }
+	ⓣ TryArray( sv path, vector<T> dflt={} )noexcept{ return Global().TryArray<T>(path, dflt); }
 
-	ⓣ Container::TryArray( sv path )noexcept->vector<T>
+	ⓣ Container::TryArray( sv path, vector<T> dflt )noexcept->vector<T>
 	{
 		vector<T> values;
 		if( auto p = FindPath(path); p && p->is_array() )
@@ -146,6 +149,8 @@ namespace Jde::Settings
 			for( var& i : *p )
 				values.push_back( i.get<T>() );
 		}
+		else
+			values = move( dflt );
 		return values;
 	}
 
