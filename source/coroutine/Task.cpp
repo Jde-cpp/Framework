@@ -46,21 +46,28 @@ namespace Jde::Coroutine
 	*/
 	α Task::promise_type::unhandled_exception()noexcept->void
 	{
-		BREAK;
 		try
 		{
-			auto p = std::current_exception();
-			if( p )
+			if( auto p = std::current_exception(); p )
 				std::rethrow_exception( p );
 			else
-				ERR( "unhandled_exception - no exception"sv );
+				CRITICAL( "unhandled_exception - no exception"sv );
+		}
+		catch( CoException& e )
+		{
+			get_return_object().Clear();//TODO check up is deleted.
+			e.Resume( *this );
 		}
 		catch( IException& e )
 		{
-			e.Log();
-			if( _pReturnObject )
-				_pReturnObject->SetResult( move(e) );
-			CRITICAL( "unhandled - {}", e.what() );
+			//e.Log();
+			// if( _unhandledResume )
+			// {
+			// 	_pReturnObject->SetResult( move(e) );
+			// 	_unhandledResume.resume();
+			// }
+			// else
+				CRITICAL( "unhandled - {}", e.what() );
 		}
 		catch( const nlohmann::json::exception& e )
 		{

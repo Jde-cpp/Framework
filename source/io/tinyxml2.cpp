@@ -26,11 +26,106 @@ distribution.
 #include <new>		// yes, this one new style header, is in the Android SDK.
 #include <cstddef>
 #include <cstdarg>
+#include <fstream>
 #include <jde/TypeDefs.h>
 #include <jde/Exception.h>
 
 using namespace std::literals::string_view_literals;
 #define var const auto
+namespace Jde
+{
+	namespace Xml
+	{
+		α XmlTrim( sv txt )ι->std::string;
+	}
+	using namespace Str;
+	struct Parser
+	{
+		Parser( sv text, vector<sv> tokens, uint i_=0 )ι: Text{text}, Tokens{move(tokens)}, i{i_}{}
+		α Next()ι->sv
+		{
+			sv result = _peekValue;
+			if( result.empty() && i<Text.size() )
+			{
+				for( auto ch = Text[i]; i<Text.size() && isspace(ch); ch = i<Text.size()-1 ? Text[++i] : Text[i++] );
+				if( i<Text.size() )
+				{
+					uint start=i;
+					if( Text[i]=='"' )
+					{
+						++i;
+						result = Text.substr( i-1, Next( '"' ).size()+1 );
+					}
+					else
+					{
+						for( bool found = false; !found && i<Text.size(); ++i )
+						{
+							char ch = Text[i];
+							//if( isspace(ch) || ch=='"' )
+							//	break;
+							for( auto p = Tokens.begin(); !found && p!=Tokens.end(); ++p  )
+							{
+								found = p->size()==1
+									? ch==(*p)[0]
+									: p->size()<=i-start+1 && Text.substr(i-p->size()+1, p->size())==*p;
+							}
+						}
+						result = i==start ? Text.substr( i++, 1 ) : Text.substr( start, i-start );
+					}
+				}
+			}
+			else
+				_peekValue = {};
+			return result;
+		};
+		α Next( const vector<sv>& tokens, bool dbg=false )ι->sv
+		{
+			sv y;
+			while( (y = Next()).size() )
+			{
+				if( dbg )
+				{
+					DBG( "{}", y );
+					BREAK;
+				}
+				if( std::find_if(tokens.begin(), tokens.end(), [&y](var& t){return y.ends_with(t);})!=tokens.end() )
+					break;
+			}
+			return y;
+		}
+		α Next( char end )ι->sv
+		{
+			sv result;
+			if( _peekValue.size() )
+			{
+				i = i-_peekValue.size();
+				_peekValue = {};
+			}
+			for( auto ch = Text[i]; i<Text.size() && isspace(ch); ch = Text[++i] );
+			if( i<Text.size() )
+			{
+				uint start = i;
+				for( auto ch = Text[i]; i<Text.size() && ch!=end; ch = Text[++i] );
+				++i;
+				result = Text.substr( start, i-start );
+			}
+			return result;
+		};
+		sv Peek()ι{ return _peekValue.empty() ? _peekValue = Next() : _peekValue; }
+		uint Index()ι{ return i;}
+		//sv Remaining()ι{ return i<Text.size() ? Text.substr(i) : sv{}; }
+		//sv AllText()ι{ return Text; }
+
+		sv Text;
+		const vector<sv> Tokens;
+	private:
+		uint i{0};
+		//bool _sensitive{true}; right now just uses {>, />, ...}
+		sv _peekValue;
+	};
+}
+
+
 #if defined(_MSC_VER) && (_MSC_VER >= 1400 ) && (!defined WINCE)
 	// Microsoft Visual Studio, version 2005 and higher. Not WinCE.
 	/*int _snprintf_s(
@@ -129,29 +224,27 @@ static const unsigned char TIXML_UTF_LEAD_0 = 0xefU;
 static const unsigned char TIXML_UTF_LEAD_1 = 0xbbU;
 static const unsigned char TIXML_UTF_LEAD_2 = 0xbfU;
 
-namespace tinyxml2
+namespace Jde::Xml
 {
+	struct Entity {
+		const char* pattern;
+		int length;
+		char value;
+	};
 
-struct Entity {
-    const char* pattern;
-    int length;
-    char value;
-};
+	static const int NUM_ENTITIES = 5;
+	static const Entity entities[NUM_ENTITIES] = {
+		{ "quot", 4,	DOUBLE_QUOTE },
+		{ "amp", 3,		'&'  },
+		{ "apos", 4,	SINGLE_QUOTE },
+		{ "lt",	2, 		'<'	 },
+		{ "gt",	2,		'>'	 }
+	};
 
-static const int NUM_ENTITIES = 5;
-static const Entity entities[NUM_ENTITIES] = {
-    { "quot", 4,	DOUBLE_QUOTE },
-    { "amp", 3,		'&'  },
-    { "apos", 4,	SINGLE_QUOTE },
-    { "lt",	2, 		'<'	 },
-    { "gt",	2,		'>'	 }
-};
-
-
-StrPair::~StrPair()
-{
-    Reset();
-}
+	StrPair::~StrPair()
+	{
+		Reset();
+	}
 
 
 void StrPair::TransferTo( StrPair* other )
@@ -171,6 +264,8 @@ void StrPair::TransferTo( StrPair* other )
 
     other->_flags = _flags;
     other->_start = _start;
+	if( string{_start}.starts_with("1.  NAME OF REPORTING PERSON ") )
+		BREAK;
     other->_end = _end;
 
     _flags = 0;
@@ -192,14 +287,16 @@ void StrPair::Reset()
 
 void StrPair::SetStr( const char* str, int flags )
 {
-    TIXMLASSERT( str );
-    Reset();
-    size_t len = strlen( str );
-    TIXMLASSERT( _start == 0 );
-    _start = new char[ len+1 ];
-    memcpy( _start, str, len+1 );
-    _end = _start + len;
-    _flags = flags | NEEDS_DELETE;
+	if( string{str}.starts_with("1.  NAME OF REPORTING PERSON ") )
+		BREAK;
+	TIXMLASSERT( str );
+	Reset();
+	size_t len = strlen( str );
+	TIXMLASSERT( _start == 0 );
+	_start = new char[ len+1 ];
+	memcpy( _start, str, len+1 );
+	_end = _start + len;
+	_flags = flags | NEEDS_DELETE;
 }
 
 
@@ -224,6 +321,8 @@ char* StrPair::ParseText( char* p, const char* endTag, int strFlags, int* curLin
         ++p;
         TIXMLASSERT( p );
     }
+	if( string{start}.starts_with("1.  NAME OF REPORTING PERSON ") )
+		BREAK;
     return 0;
 }
 
@@ -377,16 +476,135 @@ const char* StrPair::GetStr()
     return _start;
 }
 
-α StrPair::View()noexcept->sv
+α StrPair::View()ι->sv
 {
 	if ( _flags & NEEDS_FLUSH )
 		GetStr();
-	return sv{ _start, (Jde::uint)(_end-_start) };
+	return _start ? sv{ _start, std::min(strlen(_start), (Jde::uint)(_end-_start)) } : sv{};
 }
 
+}
+namespace Jde
+{
+	α Xml::XmlTrim( sv txt )ι->std::string
+	{
+		auto y = UnEscape( txt );
+		Trim( y );
+		return y;
+	}
+	α Xml::UnEscape( sv xml )ι->std::string
+	{
+		string s{ Replace(xml,"&nbsp;", " ") };
+		return Replace( s, "\u00A0", " " );
+	}
+	α Close( Jde::Parser parser, std::vector<std::tuple<size_t,sv>>& openTags )ε->std::string
+	{
+		using namespace Jde;
+		string result;
+		bool break_ = false;
+		for( auto token=parser.Next(); token.size(); token=parser.Next() )
+		{
+	//		if( token=="&nbsp;<" )
+	//			BREAK;
+			if( token.substr(token.size()-1,1)!="<" )
+				continue;
+			var next = parser.Next();
+			auto tag = Str::NextWord( next ); CHECK( tag.size() );
+			if( tag.starts_with("!--") )
+			{
+				//BREAK;
+				ASSERT( next.ends_with("-->") );
+				//parser.Next( {"-->"} );
+				continue;
+			}
+			bool haveClose = next.substr(next.size()-1, 1)==">";//<br > doesn't work with tag.
+			if( tag.substr(tag.size()-1, 1)==">" )
+				tag = tag.substr( 0, tag.size()-1 );
+			// if( tag=="TD" )
+			// 	BREAK;
+			if( tag.size() && tag[0]=='/' )// </html
+			{
+				var endTag = tag.substr( 1, tag.size()-1 ) ; CHECK( openTags.size() );
+				var [openIndex,startTag] = openTags.back();
+	//			if( startTag=="TEXT" )
+	//				BREAK;
+				var equal = Str::ToUpper(startTag)==Str::ToUpper( endTag );
+				bool haveOpenTag = equal;
+				for( size_t i=openTags.size(); !haveOpenTag && i>0; --i )
+				{
+					var& startTagCurrent = get<1>( openTags[i-1] );
+					if( endTag=="div" && startTagCurrent=="td" )//<td></div></td>
+						break;
+					haveOpenTag = startTagCurrent==endTag;
+				}
+	//			for( size_t i=0; !equal && i<openTags.size(); ++i )
+	//				DBG( "[{}]{}", get<0>( openTags[i] ), get<1>(openTags[i]) );
+				if( !haveOpenTag )//<html></div></html>
+				{
+					var endIndex = parser.Index()-tag.size()-2;
+					var newXml = string{ parser.Text.substr(0, endIndex) }+format( "<{}>", endTag )+string{ parser.Text.substr(endIndex) };
 
+					DBG( "noopentag = '{}|||{}", parser.Text.substr(parser.Index()-120, 120), parser.Text.substr(parser.Index(), 30) );
+					DBG( "new = '{}", newXml.substr(parser.Index()-120, 150) );
+					result = Close( Parser{newXml, parser.Tokens, parser.Index()}, openTags );
+					break;
+				}
+				else
+				{
+					openTags.pop_back();
+					if( !equal )
+					{
+						var newXml = string{ parser.Text.substr(0, openIndex) }+string{"/"}+string{ parser.Text.substr(openIndex) };
+						break_ = parser.Text.substr(parser.Index()-70, 13)=="\">Page&#160;2";
+	//					DBG( "'{}'", parser.Text.substr(parser.Index()-70, 12) );
+						//	BREAK;
+						// DBG( "start = [{}]'{}', end= [{}]'{}'", openIndex, startTag, parser.Index(), endTag );
+						// DBG( "end = '{}|||{}", parser.Text.substr(parser.Index()-70, 70), parser.Text.substr(parser.Index(), 30) );
+						// DBG( "old = '{}'", parser.Text.substr(openIndex-70, 100) );
+						// DBG( "new = '{}", newXml.substr(openIndex-70, 100) );
+						if( break_ )
+							BREAK;
+						result = Close( Parser{newXml, parser.Tokens, openIndex+2}, openTags );
+						break;
+					}
+				}
+			}
+			else //<html
+			{
+				size_t iStart = parser.Index();
+				if( iStart==34118 )
+					BREAK;
 
-// --------- XMLUtil ----------- //
+				bool dbg = false;//Str::ToUpper(tag)=="B";
+				var closing = haveClose
+					? next.size()<3 ? ">" : next[next.size()-2]=='/' ? "/>" : ">" //tag does not work with <br />
+					: parser.Next( {"/>",">"}, dbg );
+				if( closing.ends_with(">") && !closing.ends_with("/>") )
+				{
+					size_t i = parser.Text[parser.Index()]=='>' ? parser.Index() : parser.Index()-1;
+					ASSERT( parser.Text[i]=='>' );
+					if( i==1742836 )
+					{
+						DBG( "openTags.size()={}, {}-{} - {}", openTags.size(), iStart, i, parser.Text.substr(iStart, i>iStart ? i-iStart : iStart-i) );
+						break_ = true;
+						BREAK;
+					}
+					openTags.push_back( make_tuple(i, tag) );
+				}
+			}
+		}
+		return result.empty() ? string{ parser.Text } : result;
+	}
+	α Xml::Close( sv xml )ε->std::string
+	{
+		std::string result;
+		vector< tuple<size_t,sv> > openTags;
+		const vector<sv> tokens = { "<", "-->", "/>",">","=" };
+		return Jde::Close( Parser{xml, tokens}, openTags );
+	}
+}
+namespace Jde::Xml
+{
 
 const char* XMLUtil::writeBoolTrue  = "true";
 const char* XMLUtil::writeBoolFalse = "false";
@@ -819,6 +1037,11 @@ XMLNode::~XMLNode()
     }
 }
 
+α XMLNode::Text()Ι->sv
+{
+	auto p = ToElement();
+	return p ? p->Text() : value();
+}
 const char* XMLNode::Value() const
 {
     // Edge case: XMLDocuments don't have a Value. Return null.
@@ -1075,33 +1298,32 @@ char* XMLNode::ParseDeep( char* p, StrPair* parentEndTag, int* curLineNumPtr )
     //
     // 'endTag' is the end tag for this node, it is returned by a call to a child.
     // 'parentEnd' is the end tag for the parent, which is filled in and returned.
-
-	XMLDocument::DepthTracker tracker(_document);
-	if (_document->Error())
+	XMLDocument::DepthTracker _( _document );
+	if( _document->Error() )
 		return 0;
+	uint line{0};
+	while( p && *p )
+	{
+		XMLNode* node = nullptr;
+//		DBG( "line={}", line );
+		p = _document->Identify( p, &node ); TIXMLASSERT( p );
+		if( !node )
+			break;
+      var initialLineNum = line = node->_parseLineNum;
 
-	while( p && *p ) {
-        XMLNode* node = 0;
-
-        p = _document->Identify( p, &node );
-        TIXMLASSERT( p );
-        if ( node == 0 ) {
-            break;
-        }
-
-       const int initialLineNum = node->_parseLineNum;
-
-        StrPair endTag;
-        p = node->ParseDeep( p, &endTag, curLineNumPtr );
-        if ( !p ) {
-            DeleteNode( node );
-            if ( !_document->Error() ) {
-                _document->SetError( XML_ERROR_PARSING, initialLineNum, 0);
-            }
-            break;
-        }
-
-        const XMLDeclaration* const decl = node->ToDeclaration();
+      StrPair endTag;
+		//if( initialLineNum==158 )
+		//	BREAK;
+      p = node->ParseDeep( p, &endTag, curLineNumPtr );
+		if ( !p )
+		{
+			BREAK;
+			DeleteNode( node );
+			if( !_document->Error() )
+				_document->SetError( XML_ERROR_PARSING, initialLineNum, 0);
+			break;
+		}
+      const XMLDeclaration* const decl = node->ToDeclaration();
         if ( decl ) {
             // Declarations are only allowed at document level
             //
@@ -1135,7 +1357,7 @@ char* XMLNode::ParseDeep( char* p, StrPair* parentEndTag, int* curLineNumPtr )
         XMLElement* ele = node->ToElement();
         if ( ele ) {
             // We read the end tag. Return it to the parent.
-            if ( ele->ClosingType() == XMLElement::CLOSING ) {
+            if ( /*autoClose ||*/ ele->ClosingType() == XMLElement::CLOSING ) {
                 if ( parentEndTag ) {
                     ele->_value.TransferTo( parentEndTag );
                 }
@@ -1143,27 +1365,23 @@ char* XMLNode::ParseDeep( char* p, StrPair* parentEndTag, int* curLineNumPtr )
                 DeleteNode( node );
                 return p;
             }
-
-            // Handle an end tag returned to this level.
-            // And handle a bunch of annoying errors.
-            bool mismatch = false;
-            if ( endTag.Empty() ) {
-                if ( ele->ClosingType() == XMLElement::OPEN ) {
-                    mismatch = true;
-                }
-            }
-            else {
-                if ( ele->ClosingType() != XMLElement::OPEN ) {
-                    mismatch = true;
-                }
-                else if ( !XMLUtil::StringEqual( endTag.GetStr(), ele->Name() ) ) {
-                    mismatch = true;
-                }
-            }
-            if ( mismatch ) {
-                _document->SetError( XML_ERROR_MISMATCHED_ELEMENT, initialLineNum, "XMLElement name=%s", ele->Name());
-                DeleteNode( node );
-                break;
+				try
+				{
+					if( endTag.Empty() )
+					{
+						THROW_IFX( ele->ClosingType() == XMLElement::OPEN, Jde::Exception(SRCE_CUR, Jde::ELogLevel::Error, "ele->ClosingType() == XMLElement::OPEN") );
+					}
+					else
+					{
+						THROW_IFX( ele->ClosingType() != XMLElement::OPEN, Jde::Exception(SRCE_CUR, Jde::ELogLevel::Error, "(<{}>)line:  {}, ele->ClosingType():{}!=XMLElement::OPEN", ele->Name(), initialLineNum, XMLElement::ToString(ele->ClosingType())) );
+						THROW_IFX( !XMLUtil::StringEqual(endTag.GetStr(), ele->Name(), IsCaseInsensitive()), Jde::Exception(SRCE_CUR, Jde::ELogLevel::Error, "line:  {} endTag:'{}'!=element:  '{}'", initialLineNum, endTag.GetStr(), ele->Name()) );
+					}
+				}
+				catch( IException& e )
+				{
+					_document->SetError( XML_ERROR_MISMATCHED_ELEMENT, initialLineNum, "XMLElement name=%s", ele->Name() );
+					DeleteNode( node );
+					break;
             }
         }
         InsertEndChild( node );
@@ -1209,7 +1427,7 @@ const XMLElement* XMLNode::ToElementWithName( const char* name ) const
     if ( name == 0 ) {
         return element;
     }
-    if ( XMLUtil::StringEqual( element->Name(), name ) ) {
+    if ( XMLUtil::StringEqual( element->Name(), name, IsCaseInsensitive() ) ) {
        return element;
     }
     return 0;
@@ -1218,7 +1436,7 @@ const XMLElement* XMLNode::ToElementWithName( const char* name ) const
 α XMLNode::ToElementWithName( sv n )const->const XMLElement*
 {
     var p = this->ToElement();
-	 return n.empty() || (p && p->name()==n) ? p : nullptr;
+	 return n.empty() || (p && XMLUtil::StringEqual(p->name(), n, IsCaseInsensitive())) ? p : nullptr;
 }
 
 // --------- XMLText ---------- //
@@ -1433,29 +1651,39 @@ const char* XMLAttribute::Value() const
 
 char* XMLAttribute::ParseDeep( char* p, bool processEntities, int* curLineNumPtr )
 {
-    // Parse using the name rules: bug fix, was using ParseText before
-    p = _name.ParseName( p );
-    if ( !p || !*p ) {
-        return 0;
-    }
+	p = _name.ParseName( p );// Parse using the name rules: bug fix, was using ParseText before
+	if ( !p || !*p )
+		return 0;
 
-    // Skip white space before =
-    p = XMLUtil::SkipWhiteSpace( p, curLineNumPtr );
-    if ( *p != '=' ) {
-        return 0;
-    }
+	p = XMLUtil::SkipWhiteSpace( p, curLineNumPtr ); // Skip white space before =
+	if ( *p != '=' )
+	{
+		if( char ch = *p; ch=='>' || ch=='/' )
+		{
+			SetName( _name.GetStr() );
+			*p=ch;
+		}
+		else
+			p = XMLUtil::SkipWhiteSpace( p, curLineNumPtr );
+		return p;
+	}
 
-    ++p;	// move up to opening quote
-    p = XMLUtil::SkipWhiteSpace( p, curLineNumPtr );
-    if ( *p != '\"' && *p != '\'' ) {
-        return 0;
-    }
-
-    const char endTag[2] = { *p, 0 };
-    ++p;	// move past opening quote
-
-    p = _value.ParseText( p, endTag, processEntities ? StrPair::ATTRIBUTE_VALUE : StrPair::ATTRIBUTE_VALUE_LEAVE_ENTITIES, curLineNumPtr );
-    return p;
+	++p;	// move up to opening quote
+	p = XMLUtil::SkipWhiteSpace( p, curLineNumPtr );
+	if ( *p != '\"' && *p != '\'' )
+	{
+		char* pStart = p; char ch = *p;
+		for(  ; ch && !::isspace(ch) && ch!='/' && ch!='>'; ch = *++p );
+		*p = 0;
+		_value.SetStr( pStart );
+		*p = ch;
+   }
+	else
+	{
+		std::array<char,2> rg{ *p++, 0 };
+		p = _value.ParseText( p, rg.data(), processEntities ? StrPair::ATTRIBUTE_VALUE : StrPair::ATTRIBUTE_VALUE_LEAVE_ENTITIES, curLineNumPtr );
+	}
+   return p;
 }
 
 
@@ -1704,7 +1932,7 @@ const char* XMLElement::GetText() const
     }
     return 0;
 }
-α XMLElement::Text()const noexcept->sv
+α XMLElement::Text()Ι->sv
 {
 	const XMLNode* node = FirstChild();
 	for( ; node && node->ToComment(); node = node->NextSibling() );
@@ -1714,31 +1942,56 @@ const char* XMLElement::GetText() const
 		y = sv{ psz,strlen(psz) };
 	return y;
 }
-
-α XMLElement::FirstText()const noexcept->sv
+/*
+α XMLElement::FirstText()Ι->string
 {
-	sv text;
-	for( auto c = FirstChildElement(); c && text.empty(); c = c->NextSiblingElement() )
-	{
-		if( (text = c->Text()).empty() )
-			text = c->FirstText();
-	}
+	auto text = UnEscape( Text() );
+	Trim( text );
+	if( text.empty() )
+		text = NextText();
 	return text;
 }
+α XMLElement::NextText( / *const XMLElement* pAnchor* / )Ι->string
+{
+	string text;
+	// if( const XMLNode* n{FirstChild()}; n  )
+	// {
+	// 	auto p2 = n->ToElement();
+	// 	string x{ p2 ? Trim(p2->Text()) : "null" };
+	// 	DBG( "[{}]='{}'", Trim(n->value()), x );
+	// }
+	if( auto c = pAnchor ? nullptr : FirstChild(); c )//pAnchor's siblings already searched.
+	{
+		text = c->FirstText();
+	}
+	if( auto s = NextSiblingElement(); s && text.empty() )
+		text = s->FirstText();
+	if( auto s = NextSibling(); s && text.empty() )
+	{
+		if( var p=s->ToText(); p )
+		{
+			text = UnEscape( p->value() );
+			Trim( text );
+		}
+	}
+	if( text.empty() && Parent() )
+		text = ParentElement()->NextText( this );
+	return text;
+}*/
 
-α XMLElement::ChildText( sv elementName )noexcept(false)->sv
+α XMLElement::ChildText( sv elementName )ε->sv
 {
 	auto p = FirstChildElement( elementName ); THROW_IF( !p, "Could not find {} in {}", elementName, Name() );
 	const char* psz = p->GetText();
 	return psz ? std::string_view{psz} : std::string_view{};
 }
-α XMLElement::TryChildText( sv elementName )noexcept->sv
+α XMLElement::TryChildText( sv elementName )ι->sv
 {
 	auto p = FirstChildElement( elementName );
 	const char* psz = p ? p->GetText() : nullptr;
 	return psz ? sv{psz} : sv{};
 }
-α XMLElement::TryChildAttribute( sv elementName, sv attributeName )noexcept->sv
+α XMLElement::TryChildAttribute( sv elementName, sv attributeName )ι->sv
 {
 	auto p = FirstChildElement( elementName );
 	return p ? p->Attr( attributeName ) : sv{};
@@ -1997,45 +2250,66 @@ void XMLElement::DeleteAttribute( const char* name )
 
 char* XMLElement::ParseAttributes( char* p, int* curLineNumPtr )
 {
-    XMLAttribute* prevAttribute = 0;
+	XMLAttribute* prevAttribute = 0;
 
-    // Read the attributes.
-    while( p ) {
-        p = XMLUtil::SkipWhiteSpace( p, curLineNumPtr );
-        if ( !(*p) ) {
-            _document->SetError( XML_ERROR_PARSING_ELEMENT, _parseLineNum, "XMLElement name=%s", Name() );
-            return 0;
-        }
+	while( p )
+	{
+		 //if( *curLineNumPtr==92 )
+		 //	BREAK;
+		p = XMLUtil::SkipWhiteSpace( p, curLineNumPtr );
+		if ( !(*p) )
+		{
+			BREAK;
+			_document->SetError( XML_ERROR_PARSING_ELEMENT, _parseLineNum, "XMLElement name=%s", Name() );
+			return 0;
+		}
 
-        // attribute.
-        if (XMLUtil::IsNameStartChar( (unsigned char) *p ) ) {
-            XMLAttribute* attrib = CreateAttribute();
-            TIXMLASSERT( attrib );
-            attrib->_parseLineNum = _document->_parseCurLineNum;
+		if (XMLUtil::IsNameStartChar( (unsigned char) *p ) )
+		{
+			XMLAttribute* attrib = CreateAttribute();
+			TIXMLASSERT( attrib );
+			attrib->_parseLineNum = _document->_parseCurLineNum;
 
-            const int attrLineNum = attrib->_parseLineNum;
+			const int attrLineNum = attrib->_parseLineNum;
+			//if( attrLineNum==92 )
+			//	BREAK;
 
-            p = attrib->ParseDeep( p, _document->ProcessEntities(), curLineNumPtr );
-            if ( !p || Attribute( attrib->Name() ) ) {
-                DeleteAttribute( attrib );
-                _document->SetError( XML_ERROR_PARSING_ATTRIBUTE, attrLineNum, "XMLElement name=%s", Name() );
-                return 0;
-            }
-            // There is a minor bug here: if the attribute in the source xml
-            // document is duplicated, it will not be detected and the
-            // attribute will be doubly added. However, tracking the 'prevAttribute'
-            // avoids re-scanning the attribute list. Preferring performance for
-            // now, may reconsider in the future.
-            if ( prevAttribute ) {
-                TIXMLASSERT( prevAttribute->_next == 0 );
-                prevAttribute->_next = attrib;
-            }
-            else {
-                TIXMLASSERT( _rootAttribute == 0 );
-                _rootAttribute = attrib;
-            }
-            prevAttribute = attrib;
-        }
+			p = attrib->ParseDeep( p, _document->ProcessEntities(), curLineNumPtr );
+			//if( !p )
+			//{
+				//attrib->SetAttribute( "" );
+				//p = XMLNode::ParseDeep( p, parentEndTag, curLineNumPtr );
+			//}
+			//var end{ *p=='>' };
+			var n = attrib->Name();
+			if ( !p || Attribute(n) )
+			{
+				BREAK;
+					DeleteAttribute( attrib );
+					_document->SetError( XML_ERROR_PARSING_ATTRIBUTE, attrLineNum, "XMLElement name=%s", Name() );
+					return 0;
+			}
+			// There is a minor bug here: if the attribute in the source xml
+			// document is duplicated, it will not be detected and the
+			// attribute will be doubly added. However, tracking the 'prevAttribute'
+			// avoids re-scanning the attribute list. Preferring performance for
+			// now, may reconsider in the future.
+			if ( prevAttribute ) {
+					TIXMLASSERT( prevAttribute->_next == 0 );
+					prevAttribute->_next = attrib;
+			}
+			else {
+					TIXMLASSERT( _rootAttribute == 0 );
+					_rootAttribute = attrib;
+			}
+			prevAttribute = attrib;
+			//if( *p == '>' )
+			//{
+				//DBG( "here" );
+				//++p;
+				//break;
+			//}
+		}
         // end of the tag
         else if ( *p == '>' ) {
             ++p;
@@ -2047,6 +2321,7 @@ char* XMLElement::ParseAttributes( char* p, int* curLineNumPtr )
             return p+2;	// done; sealed element.
         }
         else {
+			  BREAK;
             _document->SetError( XML_ERROR_PARSING_ELEMENT, _parseLineNum, 0 );
             return 0;
         }
@@ -2134,7 +2409,7 @@ char* XMLElement::ParseDeep( char* p, StrPair* parentEndTag, int* curLineNumPtr 
         return p;
     }
 
-    p = XMLNode::ParseDeep( p, parentEndTag, curLineNumPtr );
+    p = XMLNode::ParseDeep( p, parentEndTag, curLineNumPtr );//~~
     return p;
 }
 
@@ -2218,18 +2493,21 @@ const char* XMLDocument::_errorNames[XML_ERROR_COUNT] = {
 	"XML_ELEMENT_DEPTH_EXCEEDED"
 };
 
-XMLDocument::XMLDocument( std::string_view value, Jde::SL sl )noexcept(false):
-	XMLDocument{}
+XMLDocument::XMLDocument( std::string_view value, bool insensitive, Jde::SL sl )ε:
+	XMLDocument{true, PRESERVE_WHITESPACE, insensitive }
+
 {
 	if( Parse(value.data(), value.size()) )
 	{
-		//std::ofstream os{"/tmp/v.xml"};
-		//os << value;
-		//os.close();
+		var file = "/tmp/error.xml";
+		std::ofstream os{ file };
+		os << value;
+		os.close();
+		Logging::Log( Logging::MessageBase{ELogLevel::Error, ErrorStr(), file, "XMLDocument::XMLDocument", (uint_least32_t)_errorLineNum} );
 		throw Jde::Exception{ sl, Jde::ELogLevel::Debug, "Could not parse '{}' - '{}'", value.substr(0, 100), ErrorStr() };
 	}
 }
-XMLDocument::XMLDocument( bool processEntities, Whitespace whitespaceMode ) :
+XMLDocument::XMLDocument( bool processEntities, Whitespace whitespaceMode, bool insensitive ) :
     XMLNode( 0 ),
     _writeBOM( false ),
     _processEntities( processEntities ),
@@ -2244,7 +2522,8 @@ XMLDocument::XMLDocument( bool processEntities, Whitespace whitespaceMode ) :
     _elementPool(),
     _attributePool(),
     _textPool(),
-    _commentPool()
+    _commentPool(),
+	 _isCaseInsensitive{insensitive}
 {
     // avoid VC++ C4355 warning about 'this' in initializer list (C4355 is off by default in VS2012+)
     _document = this;
@@ -2624,6 +2903,8 @@ void XMLDocument::PopDepth()
 	TIXMLASSERT(_parsingDepth > 0);
 	--_parsingDepth;
 }
+
+α XMLNode::IsCaseInsensitive()Ι->bool{ return GetDocument() && GetDocument()->IsCaseInsensitive(); }
 α XMLNode::Find( const std::span<sv>& entries )Ι->const XMLElement*
 {
 	ASSERT( entries.size() );
@@ -2646,24 +2927,130 @@ void XMLDocument::PopDepth()
 	{
 		// if( const XMLElement* p=n->ToElement(); p && (elementName.empty() || p->Name()==elementName) )
 		// 	DBG( "{}", p->Text() );
-		if( const XMLElement* p=n->ToElement(); p && (elementName.empty() || p->Name()==elementName) && Jde::Str::Replace(p->Text(),"\n", "")==elementText )
+		if( const XMLElement* p=n->ToElement(); p && (elementName.empty() || p->Name()==elementName) && Jde::Str::Replace(p->Text(),"\n", " ")==elementText )
 			y = p;
 		else
 			y = n->FindText( elementText, elementName );
 	}
 	return y;
 }
-α XMLNode::FindText( const std::span<sv>& entries )Ι->const XMLElement*
+
+α XMLNode::NextText()Ι->const XMLNode*
 {
-	const XMLElement* y = nullptr;
-	var compare = [&entries]( std::vector<sv>&& v ){ return v.size()==entries.size() && std::equal(v.begin(), v.end(), entries.begin()); };
-	for( const XMLNode* n=FirstChild(); !y && n; n=n->NextSibling() )
+	var text = Text();
+	auto p = Next();
+	var next = p ? p->Text() : sv{};
+	var equal = next.empty() || next==text;
+	return !equal ? p : p ? p->NextText() : nullptr;
+}
+α XMLNode::Next( bool children )Ι->const XMLNode*
+{
+	const XMLNode* y{ children ? FirstChild() : nullptr };
+	if( const XMLNode* s{NextSibling()}; !y && s )
+		y = s;
+	else if( const XMLNode* p{y ? nullptr : Parent()}; p )
+		y = p->Next( false );
+	return y;
+}
+
+α XMLNode::FindText( const std::span<sv>& entries, const XMLNode* pCalledFrom, bool searchChildren, vector<string> tags )Ι->const XMLNode*
+{
+	if( tags.empty() )
 	{
-		if( const XMLElement* p=n->ToElement(); p && compare(Jde::Str::Words(p->Text())) )
-			y = p;
-		else
-			y = n->FindText( entries );
+		for( const XMLNode* p=this; (p=p->Parent())!=nullptr && p->Value()!=nullptr; )
+			tags.insert( tags.begin(), p->Value() );
 	}
+	tags.push_back( string{value()} );
+	const XMLNode* y{};
+	var compare = [&entries]( sv x )ι
+	{
+		var txt = UnEscape( x );
+		var v = Words( txt );
+		bool equal = entries.empty() && v.size();//empty entries==any text.
+		if( !equal )
+		{
+			//equal = v.size()>=entries.size();
+			for( auto p=v.begin(); !equal && (p=std::find(p, v.end(), entries.front()))!=v.end(); ++p )
+			{
+				size_t i=std::distance( v.begin(), p );
+				equal = v.size()-i>=entries.size();
+				for( uint j=1; equal && j<entries.size(); ++j )
+					equal = ToUpper( v[++i] ) == ToUpper( entries[j] );
+			}
+		}
+		return equal;
+	};
+
+	string where;
+	if( auto p = ToElement(); p )
+	{
+		y = compare( p->Text() ) ? p : nullptr;
+/*		if( y )
+		{
+			DBG( "TEXT='{}'", p->Text() );
+			BREAK;
+			// for( const XMLNode* n{NextSibling()}; n; n=n->NextSibling() )//<divs>
+			// {
+			// 	if( auto p2 = n->ToElement(); p2 )
+			// 		Dbg( string{p2->Text()} );
+			// }
+			for( const XMLNode* n{FirstChild()}; n; n = n->NextSibling() )//div text
+			{
+				auto p2 = n->ToElement();
+				string x{ p2 ? Trim(p2->Text()) : "null" };
+				DBG( "[{}]='{}'", Trim(n->value()), x );
+				BREAK;
+			}
+		}*/
+		//string txt{ UnEscape(p->Text()) };
+		// Trim( txt );
+		// if( txt=="NAMES OF REPORTING PERSONS" )
+		// 	BREAK;
+		// where = format( "<{}>{}", AddSeparators(tags, "/"), txt );
+		// Dbg( where );
+	}
+	if( const XMLNode* n{FirstChild()}; !y && searchChildren && n )//div text
+	{
+		const XMLElement* e=n->ToElement();
+		var text = e ? string{e->Text()} : XmlTrim( n->value() );
+		y = text.size() && compare( text ) ? n : n->FindText( entries, this, true, tags );
+		//y = e && compare( e->Text() ) ? e : n->FindText( entries, this, true, tags );
+	}
+	tags.pop_back();
+	if( const XMLNode* n{NextSibling()}; !y && n )//<divs>
+		y = n->FindText( entries, pCalledFrom, true, tags );
+	else if( const XMLNode* p{ !y && Parent() && Parent()!=pCalledFrom ? Parent() : nullptr}; p )//td
+		y = p->FindText( entries, pCalledFrom, false, tags.size() ? vector<string>{tags.begin(), tags.begin()+tags.size()-1} : vector<string>{} );
+
+/*	if( const XMLNode* p{ !y && Parent() && Parent()!=pCalledFrom ? Parent() : nullptr}; p )//td
+	{
+		auto pUncle = p->NextSibling();
+		if( !pUncle && p->Parent() )
+			pUncle = p->Parent()->NextSibling();
+		if( pUncle && pUncle!=pCalledFrom )//td or tr
+			y = pUncle->FindText( entries, pCalledFrom, tags );
+*/
+/*		if( auto pUncle = p->NextSibling(); pUncle )//td
+			y = pUncle->FindText( entries, pCalledFrom );
+		else
+		{
+			for( auto gp{ p->Parent() && p->Parent()!=pCalledFrom ? p->Parent() : nullptr}; !y && gp; gp = gp->Parent() && gp->Parent()!=pCalledFrom ? gp->Parent() : nullptr )//tr etc.
+			{
+				if( var next = gp->NextSibling() ? gp->NextSibling() : gp->Parent(); next && next!=pCalledFrom )
+					y = gp->FindText( entries, pCalledFrom );
+			}
+		}
+	}*/
+		// auto me = p->FirstChildElement();
+		// for( ; me && me!=this; me=me->NextSibling() );
+		// if( me )
+		// 	y = me->FindText( entries, Parent() )
+
+		// if( const XMLNode* gp{ p->Parent() && p->Parent()!=pCalledFrom ? p->Parent() : nullptr}; gp )//grand-parent=tr
+		// {
+		// if( var next = me->NextSibling() )
+		// y = n->FindText( entries, pCalledFrom );
+
 	return y;
 }
 
@@ -2671,10 +3058,8 @@ void XMLDocument::PopDepth()
 {
 	const XMLElement* y = nullptr;
 	for( const XMLNode* p=Parent(); !y && p; p=p->Parent() )
-	{
-		if( const XMLElement* e=p->ToElement(); e && e->Name()==elementName )
-			y = e;
-	}
+		y = p->ToElementWithName( elementName );
+
 	return y;
 }
 

@@ -92,6 +92,22 @@ namespace Jde
 
 		return result;
 	}
+	α Str::RTrim( sv s )->sv
+	{
+		sv y;
+		if( auto p = std::find_if(s.rbegin(), s.rend(), [](int ch){return !std::isspace(ch);}); p!=s.rend() )
+		{
+			if( p==s.rbegin() )
+				y = s;
+			else
+			{
+				var size = std::distance( s.rbegin(), p );
+				y = { s.data(), s.size()-size };
+			}
+		}
+		return y;
+	}
+
 #pragma warning( disable: 4244 )
 	string Transform( sv source, function<int(int)> fnctn )noexcept
 	{

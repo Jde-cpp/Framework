@@ -1,13 +1,15 @@
 ﻿#pragma once
-#include <jde/Exports.h>
+//#include <jde/Exports.h>
 #include <jde/coroutine/Task.h>
 #include "Coroutine.h"
-namespace Jde{ using namespace Jde::Coroutine; }
+namespace Jde
+{
+	using namespace Jde::Coroutine;
+}
+
 namespace Jde::Coroutine
 {
 	using ClientHandle = uint;
-	using HCoroutine = coroutine_handle<Task::promise_type>;
-
 	/*https://stackoverflow.com/questions/44960760/msvc-dll-exporting-class-that-inherits-from-template-cause-lnk2005-already-defin
 	template<class TTask=Task>
 	struct TAwait
@@ -15,13 +17,13 @@ namespace Jde::Coroutine
 		using TResult=typename TTask::TResult;
 		using TPromise=typename TTask::promise_type;
 		using THandle=coroutine_handle<TPromise>;
-		TAwait()noexcept=default;
-		TAwait( string name )noexcept:_name{move(name)}{};
+		TAwait()ι=default;
+		TAwait( string name )ι:_name{move(name)}{};
 
-		β await_ready()noexcept->bool{ return false; }
-		β await_resume()noexcept->TResult=0;
-		β await_suspend( coroutine_handle<typename TTask::promise_type> / *h* / )noexcept->void{ OriginalThreadParamPtr = { Threading::GetThreadDescription(), Threading::GetAppThreadHandle() }; }
-		α AwaitResume()noexcept->void
+		β await_ready()ι->bool{ return false; }
+		β await_resume()ι->TResult=0;
+		β await_suspend( coroutine_handle<typename TTask::promise_type> / *h* / )ι->void{ OriginalThreadParamPtr = { Threading::GetThreadDescription(), Threading::GetAppThreadHandle() }; }
+		α AwaitResume()ι->void
 		{
 			if( _name.size() )
 				DBG("({}){}::await_resume"sv, std::this_thread::get_id(), _name);
@@ -38,14 +40,14 @@ namespace Jde::Coroutine
 	*/
 	struct Await
 	{
-		Await()noexcept=default;
-		Await( string name )noexcept:_name{move(name)}{};
+		Await()ι=default;
+		Await( string name )ι:_name{move(name)}{};
 
-		β await_ready()noexcept->bool{ return false; }
-		β await_resume()noexcept->AwaitResult=0;
-		β await_suspend( HCoroutine )noexcept->void=0;//->void{ OriginalThreadParamPtr = { Threading::GetThreadDescription(), Threading::GetAppThreadHandle() }; }
-		α AwaitSuspend()noexcept{ OriginalThreadParamPtr = { Threading::GetThreadDescription(), Threading::GetAppThreadHandle() }; }
-		α AwaitResume()noexcept->void
+		β await_ready()ι->bool{ return false; }
+		β await_resume()ι->AwaitResult=0;
+		β await_suspend( HCoroutine )ι->void=0;//->void{ OriginalThreadParamPtr = { Threading::GetThreadDescription(), Threading::GetAppThreadHandle() }; }
+		α AwaitSuspend()ι{ OriginalThreadParamPtr = { Threading::GetThreadDescription(), Threading::GetAppThreadHandle() }; }
+		α AwaitResume()ι->void
 		{
 //			if( _name.size() )
 //				DBG("({}){}::await_resume"sv, std::this_thread::get_id(), _name);
@@ -57,27 +59,30 @@ namespace Jde::Coroutine
 		const string _name;
 	};
 #define Base Await
-	struct IAwait : public Base
+	struct IAwait : Base
 	{
-		IAwait( SRCE )noexcept:_sl{sl}{};
-		IAwait( string name, SRCE )noexcept:Base{move(name)},_sl{sl}{};
+		IAwait( SRCE )ι:_sl{sl}{};
+		IAwait( string name, SRCE )ι:Base{move(name)},_sl{sl}{};
 		virtual ~IAwait()=0;
-		α await_suspend( HCoroutine h )noexcept->void override
+		α await_suspend( HCoroutine h )ι->void override
 		{
 			Base::AwaitSuspend();
 			_pPromise = &h.promise();
+			_pPromise->SetUnhandledResume( h );
 			if( auto& ro = _pPromise->get_return_object(); ro.HasResult() )
 				ro.Clear();
 		}
-		α await_resume()noexcept->AwaitResult override{ AwaitResume(); ASSERT(_pPromise); return move(_pPromise->get_return_object().Result()); }
+		α await_resume()ι->AwaitResult override{ AwaitResume(); ASSERT(_pPromise); return move(_pPromise->get_return_object().Result()); }
 		//α Set( AwaitResult::Value&& x )->void{ ASSERT( _pPromise ); _pPromise->get_return_object().SetResult( move(x) ); }
 		ⓣ Set( up<T>&& p )->void{ ASSERT( _pPromise ); _pPromise->get_return_object().SetResult<T>( move(p) ); }
 		α SetException( up<IException> p )->void{ ASSERT( _pPromise ); _pPromise->get_return_object().SetResult( move(*p) ); }
-		//α Get()noexcept(false)->sp<void>{ ASSERT( _pPromise ); return _pPromise->get_return_object().Get( _sl ); }
+		//α Get()ι(false)->sp<void>{ ASSERT( _pPromise ); return _pPromise->get_return_object().Get( _sl ); }
 
 		source_location _sl;
 	protected:
 		Task::promise_type* _pPromise{ nullptr };
+		friend Task;
+
 	};
 	inline IAwait::~IAwait(){}
 
@@ -85,19 +90,21 @@ namespace Jde::Coroutine
 	Τ struct TPoolAwait final : IAwait//todo rename FromSyncAwait?
 	{
 		using base=IAwait;
-		TPoolAwait( function<up<T>()> fnctn )noexcept:_fnctn{fnctn}{};
-		α await_suspend( HCoroutine h )noexcept->void override{ base::await_suspend(h); CoroutinePool::Resume( move(h) ); }
+		TPoolAwait( function<up<T>()> fnctn )ι:
+			_fnctn{fnctn}
+		{};
+		α await_suspend( HCoroutine h )ι->void override{ base::await_suspend(h); CoroutinePool::Resume( move(h) ); }
 
-		α await_resume()noexcept->AwaitResult override;
+		α await_resume()ι->AwaitResult override;
 	private:
 		function<up<T>()> _fnctn;
 	};
 	struct PoolAwait final : IAwait//todo rename FromSyncAwait?
 	{
 		using base=IAwait;
-		PoolAwait( function<void()> fnctn, SRCE )noexcept:base{sl},_fnctn{fnctn}{};
-		α await_suspend( HCoroutine h )noexcept->void override{ base::await_suspend(h); CoroutinePool::Resume( move(h) ); }
-		α await_resume()noexcept->AwaitResult override
+		PoolAwait( function<void()> fnctn, SRCE )ι:base{sl},_fnctn{fnctn}{};
+		α await_suspend( HCoroutine h )ι->void override{ base::await_suspend(h); CoroutinePool::Resume( move(h) ); }
+		α await_resume()ι->AwaitResult override
 		{
 			AwaitResume();
 			AwaitResult y{};
@@ -205,31 +212,44 @@ namespace Jde::Coroutine
 	{
 		using base=IAwait;
 	public:
-		AsyncAwait( function<Task(HCoroutine)> fnctn, SRCE, str name={} )noexcept:base{name, sl}, _fnctn{fnctn}{};
+		AsyncAwait( function<Task(HCoroutine)> fnctn, SRCE, str name={} )ι:base{name, sl}, _fnctn{fnctn}{};
 
-		α await_suspend( HCoroutine h )noexcept->void override{ base::await_suspend( h ); _fnctn( move(h) ); }
+		α await_suspend( HCoroutine h )ι->void override{ base::await_suspend(h); _fnctn( move(h) ); }
 	protected:
 		function<Task(HCoroutine)> _fnctn;
+	};
+
+	class AsyncReadyAwait final : public AsyncAwait
+	{
+		using base=AsyncAwait;
+	public:
+		AsyncReadyAwait( function<optional<AwaitResult>()> ready, function<Task(HCoroutine)> fnctn, SRCE, str name={} )ι:base{fnctn, sl, name}, _ready{ready}{};
+
+		α await_ready()ι->bool override{  _result=_ready(); return _result.has_value(); }
+		α await_resume()ι->AwaitResult override{ AwaitResume(); ASSERT(_result.has_value() || _pPromise); return _result ? move(*_result) : move(_pPromise->get_return_object().Result()); }
+	protected:
+		function<optional<AwaitResult>()> _ready;
+		optional<AwaitResult> _result;
 	};
 
 	class CacheAwait final : public AsyncAwait
 	{
 		using base=AsyncAwait;
 	public:
-		CacheAwait( sp<void*> pCache, function<Task(HCoroutine)> fnctn, SRCE, str name={} )noexcept:base{fnctn, sl, name}, _pCache{pCache}{}
-		α await_ready()noexcept->bool override{ return _pCache.get(); }
-		α await_suspend( HCoroutine h )noexcept->void override{ base::await_suspend( h ); _fnctn( move(h) ); }
-		α await_resume()noexcept->AwaitResult override{ return _pCache ? AwaitResult{_pCache} : base::await_resume(); }
+		CacheAwait( sp<void*> pCache, function<Task(HCoroutine)> fnctn, SRCE, str name={} )ι:base{fnctn, sl, name}, _pCache{pCache}{}
+		α await_ready()ι->bool override{ return _pCache.get(); }
+		α await_suspend( HCoroutine h )ι->void override{ base::await_suspend( h ); _fnctn( move(h) ); }
+		α await_resume()ι->AwaitResult override{ return _pCache ? AwaitResult{_pCache} : base::await_resume(); }
 	private:
 		sp<void*> _pCache;
 	};
 /*struct AWrapper final : IAwait
 	{
 		using base=IAwait;
-		AWrapper( function<Task(HCoroutine h)> fnctn, string name={} )noexcept:base{move(name)}, _fnctn{fnctn}{ / *DBG("({})AWrapper(0x{:x})", _name, (uint)this);* / };
+		AWrapper( function<Task(HCoroutine h)> fnctn, string name={} )ι:base{move(name)}, _fnctn{fnctn}{ / *DBG("({})AWrapper(0x{:x})", _name, (uint)this);* / };
 		~AWrapper(){ / *DBG("({})~AWrapper(0x{:x})", _name, (uint)this);* / }
 
-		α await_suspend( HCoroutine h )noexcept->void override
+		α await_suspend( HCoroutine h )ι->void override
 		{
 			base::await_suspend( h );
 			_fnctn( move(h) );
@@ -241,14 +261,14 @@ namespace Jde::Coroutine
 	//template<class T>
 	struct CancelAwait /*abstract*/ : Await
 	{
-		CancelAwait( ClientHandle& handle )noexcept:_hClient{ NextHandle() }{ handle = _hClient; }
+		CancelAwait( ClientHandle& handle )ι:_hClient{ NextHandle() }{ handle = _hClient; }
 		virtual ~CancelAwait()=0;
 	protected:
 		const ClientHandle _hClient;
 	};
 	/*template<class T>*/ inline CancelAwait::~CancelAwait() {}
 
-	ⓣ TPoolAwait<T>::await_resume()noexcept->AwaitResult
+	ⓣ TPoolAwait<T>::await_resume()ι->AwaitResult
 	{
 		AwaitResume();
 		try

@@ -22,22 +22,11 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-#if defined(ANDROID_NDK) || defined(__BORLANDC__) || defined(__QNXNTO__)
-#   include <ctype.h>
-#   include <limits.h>
-#   include <stdio.h>
-#   include <stdlib.h>
-#   include <string.h>
-#	if defined(__PS3__)
-#		include <stddef.h>
-#	endif
-#else
 #   include <cctype>
 #   include <climits>
 #   include <cstdio>
 #   include <cstdlib>
 #   include <cstring>
-#endif
 #include <stdint.h>
 #include <optional>
 #include <span>
@@ -100,18 +89,16 @@ static const int TIXML2_PATCH_VERSION = 0;
 // so there needs to be a limit in place.
 static const int TINYXML2_MAX_ELEMENT_DEPTH = 100;
 #define var const auto
-namespace tinyxml2
+namespace Jde::Xml
 {
-using Jde::sv;
-
-class XMLDocument;
-class XMLElement;
-class XMLAttribute;
-class XMLComment;
-class XMLText;
-class XMLDeclaration;
-class XMLUnknown;
-class XMLPrinter;
+	struct XMLDocument;
+	struct XMLElement;
+	struct XMLAttribute;
+	struct XMLComment;
+	struct XMLText;
+	struct XMLDeclaration;
+	struct XMLUnknown;
+	struct XMLPrinter;
 
 /*
 	A class that wraps strings. Normally stores the start and end
@@ -121,9 +108,8 @@ class XMLPrinter;
 
     Isn't clear why TINYXML2_LIB is needed; but seems to fix #719
 */
-class StrPair
+struct StrPair
 {
-public:
     enum Mode {
         NEEDS_ENTITY_PROCESSING			= 0x01,
         NEEDS_NEWLINE_NORMALIZATION		= 0x02,
@@ -151,9 +137,7 @@ public:
 
 	const char* GetStr();
 	Φ View()noexcept->sv;
-    bool Empty() const {
-        return _start == _end;
-    }
+   bool Empty() const{ return _start == _end; }
 
     void SetInternedStr( const char* str ) {
         Reset();
@@ -191,9 +175,8 @@ private:
 	cause a call to new/delete
 */
 template <class T, int INITIAL_SIZE>
-class DynArray
+struct DynArray
 {
-public:
     DynArray() :
         _mem( _pool ),
         _allocated( INITIAL_SIZE ),
@@ -315,9 +298,8 @@ private:
 	Parent virtual class of a pool for fast allocation
 	and deallocation of objects.
 */
-class MemPool
+struct MemPool
 {
-public:
     MemPool() {}
     virtual ~MemPool() {}
 
@@ -332,9 +314,8 @@ public:
 	Template child class to create pools of the correct type.
 */
 template< int ITEM_SIZE >
-class MemPoolT : public MemPool
+struct MemPoolT : public MemPool
 {
-public:
     MemPoolT() : _blockPtrs(), _root(0), _currentAllocs(0), _nAllocs(0), _maxAllocs(0), _nUntracked(0)	{}
     ~MemPoolT() {
         MemPoolT< ITEM_SIZE >::Clear();
@@ -466,9 +447,8 @@ private:
 
 	@sa XMLNode::Accept()
 */
-class XMLVisitor
+struct XMLVisitor
 {
-public:
     virtual ~XMLVisitor() {}
 
     /// Visit a document.
@@ -536,9 +516,11 @@ enum XMLError {
 /*
 	Utility functionality.
 */
-class XMLUtil
+α UnEscape( sv xml )ι->std::string;
+α Close( sv xml )ε->std::string;
+
+struct XMLUtil
 {
-public:
     static const char* SkipWhiteSpace( const char* p, int* curLineNumPtr )	{
         TIXMLASSERT( p );
 
@@ -592,6 +574,20 @@ public:
         TIXMLASSERT( q );
         TIXMLASSERT( nChar >= 0 );
         return strncmp( p, q, nChar ) == 0;
+    }
+
+    static Ξ StringEqual( sv p, sv q, bool insensitive )->bool
+	 {
+		 return insensitive ? Jde::Str::ToUpper(p)==Jde::Str::ToUpper(q) : p==q;
+	 }
+    inline static bool StringEqual( const char* p, const char* q, bool insensitive )  {
+        if ( p == q ) {
+            return true;
+        }
+        TIXMLASSERT( p );
+        TIXMLASSERT( q );
+        TIXMLASSERT( nChar >= 0 );
+        return insensitive ? Jde::Str::ToUpper(std::string{p})==Jde::Str::ToUpper(std::string{q}) : strcmp(p, q)==0;
     }
 
     inline static bool IsUTF8Continuation( const char p ) {
@@ -659,12 +655,8 @@ private:
 
 	@endverbatim
 */
-class Γ XMLNode
+struct Γ XMLNode
 {
-    friend class XMLDocument;
-    friend class XMLElement;
-public:
-
     /// Get the XMLDocument that owns this XMLNode.
     const XMLDocument* GetDocument() const	{
         TIXMLASSERT( _document );
@@ -730,7 +722,9 @@ public:
     	@endverbatim
     */
     const char* Value() const;
+	 α value()Ι->sv{ return _value.View(); }
 
+	β name()Ι->sv{ return {}; }
     /** Set the Value of an XML node.
     	@sa Value()
     */
@@ -743,6 +737,9 @@ public:
     const XMLNode*	Parent() const			{
         return _parent;
     }
+
+	 α Text()Ι->sv;
+    α ParentElement()Ι->const XMLElement*{ return _parent ? _parent->ToElement() : nullptr; }
 
     XMLNode* Parent()						{
         return _parent;
@@ -818,7 +815,7 @@ public:
     /// Get the next (right) sibling element of this node, with an optionally supplied name.
     const XMLElement*	NextSiblingElement( const char* name = 0 ) const;
 	 α NextSiblingElement( sv name )Ι->const XMLElement*;
-
+	 α IsCaseInsensitive()Ι->bool;
     XMLElement*	NextSiblingElement( const char* name = 0 )	{
         return const_cast<XMLElement*>(const_cast<const XMLNode*>(this)->NextSiblingElement( name ) );
     }
@@ -936,8 +933,11 @@ public:
 	void* GetUserData() const			{ return _userData; }
 	α Find( const std::span<sv>& entries )Ι->const XMLElement*;//[child][grandChild][great-grandChild]
 	α FindText( sv elementText, sv elementName={} )Ι->const XMLElement*;//"<p>value</p>=Find(p, value"
-	α FindText( const std::span<sv>& entries )Ι->const XMLElement*;
+
+	α FindText( const std::span<sv>& entries, const XMLNode* pCalledFrom=nullptr, bool searchChildren=true, vector<string> tags={} )Ι->const XMLNode*;
 	α Parent( sv elementName )Ι->const XMLElement*;
+	α NextText()Ι->const XMLNode*;
+	α Next( bool children=true )Ι->const XMLNode*;
 protected:
     explicit XMLNode( XMLDocument* );
     virtual ~XMLNode();
@@ -967,6 +967,7 @@ private:
 
     XMLNode( const XMLNode& );	// not supported
     XMLNode& operator=( const XMLNode& );	// not supported
+	friend struct XMLDocument; friend struct XMLElement;
 };
 
 
@@ -982,10 +983,8 @@ private:
 	you generally want to leave it alone, but you can change the output mode with
 	SetCData() and query it with CData().
 */
-class XMLText : public XMLNode
+struct XMLText : XMLNode
 {
-    friend class XMLDocument;
-public:
     virtual bool Accept( XMLVisitor* visitor ) const;
 
     virtual XMLText* ToText()			{
@@ -1018,14 +1017,12 @@ private:
 
     XMLText( const XMLText& );	// not supported
     XMLText& operator=( const XMLText& );	// not supported
+    friend struct XMLDocument;
 };
 
 
-/** An XML Comment. */
-class XMLComment : public XMLNode
+struct XMLComment : XMLNode
 {
-    friend class XMLDocument;
-public:
     virtual XMLComment*	ToComment()					{
         return this;
     }
@@ -1045,8 +1042,9 @@ protected:
     char* ParseDeep( char* p, StrPair* parentEndTag, int* curLineNumPtr);
 
 private:
-    XMLComment( const XMLComment& );	// not supported
-    XMLComment& operator=( const XMLComment& );	// not supported
+	XMLComment( const XMLComment& );	// not supported
+	XMLComment& operator=( const XMLComment& );	// not supported
+   friend struct XMLDocument;
 };
 
 
@@ -1061,10 +1059,8 @@ private:
 	The text of the declaration isn't interpreted. It is parsed
 	and written as a string.
 */
-class XMLDeclaration : public XMLNode
+struct XMLDeclaration : XMLNode
 {
-    friend class XMLDocument;
-public:
     virtual XMLDeclaration*	ToDeclaration()					{
         return this;
     }
@@ -1086,6 +1082,7 @@ protected:
 private:
     XMLDeclaration( const XMLDeclaration& );	// not supported
     XMLDeclaration& operator=( const XMLDeclaration& );	// not supported
+	friend struct XMLDocument;
 };
 
 
@@ -1096,10 +1093,8 @@ private:
 
 	DTD tags get thrown into XMLUnknowns.
 */
-class XMLUnknown : public XMLNode
+struct XMLUnknown : XMLNode
 {
-    friend class XMLDocument;
-public:
     virtual XMLUnknown*	ToUnknown()					{
         return this;
     }
@@ -1121,6 +1116,7 @@ protected:
 private:
     XMLUnknown( const XMLUnknown& );	// not supported
     XMLUnknown& operator=( const XMLUnknown& );	// not supported
+    friend struct XMLDocument;
 };
 
 
@@ -1131,13 +1127,11 @@ private:
 	@note The attributes are not XMLNodes. You may only query the
 	Next() attribute in a list.
 */
-class XMLAttribute
+struct XMLAttribute
 {
-    friend class XMLElement;
-public:
     /// The name of the attribute.
     const char* Name() const;
-	 sv name()Ι{ return _name.View(); }
+	 α name()Ι->sv{ return _name.View(); }
 
     /// The value of the attribute.
     const char* Value() const;
@@ -1250,6 +1244,8 @@ private:
     int             _parseLineNum;
     XMLAttribute*   _next;
     MemPool*        _memPool;
+
+    friend struct XMLElement;
 };
 
 
@@ -1257,15 +1253,13 @@ private:
 	and can contain other elements, text, comments, and unknowns.
 	Elements also contain an arbitrary number of attributes.
 */
-class Γ XMLElement : public XMLNode
+struct Γ XMLElement : public XMLNode
 {
-    friend class XMLDocument;
-public:
     /// Get the name of an element (which is the Value() of the node.)
     const char* Name() const		{
         return Value();
     }
-	 α name()Ι->sv{ return _value.View(); }
+	 α name()Ι->sv override{ return _value.View(); }
 
 	 α operator[](sv i)Ι->const XMLAttribute*;
 
@@ -1286,13 +1280,10 @@ public:
     }
 
 
-    virtual XMLElement* ToElement()				{
-        return this;
-    }
-    virtual const XMLElement* ToElement() const {
-        return this;
-    }
-    virtual bool Accept( XMLVisitor* visitor ) const;
+    α ToElement()->XMLElement* override{return this; }
+	 α ToElement()const->const XMLElement* override{return this; }
+
+    α Accept( XMLVisitor* visitor ) const->bool override;
 
     /** Given an attribute name, Attribute() returns the value
     	for the attribute of that name, or null if none
@@ -1560,8 +1551,9 @@ public:
     */
     const char* GetText() const;
 
-	α Text()const noexcept->sv;
-	α FirstText()const noexcept->sv; //<td><font>findMe
+	α Text()Ι->sv;
+	//α FirstText()Ι->std::string; //<td><font>findMe
+	//α NextText( /*const XMLElement* pAnchor=nullptr*/ )Ι->std::string; //<td><font>findMe
     /** Convenience function for easy access to the text inside an element. Although easy
     	and concise, SetText() is limited compared to creating an XMLText child
     	and mutating it directly.
@@ -1708,11 +1700,13 @@ public:
     ElementClosingType ClosingType() const {
         return _closingType;
     }
-    virtual XMLNode* ShallowClone( XMLDocument* document ) const;
-    virtual bool ShallowEqual( const XMLNode* compare ) const;
+	static constexpr array<sv,3> ElementClosingTypeStrings{ "Open", "Closed", "Closing" };
+	Ω ToString( ElementClosingType e )ι->string{ return e<ElementClosingTypeStrings.size() ? string{ElementClosingTypeStrings[e]} : std::to_string(e); }
+	α ShallowClone( XMLDocument* document )const->XMLNode* override;
+   α ShallowEqual( const XMLNode* compare )const->bool override;
 
 protected:
-    char* ParseDeep( char* p, StrPair* parentEndTag, int* curLineNumPtr );
+	α ParseDeep( char* p, StrPair* parentEndTag, int* curLineNumPtr )->char* override;
 
 private:
     XMLElement( XMLDocument* doc );
@@ -1731,6 +1725,7 @@ private:
     // because the list needs to be scanned for dupes before adding
     // a new attribute.
     XMLAttribute* _rootAttribute;
+	friend struct XMLDocument;
 };
 
 
@@ -1745,19 +1740,10 @@ enum Whitespace {
 	All Nodes are connected and allocated to a Document.
 	If the Document is deleted, all its Nodes are also deleted.
 */
-class Γ XMLDocument : public XMLNode
+struct Γ XMLDocument : public XMLNode
 {
-    friend class XMLElement;
-    // Gives access to SetError and Push/PopDepth, but over-access for everything else.
-    // Wishing C++ had "internal" scope.
-    friend class XMLNode;
-    friend class XMLText;
-    friend class XMLComment;
-    friend class XMLDeclaration;
-    friend class XMLUnknown;
-public:
-    XMLDocument( std::string_view value, SRCE )noexcept(false);
-    XMLDocument( bool processEntities = true, Whitespace whitespaceMode = PRESERVE_WHITESPACE );
+    XMLDocument( std::string_view value, bool insensitive, SRCE )noexcept(false);
+    XMLDocument( bool processEntities = true, Whitespace whitespaceMode = PRESERVE_WHITESPACE, bool insensitive=false );
     ~XMLDocument();
 
     virtual XMLDocument* ToDocument()				{
@@ -1768,7 +1754,7 @@ public:
         TIXMLASSERT( this == _document );
         return this;
     }
-
+	α IsCaseInsensitive()Ι->bool{ return _isCaseInsensitive; }
     /**
     	Parse an XML file from a character string.
     	Returns XML_SUCCESS (0) on success, or
@@ -1986,6 +1972,7 @@ private:
     MemPoolT< sizeof(XMLAttribute) > _attributePool;
     MemPoolT< sizeof(XMLText) >		 _textPool;
     MemPoolT< sizeof(XMLComment) >	 _commentPool;
+	 bool _isCaseInsensitive;
 
 	static const char* _errorNames[XML_ERROR_COUNT];
 
@@ -1996,8 +1983,7 @@ private:
 	// Something of an obvious security hole, once it was discovered.
 	// Either an ill-formed XML or an excessively deep one can overflow
 	// the stack. Track stack depth, and error out if needed.
-	class DepthTracker {
-	public:
+	struct DepthTracker {
 		explicit DepthTracker(XMLDocument * document) {
 			this->_document = document;
 			document->PushDepth();
@@ -2011,8 +1997,10 @@ private:
 	void PushDepth();
 	void PopDepth();
 
-    template<class NodeType, int PoolElementSize>
-    NodeType* CreateUnlinkedNode( MemPoolT<PoolElementSize>& pool );
+	template<class NodeType, int PoolElementSize>
+	NodeType* CreateUnlinkedNode( MemPoolT<PoolElementSize>& pool );
+
+	friend struct XMLElement; friend struct XMLNode; friend struct XMLText; friend struct XMLComment; friend struct XMLDeclaration; friend struct XMLUnknown;
 };
 
 template<class NodeType, int PoolElementSize>
@@ -2083,9 +2071,8 @@ inline NodeType* XMLDocument::CreateUnlinkedNode( MemPoolT<PoolElementSize>& poo
 
 	See also XMLConstHandle, which is the same as XMLHandle, but operates on const objects.
 */
-class XMLHandle
+struct XMLHandle
 {
-public:
     /// Create a handle from any node (at any depth of the tree.) This can be a null pointer.
     explicit XMLHandle( XMLNode* node ) : _node( node ) {
     }
@@ -2164,7 +2151,7 @@ private:
 	A variant of the XMLHandle class for working with const XMLNodes and Documents. It is the
 	same in all regards, except for the 'const' qualifiers. See XMLHandle for API.
 */
-class XMLConstHandle
+struct XMLConstHandle
 {
 public:
     explicit XMLConstHandle( const XMLNode* node ) : _node( node ) {
@@ -2268,7 +2255,7 @@ private:
 	printer.CloseElement();
 	@endverbatim
 */
-class XMLPrinter : public XMLVisitor
+struct XMLPrinter : XMLVisitor
 {
 public:
     /** Construct the printer. If the FILE* is specified,
