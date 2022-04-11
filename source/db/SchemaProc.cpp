@@ -125,7 +125,7 @@ namespace Jde::DB
 				var path = relativePath/name; THROW_IF( !fs::exists(path), "Could not find {}"sv, path.string() );
 				var text = IO::FileUtilities::Load( path );
 				DBG( "Executing '{}'"sv, path.string() );
-				var queries = Str::Split( text, CIString{"\ngo"sv} );
+				var queries = Str::Split<sv,iv>( text, "\ngo"_iv );
 				for( var& query : queries )
 				{
 					ostringstream os;
@@ -162,8 +162,8 @@ namespace Jde::DB
 						if( osWhere.tellp() != std::streampos(0) )
 							osWhere << " and ";
 						osWhere << keyColumn << "=?";
-						if( var pData = jData.find( Schema::ToJson(keyColumn) ); pData!=jData.end() )
-							selectParams.push_back( ToObject(table.FindColumn(keyColumn)->Type, *pData, keyColumn) );
+						if( var pData = jData.find( Schema::ToJson(ToSV(keyColumn)) ); pData!=jData.end() )
+							selectParams.push_back( ToObject(table.FindColumn(ToSV(keyColumn))->Type, *pData, (sv)keyColumn) );
 						else
 						{
 							selectParams.clear();

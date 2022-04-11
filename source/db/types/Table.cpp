@@ -50,7 +50,7 @@ namespace Jde::DB
 					if( var pPKTable = schema.find(string{typeName}); pPKTable!=schema.end() )
 					{
 						Table table{ typeName, *pPKTable, parents, commonColumns, schema };
-						if( var pColumn = table.SurrogateKey.size()==1 ? table.FindColumn(table.SurrogateKey.front()) : nullptr; pColumn )
+						if( var pColumn = table.SurrogateKey.size()==1 ? table.FindColumn((sv)table.SurrogateKey.front()) : nullptr; pColumn )
 							Type = pColumn->Type;
 						IsEnum = table.Data.size();
 					}
@@ -113,7 +113,7 @@ namespace Jde::DB
 			for( var& column : pParent->second.Columns )
 				Columns.push_back( column );
 			for( var& index : pParent->second.Indexes )
-				Indexes.push_back( Index{index.Name, Name, index} );
+				Indexes.push_back( Index{(sv)index.Name, Name, index} );
 			SurrogateKey = pParent->second.SurrogateKey;
 		}
 		for( var& [attribute,value] : j.items() )
@@ -125,8 +125,6 @@ namespace Jde::DB
 				for( var& it : value )
 				{
 					var dbName = Schema::FromJson( it["name"].get<string>() );
-					//if( name=="dgr_classes" && dbName=="name" )
-						//Dbg( "" );
 					Columns.push_back( Column{dbName, it, commonColumns, parents, schema} );
 					if( auto p=find(SurrogateKey.begin(), SurrogateKey.end(), dbName); p!=SurrogateKey.end() )
 					{
@@ -298,7 +296,7 @@ namespace Jde::DB
 		var nameParts = Str::Split( table.NameWithoutType(), '_' );
 		return nameParts.size()>index ? DB::Schema::ToSingular( nameParts[index] ) : string{};
 	}
-	α Table::Prefix()const noexcept->string{ return Str::Split( Name, '_' )[0]; }
+	α Table::Prefix()const noexcept->sv{ return Str::Split( Name, '_' )[0]; }
 	α Table::NameWithoutType()const noexcept->string{ var underscore = Name.find_first_of('_'); return Name.substr(underscore==string::npos ? 0 : underscore+1); }
 
 	α Table::FKName()const noexcept->string{ return Schema::ToSingular(NameWithoutType())+"_id"; }

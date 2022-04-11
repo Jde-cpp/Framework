@@ -3,6 +3,23 @@ windows() { [[ -n "$WINDIR" ]]; }
 t=$(readlink -f "${BASH_SOURCE[0]}"); commonBuild=$(basename "$t"); unset t;
 export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 
+startIndex() {
+  x="${1%%$2*}"
+  [[ "$x" = "$1" ]] && echo -1 || echo "${#x}"
+}
+
+function anyDir
+{
+	echo a
+	path=$1;
+	echo $path
+	index=$(startIndex "$path" /*/);
+	if [ $index -ne -1 ]; then
+		echo hi;
+	fi;
+	echo $index;
+}
+
 function findExecutable
 {
 	exe=$1;

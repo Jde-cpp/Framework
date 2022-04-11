@@ -12,7 +12,7 @@ namespace Jde::DB
 	using nlohmann::json;
 	using DBClock=std::chrono::system_clock;
 	using DBTimePoint=DBClock::time_point;
-	enum class EObject: uint8 {Null,String,StringView,StringPtr,Bool,Int32,Int64,UInt32,UInt64,Double,Time };
+	enum class EObject:uint8{ Null, String, StringView, StringPtr, Bool, Int32, Int64, UInt32, UInt64, Double, Time };
 	using object=std::variant<std::nullptr_t,string,sv,sp<string>,bool,int,_int,uint32_t,uint,double,DBTimePoint>;
 	α ToString( const object& parameter )noexcept(false)->string;
 

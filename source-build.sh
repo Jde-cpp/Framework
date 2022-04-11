@@ -17,8 +17,8 @@ if windows; then
 	findExecutable MSBuild.exe '/c/Program\ Files/Microsoft\ Visual\ Studio/2022/BuildTools/MSBuild/Current/Bin' 0
 	findExecutable MSBuild.exe '/c/Program\ Files/Microsoft\ Visual\ Studio/2022/Enterprise/MSBuild/Current/Bin'
 	findExecutable cmake.exe '/c/Program\ Files/CMake/bin'
-	findExecutable cl.exe '/c/Program\ Files/Microsoft\ Visual\ Studio/2022/BuildTools/VC/Tools/MSVC/14.30.30705/bin/Hostx64/x64' 0
-	findExecutable cl.exe '/c/Program\ Files/Microsoft\ Visual\ Studio/2022/Enterprise/VC/Tools/MSVC/14.30.30705/bin/Hostx64/x64' 1
+	findExecutable cl.exe '/c/Program\ Files/Microsoft\ Visual\ Studio/2022/BuildTools/VC/Tools/MSVC/14.31.31103/bin/Hostx64/x64' 0  #TODO go to any directory
+	findExecutable cl.exe '/c/Program\ Files/Microsoft\ Visual\ Studio/2022/Enterprise/VC/Tools/MSVC/14.31.31103/bin/Hostx64/x64' 1
 	findExecutable vswhere.exe '/c/Program\ Files\ \(X86\)/Microsoft\ Visual\ Studio/installer' 0
 	#findExecutable protoc.exe $REPO_BASH/jde/Public/stage/Release;
 fi;

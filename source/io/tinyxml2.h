@@ -108,7 +108,7 @@ namespace Jde::Xml
 
     Isn't clear why TINYXML2_LIB is needed; but seems to fix #719
 */
-struct StrPair
+struct Γ StrPair
 {
     enum Mode {
         NEEDS_ENTITY_PROCESSING			= 0x01,
@@ -136,7 +136,7 @@ struct StrPair
     }
 
 	const char* GetStr();
-	Φ View()noexcept->sv;
+   template<Str::IsView T=sv> α View()ι->T;
    bool Empty() const{ return _start == _end; }
 
     void SetInternedStr( const char* str ) {
@@ -146,7 +146,7 @@ struct StrPair
 
     void SetStr( const char* str, int flags=0 );
 
-    char* ParseText( char* in, const char* endTag, int strFlags, int* curLineNumPtr );
+    char* ParseText( char* in, const char* endTag, int strFlags, uint* curLineNumPtr );
     char* ParseName( char* in );
 
     void TransferTo( StrPair* other );
@@ -513,15 +513,12 @@ enum XMLError {
 };
 
 
-/*
-	Utility functionality.
-*/
-α UnEscape( sv xml )ι->std::string;
-α Close( sv xml )ε->std::string;
+template<class T=string> α UnEscape( Str::bsv<typename T::traits_type> xml )ι->T;
+Φ Close( sv xml )ε->string;
 
 struct XMLUtil
 {
-    static const char* SkipWhiteSpace( const char* p, int* curLineNumPtr )	{
+    static const char* SkipWhiteSpace( const char* p, uint* curLineNumPtr )	{
         TIXMLASSERT( p );
 
         while( IsWhiteSpace(*p) ) {
@@ -533,7 +530,7 @@ struct XMLUtil
         TIXMLASSERT( p );
         return p;
     }
-    static char* SkipWhiteSpace( char* const p, int* curLineNumPtr ) {
+    static char* SkipWhiteSpace( char* const p, uint* curLineNumPtr ) {
         return const_cast<char*>( SkipWhiteSpace( const_cast<const char*>(p), curLineNumPtr ) );
     }
 
@@ -580,14 +577,14 @@ struct XMLUtil
 	 {
 		 return insensitive ? Jde::Str::ToUpper(p)==Jde::Str::ToUpper(q) : p==q;
 	 }
-    inline static bool StringEqual( const char* p, const char* q, bool insensitive )  {
+    static Ξ StringEqual( const char* p, const char* q, bool insensitive )->bool  {
         if ( p == q ) {
             return true;
         }
         TIXMLASSERT( p );
         TIXMLASSERT( q );
-        TIXMLASSERT( nChar >= 0 );
-        return insensitive ? Jde::Str::ToUpper(std::string{p})==Jde::Str::ToUpper(std::string{q}) : strcmp(p, q)==0;
+        //TIXMLASSERT( nChar >= 0 );
+        return insensitive ? Jde::Str::ToUpper( string{p} )==Jde::Str::ToUpper( string{q} ) : strcmp( p, q )==0;
     }
 
     inline static bool IsUTF8Continuation( const char p ) {
@@ -722,7 +719,8 @@ struct Γ XMLNode
     	@endverbatim
     */
     const char* Value() const;
-	 α value()Ι->sv{ return _value.View(); }
+    template<Str::IsView T=sv> α value()Ι->T{ return _value.View<T>(); }
+    α IsHtmlStyle()Ι->bool{ return Str::ToUpper(_value.View())=="FONT"; }
 
 	β name()Ι->sv{ return {}; }
     /** Set the Value of an XML node.
@@ -731,19 +729,17 @@ struct Γ XMLNode
     void SetValue( const char* val, bool staticMem=false );
 
     /// Gets the line number the node is in, if the document was parsed from a file.
-    int GetLineNum() const { return _parseLineNum; }
+    uint GetLineNum() const { return _parseLineNum; }
 
     /// Get the parent of this node on the DOM.
     const XMLNode*	Parent() const			{
         return _parent;
     }
 
-	 α Text()Ι->sv;
+    template<Str::IsView T=sv> α Text()Ι->T;
+    template<Str::IsString T=string> α HtmlText( bool trim=true, bool unescape=true )Ι->T;
     α ParentElement()Ι->const XMLElement*{ return _parent ? _parent->ToElement() : nullptr; }
-
-    XMLNode* Parent()						{
-        return _parent;
-    }
+    α Parent()ι->XMLNode*{return _parent;}
 
     /// Returns true if this node has no children.
     bool NoChildren() const					{
@@ -932,22 +928,23 @@ struct Γ XMLNode
 	*/
 	void* GetUserData() const			{ return _userData; }
 	α Find( const std::span<sv>& entries )Ι->const XMLElement*;//[child][grandChild][great-grandChild]
-	α FindText( sv elementText, sv elementName={} )Ι->const XMLElement*;//"<p>value</p>=Find(p, value"
+	template<class T=sv> α FindText( T elementText, sv elementName={} )Ι->const XMLElement*;//<p>value</p>=Find(p, "value"
 
-	α FindText( const std::span<sv>& entries, const XMLNode* pCalledFrom=nullptr, bool searchChildren=true, vector<string> tags={} )Ι->const XMLNode*;
+	α FindOneOf( const std::span<iv>& entries, const XMLNode* pCalledFrom=nullptr, bool searchChildren=true, vector<string> tags={}, bool stem=false )Ι->const XMLNode*;
 	α Parent( sv elementName )Ι->const XMLElement*;
-	α NextText()Ι->const XMLNode*;
+	α NextHtmlText()Ι->const XMLNode*;
 	α Next( bool children=true )Ι->const XMLNode*;
+   α NextHtml( bool children=true )Ι->const XMLNode*;
 protected:
     explicit XMLNode( XMLDocument* );
     virtual ~XMLNode();
 
-    virtual char* ParseDeep( char* p, StrPair* parentEndTag, int* curLineNumPtr);
+    virtual char* ParseDeep( char* p, StrPair* parentEndTag, uint* curLineNumPtr );
 
     XMLDocument*	_document;
     XMLNode*		_parent;
     mutable StrPair	_value;
-    int             _parseLineNum;
+    uint _parseLineNum;
 
     XMLNode*		_firstChild;
     XMLNode*		_lastChild;
@@ -983,7 +980,7 @@ private:
 	you generally want to leave it alone, but you can change the output mode with
 	SetCData() and query it with CData().
 */
-struct XMLText : XMLNode
+struct Γ XMLText : XMLNode
 {
     virtual bool Accept( XMLVisitor* visitor ) const;
 
@@ -1010,7 +1007,7 @@ protected:
     explicit XMLText( XMLDocument* doc )	: XMLNode( doc ), _isCData( false )	{}
     virtual ~XMLText()												{}
 
-    char* ParseDeep( char* p, StrPair* parentEndTag, int* curLineNumPtr );
+    char* ParseDeep( char* p, StrPair* parentEndTag, uint* curLineNumPtr );
 
 private:
     bool _isCData;
@@ -1039,7 +1036,7 @@ protected:
     explicit XMLComment( XMLDocument* doc );
     virtual ~XMLComment();
 
-    char* ParseDeep( char* p, StrPair* parentEndTag, int* curLineNumPtr);
+    char* ParseDeep( char* p, StrPair* parentEndTag, uint* curLineNumPtr);
 
 private:
 	XMLComment( const XMLComment& );	// not supported
@@ -1077,7 +1074,7 @@ protected:
     explicit XMLDeclaration( XMLDocument* doc );
     virtual ~XMLDeclaration();
 
-    char* ParseDeep( char* p, StrPair* parentEndTag, int* curLineNumPtr );
+    char* ParseDeep( char* p, StrPair* parentEndTag, uint* curLineNumPtr );
 
 private:
     XMLDeclaration( const XMLDeclaration& );	// not supported
@@ -1111,7 +1108,7 @@ protected:
     explicit XMLUnknown( XMLDocument* doc );
     virtual ~XMLUnknown();
 
-    char* ParseDeep( char* p, StrPair* parentEndTag, int* curLineNumPtr );
+    char* ParseDeep( char* p, StrPair* parentEndTag, uint* curLineNumPtr );
 
 private:
     XMLUnknown( const XMLUnknown& );	// not supported
@@ -1127,7 +1124,7 @@ private:
 	@note The attributes are not XMLNodes. You may only query the
 	Next() attribute in a list.
 */
-struct XMLAttribute
+struct Γ XMLAttribute
 {
     /// The name of the attribute.
     const char* Name() const;
@@ -1138,7 +1135,7 @@ struct XMLAttribute
 	 α value()Ι->sv{ return _value.View(); }
 
     /// Gets the line number the attribute is in, if the document was parsed from a file.
-    int GetLineNum() const { return _parseLineNum; }
+    uint GetLineNum() const { return _parseLineNum; }
 
     /// The next attribute in the list.
     const XMLAttribute* Next() const {
@@ -1230,18 +1227,18 @@ struct XMLAttribute
 private:
     enum { BUF_SIZE = 200 };
 
-    XMLAttribute() : _name(), _value(),_parseLineNum( 0 ), _next( 0 ), _memPool( 0 ) {}
+    XMLAttribute() : _name(), _value(),_parseLineNum{ 0 }, _next( 0 ), _memPool( 0 ) {}
     virtual ~XMLAttribute()	{}
 
     XMLAttribute( const XMLAttribute& );	// not supported
     void operator=( const XMLAttribute& );	// not supported
     void SetName( const char* name );
 
-    char* ParseDeep( char* p, bool processEntities, int* curLineNumPtr );
+    char* ParseDeep( char* p, bool processEntities, uint* curLineNumPtr );
 
     mutable StrPair _name;
     mutable StrPair _value;
-    int             _parseLineNum;
+    uint             _parseLineNum;
     XMLAttribute*   _next;
     MemPool*        _memPool;
 
@@ -1551,9 +1548,9 @@ struct Γ XMLElement : public XMLNode
     */
     const char* GetText() const;
 
-	α Text()Ι->sv;
-	//α FirstText()Ι->std::string; //<td><font>findMe
-	//α NextText( /*const XMLElement* pAnchor=nullptr*/ )Ι->std::string; //<td><font>findMe
+	template<Str::IsView T=sv> α Text()Ι->T;
+	//α FirstText()Ι->string; //<td><font>findMe
+	//α NextText( /*const XMLElement* pAnchor=nullptr*/ )Ι->string; //<td><font>findMe
     /** Convenience function for easy access to the text inside an element. Although easy
     	and concise, SetText() is limited compared to creating an XMLText child
     	and mutating it directly.
@@ -1643,10 +1640,10 @@ struct Γ XMLElement : public XMLNode
       return Jde::To<T>( trim );
       //if( s.size() )
       //{
-      //   auto trim = Jde::Str::Trim( std::string{s} );
+      //   auto trim = Jde::Str::Trim( string{s} );
       //   return Jde::To<T>( trim );
       //}
-      //return std::optional<T>{};
+      //return optional<T>{};
    }
 
 	α TryChildText( sv elementName )noexcept->sv;
@@ -1706,7 +1703,7 @@ struct Γ XMLElement : public XMLNode
    α ShallowEqual( const XMLNode* compare )const->bool override;
 
 protected:
-	α ParseDeep( char* p, StrPair* parentEndTag, int* curLineNumPtr )->char* override;
+	α ParseDeep( char* p, StrPair* parentEndTag, uint* curLineNumPtr )->char* override;
 
 private:
     XMLElement( XMLDocument* doc );
@@ -1715,7 +1712,7 @@ private:
     void operator=( const XMLElement& );	// not supported
 
     XMLAttribute* FindOrCreateAttribute( const char* name );
-    char* ParseAttributes( char* p, int* curLineNumPtr );
+    char* ParseAttributes( char* p, uint* curLineNumPtr );
     static void DeleteAttribute( XMLAttribute* attribute );
     XMLAttribute* CreateAttribute();
 
@@ -1742,7 +1739,7 @@ enum Whitespace {
 */
 struct Γ XMLDocument : public XMLNode
 {
-    XMLDocument( std::string_view value, bool insensitive, SRCE )noexcept(false);
+    XMLDocument( sv value, bool insensitive, SRCE )noexcept(false);
     XMLDocument( bool processEntities = true, Whitespace whitespaceMode = PRESERVE_WHITESPACE, bool insensitive=false );
     ~XMLDocument();
 
@@ -1917,7 +1914,7 @@ struct Γ XMLDocument : public XMLNode
     void PrintError() const;
 
     /// Return the line where the error occurred, or zero if unknown.
-    int ErrorLineNum() const
+    uint ErrorLineNum() const
     {
         return _errorLineNum;
     }
@@ -1956,9 +1953,9 @@ private:
     XMLError		_errorID;
     Whitespace		_whitespaceMode;
     mutable StrPair	_errorStr;
-    int             _errorLineNum;
+    uint             _errorLineNum;
     char*			_charBuffer;
-    int				_parseCurLineNum;
+    uint				_parseCurLineNum;
 	int				_parsingDepth;
 	// Memory tracking does add some overhead.
 	// However, the code assumes that you don't
@@ -1978,7 +1975,7 @@ private:
 
     void Parse();
 
-    void SetError( XMLError error, int lineNum, const char* format, ... );
+    void SetError( XMLError error, uint lineNum, const char* format, ... );
 
 	// Something of an obvious security hole, once it was discovered.
 	// Either an ill-formed XML or an excessively deep one can overflow
@@ -2074,8 +2071,7 @@ inline NodeType* XMLDocument::CreateUnlinkedNode( MemPoolT<PoolElementSize>& poo
 struct XMLHandle
 {
     /// Create a handle from any node (at any depth of the tree.) This can be a null pointer.
-    explicit XMLHandle( XMLNode* node ) : _node( node ) {
-    }
+    XMLHandle( XMLNode* node ):_node( node ){}
     /// Create a handle from a node.
     explicit XMLHandle( XMLNode& node ) : _node( &node ) {
     }
@@ -2255,7 +2251,7 @@ private:
 	printer.CloseElement();
 	@endverbatim
 */
-struct XMLPrinter : XMLVisitor
+struct Γ XMLPrinter : XMLVisitor
 {
 public:
     /** Construct the printer. If the FILE* is specified,
@@ -2402,8 +2398,86 @@ private:
 		return (*this)[n] ? Jde::To<T>((*this)[n]->value()) : T{};
 	}
 
+   ⓣ XMLNode::FindText( T elementText, sv elementName )Ι->const XMLElement* //"<p>value</p>=Find(p, value)"
+   {
+	   const XMLElement* y = nullptr;
+	   for( const XMLNode* n=FirstChild(); !y && n; n=n->NextSibling() )
+	   {
+         sv foo = Str::Replace(n->ToElement()->Text(),'\n', ' ');
+         T foo2 = ToView<T,sv>( foo );
+         bool v = foo2==elementText;
+         
+		   if( const XMLElement* p=n->ToElement(); p && (elementName.empty() || p->Name()==elementName) && ToView<T,sv>(Str::Replace(p->Text(),'\n', ' '))==elementText )
+			   y = p;
+		   else
+			   y = n->FindText( elementText, elementName );
+	   }
+	   return y;
+   }
 
-}	// tinyxml2
+   ⓣ Xml::UnEscape( Str::bsv<typename T::traits_type> xml )ι->T
+	{
+		T y; static_assert( std::is_same<T, string>::value || std::is_same<T, String>::value, "can't be sv" );
+		if( xml.size() )
+		{
+			T s{ Str::Replace(xml,"&nbsp;", " ") };
+			array<uint8_t,2> sz{ 0xc2, 0xa0 };
+			y = Str::Replace( s, Str::bsv<typename T::traits_type>{(char*)sz.data(),2}, " " );
+		}
+		return y;
+	}
+
+   template<Str::IsString T> α XMLNode::HtmlText( bool trim, bool unescape )Ι->T
+   {
+      using view=Str::bsv<T::traits_type>;
+      T y;
+	   if( var* p = ToText(); p )
+		   y = p->Text<view>();
+	   else
+	   {
+		   for( var* c = FirstChild(); c; c = c->NextSibling() )
+		   {
+			   if( c->ToComment() )
+				   continue;
+			   if( var* p{c->ToText()}; p )
+				   y+=p->value<view>();
+			   else if( var p{c->ToElement()}; p && Str::ToUpper(p->value())=="BR" )
+				   y+='\n';
+			   else if( var p{c->IsHtmlStyle() ? c->ToElement() : nullptr}; p )
+				   y+=p->HtmlText<T>();
+		   }
+	   }
+      if( unescape )
+         y = UnEscape<T>( y );
+      if( trim )
+         y = Str::Trim<view>( y );
+	   return y;
+   }
+
+   template<Str::IsView T> α XMLNode::Text()Ι->T
+   {
+	   auto p = ToElement();
+	   return p ? p->Text<T>() : value<T>();
+   }
+
+   template<Str::IsView T> α XMLElement::Text()Ι->T
+   {
+	   var* node = FirstChild();
+	   for( ; node && node->ToComment(); node = node->NextSibling() );
+
+	   T y;
+	   if( var psz = node && node->ToText() ? node->Value() : nullptr; psz )
+		   y = T{ psz, strlen(psz) };
+	   return y;
+   }
+
+   template<Str::IsView T> α StrPair::View()ι->T
+   {
+	   if ( _flags & NEEDS_FLUSH )
+		   GetStr();
+	   return _start ? T{ _start, std::min(strlen(_start), (Jde::uint)(_end-_start)) } : T{};
+   }
+}	
 
 #if defined(_MSC_VER)
 #   pragma warning(pop)

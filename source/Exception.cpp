@@ -17,7 +17,7 @@ namespace Jde
 		Code( code ? code : Calc32RunTime(value) ),
 		_level{ level }
 	{}
-	
+
 	IException::IException( vector<string>&& args, string&& format, SL sl, uint c, ELogLevel level )noexcept:
 		_stack{ sl },
 		_format{ move(format) },
@@ -144,19 +144,37 @@ namespace Jde
 		return _what.c_str();
 	}
 
+	NetException::NetException( sv host, sv target, uint code, string result, ELogLevel level, SL sl )noexcept:
+		IException{ {string{host}, string{target}, std::to_string(code), string{result.substr(0,100)}}, "{}{} ({}){}", sl, code }, //"
+		Host{ host },
+		Target{ target },
+		//Code{ code },
+		Result{ move(result) }
+	{
+		SetLevel( level );
+		_what = format( "{}{} ({}){}", Host, Target, code, Result );
+		if( var f = Settings::Get<fs::path>("net/errorFile"); f )
+		{
+			std::ofstream os{ *f };
+			os << Result;
+		}
+		//Log();
+	}
+
 	α NetException::Log( string extra )const noexcept->void
 	{
 		if( Level()==ELogLevel::NoLog )
 			return;
 		var sl = _stack.front();
+#ifndef NDEBUG
 		if( string{sl.file_name()}.ends_with("construct_at") || Level()>=Logging::BreakLevel() )
 			BREAK;
+#endif
 		Logging::Default().log( spdlog::source_loc{FileName(sl.file_name()).c_str(), (int)sl.line(), sl.function_name()}, (spdlog::level::level_enum)Level(), extra.size() ? format("{}\n{}", extra, _what) : _what );
 		SetLevel( ELogLevel::NoLog );
 		//if( Logging::Server() )
 		//	Logging::LogServer( Logging::Messages::Message{Logging::Message2{_level, _what, _sl.file_name(), _sl.function_name(), _sl.line()}, vector<string>{_args}} );
 
-//#ifdef _MSC_VER
 		try
 		{
 			var path = fs::temp_directory_path()/"ssl_error_response.json";
@@ -168,11 +186,5 @@ namespace Jde
 		{
 			ERR( "could not save error result:  {}", e.what() );
 		}
-/*#else
-		constexpr sv fileName = "/tmp/ssl_error_response.json";
-		auto l{ Threading::UniqueLock(string{fileName}) };
-		std::ofstream os{ fileName };
-		os << Result;
-#endif*/
 	}
 }

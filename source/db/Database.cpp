@@ -26,7 +26,12 @@ namespace Jde
 		for( uint sqlIndex=0, paramIndex=0, size = pParameters ? pParameters->size() : 0; (sqlIndex=sql.find_first_of('?', prevIndex))!=string::npos && paramIndex<size; ++paramIndex, prevIndex=sqlIndex+1 )
 		{
 			os << sql.substr( prevIndex, sqlIndex-prevIndex );
-			os << DB::ToString( (*pParameters)[paramIndex] );
+			var& o = (*pParameters)[paramIndex];
+			if( (EObject)o.index()==EObject::String )
+				os << "'";
+			os << DB::ToString( o );
+			if( (EObject)o.index()==EObject::String )
+				os << "'";
 		}
 		if( prevIndex<sql.size() )
 			os << sql.substr( prevIndex );
@@ -121,20 +126,17 @@ namespace Jde
 	α Initialize( path libraryName )noexcept(false)->void
 	{
 		static DataSourceApi api{ libraryName };
-		//_pDefault = sp<Jde::DB::IDataSource>{ api.GetDataSourceFunction() };//needs to be deleted before api
 		_pDefault = sp<Jde::DB::IDataSource>{ api.GetDataSourceFunction(), [](auto) {
          //  delete p;  needs to be deleted before api
       } };
-		//std::call_once( _singleShutdown, [](){ IApplication::AddShutdownFunction( DB::CleanDataSources ); } );
 	}
 
 	α DB::DataSourcePtr()noexcept(false)->sp<IDataSource>
 	{
-		if( !_pDefault /*&& !IApplication::ShuttingDown()*/ )
+		if( !_pDefault )
 		{
 			Initialize( Driver() );
 			string cs{ Settings::Env("db/connectionString").value_or("DSN=Jde_Log_Connection") };
-			//var env = cs.find( '=' )==string::npos ? OSApp::EnvironmentVariable( cs ) : string{};
 			_pDefault->SetConnectionString( move(cs) );
 		}
 		return _pDefault;
@@ -157,7 +159,6 @@ namespace Jde
 		return pSource->second->Emplace( move(connectionString) );
 	}
 
-//#define DS if( auto p = DataSource(); p ) p
 	α DB::Select( string sql, function<void(const IRow&)> f, SL sl )noexcept(false)->void{ db.Select(move(sql), f, sl); }
 	α DB::Select( string sql, function<void(const IRow&)> f, const vector<object>& values, SL sl )noexcept(false)->void{ db.Select(move(sql), f, values, sl); }
 

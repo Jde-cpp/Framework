@@ -36,7 +36,17 @@ namespace Jde
 	{
 		VFuture( Copy(move(from), move(to), sl) ).get();
 	}
-
+	α IO::CreateDirectories( fs::path path )ε->void
+	{
+		try
+		{
+			fs::create_directories( path );
+		}
+		catch( fs::filesystem_error& e )
+		{
+			throw IOException( move(e) );
+		}
+	}
 }
 namespace Jde::IO::FileUtilities
 {
@@ -203,7 +213,7 @@ namespace Jde::IO
 	vector<string> FileUtilities::LoadColumnNames( path csvFileName )
 	{
 		std::vector<string> columnNames;
-		auto columnNameFunction = [&columnNames](string line){ columnNames = Str::Split<char>(line); };
+		auto columnNameFunction = [&columnNames]( sv line ){ var y = Str::Split(line); columnNames.reserve(y.size()); for( var& i : y )columnNames.push_back(string{i}); };
 		IO::File::ForEachLine<char>( csvFileName.string(), columnNameFunction, 1 );
 		return columnNames;
 	}
@@ -556,9 +566,9 @@ namespace Jde::IO
 		return lineIndex-startLine;
 	}
 
-	std::pair<std::vector<string>,std::set<size_t>> File::LoadColumnNames( sv csvFileName, std::vector<string>& columnNamesToFetch, bool notColumns )
+	std::pair<vector<string>,std::set<size_t>> File::LoadColumnNames( sv csvFileName, std::vector<string>& columnNamesToFetch, bool notColumns )
 	{
-		std::vector<string> columnNames;
+		vector<string> columnNames;
 		std::set<size_t> columnIndexes;
 		auto columnNameFunction = [&columnNamesToFetch,&columnIndexes,&columnNames,&notColumns](sv line)
 		{
@@ -569,7 +579,7 @@ namespace Jde::IO
 				if( (!notColumns && std::find( columnNamesToFetch.begin(), columnNamesToFetch.end(), token)!=columnNamesToFetch.end())
 					|| (notColumns && std::find( columnNamesToFetch.begin(), columnNamesToFetch.end(), token)==columnNamesToFetch.end()) )
 				{
-					columnNames.push_back( token );
+					columnNames.push_back( string{token} );
 					columnIndexes.insert( iToken );
 				}
 				++iToken;

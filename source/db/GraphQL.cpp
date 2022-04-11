@@ -359,7 +359,7 @@ namespace DB
 			Try( [&]{UM::ApplyMutation( m, result );} );
 		shared_lock l{ _applyMutationListenerMutex };
 		//var x = _foo._applyMutationListeners.find( t.Prefix() );
-		if( var p = ApplyMutationListeners().find(t.Prefix()); p!=ApplyMutationListeners().end() )
+		if( var p = ApplyMutationListeners().find(string{t.Prefix()}); p!=ApplyMutationListeners().end() )
 			std::for_each( p->second.begin(), p->second.end(), [&](var& f){f(m, result);} );
 
 		return result;
@@ -642,9 +642,9 @@ namespace DB
 
 		return tableQueries.size() ? QueryTables( tableQueries, userId ) : j;
 	}
-	struct Parser
+	struct Parser2
 	{
-		Parser( sv text, sv delimiters )noexcept: _text{text}, Delimiters{delimiters}{}
+		Parser2( sv text, sv delimiters )noexcept: _text{text}, Delimiters{delimiters}{}
 		α Next()noexcept->sv
 		{
 			sv result = _peekValue;
@@ -750,14 +750,14 @@ namespace DB
 		}
 		return os.str();
 	}
-	α ParseJson( Parser& q )->json
+	α ParseJson( Parser2& q )->json
 	{
 		string params{ q.Next(')') }; THROW_IF( params.front()!='(', "Expected '(' vs {} @ '{}' to start function - '{}'.",  params.front(), q.Index()-1, q.Text() );
 		params.front()='{'; params.back() = '}';
 		params = StringifyKeys( params );
 		return json::parse( params );
 	}
-	α LoadTable( Parser& q, sv jsonName )noexcept(false)->DB::TableQL//__type(name: "Account") { fields { name type { name kind ofType{name kind} } } }
+	α LoadTable( Parser2& q, sv jsonName )noexcept(false)->DB::TableQL//__type(name: "Account") { fields { name type { name kind ofType{name kind} } } }
 	{
 		var j = q.Peek()=="(" ? ParseJson( q ) : json{};
 		THROW_IF( q.Next()!="{", "Expected '{{' after table name. i='{}', text='{}'", q.Index(), q.AllText() );
@@ -771,7 +771,7 @@ namespace DB
 		}
 		return table;
 	}
-	α LoadTables( Parser& q, sv jsonName )noexcept(false)->vector<DB::TableQL>
+	α LoadTables( Parser2& q, sv jsonName )noexcept(false)->vector<DB::TableQL>
 	{
 		vector<DB::TableQL> results;
 		do
@@ -787,7 +787,7 @@ namespace DB
 		return results;
 	}
 
-	α LoadMutation( Parser& q )->DB::MutationQL
+	α LoadMutation( Parser2& q )->DB::MutationQL
 	{
 		THROW_IF( q.Next()!="{", "mutation expected '{' as 1st character." );
 		var command = q.Next();
@@ -806,7 +806,7 @@ namespace DB
 	α DB::ParseQL( sv query )noexcept(false)->DB::RequestQL
 	{
 		uint i = query.find_first_of( "{" ); THROW_IF( i==sv::npos || i>query.size()-2, "Invalid query '{}'", query );
-		Parser parser{ query.substr(i+1), "{}()," };
+		Parser2 parser{ query.substr(i+1), "{}()," };
 		auto name = parser.Next();
 		if( name=="query" )
 			name = parser.Next();

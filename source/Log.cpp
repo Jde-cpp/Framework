@@ -140,7 +140,7 @@ namespace Jde
 			if( name=="console" && IApplication::IsConsole() )
 			{
 				if( pattern.empty() )
-#ifdef NDEBUG
+#if defined(NDEBUG) && !defined(_MSC_VER)
 					pattern = "%^%3!l%$-%H:%M:%S.%e \e]8;;file://%g#%#\a%v\e]8;;\a";
 #else
 					pattern = "%^%3!l%$-%H:%M:%S.%e %-64@  %v";

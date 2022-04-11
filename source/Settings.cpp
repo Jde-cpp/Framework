@@ -117,24 +117,6 @@ namespace Jde
 			Save( Global().Json(), what, sl );
 	}
 
-/*	α Settings::Set( sv path, path value )noexcept->void
-	{
-		var values = Str::Split( path, '/' );
-		auto j = &Global().Json();
-		for( uint i=0; i<values.size()-1; ++i )
-		{
-			var member = values[i];
-			auto p = j->find( member );
-			if( p == j->end() )
-			{
-				(*j)[string{member}] = json::object();
-				p = j->find( member );
-			}
-			j = &*p;
-		}
-		(*j)[string{values.back()}] = value.string();
-	}
-*/
 	α Settings::FileStem()noexcept->string
 	{
 		var executable = OSApp::Executable().filename();
@@ -171,6 +153,7 @@ namespace Jde
 			}
 			catch( const std::exception& e )
 			{
+				BREAK;
 				LOG_MEMORY( {}, ELogLevel::Critical, "({})Could not load settings - {}", settingsPath.string(), e.what() );
 				_pGlobal = std::make_unique<Jde::Settings::Container>( nlohmann::json{} );
 			}
