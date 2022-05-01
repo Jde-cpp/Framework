@@ -1,5 +1,6 @@
 ﻿#include <variant>
 #include <nlohmann/json.hpp>
+#include <jde/Str.h>
 #include "../um/UM.h"
 
 #define var const auto

@@ -1,8 +1,9 @@
 #!/bin/bash
 windows() { [[ -n "$WINDIR" ]]; }
-t=$(readlink -f "${BASH_SOURCE[0]}"); commonBuild=$(basename "$t"); unset t;
+#t=$(readlink -f "${BASH_SOURCE[0]}"); commonBuild=$(basename "$t"); unset t;
+#commonBuildDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+jdeDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
 export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
-
 startIndex() {
   x="${1%%$2*}"
   [[ "$x" = "$1" ]] && echo -1 || echo "${#x}"
@@ -52,7 +53,8 @@ function toBashDir
 }
 if windows; then
 	toBashDir $REPO_DIR REPO_BASH;
-	if [[ -z $JDE_DIR ]]; then JDE_DIR=$REPO_BASH/jde; else toBashDir $JDE_DIR JDE_BASH; fi;
+	if [[ -z $JDE_DIR ]]; then JDE_DIR=$jdeDir; fi;
+	toBashDir $JDE_DIR JDE_BASH;
 else
 	REPO_BASH=$REPO_DIR;
 	JDE_BASH=$JDE_DIR

@@ -3,6 +3,7 @@
 DISABLE_WARNINGS
 #include <nlohmann/json.hpp>
 ENABLE_WARNINGS
+#include <jde/Str.h>
 #include <jde/Log.h>
 #include <jde/Assert.h>
 
@@ -18,8 +19,8 @@ namespace Jde::DB
 
 	enum class EType:uint8{None,Int16,Int,UInt,SmallFloat,Float,Bit,Decimal,Int8,Long,ULong,Guid,Binary,VarBinary,VarTChar,VarWChar,Numeric,DateTime,Cursor,TChar,VarChar,RefCursor,SmallDateTime,WChar,NText,Text,Image,Blob,Money,Char,TimeSpan,Uri,UInt8,UInt16 };
 
-	α ToType( sv typeName )noexcept->EType;
-	α ToString( EType type, const Syntax& syntax )noexcept->string;
+	α ToType( iv typeName )noexcept->EType;
+	α ToString( EType type, const Syntax& syntax )noexcept->String;
 
 	α ToObject( EType type, const nlohmann::json& j, sv memberName, SRCE )noexcept(false)->object;
 	α ToJson( const object& obj, json& j )noexcept->void;

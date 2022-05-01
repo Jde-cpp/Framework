@@ -11,7 +11,7 @@ namespace Jde::DB
 
 	α ICacheAwait::await_resume()noexcept->AwaitResult
 	{
-		auto y = _pValue ? AwaitResult{ _pValue } : base::await_resume();
+		auto y = _pValue ? AwaitResult{ move(_pValue) } : base::await_resume();
 		if( !_pValue && y.HasShared() )
 			Cache::Set<void>( _name, y.SP<void>() );
 		return y;

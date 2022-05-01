@@ -30,13 +30,7 @@ namespace Jde::Threading
 	private:
 		void Shutdown()noexcept override;
 		optional<bool> Poll()noexcept override;
-		optional<TimePoint> Next()noexcept;
 		static void Add( TimePoint t, HCoroutine h, Handle myHandle )noexcept;
-		void Add2( TimePoint t, HCoroutine h, Handle myHandle )noexcept;
-		void Cancel2( Handle handle )noexcept;
-
-		std::condition_variable _cv; mutable std::mutex _mtx;
-		flat_multimap<TimePoint,tuple<Handle,HCoroutine>> _coroutines; mutex _coroutineMutex;
 		static constexpr Duration WakeDuration{5s};
 		static const LogTag& _logLevel;
 		friend AlarmAwait;

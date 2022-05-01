@@ -33,6 +33,8 @@ namespace Jde
 	struct Γ LockWrapperAwait final: IAwait
 	{
 		LockWrapperAwait( string key, function<void(Coroutine::AwaitResult&)> f, bool shared=true, SRCE ):IAwait{sl},_key{move(key)}, _f{f}, _shared{shared}{}//TODO implement shared
+		LockWrapperAwait( string key, function<void(Coroutine::AwaitResult&, up<CoLockGuard> l)> f, bool shared=true, SRCE ):IAwait{sl},_key{move(key)}, _f{f}, _shared{shared}{}//TODO implement shared
+		Ω TryLock( string key, bool shared )noexcept->up<CoLockGuard>;
 		α await_ready()noexcept->bool override;
 		α AwaitSuspend( HCoroutine h )->Task;
 		α await_suspend( HCoroutine h )noexcept->void override;
@@ -41,7 +43,7 @@ namespace Jde
 	private:
 		const string _key;
 		sp<AwaitResult> _pReadyResult;
-		function<void(AwaitResult&)> _f;
+		std::variant<function<void(AwaitResult&)>,function<void(Coroutine::AwaitResult&, up<CoLockGuard> l)>> _f;
 		const bool _shared;
 		up<CoLockGuard> _pLock;
 	};

@@ -44,13 +44,13 @@ namespace Jde::DB
 			}
 			else
 			{
-				Type = ToType( typeName );
+				Type = ToType( ToIV(typeName) );
 				if( Type==EType::None )
 				{
 					if( var pPKTable = schema.find(string{typeName}); pPKTable!=schema.end() )
 					{
 						Table table{ typeName, *pPKTable, parents, commonColumns, schema };
-						if( var pColumn = table.SurrogateKey.size()==1 ? table.FindColumn((sv)table.SurrogateKey.front()) : nullptr; pColumn )
+						if( var pColumn = table.SurrogateKey.size()==1 ? table.FindColumn(table.SurrogateKey.front()) : nullptr; pColumn )
 							Type = pColumn->Type;
 						IsEnum = table.Data.size();
 					}
@@ -91,15 +91,15 @@ namespace Jde::DB
 		else if( j.is_string() )
 			getType( j.get<string>() );
 	}
-	α Column::DataTypeString(const Syntax& syntax)const noexcept->string
+	α Column::DataTypeString( const Syntax& syntax )const noexcept->SchemaName
 	{
-		return MaxLength ? format( "{}({})", ToString(Type, syntax), *MaxLength ) : ToString( Type, syntax );
+		return MaxLength ? format("{}({})", ToString(Type, syntax), *MaxLength) : ToStr( ToString(Type, syntax) );
 	}
 	α Column::Create( const Syntax& syntax )const noexcept->string
 	{
 		var null = IsNullable ? "null"sv : "not null"sv;
 		const string sequence = IsIdentity ?  " "+string{syntax.IdentityColumnSyntax()} : string{};
-		string dflt = Default.size() ? format( " default {}", Default=="$now" ? syntax.NowDefault() : format("'{}'"sv, Default) ) : string{};
+		string dflt = Default.size() ? format( " default {}", Default=="$now" ? ToStr(syntax.NowDefault()) : format("'{}'"sv, Default) ) : string{};
 		return format( "{} {} {}{}{}", Name, DataTypeString(syntax), null, sequence, dflt );
 	}
 
@@ -108,12 +108,12 @@ namespace Jde::DB
 	{
 		if( var& p = j.find("parent"); p != j.end() )
 		{
-			var parentName = p->get<string>();
+			var parentName = p->get<SchemaName>();
 			var pParent = parents.find( parentName ); THROW_IF( pParent==parents.end(), "Could not find '{}' parent '{}'", name, parentName );
 			for( var& column : pParent->second.Columns )
 				Columns.push_back( column );
 			for( var& index : pParent->second.Indexes )
-				Indexes.push_back( Index{(sv)index.Name, Name, index} );
+				Indexes.push_back( Index{index.Name, Name, index} );
 			SurrogateKey = pParent->second.SurrogateKey;
 		}
 		for( var& [attribute,value] : j.items() )
@@ -152,6 +152,7 @@ namespace Jde::DB
 				vector<SchemaName> columns;
 				for( var& it : value )
 					columns.push_back( DB::Schema::FromJson(it.get<string>()) );
+
 				var name2 = NaturalKeys.empty() ? "nk" : format( "nk{}", NaturalKeys.size() );
 				Indexes.push_back( Index{name2, Name, false, &columns} );
 				NaturalKeys.push_back( columns );
@@ -183,11 +184,11 @@ namespace Jde::DB
 				ASSERT_DESC( attribute=="usePrefix", format("Unknown table attribute:  '{}'", attribute) );
 		}
 	}
-
-	α Table::InsertProcName()const noexcept->string
+	
+	α Table::InsertProcName()const noexcept->SchemaName
 	{
 		var haveSequence = std::find_if( Columns.begin(), Columns.end(), [](var& c){return c.IsIdentity;} )!=Columns.end();
-		return !haveSequence || CustomInsertProc ? string{} : format( "{}_insert", DB::Schema::ToSingular(Name) );
+		return !haveSequence || CustomInsertProc ? SchemaName{} : format( "{}_insert", DB::Schema::ToSingular(Name) );
 	}
 
 	α Table::InsertProcText( const Syntax& syntax )const noexcept->string
@@ -200,15 +201,15 @@ namespace Jde::DB
 		char delimiter = ' ';
 		for( var& column : Columns )
 		{
-			string value = format( "{}{}"sv, prefix, column.Name );
+			auto value{ format("{}{}"sv, prefix, column.Name) };
 			if( column.Insertable )
-				osCreate << delimiter << prefix << column.Name  << " " << column.DataTypeString( syntax );
+				osCreate << delimiter << prefix << column.Name << " " << column.DataTypeString( syntax );
 			else
 			{
 				 if( column.IsNullable || column.Default.empty() )
 				 	continue;
 				if( column.Default=="$now" )
-					value = syntax.UtcNow();
+					value = ToSV( syntax.UtcNow() );
 			}
 			osInsert << delimiter << column.Name;
 			osValues << delimiter  << value;
@@ -219,7 +220,7 @@ namespace Jde::DB
 		osCreate << " )" << endl << syntax.ProcStart() << endl;
 		osCreate << osInsert.str() << osValues.str();
 		osCreate << "\tselect " << syntax.IdentitySelect() <<";" << endl << syntax.ProcEnd() << endl;// into _id
-		return osCreate.str();
+		return CIString{ osCreate.str() };
 	}
 
 	α Table::Create( const Syntax& syntax )const noexcept->string
@@ -241,10 +242,10 @@ namespace Jde::DB
 		return createStatement.str();
 	}
 
-	Index::Index( sv indexName, sv tableName, bool primaryKey, vector<CIString>* pColumns, bool unique, optional<bool> clustered )noexcept:
+	Index::Index( sv indexName, sv tableName, bool primaryKey, vector<string>* pColumns, bool unique, optional<bool> clustered )noexcept:
 		Name{ indexName },
 		TableName{ tableName },
-		Columns{ pColumns ? *pColumns : vector<CIString>{} },
+		Columns{ pColumns ? *pColumns : vector<string>{} },
 		Clustered{ clustered ? *clustered : primaryKey },
 		Unique{ unique },
 		PrimaryKey{ primaryKey }
@@ -285,21 +286,21 @@ namespace Jde::DB
 		return pColumn==Columns.end() ? nullptr : &(*pColumn);
 	}
 
-	α ColumnStartingWith( const Table& table, sv part )->string
+	α ColumnStartingWith( const Table& table, sv part )->SchemaName
 	{
-		auto pColumn = find_if( table.Columns.begin(), table.Columns.end(), [&part](var& c){return c.Name.starts_with(part);} );
-		return pColumn==table.Columns.end() ? string{} : pColumn->Name;
+		var pColumn = find_if( table.Columns.begin(), table.Columns.end(), [&part](var& c){return c.Name.starts_with(part);} );
+		return pColumn==table.Columns.end() ? SchemaName{} : pColumn->Name;
 	}
 
-	α TableNamePart( const Table& table, uint8 index )noexcept(false)->string
+	α TableNamePart( const Table& table, uint8 index )noexcept(false)->sv
 	{
 		var nameParts = Str::Split( table.NameWithoutType(), '_' );
 		return nameParts.size()>index ? DB::Schema::ToSingular( nameParts[index] ) : string{};
 	}
 	α Table::Prefix()const noexcept->sv{ return Str::Split( Name, '_' )[0]; }
-	α Table::NameWithoutType()const noexcept->string{ var underscore = Name.find_first_of('_'); return Name.substr(underscore==string::npos ? 0 : underscore+1); }
+	α Table::NameWithoutType()const noexcept->SchemaName{ var underscore = Name.find_first_of('_'); return Name.substr(underscore==string::npos ? 0 : underscore+1); }
 
-	α Table::FKName()const noexcept->string{ return Schema::ToSingular(NameWithoutType())+"_id"; }
+	α Table::FKName()const noexcept->SchemaName{ return string{Schema::ToSingular(NameWithoutType())}+"_id"; }
 	α Table::JsonTypeName()const noexcept->string
 	{
 		auto name = Schema::ToJson( Schema::ToSingular(NameWithoutType()) );
@@ -307,10 +308,10 @@ namespace Jde::DB
 			name[0] = (char)std::toupper( name[0] );
 		return name;
 	}
-	α Table::ChildId()const noexcept(false)->string
+	α Table::ChildId()const noexcept(false)->SchemaName
 	{
 		var part = TableNamePart( *this, 0 );
-		return part.empty() ? part : ColumnStartingWith( *this, part );
+		return part.empty() ? string{ part } : ColumnStartingWith( *this, part );
 	}
 
 	α Table::ChildTable( const DB::Schema& schema )const noexcept(false)->sp<const Table>
@@ -319,10 +320,10 @@ namespace Jde::DB
 		return part.empty() ? sp<const Table>{} : schema.TryFindTableSuffix( Schema::ToPlural(part) );
 	}
 
-	α Table::ParentId()const noexcept(false)->string
+	α Table::ParentId()const noexcept(false)->SchemaName
 	{
 		var part = TableNamePart( *this, 1 );
-		return part.empty() ? part : ColumnStartingWith( *this, part );
+		return part.empty() ? string{ part } : ColumnStartingWith( *this, part );
 	}
 
 	α Table::ParentTable( const DB::Schema& schema )const noexcept(false)->sp<const Table>

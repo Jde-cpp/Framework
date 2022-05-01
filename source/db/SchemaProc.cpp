@@ -1,4 +1,4 @@
-#include "SchemaProc.h"
+﻿#include "SchemaProc.h"
 #include <nlohmann/json.hpp>
 #include <boost/container/flat_map.hpp>
 #include <jde/Str.h>
@@ -15,11 +15,11 @@ namespace Jde::DB
 	using nlohmann::json;
 	using nlohmann::ordered_json;
 	struct IDataSource;
-	string UniqueIndexName( const Index& index, ISchemaProc& dbSchema, bool uniqueName, const vector<Index>& indexes )noexcept(false);
+	α UniqueIndexName( const Index& index, ISchemaProc& dbSchema, bool uniqueName, const vector<Index>& indexes )noexcept(false)->string;
 
 	string AbbrevName( sv schemaName )
 	{
-		auto fnctn = []( var& word )
+		auto fnctn = []( var& word )->string
 		{
 			ostringstream os;
 			for( var ch : word )
@@ -27,7 +27,7 @@ namespace Jde::DB
 				if( (ch!='a' && ch!='e' && ch!='i' && ch!='o' && ch!='u') || os.tellp() == std::streampos(0) )
 					os << ch;
 			}
-			return word.size()>2 && os.str().size()<word.size()-1 ? os.str() : word;
+			return word.size()>2 && os.str().size()<word.size()-1 ? os.str() : string{ word };
 		};
 		var splits = Str::Split( DB::Schema::ToSingular(schemaName), '_' );
 		ostringstream name;
@@ -107,8 +107,7 @@ namespace Jde::DB
 			}
 			if( var procName = pTable->InsertProcName(); procName.size() && procedures.find(procName)==procedures.end() )
 			{
-				var procCreate = pTable->InsertProcText( _syntax );
-				_pDataSource->Execute( procCreate );
+				_pDataSource->Execute( pTable->InsertProcText(_syntax) );
 				DBG( "Created proc '{}'."sv, pTable->InsertProcName() );
 			}
 		}
@@ -162,8 +161,8 @@ namespace Jde::DB
 						if( osWhere.tellp() != std::streampos(0) )
 							osWhere << " and ";
 						osWhere << keyColumn << "=?";
-						if( var pData = jData.find( Schema::ToJson(ToSV(keyColumn)) ); pData!=jData.end() )
-							selectParams.push_back( ToObject(table.FindColumn(ToSV(keyColumn))->Type, *pData, (sv)keyColumn) );
+						if( var pData = jData.find( Schema::ToJson(keyColumn) ); pData!=jData.end() )
+							selectParams.push_back( ToObject(table.FindColumn(keyColumn)->Type, *pData, keyColumn) );
 						else
 						{
 							selectParams.clear();
@@ -204,7 +203,7 @@ namespace Jde::DB
 						params.push_back( ToObject(column.Type, *pData, column.Name) );
 					}
 					else
-						osInsertValues << ( column.Default=="$now" ? _syntax.UtcNow() : column.Default );
+						osInsertValues << ( column.Default=="$now" ? ToStr(_syntax.UtcNow()) : column.Default );
 				}
 				if( _pDataSource->Scaler<uint>( osSelect.str(), selectParams)==0 )
 				{
@@ -230,7 +229,7 @@ namespace Jde::DB
 				var pPKTable = schema.Tables.find( Schema::FromJson(column.PKTable) );
 				if( pPKTable == schema.Tables.end() )
 				{
-					ERR( "Could not find primary key table '{}' for {}.{}"sv, Schema::FromJson(column.PKTable), tableName, column.Name );
+					ERR( "Could not find primary key table '{}' for {}.{}", Schema::FromJson(column.PKTable), tableName, column.Name );
 					continue;
 				}
 				if( pPKTable->second->FlagsData.size() )
@@ -241,7 +240,10 @@ namespace Jde::DB
 						column.IsEnum = true;
 
 					auto i = 0;
-					auto getName = [&,t=tableName](auto i){ return format( "{}_{}{}_fk", AbbrevName(t), AbbrevName(pPKTable->first), i==0 ? "" : ToString(i)); };
+					auto getName = [&](auto i)->string
+					{ 
+						return format( "{}_{}{}_fk", AbbrevName(tableName), AbbrevName(pPKTable->first), i==0 ? "" : ToString(i) ); 
+					};
 					auto name = getName( i++ );
 					for( ; fks.find(name)!=fks.end(); name = getName(i++) );
 
@@ -254,7 +256,7 @@ namespace Jde::DB
 		return schema;
 	}
 
-	string UniqueIndexName( const DB::Index& index, ISchemaProc& /*dbSchema*/, bool uniqueName, const vector<Index>& indexes )noexcept(false)
+	α UniqueIndexName( const DB::Index& index, ISchemaProc& /*dbSchema*/, bool uniqueName, const vector<Index>& indexes )ε->string
 	{
 		auto indexName=index.Name;
 		bool checkOnlyTable = !index.PrimaryKey && !uniqueName;

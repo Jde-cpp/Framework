@@ -1,40 +1,47 @@
 ﻿#pragma once
 #include "Table.h"
 
+#define TMPL template<class T=string>
+#define BSV Str::bsv<typename T::traits_type>
+#define RESULT std::basic_string<char,typename T::traits_type>
+#define YRESULT std::basic_string<char,typename Y::traits_type>
 namespace Jde::DB
 {
 	struct Schema
 	{
-		α FindTableSuffix( str suffix, SRCE )const noexcept(false)->const Table&;
-		α TryFindTableSuffix( str suffix )const noexcept->sp<const Table>;
+		α FindTableSuffix( sv suffix, SRCE )const noexcept(false)->const Table&;
+		α TryFindTableSuffix( sv suffix )const noexcept->sp<const Table>;
 		α FindDefTable( const Table& t1, const Table& t2 )const noexcept->sp<const Table>;
 
-		flat_map<string, Column> Types;
-		flat_map<string, sp<const Table>> Tables;
+		template<class X=string,class Y=string> Ω FromJson( Str::bsv<typename X::traits_type> jsonName )noexcept->YRESULT;
+		template<class X=string,class Y=string> Ω ToJson(   Str::bsv<typename X::traits_type> schemaName )noexcept->YRESULT;
+		Ω ToSingular( sv plural )noexcept->sv;
+		TMPL Ω ToPlural( BSV singular )noexcept->RESULT;
 
-		Ω FromJson( sv jsonName )noexcept->string;
-		Ω ToJson( sv jsonName )noexcept->string;
-		Ω ToSingular( sv plural )noexcept->string;
-		Ω ToPlural( sv singular )noexcept->string;
+		flat_map<string, Column> Types;
+		flat_map<SchemaName, sp<const Table>> Tables;
 	};
 #define var const auto
-	Ξ Schema::FromJson( sv jsonName )noexcept->string
+	template<class X,class Y> α Schema::FromJson( Str::bsv<typename X::traits_type> jsonName )noexcept->YRESULT
 	{
-		ostringstream sqlName;
+		YRESULT sqlName; sqlName.reserve( jsonName.size() );
 		for( var ch : jsonName )
 		{
 			if( std::isupper(ch) )
-				sqlName << "_" << (char)std::tolower( ch );
+			{
+				sqlName+="_";
+				sqlName +=(char)std::tolower( ch );
+			}
 			else
-				sqlName << ch;
+				sqlName+=ch;
 		}
-		return sqlName.str();
+		return sqlName;
 	}
-	Ξ Schema::ToJson( sv jsonName )noexcept->string
+	template<class X,class Y> α Schema::ToJson( Str::bsv<typename X::traits_type> schemaName )noexcept->YRESULT
 	{
 		ostringstream j;
 		bool upper = false;
-		for( var ch : jsonName )
+		for( var ch : schemaName )
 		{
 			if( ch=='_' )
 				upper = true;
@@ -50,18 +57,15 @@ namespace Jde::DB
 		}
 		return j.str();
 	}
-	Ξ Schema::ToSingular( sv plural )noexcept->string
+	Ξ Schema::ToSingular( sv plural )noexcept->sv
 	{
-		string result = plural.ends_with('s') ? string{plural.substr( 0, plural.size()-1 )} : string{plural};
-
-		return result;
+		return plural.ends_with('s') ? plural.substr( 0, plural.size()-1 ) : plural;
 	}
-	Ξ Schema::ToPlural( sv singular )noexcept->string
+	ⓣ Schema::ToPlural( BSV singular )noexcept->RESULT
 	{
-		string result{ singular };
-		return result.ends_with('s') ? result : result+"s";
+		return singular.ends_with( 's' ) ? RESULT{ singular } : RESULT{ singular }+"s";
 	}
-	Ξ Schema::TryFindTableSuffix( str suffix )const noexcept->sp<const Table>
+	Ξ Schema::TryFindTableSuffix( sv suffix )const noexcept->sp<const Table>
 	{
 		sp<const Table> y;
 		for( var& [name,pTable] : Tables )
@@ -74,7 +78,7 @@ namespace Jde::DB
 		}
 		return y;
 	}
-	Ξ Schema::FindTableSuffix( str suffix, SL sl )const noexcept(false)->const Table&
+	Ξ Schema::FindTableSuffix( sv suffix, SL sl )const noexcept(false)->const Table&
 	{
 		var y = TryFindTableSuffix( suffix );
 		if( !y ) throw Exception{ sl, ELogLevel::Debug, "Could not find table '{}' in schema", suffix };//mysql can't use THROW_IF
@@ -99,4 +103,8 @@ namespace Jde::DB
 		return result;
 	}
 #undef var
+#undef TMPL
+#undef BSV
+#undef RESULT
+#undef YRESULT
 }

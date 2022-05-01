@@ -16,7 +16,9 @@ namespace Jde
 		_what{ move(value) },
 		Code( code ? code : Calc32RunTime(value) ),
 		_level{ level }
-	{}
+	{
+		BreakLog();
+	}
 
 	IException::IException( vector<string>&& args, string&& format, SL sl, uint c, ELogLevel level )noexcept:
 		_stack{ sl },
@@ -24,7 +26,9 @@ namespace Jde
 		_args{ move(args) },
 		Code( c ? c : Calc32RunTime(format) ),
 		_level{ level }
-	{}
+	{
+		BreakLog();
+	}
 
 	IException::IException( IException&& from )noexcept:
 		_stack{ move(from._stack) },
@@ -35,6 +39,7 @@ namespace Jde
 		Code{ from.Code },
 		_level{ from.Level() }
 	{
+		BreakLog();
 		ASSERT( _stack.stack.size() );
 		from.SetLevel( ELogLevel::NoLog );
 	}
@@ -46,7 +51,7 @@ namespace Jde
 	α IException::BreakLog()const noexcept->void
 	{
 #ifndef NDEBUG
-		if( Level()>Logging::BreakLevel() )
+		if( Level()!=ELogLevel::None && Level()>Logging::BreakLevel() )
 		{
 			Log();
 			BREAK;

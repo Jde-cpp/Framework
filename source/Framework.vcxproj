@@ -50,7 +50,7 @@
     <OutDir>$(SolutionDir).bin\$(Configuration)\</OutDir>
     <TargetName>Jde</TargetName>
     <LibraryPath>$(LibraryPath)</LibraryPath>
-    <IntDir>$(SolutionDir).obj\Core\$(Configuration)\</IntDir>
+    <IntDir>.obj\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>

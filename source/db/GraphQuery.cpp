@@ -54,7 +54,7 @@ namespace Jde::DB
 		auto columnName = DB::Schema::FromJson( c.JsonName );
 		if( columnName=="id" && excludeId )
 			return;
-		auto findColumn = []( const DB::Table& t, str n ){ auto p = t.FindColumn( n ); if( !p ) p = t.FindColumn( n+"_id" ); return p; }; //+_id for enums
+		auto findColumn = []( const DB::Table& t, sv n ){ auto p = t.FindColumn( n ); if( !p ) p = t.FindColumn( string{n}+"_id" ); return p; }; //+_id for enums
 		auto pSchemaColumn = findColumn( dbTable, columnName );
 		if( !pDefTable && pSchemaColumn && pSchemaColumn->PKTable.size() )//enumeration pSchemaColumn==authenticator_id
 		{
@@ -87,14 +87,12 @@ namespace Jde::DB
 			}
 			else if( pSchemaColumn->QLAppend.size() && !qlTable.FindColumn(pSchemaColumn->QLAppend) )
 			{
-				if( var name{ format("{}.{}", defaultPrefix, DB::Schema::FromJson(pSchemaColumn->QLAppend)) }; std::find(columns.begin(), columns.end(), name)==columns.end() )
+				if( CIString name{ format("{}.{}", defaultPrefix, DB::Schema::FromJson(pSchemaColumn->QLAppend)) }; std::find(columns.begin(), columns.end(), name)==columns.end() )
 				{
 					columns.push_back( name );//add db column, doesn't add qlColumn
 					c.SchemaColumnPtr = pSchemaColumn;
 					c.SchemaColumnPtr->TablePtr = &dbTable;
 				}
-				//qlTable.Columns.emplace_back( ColumnQL{pSchemaColumn->QLAppend} );
-				//AddColumn( qlTable.Columns.back(), qlTable, dbTable, columns, pDefTable, dates, flags, defaultPrefix, excludeId, pIndex, pSubsequentJoin, pJsonMembers );
 			}
 
 			columnName = format( "{}.{}", defaultPrefix, pSchemaColumn->Name );

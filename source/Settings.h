@@ -103,7 +103,13 @@ namespace Jde::Settings
 
 	$ Container::Get<fs::path>( sv path )const noexcept->optional<fs::path>
 	{
-		var p = Get<string>( path );
+		auto p = Get<string>( path );
+		if( var i{p ? p->find("$(") : string::npos}; i!=string::npos && i<p->size()-3 )
+		{
+			var end = p->find( ')', i );
+			var env = OSApp::EnvironmentVariable( p->substr(i+2, end-i-2), SRCE_CUR );
+			p = p->substr( 0, i )+env+p->substr( end+1 );
+		}
 		return p ? optional<fs::path>(*p) : nullopt;
 	}
 

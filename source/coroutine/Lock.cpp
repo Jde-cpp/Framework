@@ -6,7 +6,7 @@ namespace Jde
 {
 	static var& _logLevel{ Logging::TagLevel("locks") };
 	flat_map<string,std::deque<std::variant<LockKeyAwait*,coroutine_handle<>>>> _coLocks; std::atomic_flag _coLocksLock;
-	α TryLock( string key, bool /*shared*/ )noexcept->up<CoLockGuard>
+	α LockWrapperAwait::TryLock( string key, bool /*shared*/ )noexcept->up<CoLockGuard>
 	{
 		AtomicGuard l( _coLocksLock );
 		auto& locks = _coLocks.try_emplace( key ).first->second;
@@ -91,7 +91,10 @@ namespace Jde
 	α LockWrapperAwait::await_resume()noexcept->AwaitResult
 	{
 		auto p = _pPromise ? ms<AwaitResult>( move(_pPromise->get_return_object().Result()) ) : ReadyResult();
-		_f( *p );
+		if( _f.index()==0 )
+			get<0>( _f )( *p );
+		else
+			get<1>( _f )( *p, move(_pLock) );
 		return move( *p );
 	}
 }

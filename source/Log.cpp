@@ -20,7 +20,7 @@ namespace Jde::Logging
 	up<vector<LogTag*>> _pCumulativeTags;
 	bool _logMemory{true};
 	up<vector<Logging::Messages::ServerMessage>> _pMemoryLog; shared_mutex MemoryLogMutex;
-	auto _pOnceMessages = make_unique<flat_map<uint,set<string>>>(); std::shared_mutex OnceMessageMutex;
+	auto _pOnceMessages = mu<flat_map<uint,set<string>>>(); std::shared_mutex OnceMessageMutex;
 	static const LogTag& _statusLevel = Logging::TagLevel( "status" );
 	static const LogTag& _logLevel = Logging::TagLevel( "settings" );
 	const ELogLevel _breakLevel{ Settings::Get<ELogLevel>("logging/breakLevel").value_or(ELogLevel::Warning) };
@@ -88,9 +88,10 @@ namespace Jde
 	α Logging::TagLevel( sv tag )noexcept->const LogTag&
 	{
 		if( !_pCumulativeTags )
-			_pCumulativeTags = make_unique<vector<LogTag*>>();
+			_pCumulativeTags = mu<vector<LogTag*>>();
+
 		var pp = find_if( _pCumulativeTags->begin(), _pCumulativeTags->end(), [&](var& x){return x->Id==tag;} );
-		auto p = pp==_pCumulativeTags->end() ? _pCumulativeTags->emplace_back( new LogTag{tag} ) : *pp;
+		auto p = pp==_pCumulativeTags->end() ? _pCumulativeTags->emplace_back( new LogTag{string{tag}} ) : *pp;
 		return *p;
 	}
 
@@ -107,7 +108,7 @@ namespace Jde
 		SetServer( nullptr );
 	};
 
-#define PREFIX unique_lock l{ MemoryLogMutex }; if( !_pMemoryLog ) _pMemoryLog = make_unique<vector<Logging::Messages::ServerMessage>>();
+#define PREFIX unique_lock l{ MemoryLogMutex }; if( !_pMemoryLog ) _pMemoryLog = mu<vector<Logging::Messages::ServerMessage>>();
 	α Logging::LogMemory( const Logging::MessageBase& m )noexcept->void
 	{
 		PREFIX
@@ -139,11 +140,21 @@ namespace Jde
 			string pattern = sink.Get<string>( "pattern" ).value_or("");
 			if( name=="console" && IApplication::IsConsole() )
 			{
+				//string p2 = "\033]8;;file://c:\\temp\\unchanged.xml\033\\%^%3!l%$-%H:%M:%S.%e %-64@  %v\033]8;;\033\\";
+				//bool equal = p2==pattern;
 				if( pattern.empty() )
 #if defined(NDEBUG) && !defined(_MSC_VER)
 					pattern = "%^%3!l%$-%H:%M:%S.%e \e]8;;file://%g#%#\a%v\e]8;;\a";
+#elif defined(_MSC_VER)
+					//pattern = "\033]8;;file://c:\\temp\\unchanged.xml;\033\\%3!l%$-%H:%M:%S.%e %v\033]8;;\033\\";//\n
+					pattern = "\u001b]8;;file://%g\u001b\\%3!#-%3!l-%H:%M:%S.%e %v\u001b]8;;\u001b";
+				//pattern = "\033]8;;file://c:\\temp\\unchanged.xml\033\\%^%3!l-%H:%M:%S.%e %-64@  %v\033]8;;\033\\";//\n
+				//pattern = "\033]8;;file://c:\\temp\\unchanged.xml\033\\%3!l%-%H:%M:%S.%e %-64@  %v\033]8;;\033\\";//\n
+				//pattern = "\033]8;;%3!l%\033\\%H:%M:%S.%e %-64@  %v\033]8;;\033\\";//\n
 #else
 					pattern = "%^%3!l%$-%H:%M:%S.%e %-64@  %v";
+				//$-10:12:34.025 %JDE_DIR%\Private\tests\markets\edgar\MainTests.cpp:71            c:\temp\unchanged.xml
+					
 #endif
 				pSink = ms<spdlog::sinks::stdout_color_sink_mt>();
 			}
@@ -284,7 +295,7 @@ namespace Jde
 	α Logging::GetStatus()noexcept->up<Logging::Proto::Status>
 	{
 		lock_guard l{_statusMutex};
-		return make_unique<Proto::Status>( _status );
+		return mu<Proto::Status>( _status );
 	}
 
 	α Logging::ShouldLogOnce( const Logging::MessageBase& messageBase )noexcept->bool
@@ -305,7 +316,7 @@ namespace Jde
 	α ClearMemoryLog()noexcept->void
 	{
 		unique_lock l{ Logging::MemoryLogMutex };
-		Logging::_pMemoryLog = Logging::_logMemory ? make_unique<vector<Logging::Messages::ServerMessage>>() : nullptr;
+		Logging::_pMemoryLog = Logging::_logMemory ? mu<vector<Logging::Messages::ServerMessage>>() : nullptr;
 	}
 	vector<Logging::Messages::ServerMessage> FindMemoryLog( uint32 messageId )noexcept
 	{
@@ -353,7 +364,7 @@ namespace Jde
 
 		Message::Message( ELogLevel level, string message, const source_location& sl )noexcept:
 			MessageBase( level, sl ),
-			_pMessage{ make_unique<string>(move(message)) },
+			_pMessage{ mu<string>(move(message)) },
 			_fileName{ FileName(sl.file_name()) }
 		{
 			File = _fileName.c_str();
@@ -364,7 +375,7 @@ namespace Jde
 		Message::Message( sv tag, ELogLevel level, string message, const source_location& sl )noexcept:
 			MessageBase( level, sl ),
 			Tag{ tag },
-			_pMessage{ make_unique<string>(move(message)) },
+			_pMessage{ mu<string>(move(message)) },
 			_fileName{ FileName(sl.file_name()) }
 		{
 			File = _fileName.c_str();
@@ -375,7 +386,7 @@ namespace Jde
 		Message::Message( const Message& x )noexcept:
 			MessageBase{ x },
 			Tag{ x.Tag },
-			_pMessage{ x._pMessage ? make_unique<string>(*x._pMessage) : nullptr },
+			_pMessage{ x._pMessage ? mu<string>(*x._pMessage) : nullptr },
 			_fileName{ x._fileName }
 		{
 			File = _fileName.c_str();

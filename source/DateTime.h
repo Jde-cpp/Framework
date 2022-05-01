@@ -7,7 +7,7 @@ namespace Jde::Chrono
 {
 	using namespace std::chrono;
 	Γ α Epoch()noexcept->TimePoint;
-	Ξ MillisecondsSinceEpoch( TimePoint time)noexcept->uint{ return duration_cast<std::chrono::milliseconds>( time-Epoch() ).count(); }
+	Ξ MillisecondsSinceEpoch( TimePoint time=Clock::now() )noexcept->uint{ return duration_cast<std::chrono::milliseconds>( time-Epoch() ).count(); }
 	Γ α Min( TimePoint a, TimePoint b )noexcept->TimePoint;
 
 	Ξ Date( TimePoint time )noexcept->TimePoint{ return Clock::from_time_t( Clock::to_time_t(time)/(60*60*24)*(60*60*24) ); }
@@ -80,11 +80,11 @@ namespace Jde
 		mutable sp<std::tm> _pTm{nullptr};
 	};
 
-	Ξ ToIsoString( TimePoint time )noexcept->string{ return DateTime(time).ToIsoString(); }
-	Ξ ToIsoString( fs::file_time_type time )noexcept->string{ return DateTime(time).ToIsoString(); }
-	//Ξ to_string( TimePoint time )noexcept->string{ return DateTime(time).ToIsoString(); }//TODO take out.
-	Ξ DateDisplay( TimePoint time)noexcept->string{ return DateTime{time}.DateDisplay(); }
-	Ξ DateDisplay( DayIndex day)noexcept->string{ return DateTime{Chrono::FromDays(day)}.DateDisplay(); }
+	Ξ ToIsoString( TimePoint time )ι->string{ return DateTime(time).ToIsoString(); }
+	Ξ ToIsoString( fs::file_time_type time )ι->string{ return DateTime(time).ToIsoString(); }
+	Ξ LocalTimeDisplay( TimePoint time )ι->string{ return DateTime{time}.LocalTimeDisplay(); }
+	Ξ DateDisplay( TimePoint time)ι->string{ return DateTime{time}.DateDisplay(); }
+	Ξ DateDisplay( DayIndex day)ι->string{ return DateTime{Chrono::FromDays(day)}.DateDisplay(); }
 }
 #define var const auto
 namespace Jde::Timezone
@@ -124,5 +124,4 @@ namespace Jde::Chrono
 		return K::now()-milliseconds{ duration_cast<milliseconds>(V::time_point::clock::now()-from) };
 	}
 }
-
 #undef var

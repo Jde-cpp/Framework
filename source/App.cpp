@@ -24,7 +24,6 @@ namespace Jde
 
 	auto _pDeletedThreads = make_shared<vector<sp<Threading::InterruptibleThread>>>();
 
-	//auto _pShutdowns = make_shared<vector<sp<IShutdown>>>();
 	vector<sp<void>> IApplication::_objects; mutex IApplication::_objectMutex;
 	vector<Threading::IPollWorker*> IApplication::_activeWorkers; std::atomic_flag IApplication::_activeWorkersMutex;
 	vector<sp<IShutdown>> IApplication::_shutdowns;
@@ -140,9 +139,6 @@ namespace Jde
 			{
 				l.unlock();
 				OSApp::Pause();
-				// unique_lock<std::mutex> lk( _workerConditionMutex );
-				//
-				// _workerCondition.wait( lk );
 			}
 		}
 		//TODO wait for signal
@@ -282,8 +278,7 @@ namespace Jde
 	}
 	α IApplication::ApplicationDataFolder()noexcept->fs::path
 	{
-		auto p=_pInstance;
-		return p ? p->ProgramDataFolder()/OSApp::CompanyRootDir()/ApplicationName() : ".app";
+		return ProgramDataFolder()/OSApp::CompanyRootDir()/OSApp::ProductName();
 	}
 	α IApplication::IsConsole()noexcept->bool
 	{

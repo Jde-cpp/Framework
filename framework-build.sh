@@ -33,7 +33,7 @@ else
 fi;
 fetchDefault Public;
 cd $scriptDir/../Public;
-if [[ -z $JDE_DIR ]]; then JDE_BASH=$REPO_BASH/jde; else toBashDir $JDE_DIR JDE_BASH; fi;
+if [[ -z $JDE_BASH ]]; then JDE_BASH=$scriptDir/..; fi;
 stageDir=$JDE_BASH/Public/stage
 
 function winBoostConfig
@@ -97,13 +97,13 @@ elif [ $shouldFetch -eq 1 ]; then
 fi;
 
 if windows; then
+	CMAKE_VS_PLATFORM_NAME_DEFAULT="Visual Studio 17 2022"
 	if [ ! -d fmt ]; then
 		git clone https://github.com/fmtlib/fmt.git; cd fmt;
 	elif [ $shouldFetch -eq 1 ]; then
 		cd fmt; echo pulling fmt; git pull;
 	fi;
 	if [ ! -d build ]; then
-		moveToDir build;
 		cmake -DCMAKE_CXX_STANDARD=20 ..;
 	else
 		cd build;
@@ -118,10 +118,9 @@ function protocBuildWin
 {
 	type=sln;#lib;
 	sharedLibs=$(if [ $type = "sln" ]; then echo "ON"; else echo "OFF"; fi)
-	if [ ! -d "`pwd`/$type" ]; then mkdir $type; fi;
-	cd $type;
+	moveToDir $type;#cmake\build\sln
 	if test ! -f libprotobuf.vcxproj; then
-		cmake -G "Visual Studio 16 2019" -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_WITH_ZLIB=ON -DZLIB_INCLUDE_DIR=$REPO_DIR/vcpkg/installed/x64-windows/include -DZLIB_LIB=$REPO_DIR/vcpkg/installed/x64-windows/lib -Dprotobuf_MSVC_STATIC_RUNTIME=OFF -Dprotobuf_BUILD_SHARED_LIBS=$sharedLibs ../..
+		cmake -G "Visual Studio 17 2022" -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_WITH_ZLIB=ON -DZLIB_INCLUDE_DIR=$REPO_DIR/vcpkg/installed/x64-windows/include -DZLIB_LIB=$REPO_DIR/vcpkg/installed/x64-windows/lib -Dprotobuf_MSVC_STATIC_RUNTIME=OFF -Dprotobuf_BUILD_SHARED_LIBS=$sharedLibs ../..
 		if [ $? -ne 0 ]; then echo `pwd`/$cmd; exit 1; fi;
 	fi;
 	baseCmd="msbuild.exe libprotobuf.vcxproj -p:Platform=x64 -maxCpuCount -nologo -v:q /clp:ErrorsOnly -p:Configuration"

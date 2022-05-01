@@ -29,9 +29,9 @@ namespace Jde
 		return std::visit( Visit{}, p );
 	}
 
-	α  DB::ToType( sv t )noexcept->DB::EType
+	α  DB::ToType( iv typeName )noexcept->DB::EType
 	{
-		CIString typeName{ t };
+		//String typeName{ t };
 		EType type{ EType::None };
 		if( typeName=="dateTime" )
 			type=EType::DateTime;
@@ -88,13 +88,13 @@ namespace Jde
 		else if( typeName=="money" )
 			type = EType::Money;
 		else
-			TRACE( "Unknown datatype({})."sv, typeName.c_str() );
+			TRACE( "Unknown datatype({})."sv, typeName );
 		return type;
 	}
 
-	α DB::ToString( EType type, const Syntax& syntax )noexcept->string
+	α DB::ToString( EType type, const Syntax& syntax )noexcept->String
 	{
-		string typeName;
+		String typeName;
 		if( syntax.HasUnsigned() && type == EType::UInt ) typeName = "int unsigned";
 		else if( type == EType::Int || type == EType::UInt ) typeName = "int";
 		else if( syntax.HasUnsigned() && type == EType::ULong ) typeName = "bigint(20) unsigned";

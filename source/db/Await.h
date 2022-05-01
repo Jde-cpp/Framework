@@ -81,8 +81,9 @@ namespace Jde::DB
 
 	ⓣ SelectCacheAwait<T>::await_resume()noexcept->AwaitResult
 	{
-		auto y = _pValue ? AwaitResult{ _pValue } : IAwait::await_resume();
-		if( !_pValue && y.HasValue() )
+		const bool haveValue = (bool)_pValue;
+		auto y = haveValue ? AwaitResult{ move(_pValue) } : IAwait::await_resume();
+		if( !haveValue && y.HasValue() )
 		{
 			sp<T> p{ y. template UP<T>().release() };
 			Cache::Set<void>( _name, p );

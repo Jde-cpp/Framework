@@ -23,7 +23,7 @@ namespace Jde
 
 	α DB::ClearQLDataSource()noexcept->void{ _pDataSource = nullptr; }
 	up<flat_map<string,vector<function<void(const DB::MutationQL& m, PK id)>>>> _applyMutationListeners;  shared_mutex _applyMutationListenerMutex;
-	flat_map<string,vector<function<void(const DB::MutationQL& m, PK id)>>>& ApplyMutationListeners()noexcept{ if( !_applyMutationListeners ) _applyMutationListeners = mu<flat_map<string,vector<function<void(const DB::MutationQL& m, PK id)>>>>(); return *_applyMutationListeners; }
+	α ApplyMutationListeners()noexcept->flat_map<string,vector<function<void(const DB::MutationQL& m, PK id)>>>&{ if( !_applyMutationListeners ) _applyMutationListeners = mu<flat_map<string,vector<function<void(const DB::MutationQL& m, PK id)>>>>(); return *_applyMutationListeners; }
 
 	α DB::AddMutationListener( string tablePrefix, function<void(const DB::MutationQL& m, PK id)> listener )noexcept->void
 	{
@@ -48,7 +48,7 @@ namespace DB
 	α MutationQL::TableSuffix()const noexcept->string
 	{
 		if( _tableSuffix.empty() )
-			_tableSuffix = DB::Schema::ToPlural( DB::Schema::FromJson(JsonName) );
+			_tableSuffix = DB::Schema::ToPlural<string>( DB::Schema::FromJson<string,string>(JsonName) );
 		return _tableSuffix;
 	}
 
@@ -86,7 +86,7 @@ namespace DB
 	}
 	α Insert( const DB::Table& table, const DB::MutationQL& m )noexcept(false)->uint
 	{
-		ostringstream sql{ DB::Schema::ToSingular(table.Name), std::ios::ate }; sql << "_insert(";
+		ostringstream sql{ string{DB::Schema::ToSingular(table.Name)}, std::ios::ate }; sql << "_insert(";
 		vector<DB::object> parameters; parameters.reserve( table.Columns.size() );
 		var pInput = m.Args.find( "input" ); THROW_IF( pInput == m.Args.end(), "Could not find 'input' arg." );
 		for( var& c : table.Columns )
@@ -167,7 +167,7 @@ namespace DB
 					{
 						auto pTable = c.Name==table.ParentId() ? table.ParentTable( _schema ) : table.ChildTable( _schema ); CHECK( pTable );
 						auto pValue = m.Args.find( "target" );
-						sv cName = pValue==m.Args.end() ? "name" : "target";
+						sv cName{ pValue==m.Args.end() ? "name" : "target" };
 						if( pValue==m.Args.end() )
 						{
 							pValue = m.Args.find( cName ); CHECK( pValue!=m.Args.end() );
@@ -333,8 +333,8 @@ namespace DB
 	α Mutation( const DB::MutationQL& m, UserPK userId )noexcept(false)->uint
 	{
 		var& t = _schema.FindTableSuffix( m.TableSuffix() );
-		//TEST_ACCESS( "Write", t.Name, userId ); //TODO implement.
-		var pAuthorizer = UM::FindAuthorizer(t.Name); if( pAuthorizer ) pAuthorizer->Test( m.Type, userId );
+		if( var pAuthorizer = UM::FindAuthorizer(t.Name); pAuthorizer ) 
+			pAuthorizer->Test( m.Type, userId );
 		uint result;
 		if( m.Type==DB::EMutationQL::Create )
 			result = Insert( t, m );
@@ -358,7 +358,6 @@ namespace DB
 		if( t.Name.starts_with("um_") )
 			Try( [&]{UM::ApplyMutation( m, result );} );
 		shared_lock l{ _applyMutationListenerMutex };
-		//var x = _foo._applyMutationListeners.find( t.Prefix() );
 		if( var p = ApplyMutationListeners().find(string{t.Prefix()}); p!=ApplyMutationListeners().end() )
 			std::for_each( p->second.begin(), p->second.end(), [&](var& f){f(m, result);} );
 
@@ -458,10 +457,10 @@ namespace DB
 							continue;
 						rootType = pPKTable->second->IsEnum() ? DB::QLFieldKind::Enum : DB::QLFieldKind::Object;
 						qlTypeName = pPKTable->second->JsonTypeName();
-						fieldName = DB::Schema::ToJson( qlTypeName );
+						fieldName = DB::Schema::ToJson<sv>( qlTypeName );
 						if( pPKTable->second->IsFlags() )
 						{
-							fieldName = DB::Schema::ToPlural( fieldName );
+							fieldName = DB::Schema::ToPlural<sv>( fieldName );
 							rootType = DB::QLFieldKind::List;
 						}
 					}
@@ -494,7 +493,7 @@ namespace DB
 					if( pColumn1->PKTable==dbTable.Name )
 					{
 						var jsonType = p->Columns.size()==2 ? _schema.Tables[pColumn2->PKTable]->JsonTypeName() : p->JsonTypeName();
-						addField( DB::Schema::ToPlural(DB::Schema::ToJson(jsonType)), {}, DB::QLFieldKind::List, jsonType, DB::QLFieldKind::Object );
+						addField( DB::Schema::ToPlural<string>(DB::Schema::ToJson<sv>(jsonType)), {}, DB::QLFieldKind::List, jsonType, DB::QLFieldKind::Object );
 					}
 				}
 			};

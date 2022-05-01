@@ -9,6 +9,16 @@ namespace Jde
 
 namespace Jde::Coroutine
 {
+	Ξ ForceSuspend()->bool
+	{
+		bool y{ false };
+		if constexpr( _debug )
+		{
+			static uint i=0;
+			y = ++i%2==0;
+		}
+		return y;
+	}
 	using ClientHandle = uint;
 	/*https://stackoverflow.com/questions/44960760/msvc-dll-exporting-class-that-inherits-from-template-cause-lnk2005-already-defin
 	template<class TTask=Task>
@@ -49,8 +59,6 @@ namespace Jde::Coroutine
 		α AwaitSuspend()ι{ OriginalThreadParamPtr = { Threading::GetThreadDescription(), Threading::GetAppThreadHandle() }; }
 		α AwaitResume()ι->void
 		{
-//			if( _name.size() )
-//				DBG("({}){}::await_resume"sv, std::this_thread::get_id(), _name);
 			if( OriginalThreadParamPtr )
 				Threading::SetThreadInfo( *OriginalThreadParamPtr );
 		}
@@ -73,10 +81,8 @@ namespace Jde::Coroutine
 				ro.Clear();
 		}
 		α await_resume()ι->AwaitResult override{ AwaitResume(); ASSERT(_pPromise); return move(_pPromise->get_return_object().Result()); }
-		//α Set( AwaitResult::Value&& x )->void{ ASSERT( _pPromise ); _pPromise->get_return_object().SetResult( move(x) ); }
 		ⓣ Set( up<T>&& p )->void{ ASSERT( _pPromise ); _pPromise->get_return_object().SetResult<T>( move(p) ); }
 		α SetException( up<IException> p )->void{ ASSERT( _pPromise ); _pPromise->get_return_object().SetResult( move(*p) ); }
-		//α Get()ι(false)->sp<void>{ ASSERT( _pPromise ); return _pPromise->get_return_object().Get( _sl ); }
 
 		source_location _sl;
 	protected:
@@ -119,21 +125,15 @@ namespace Jde::Coroutine
 		function<void()> _fnctn;
 	};
 
-/*	template<class T>
-	struct Task : std::promise<T>
-	{
-		~Task(){}
-	};*/
-
 	ⓣ CallAwait( std::promise<up<T>>&& p_, IAwait&& a )->Task
 	{
 		auto p = move( p_ );
 		AwaitResult r = co_await a;
-		ASSERTSL( !r.HasShared(), a._sl );
-		if( r.HasValue() )
-			p.set_value( r.UP<T>() );
-		else if( r.HasError() )
+		ASSERTSL( !r.HasShared() && !r.HasBool(), a._sl );
+		if( r.HasError() )
 			p.set_exception( r.Error()->Ptr() );
+		else 
+			p.set_value( r.UP<T>() );
 	}
 
 	ⓣ Future( IAwait&& a )->std::future<up<T>>
@@ -223,6 +223,7 @@ namespace Jde::Coroutine
 	{
 		using base=AsyncAwait;
 	public:
+		AsyncReadyAwait():base{ [](HCoroutine){return Task{};} },_ready{ [](){return AwaitResult{};} }{}
 		AsyncReadyAwait( function<optional<AwaitResult>()> ready, function<Task(HCoroutine)> fnctn, SRCE, str name={} )ι:base{fnctn, sl, name}, _ready{ready}{};
 
 		α await_ready()ι->bool override{  _result=_ready(); return _result.has_value(); }
@@ -239,26 +240,10 @@ namespace Jde::Coroutine
 		CacheAwait( sp<void*> pCache, function<Task(HCoroutine)> fnctn, SRCE, str name={} )ι:base{fnctn, sl, name}, _pCache{pCache}{}
 		α await_ready()ι->bool override{ return _pCache.get(); }
 		α await_suspend( HCoroutine h )ι->void override{ base::await_suspend( h ); _fnctn( move(h) ); }
-		α await_resume()ι->AwaitResult override{ return _pCache ? AwaitResult{_pCache} : base::await_resume(); }
+		α await_resume()ι->AwaitResult override{ return _pCache ? AwaitResult{move(_pCache)} : base::await_resume(); }
 	private:
-		sp<void*> _pCache;
+		sp<void> _pCache;
 	};
-/*struct AWrapper final : IAwait
-	{
-		using base=IAwait;
-		AWrapper( function<Task(HCoroutine h)> fnctn, string name={} )ι:base{move(name)}, _fnctn{fnctn}{ / *DBG("({})AWrapper(0x{:x})", _name, (uint)this);* / };
-		~AWrapper(){ / *DBG("({})~AWrapper(0x{:x})", _name, (uint)this);* / }
-
-		α await_suspend( HCoroutine h )ι->void override
-		{
-			base::await_suspend( h );
-			_fnctn( move(h) );
-		}
-	private:
-		function<Task(HCoroutine h)> _fnctn;
-	};
-*/
-	//template<class T>
 	struct CancelAwait /*abstract*/ : Await
 	{
 		CancelAwait( ClientHandle& handle )ι:_hClient{ NextHandle() }{ handle = _hClient; }
@@ -266,7 +251,7 @@ namespace Jde::Coroutine
 	protected:
 		const ClientHandle _hClient;
 	};
-	/*template<class T>*/ inline CancelAwait::~CancelAwait() {}
+	inline CancelAwait::~CancelAwait() {}
 
 	ⓣ TPoolAwait<T>::await_resume()ι->AwaitResult
 	{
