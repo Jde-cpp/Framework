@@ -28,10 +28,11 @@ namespace Jde
 		α InstanceHas( str name )const noexcept->bool{ shared_lock l{_cacheLock}; return _cache.find( name )!=_cache.end(); }
 		ⓣ InstanceGet( str name )noexcept->sp<T>;
 		ẗ InstanceGetValue( str n, K id )noexcept->sp<V>;
-		template<class T> sp<T> InstanceEmplace( str name )noexcept;
+		ⓣ InstanceEmplace( str name )noexcept->sp<T>;
 		ⓣ InstanceSet( str name, sp<T> pValue )noexcept->sp<T>;
 		Φ Instance()noexcept->Cache&;
 		std::map<string,sp<void>,std::less<>> _cache; mutable shared_mutex _cacheLock;
+		Φ LogLevel()->const LogTag&;
 	};
 
 	ⓣ Cache::InstanceGet( str name )noexcept->sp<T>
@@ -64,7 +65,7 @@ namespace Jde
 		}
 		return pValue;
 	}
-
+#define _logLevel LogLevel()
 	ⓣ Cache::InstanceSet( str name, sp<T> pValue )noexcept->	sp<T> 
 	{
 		unique_lock l{_cacheLock};
@@ -82,4 +83,5 @@ namespace Jde
 	}
 #undef var
 #undef Φ
+#undef _logLevel
 }

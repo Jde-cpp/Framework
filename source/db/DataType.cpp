@@ -7,6 +7,7 @@
 
 namespace Jde
 {
+	static var& _logLevel{ Logging::TagLevel("sql") };
 	using nlohmann::json;
 
 	struct Visit

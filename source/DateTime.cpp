@@ -223,10 +223,13 @@ namespace Jde
 	{
 		return fmt::format( "{:0>2}:{:0>2}", Hour(), Minute() );
 	}
-	α DateTime::LocalTimeDisplay()const noexcept->string
+	α DateTime::LocalTimeDisplay( bool seconds, bool milli )const noexcept->string
 	{
 		auto pLocal = LocalTm();
-		return fmt::format( "{:0>2}:{:0>2}", pLocal->tm_hour, pLocal->tm_min );
+		string suffix{ seconds ? format(":{:0>2}", pLocal->tm_sec) : string{} };
+		if( milli )
+			suffix = format( "{}.{:0>2}", suffix, _time_point.time_since_epoch().count()%1000 );
+		return fmt::format( "{:0>2}:{:0>2}{}", pLocal->tm_hour, pLocal->tm_min, suffix );
 	}
 	α DateTime::LocalDateDisplay()const noexcept->string
 	{

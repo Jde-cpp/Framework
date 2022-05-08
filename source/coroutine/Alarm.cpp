@@ -57,7 +57,7 @@ namespace Jde::Threading
 			var next = Next().value_or(dflt);
 			var until = std::min( dflt, next );
 			if( ++i%10==0 )
-				LOG( "Alarm wait until:  {}"sv, LocalTimeDisplay(until) );
+				LOG( "Alarm wait until:  {}"sv, LocalTimeDisplay(until, true, true) );
 			/*var status =*/ _cv.wait_for( lk, until-now );
 		}
 		unique_lock l{ _coroutineMutex };
@@ -65,7 +65,7 @@ namespace Jde::Threading
 		for( auto p=_coroutines.begin(); p!=_coroutines.end() && p->first<Clock::now(); p = _coroutines.erase(p) )
 		{
 			processed = true;
-			LOG( "({})Alarm::Resume()"sv, get<0>(p->second) );
+			TRACE( "({})Alarm::Resume()"sv, get<0>(p->second) );
 			Coroutine::CoroutinePool::Resume( move(get<1>(p->second)) );
 		}
 		return _coroutines.empty() ? std::nullopt : optional<bool>{ processed };

@@ -2,6 +2,8 @@
 #define var const auto
 namespace Jde
 {
+	static const LogTag& _logLevel = Logging::TagLevel( "cache" );
+	α Cache::LogLevel()->const LogTag&{ return _logLevel; }
 	Cache _instance;
 	α Cache::Instance()noexcept->Cache& { return _instance; }
 
