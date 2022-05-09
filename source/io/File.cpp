@@ -12,6 +12,7 @@
 
 namespace Jde
 {
+	static var& _logLevel{ Logging::TagLevel("io") };
 	α IO::FileSize( path path )noexcept(false)->uint
 	{
 		try

@@ -340,14 +340,16 @@ namespace Jde
 	}
 
 	ELogLevel level{ ELogLevel::Trace };
-	struct OpenTag{ uint Index; uint Line; string Tag; };
-	using Parser=IO::TokenParser<std::char_traits<char>>;
+	struct OpenTag{ uint Index; uint Line; String Tag; bool InnerText; };
+	using Parser=IO::TokenParser<sv>;
 	α Close( Parser parser, std::vector<OpenTag>& openTags )ε->string
 	{
 		string result; bool innerText{ false };
 		for( auto token{parser.Next()}; token.size(); token=parser.Next(!innerText) )
 		{
-			//DEBUG_IF( parser.Line()==577 );
+			//DEBUG_IF( parser.Line()==1127 );
+			//if( parser.Line()==1127 )
+			//	Dbg( string{token.data(), token.size()} );
 			if( token=="begin"sv )
 			{
 				uint iStart{ parser.Index() }; uint line{ parser.Line() };
@@ -366,7 +368,7 @@ namespace Jde
 			if( token.substr(token.size()-1,1)!="<" )
 				continue;
 			var next = parser.Next();
-			auto tag = Str::NextWord( next ); CHECK( tag.size() );
+			auto tag = ToIV( Str::NextWord(next) ); CHECK( tag.size() );
 			if( token=="<" && tag.starts_with("![CDATA[") && next.ends_with("]]>") )
 				continue;
 			if( tag.starts_with("!--") )
@@ -379,10 +381,9 @@ namespace Jde
 				tag = tag.substr( 0, tag.size()-1 );
 			if( tag.size() && tag[0]=='/' )// </html
 			{
-				innerText = false;
 				var endTag = tag.substr( 1, tag.size()-1 ) ; CHECK( openTags.size() );
 				var startTag = openTags.back();
-				var equal = Str::ToUpper(startTag.Tag)==Str::ToUpper( endTag );
+				var equal = startTag.Tag==endTag;
 				bool haveOpenTag = equal;
 				for( size_t i=openTags.size(); !haveOpenTag && i>0; --i )
 				{
@@ -406,6 +407,7 @@ namespace Jde
 				else
 				{
 					openTags.pop_back();
+					innerText = openTags.size() && openTags.back().InnerText;
 					if( !equal )
 					{
 						for( size_t i=0; !equal && i<openTags.size(); ++i )
@@ -445,7 +447,7 @@ namespace Jde
 					}
 					else
 					{
-						openTags.push_back( {i, parser.Line(), string{tag}} );
+						openTags.push_back( {i, parser.Line(), String{tag}, innerText} );
 						innerText = true;
 					}
 				}
@@ -1173,8 +1175,7 @@ char* XMLNode::ParseDeep( char* p, StrPair* parentEndTag, uint* curLineNumPtr )
 		var initialLineNum = line = node->_parseLineNum;
 
 		StrPair endTag;
-		//if( initialLineNum==157 )
-		//	BREAK;
+		//DEBUG_IF( initialLineNum==1127 );
 		p = node->ParseDeep( p, &endTag, curLineNumPtr );
 		if ( !p )
 		{
@@ -2806,7 +2807,7 @@ void XMLDocument::PopDepth()
 	return equal;
 }
 */
-α XMLNode::FindOneOf( const std::span<iv>& entries, const XMLNode* pCalledFrom, bool searchChildren, vector<string> tags, bool stem )Ι->const XMLNode*
+α XMLNode::FindOneOf( const vector<iv>& entries, bool stem, const XMLNode* pCalledFrom, bool searchChildren, optional<FindPhraseResult>& entryLocation, vector<string> tags )Ι->const XMLNode*
 {
 	const XMLNode* pThis = this;
 	if( tags.empty() )
@@ -2817,22 +2818,58 @@ void XMLDocument::PopDepth()
 			tags.insert( tags.begin(), string{p->Value()} );
 	}
 start:
-	var isElement = pThis->ToElement(); 
-	if( isElement )
+	var pElement = pThis->ToElement(); 
+	if( pElement )
 		tags.push_back( string{pThis->Value()} );
 	const XMLNode* y{};
-//	DEBUG_IF( pThis->_parseLineNum==157 /*&& entries.front()!="NAME"*/ );
+	//DEBUG_IF( pThis->_parseLineNum==224 /*&& entries.front()!="NAME"*/ );
 
 	string where;
-	if( var c{pThis->FirstChild()}; !y && searchChildren && c )//smallest element first.
+	if( var c{searchChildren ? pThis->FirstChild() : nullptr}; c )
 	{
-		var* e = c->ToElement();
-		var text = e ? String{ ToIV(e->Text()) } : XmlTrim<String>( ToIV(c->Value()) );
-		y = text.size() && Str::FindPhrase( text, entries, stem ) ? c : c->FindOneOf( entries, pThis, true, tags, stem );
+		//var* e = c->ToElement();
+		//var text = e ? String{} : XmlTrim<String>( c->Value<iv>() );//element c->FindOneOf should find. String{ ToIV(e->Text()) }
+		//if( entryLocation = text.size() ? Str::FindPhrase(text, entries, stem) : nullopt; entryLocation && entryLocation->NextEntry>=entries.size() )
+		//	y = c;
+		//else
+		y = c->FindOneOf( entries, stem, pThis, true, entryLocation, tags );
 	}
-	if( auto p{y ? nullptr : pThis/*->ToElement()*/}; p )
-		y = Str::FindPhrase( p->HtmlText<String>(), entries, stem ) ? p : nullptr;
-	if( isElement )
+	if( auto p{y || pThis->ToElement() ? nullptr : pThis/*->ToElement()*/}; p )//element child above would have picked up.
+	{
+		var text = p->HtmlText<String>();
+		if( text.size() )
+		{
+			if( entryLocation )
+			{
+			//	DEBUG_IF( pThis->_parseLineNum==224 /*&& entries.front()!="NAME"*/ );
+				bool equal = true; uint i = entryLocation->NextEntry, size;
+				auto f = [&]( auto words )
+				{
+					for( uint j=0; i<entries.size() && (equal = entries[i]==words[j]); ++i, ++j );
+					size = words.size();
+				};
+				if( stem )
+					f( Str::StemmedWords<iv>(text) );
+				else
+					f( Str::Words<iv>(text) );
+				if( equal )
+					y = p;
+				else if( i>entryLocation->NextEntry && i-entryLocation->NextEntry==size )//all matched, just not enough
+				{
+					BREAK;//step through to make sure logic correct.
+					entryLocation->NextEntry=i;
+				}
+				else
+					entryLocation = nullopt;
+			}
+			if( !y && !entryLocation )
+			{
+				if( entryLocation = Str::FindPhrase(text, entries, stem); entryLocation && entryLocation->NextEntry>=entries.size() )
+					y = p;
+			}
+		}
+	}
+	if( pElement )
 		tags.pop_back();
 	if( const XMLNode* n{pThis->NextSibling()}; !y && n )//<divs>
 	{
@@ -2842,7 +2879,7 @@ start:
 		goto start;
 	}
 	else if( const XMLNode* p{ !y && pThis->Parent() && pThis->Parent()!=pCalledFrom ? pThis->Parent() : nullptr}; p )//td
-		y = p->FindOneOf( entries, pCalledFrom, false, tags.size() ? vector<string>{tags.begin(), tags.begin()+tags.size()-1} : vector<string>{}, stem );
+		y = p->FindOneOf( entries, stem, pCalledFrom, false, entryLocation, tags.size() ? vector<string>{tags.begin(), tags.begin()+tags.size()-1} : vector<string>{} );
 
 	return y;
 }

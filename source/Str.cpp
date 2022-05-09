@@ -1,6 +1,4 @@
-﻿#include <codecvt>
-#include <boost/algorithm/string/trim.hpp>
-#include <jde/Str.h>
+﻿#include <jde/Str.h>
 #include <algorithm>
 #include <functional>
 #ifdef _MSC_VER
@@ -18,29 +16,6 @@ namespace Jde
 			*pTo = *pFrom==find ? replace : *pFrom;
 
 		return result;
-	}
-
-	α Str::LTrim_( string& s )->void
-	{
-		boost::trim_left( s );
-#ifdef _MSC_VER
-		auto w = Windows::ToWString( s );
-		boost::trim_left( w );
-#else
-		std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> cvt;
-		std::u32string utf32 = cvt.from_bytes( s );
-		::boost::algorithm::trim_left_if(utf32, boost::is_any_of(U"\x2000\x2001\x2002\x2003\x2004\x2005\x2006\x2007\x2009\x200A\x2028\x2029\x202f\x205f\x3000"));
-		s = cvt.to_bytes( utf32 );
-#endif
-	}
-	//https://stackoverflow.com/questions/59589243/utf8-strings-boost-trim
-	α Str::RTrim_( string& s )->void
-	{
-		boost::trim_right( s );
-		std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> cvt;
-		std::u32string utf32 = cvt.from_bytes( s );
-		::boost::algorithm::trim_right_if(utf32, boost::is_any_of(U"\x2000\x2001\x2002\x2003\x2004\x2005\x2006\x2007\x2009\x200A\x2028\x2029\x202f\x205f\x3000"));
-		s = cvt.to_bytes( utf32 );
 	}
 
 #pragma warning( disable: 4244 )
@@ -64,10 +39,5 @@ namespace Jde
 	{
 		var p = NextWordLocation( x );
 		return p ? get<0>( *p ) : sv{};
-	}
-
-	α Str::StemmedWords( sv x )ι->vector<string>
-	{
-		return get<0>( Internal::WordsLocation<string,true>(string{x}) );
 	}
 }

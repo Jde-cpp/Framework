@@ -14,7 +14,7 @@ namespace Jde::Threading
 		AlarmAwait( TimePoint& alarm, Handle& handle )noexcept:CancelAwait{handle}, _alarm{alarm}{}
 		bool await_ready()noexcept override{ return _alarm<Clock::now(); }
 		void await_suspend( coroutine_handle<Task::promise_type> h )noexcept override;
-		α await_resume()noexcept->AwaitResult override{ DBG("({})AlarmAwait::await_resume"sv, std::this_thread::get_id()); return {}; }//returns the result value for co_await expression.
+		α await_resume()noexcept->AwaitResult override{ TRACE("({})AlarmAwait::await_resume"sv, std::this_thread::get_id()); return {}; }//returns the result value for co_await expression.
 	private:
 		TimePoint _alarm;
 	};
