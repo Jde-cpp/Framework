@@ -1,7 +1,5 @@
 #!/bin/bash
 windows() { [[ -n "$WINDIR" ]]; }
-#t=$(readlink -f "${BASH_SOURCE[0]}"); commonBuild=$(basename "$t"); unset t;
-#commonBuildDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 jdeDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
 export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 startIndex() {
@@ -26,7 +24,6 @@ function findExecutable
 	exe=$1;
 	defaultPath=$2;
 	exitFailure=${3:-1};
-	#echo hi;
 	local path_to_exe=$(which "$exe" 2> /dev/null);
 	if [ ! -x "$path_to_exe" ]; then
 		if  [[ -x "${defaultPath//\\}/$exe" ]]; then
@@ -46,7 +43,6 @@ function findExecutable
 function toBashDir
 {
 	windowsDir=$1;
-#	echo toBashDir $1 $2
   	local -n _bashDir=$2
   	_bashDir=${windowsDir/:/}; _bashDir=${_bashDir//\\//}; _bashDir=${_bashDir/C/c};
 	if [[ ${_bashDir:0:1} != "/" ]]; then _bashDir=/$_bashDir; fi;
@@ -74,7 +70,7 @@ function toWinDir
 	elif [[ $_winDir == \"\\c\\* ]]; then _winDir=\"c:${_winDir:3}; fi;
 }
 
-function fetch
+function fetchFile
 {
     file2=${1};
     fetchLocation2=${2};
@@ -88,6 +84,19 @@ function fetch
             curl https://raw.githubusercontent.com/$gitTarget2/$file2 -o $file2
         fi;
     fi;
+}
+
+function fetch
+{
+	url=$([ ! -z "$JDE_TOKEN" ] && echo $JDE_TOKEN@ || echo "");
+	if [ ! -d $1 ]; then
+		echo calling git clone $1
+		git clone https://"$url"github.com/Jde-cpp/$1.git -q; cd $1;
+	else
+		cd $1;
+		if  [[ $shouldFetch -eq 1 ]]; then git pull -q; fi;
+	fi;
+	if [ -d source ];then cd source; fi;
 }
 
 function fetchDir
@@ -122,13 +131,10 @@ function addHard
 
 function addHardDir
 {
-	#echo addHardDir;
 	local dir=$1;
 	local sourceDir=$2/$1;
 	moveToDir $dir;
-	#echo $sourceDir/$dir;
 	for filename in $sourceDir/*; do
-		#echo $filename;
 		if [ -f $filename ]; then addHard $(basename "$filename") $sourceDir;
 		elif [ -d $filename ]; then addHardDir $(basename "$filename") $sourceDir; fi;
 	done;
@@ -165,8 +171,6 @@ function linkFileAbs
 		toWinDir $original originalWin;
 		toWinDir $link linkWin;
 		cmd <<< "mklink $linkWin $originalWin " > /dev/null;  #need to send in quoted, linkFile is already quoting.
-		#echo if [ ! -f $link ];
-		#if [ ! -f $link ]; then echo file not found; echo `pwd`; echo cmd  "linkFileAbs $original $link ";  exit 1; fi; #"
 	else
 		if [ -L $file ]; then rm $file; fi;
 		ln -s $original $link;
@@ -183,7 +187,6 @@ function linkFile
 		echo linkFileAbs start;
 		linkFileAbs \"`pwd`/$original\" \"`pwd`/$link\" #"
 		if [ ! -f "$link" ]; then echo file $link not found; echo `pwd`; echo linkFileAbs \"`pwd`/$original\" \"`pwd`/$link\";  exit 1; fi; #"
-		#if [ $? -ne 0 ]; then exit 1; fi;
 	else
  		if [ -L $file ]; then rm $file; fi;
 		ln -s $original $link;
@@ -201,7 +204,6 @@ function removeJson
 	items=$(eval jq \"${test//\"/\\\"}\" $file;)
 	echo items=$items;
 	if [ ! -z "$items" ]; then
-		#echo update=${update//\"/\\\"};
 		(eval "jq \"${update//\"/\\\"}\" $file") > temp.json; if [ $? -ne 0 ]; then echo `pwd`; echo jq \"${update//\"/\\\"}\" $file $file; exit 1; fi;
 		mv temp.json $file;
 	fi;

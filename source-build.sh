@@ -7,7 +7,6 @@ if [ -z $JDE_DIR ]; then JDE_DIR=$baseDir/$jdeRoot; fi;
 if [ -z $JDE_BASH ]; then toBashDir $JDE_DIR JDE_BASH; fi;
 
 t=$(readlink -f "${BASH_SOURCE[0]}"); sourceBuild=$(basename "$t"); unset t;
-#echo running $sourceBuild
 
 if [[ -z "$REPO_DIR" ]]; then export REPO_DIR=$baseDir; fi;
 pushd `pwd` > /dev/null;
@@ -20,20 +19,7 @@ if windows; then
 	findExecutable cl.exe '/c/Program\ Files/Microsoft\ Visual\ Studio/2022/BuildTools/VC/Tools/MSVC/14.31.31103/bin/Hostx64/x64' 0  #TODO go to any directory
 	findExecutable cl.exe '/c/Program\ Files/Microsoft\ Visual\ Studio/2022/Enterprise/VC/Tools/MSVC/14.31.31103/bin/Hostx64/x64' 1
 	findExecutable vswhere.exe '/c/Program\ Files\ \(X86\)/Microsoft\ Visual\ Studio/installer' 0
-	#findExecutable protoc.exe $REPO_BASH/jde/Public/stage/Release;
 fi;
-
-function fetch
-{
-	if [ ! -d $1 ]; then
-		echo calling git clone $1
-		git clone https://github.com/Jde-cpp/$1.git -q; cd $1;
-	else
-		cd $1;
-		if  [[ $shouldFetch -eq 1 ]]; then git pull -q; fi;
-	fi;
-	if [ -d source ];then cd source; fi;
-}
 
 function buildConfig
 {
@@ -43,11 +29,8 @@ function buildConfig
 		echo no `pwd`/.obj/$config/Makefile configClean=1;
 		configClean=1;
 	fi;
-	#echo $sourceBuildDir/cmake/buildc.sh `pwd` $config $configClean;
 	cmd="$sourceBuildDir/cmake/buildc.sh `pwd` $config $configClean";
 	$cmd; if [ $? -ne 0 ]; then echo "FAILED"; echo `pwd`; echo $cmd; exit 1; fi;
-	#echo '-----------------------------------------------------------';
-	#exit 1;
 }
 
 function buildLinux
@@ -83,20 +66,15 @@ function buildWindows2
 		sourceDir=`pwd`;
 		subDir=$(if [ -d .bin ]; then echo "/.bin"; else echo ""; fi);
 		cd $targetDir;
-		#mklink $file $sourceDir/.bin/$configuration;
-		#echo cp "$sourceDir$subDir/$configuration/$file" .;
 
 		cp "$sourceDir$subDir/$configuration/$file" .;
 		if [[ $file == *.dll ]]; then
-			#mklink ${file:0:-3}lib $sourceDir/.bin/$configuration;
 			cp "$sourceDir$subDir/$configuration/${file:0:-3}lib" .;
 		fi;
-		#echo cd "$sourceDir";
 		cd "$sourceDir";
 	else
 		echo $target - found;
 	fi;
-	#echo $3 - done;
 }
 function buildWindows
 {
@@ -120,7 +98,6 @@ function buildWindows
 			file="Jde.$dir.dll";
 		fi;
 	fi;
-	#echo buildWindows $dir `pwd`;
 	projFile=$([ "${PWD##*/}" = "tests" ] && echo "Tests.$dir" || echo "$dir");
 	baseCmd="msbuild.exe $projFile.vcxproj -p:Platform=x64 -maxCpuCount -nologo -v:q /clp:ErrorsOnly -p:Configuration"
 	echo buildWindows $baseCmd $file release
@@ -150,7 +127,7 @@ function createProto
 function fetchDefault
 {
 	cd $baseDir/$jdeRoot;
-	fetch $1
+	fetch $1;
 }
 function build
 {
