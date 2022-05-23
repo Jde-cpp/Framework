@@ -104,7 +104,7 @@
 		<DisplayString Condition="__ptr_==0">{{nullptr}}</DisplayString>
 	</Type>
 	<Type Name="std::__1::optional&lt;*&gt;">
-		<DisplayString Condition="__engaged_">{__val_}</DisplayString>
+		<DisplayString Condition="__engaged_">{{__val_={__val_}}}</DisplayString>
 		<DisplayString Condition="!__engaged_">{{null}}</DisplayString>
 	</Type>
 	<Type Name="std::__1::__compressed_pair_elem&lt;*&gt;">

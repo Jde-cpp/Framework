@@ -184,7 +184,7 @@ namespace Jde::DB
 				ASSERT_DESC( attribute=="usePrefix", format("Unknown table attribute:  '{}'", attribute) );
 		}
 	}
-	
+
 	α Table::InsertProcName()const noexcept->SchemaName
 	{
 		var haveSequence = std::find_if( Columns.begin(), Columns.end(), [](var& c){return c.IsIdentity;} )!=Columns.end();
@@ -294,11 +294,12 @@ namespace Jde::DB
 
 	α TableNamePart( const Table& table, uint8 index )noexcept(false)->sv
 	{
-		var nameParts = Str::Split( table.NameWithoutType(), '_' );
-		return nameParts.size()>index ? DB::Schema::ToSingular( nameParts[index] ) : string{};
+		var name = table.NameWithoutType();//split returns temp
+		var nameParts = Str::Split( name, '_' );
+		return nameParts.size()>index ? DB::Schema::ToSingular( nameParts[index] ) : "";
 	}
 	α Table::Prefix()const noexcept->sv{ return Str::Split( Name, '_' )[0]; }
-	α Table::NameWithoutType()const noexcept->SchemaName{ var underscore = Name.find_first_of('_'); return Name.substr(underscore==string::npos ? 0 : underscore+1); }
+	α Table::NameWithoutType()const noexcept->sv{ var underscore = Name.find_first_of('_'); return underscore==string::npos ? Name : sv{Name.data()+underscore+1, Name.size()-underscore-1 }; }
 
 	α Table::FKName()const noexcept->SchemaName{ return string{Schema::ToSingular(NameWithoutType())}+"_id"; }
 	α Table::JsonTypeName()const noexcept->string

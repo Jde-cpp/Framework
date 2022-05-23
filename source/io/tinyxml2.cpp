@@ -30,6 +30,7 @@ distribution.
 #include <jde/TypeDefs.h>
 #include <jde/Exception.h>
 #include <jde/io/Parser.h>
+#include <jde/io/File.h>
 #include "../Settings.h"
 
 using namespace std::literals::string_view_literals;
@@ -70,12 +71,12 @@ namespace Jde
 	//#warning( "Using sn* functions." )
 	#define TIXML_SNPRINTF	snprintf
 	#define TIXML_VSNPRINTF	vsnprintf
-	static inline int TIXML_VSCPRINTF( const char* format, va_list va )
+/*	static inline int TIXML_VSCPRINTF( const char* format, va_list va )
 	{
 		int len = vsnprintf( 0, 0, format, va );
 		TIXMLASSERT( len >= 0 );
 		return len;
-	}
+	}*/
 	#define TIXML_SSCANF   sscanf
 #endif
 
@@ -175,13 +176,13 @@ void StrPair::SetStr( sv str, int flags )
 
 	var length = strlen( endTag );
 	char* pResult = nullptr;
-	for( char* start = p; *p && !pResult; ++p ) 
+	for( char* start = p; *p && !pResult; ++p )
 	{
-		if( *p == *endTag && !strncmp(p, endTag, length) ) 
+		if( *p == *endTag && !strncmp(p, endTag, length) )
 		{
 			Set( start, p, mode );
 			pResult = p + length;
-		} 
+		}
 		else if( *p == '\n' )
 			++line;
 	}
@@ -242,15 +243,15 @@ void StrPair::CollapseWhitespace()
 {
 	TIXMLASSERT( _start );
 	TIXMLASSERT( _end );
-	if ( _flags & NEEDS_FLUSH ) 
+	if ( _flags & NEEDS_FLUSH )
 	{
 		*_end = 0;
 		_flags ^= NEEDS_FLUSH;
-		if( _flags ) 
+		if( _flags )
 		{
 			const char* p = _start;	// the read pointer
 			char* q = _start;	// the write pointer
-			while( p < _end ) 
+			while( p < _end )
 			{
 				if ( (_flags & NEEDS_NEWLINE_NORMALIZATION) && *p == CR ) // CR-LF pair becomes LF, CR alone becomes LF LF-CR becomes LF
 				{
@@ -261,7 +262,7 @@ void StrPair::CollapseWhitespace()
 				  *q = LF;
 				  ++q;
 				}
-				else if ( (_flags & NEEDS_NEWLINE_NORMALIZATION) && *p == LF ) 
+				else if ( (_flags & NEEDS_NEWLINE_NORMALIZATION) && *p == LF )
 				{
 					if( *(p+1) == CR )
 						p += 2;
@@ -270,21 +271,21 @@ void StrPair::CollapseWhitespace()
 					*q = LF;
 					++q;
 				}
-				else if ( (_flags & NEEDS_ENTITY_PROCESSING) && *p == '&' ) 
+				else if ( (_flags & NEEDS_ENTITY_PROCESSING) && *p == '&' )
 				{
-					if ( *(p+1) == '#' ) 
+					if ( *(p+1) == '#' )
 					{
 						constexpr int buflen = 10;
 						char buf[buflen] = { 0 };
 						int len = 0;
 						const char* adjusted = const_cast<char*>( GetCharacterRef( p, buf, &len ) );
-						if ( adjusted == 0 ) 
+						if ( adjusted == 0 )
 						{
 								*q = *p;
 								++p;
 								++q;
 						}
-						else 
+						else
 						{
 							TIXMLASSERT( 0 <= len && len <= buflen );
 							TIXMLASSERT( q + len <= adjusted );
@@ -313,7 +314,7 @@ void StrPair::CollapseWhitespace()
 						}
 					}
 				}
-				else 
+				else
 				{
 					*q = *p;
 					++p;
@@ -347,20 +348,19 @@ namespace Jde
 		string result; bool innerText{ false };
 		for( auto token{parser.Next()}; token.size(); token=parser.Next(!innerText) )
 		{
-			//DEBUG_IF( parser.Line()==1127 );
-			//if( parser.Line()==1127 )
-			//	Dbg( string{token.data(), token.size()} );
+			//DEBUG_IF( parser.Line()==1227 );
 			if( token=="begin"sv )
 			{
 				uint iStart{ parser.Index() }; uint line{ parser.Line() };
-				var next = parser.Next(); iStart += next.find_first_of("\n");
-				auto nextWord = Str::NextWord( next );
-				if( nextWord=="644" )
+				var next = parser.Next(); iStart += next.find_first_of("\n")+1;
+				if( var nextWord = Str::NextWord(next); nextWord=="644" )
 				{
-					var file = Str::NextWord( next.substr(nextWord.size()+1) );
-					for( sv n=parser.Next(); n.size() && !n.ends_with("end"); n = parser.Next() );
+					for( sv n=parser.Next(false); n.size() && !n.ends_with("end"); n = parser.Next(false) );
 					if( parser.Index()<parser.Text.size() )
+					{
+//						IO::FileUtilities::SaveBinary( "/tmp/new.xml", string{parser.Text.substr(0, iStart)}+string{parser.Text.substr(parser.Index())} );
 						result = Close( Parser{string{parser.Text.substr(0, iStart)}+string{parser.Text.substr(parser.Index())}, &parser, iStart, line}, openTags );
+					}
 					break;
 				}
 				continue;
@@ -425,12 +425,12 @@ namespace Jde
 			}
 			else //<html
 			{
-				var dbg = false;//iStart==9817;//Str::ToUpper(tag)=="B";
+				//var dbg = false;//iStart==9817;//Str::ToUpper(tag)=="B";
 				//if( dbg )
 				//	BREAK;
 				var closing = haveClose
 					? next.size()<3 ? ">" : next[next.size()-2]=='/' ? "/>" : ">" //tag does not work with <br />
-					: parser.Next( {"/>",">"}, dbg );
+					: parser.NextToken( {"/>",">"} );
 				if( !closing.ends_with("/>") )/*closing.ends_with(">") &&*/
 				{
 					ASSERT( closing.ends_with(">") );
@@ -653,7 +653,7 @@ void XMLUtil::ToStr( int v, char* buffer, int bufferSize )
 	 TIXML_SNPRINTF( buffer, bufferSize, "%d", v );
 }
 
-
+/*
 void XMLUtil::ToStr( unsigned v, char* buffer, int bufferSize )
 {
 	 TIXML_SNPRINTF( buffer, bufferSize, "%u", v );
@@ -665,10 +665,10 @@ void XMLUtil::ToStr( bool v, char* buffer, int bufferSize )
 	 TIXML_SNPRINTF( buffer, bufferSize, "%s", v ? writeBoolTrue : writeBoolFalse);
 }
 
-/*
+/ *
 	ToStr() of a number is a very tricky topic.
 	https://github.com/leethomason/tinyxml2/issues/106
-*/
+* /
 void XMLUtil::ToStr( float v, char* buffer, int bufferSize )
 {
 	 TIXML_SNPRINTF( buffer, bufferSize, "%.8g", v );
@@ -691,7 +691,7 @@ void XMLUtil::ToStr( uint64_t v, char* buffer, int bufferSize )
 {
 	 // horrible syntax trick to make the compiler happy about %llu
 	 TIXML_SNPRINTF(buffer, bufferSize, "%llu", (long long)v);
-}
+}*/
 /*
 bool XMLUtil::ToInt(const char* str, int* value)
 {
@@ -1080,7 +1080,7 @@ XMLNode* XMLNode::InsertAfterChild( XMLNode* afterThis, XMLNode* addThis )
 
 
 α XMLNode::FirstChildElement( sv n )Ι->const XMLElement*
-{ 
+{
 	var* y = FirstChild();
 	for( ; y && (!y->ToElement() || (!n.empty() && !StringEqual(y->Name(),n,IsCaseInsensitive()))); y = y->NextSiblingElement(n) );
 
@@ -1310,7 +1310,7 @@ char* XMLText::ParseDeep( char* p, StrPair*, uint* curLineNumPtr )
 				_document->SetError( XML_ERROR_PARSING_CDATA, _parseLineNum, 0 );
 		  return p;
 	 }
-	 else 
+	 else
 	 {
 		 StrPair::Mode flags = _document->ProcessEntities() ? StrPair::TEXT_ELEMENT : StrPair::TEXT_ELEMENT_LEAVE_ENTITIES;
 		  if ( _document->WhitespaceMode() == COLLAPSE_WHITESPACE )
@@ -1498,7 +1498,7 @@ bool XMLUnknown::Accept( XMLVisitor* visitor ) const
 
 // --------- XMLAttribute ---------- //
 
-α XMLAttribute::Name()Ι->sv 
+α XMLAttribute::Name()Ι->sv
 {
 	 return _name.GetStr();
 }
@@ -1710,7 +1710,7 @@ XMLElement::~XMLElement()
 
 const XMLAttribute* XMLElement::FindAttribute( sv name ) const
 {
-	 for( XMLAttribute* a = _rootAttribute; a; a = a->_next ) 
+	 for( XMLAttribute* a = _rootAttribute; a; a = a->_next )
 	 {
 		  if ( StringEqual( a->Name(), name, IsCaseInsensitive() ) )
 				return a;
@@ -1785,7 +1785,7 @@ sv XMLElement::Text()Ι
 {
 	var* node = FirstChild();
 	for( ; node && node->ToComment(); node = node->NextSibling() );
-	
+
 	var txt = node ? node->ToText() : nullptr;
 	return txt ? txt->Value() : sv{};
 }
@@ -2126,31 +2126,31 @@ char* XMLElement::ParseAttributes( char* p, uint& line )
 				break;
 			}
 			// There is a minor bug here: if the attribute in the source xml document is duplicated, it will not be detected and the attribute will be doubly added. However, tracking the 'prevAttribute' avoids re-scanning the attribute list. Preferring performance for now, may reconsider in the future.
-			if ( prevAttribute ) 
+			if ( prevAttribute )
 			{
 				TIXMLASSERT( prevAttribute->_next == 0 );
 				prevAttribute->_next = attrib;
 			}
-			else 
+			else
 			{
 				TIXMLASSERT( _rootAttribute == 0 );
 				_rootAttribute = attrib;
 			}
 			prevAttribute = attrib;
 		}
-		else if ( *p == '>' ) 
+		else if ( *p == '>' )
 		{
 			++p;
 			break;
 		}
-		else if ( *p == '/' && *(p+1) == '>' ) 
+		else if ( *p == '/' && *(p+1) == '>' )
 		{
 			_closingType = CLOSED;
 			p+=2;
 			break;
 			//return p+2;	// done; sealed element.
 		}
-		else 
+		else
 		{
 			BREAK;
 			_document->SetError( XML_ERROR_PARSING_ELEMENT, _parseLineNum, 0 );
@@ -2268,7 +2268,7 @@ bool XMLElement::ShallowEqual( const XMLNode* compare ) const
 		  const XMLAttribute* a=FirstAttribute();
 		  const XMLAttribute* b=other->FirstAttribute();
 
-		  while ( a && b ) 
+		  while ( a && b )
 		  {
 				if ( !StringEqual(a->Value(), b->Value(), IsCaseInsensitive()) )
 					 return false;
@@ -2667,7 +2667,7 @@ void XMLDocument::SetError( XMLError error, uint lineNum, const char* format, ..
 	 char* buffer = new char[BUFFER_SIZE];
 
 	 TIXMLASSERT(sizeof(error) <= sizeof(int));
-	 TIXML_SNPRINTF(buffer, BUFFER_SIZE, "Error=%s ErrorID=%d (0x%x) Line number=%d", ErrorIDToName(error), int(error), int(error), lineNum);
+	 TIXML_SNPRINTF(buffer, BUFFER_SIZE, "Error=%s ErrorID=%d (0x%x) Line number=%lu", ErrorIDToName(error), int(error), int(error), lineNum);
 
 	if (format) {
 		size_t len = strlen(buffer);
@@ -2818,7 +2818,7 @@ void XMLDocument::PopDepth()
 			tags.insert( tags.begin(), string{p->Value()} );
 	}
 start:
-	var pElement = pThis->ToElement(); 
+	var pElement = pThis->ToElement();
 	if( pElement )
 		tags.push_back( string{pThis->Value()} );
 	const XMLNode* y{};
@@ -2842,11 +2842,11 @@ start:
 			if( entryLocation )
 			{
 			//	DEBUG_IF( pThis->_parseLineNum==224 /*&& entries.front()!="NAME"*/ );
-				bool equal = true; uint i = entryLocation->NextEntry, size;
+				bool equal = false; uint i = entryLocation->NextEntry, size;
 				auto f = [&]( auto words )
 				{
-					for( uint j=0; i<entries.size() && (equal = entries[i]==words[j]); ++i, ++j );
 					size = words.size();
+					for( uint j=0; i<entries.size() && j<size && (equal = entries[i]==words[j]); ++i, ++j );
 				};
 				if( stem )
 					f( Str::StemmedWords<iv>(text) );

@@ -236,9 +236,9 @@ namespace Jde
 		auto pLocal = LocalTm();
 		return fmt::format( "{:0>2}/{:0>2}/{:0>2}", pLocal->tm_mon+1, pLocal->tm_mday, pLocal->tm_year-100 );
 	}
-	α DateTime::LocalDisplay()const noexcept->string
+	α DateTime::LocalDisplay( bool seconds, bool milli )const noexcept->string
 	{
-		return fmt::format( "{} {}", LocalDateDisplay(), LocalTimeDisplay() );
+		return fmt::format( "{} {}", LocalDateDisplay(), LocalTimeDisplay(seconds, milli) );
 	}
 	α DateTime::ToDate( TimePoint time )noexcept->TimePoint
 	{
@@ -282,7 +282,7 @@ namespace Jde
 		return Duration{};
 	}
 #ifdef _MSC_VER
-	α Timezone::GetGmtOffset( sv inputName, TimePoint utc, SL sl )noexcept(false)->Duration 
+	α Timezone::GetGmtOffset( sv inputName, TimePoint utc, SL sl )noexcept(false)->Duration
 	{
 /*		CIString ciName{ inputName };
 		if( ciName=="EST (Eastern Standard Time)"sv || ciName=="US/Eastern"sv )

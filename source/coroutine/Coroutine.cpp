@@ -119,8 +119,8 @@ namespace Jde::Coroutine
 	}
 	optional<CoroutineParam> CoroutinePool::StartThread( CoroutineParam&& param )noexcept
 	{
-		unique_lock l{ _mtx };
-		optional<CoroutineParam> pResult = move(param);
+		unique_lock _{ _mtx };
+		optional<CoroutineParam> pResult{ move(param) };
 		for( auto p = _threads.begin(); p!=_threads.end(); p = p->Done() ? _threads.erase(p) : next(p) )
 		{
 			if( pResult )

@@ -1,4 +1,5 @@
 ﻿#pragma once
+#include <list>
 #include "../threading/Thread.h"
 #include "../Settings.h"
 #include <jde/App.h>

@@ -240,9 +240,9 @@ namespace Jde::DB
 						column.IsEnum = true;
 
 					auto i = 0;
-					auto getName = [&](auto i)->string
-					{ 
-						return format( "{}_{}{}_fk", AbbrevName(tableName), AbbrevName(pPKTable->first), i==0 ? "" : ToString(i) ); 
+					auto getName = [&, &t=tableName](auto i)->string//&t for clang
+					{
+						return format( "{}_{}{}_fk", AbbrevName(t), AbbrevName(pPKTable->first), i==0 ? "" : ToString(i) );
 					};
 					auto name = getName( i++ );
 					for( ; fks.find(name)!=fks.end(); name = getName(i++) );

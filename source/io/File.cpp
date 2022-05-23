@@ -29,7 +29,7 @@ namespace Jde
 		return PoolAwait( [f=move(from), t=move(to), sl=sl_]()noexcept(false)
 		{
 			std::error_code e;
-			fs::copy_file( f, t, e ); 
+			fs::copy_file( f, t, e );
 			THROW_IFX( e, IOException(fs::filesystem_error("copy file failed", f, t, e), sl) );
 		}, sl_);
 	}
@@ -140,7 +140,6 @@ namespace Jde::IO::FileUtilities
 	fs::path Compression::Compress( path path, bool deleteAfter )noexcept(false)
 	{
 		var command = CompressCommand( path );
-		//LOGS( ELogLevel::Trace, command );
 		THROW_IF( system(command.c_str())==-1, "{} failed.", command );
 		if( deleteAfter && !CompressAutoDeletes() )
 		{
@@ -158,7 +157,7 @@ namespace Jde::IO::FileUtilities
 			compressedFile.replace_extension( format("{}{}", compressedFile.extension().string(),Extension()) );
 
 		auto command = ExtractCommand( compressedFile, destination );// -y -bsp0 -bso0
-		THROW_IFX( system(command.c_str())==-1, IO_EX(path, "{} failed.", command) );
+		THROW_IFX( system(command.c_str())==-1, IO_EX(path, ELogLevel::Error, "{} failed.", command) );
 	}
 }
 namespace Jde::IO

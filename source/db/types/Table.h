@@ -62,7 +62,7 @@ namespace Jde::DB
 
 		α IsFlags()const noexcept->bool{ return FlagsData.size(); }
 		α IsEnum()const noexcept->bool{ return Data.size(); }//GraphQL attribute
-		α NameWithoutType()const noexcept->SchemaName;//users in um_users.
+		α NameWithoutType()const noexcept->sv;//users in um_users.
 		α Prefix()const noexcept->sv;//um in um_users.
 		α JsonTypeName()const noexcept->string;
 

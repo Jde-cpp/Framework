@@ -14,6 +14,7 @@
 
 namespace Jde::IO
 {
+	static const LogTag& _logLevel = Logging::TagLevel( "io" );
 #ifndef _MSC_VER
 	NotifyEvent::NotifyEvent( const inotify_event& sys ):
 		WatchDescriptor{ sys.wd },
@@ -39,15 +40,15 @@ namespace Jde::IO
 		_path(path),
 		_fd{ ::inotify_init1(IN_NONBLOCK) }
 	{
-		THROW_IFX( _fd < 0, IO_EX(path, "({})Could not init inotify."sv, errno) );
-		TRACE( "DiskWatcher::inotify_init returned {}"sv, _fd );
+		THROW_IFX( _fd < 0, IO_EX(path, ELogLevel::Error, "({})Could not init inotify."sv, errno) );
+		TRACE( "DiskWatcher::inotify_init returned {}", _fd );
 
 		try
 		{
 			auto add = [&]( var& subPath )
 			{
 				var wd = ::inotify_add_watch( _fd, subPath.string().c_str(), (uint32_t)_events );
-				THROW_IFX( wd < 0, IO_EX(subPath, "({})Could not init watch.", errno) );
+				THROW_IFX( wd < 0, IO_EX(subPath, ELogLevel::Error, "({})Could not init watch.", errno) );
 				_descriptors.emplace( wd, subPath );
 				TRACE( "inotify_add_watch on {}, returned {}"sv, subPath.c_str(), wd );
 			};

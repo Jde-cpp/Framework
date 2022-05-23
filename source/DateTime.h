@@ -62,7 +62,7 @@ namespace Jde
 		α TimeDisplay()const noexcept->string;
 		α LocalTimeDisplay( bool seconds=false, bool miliseconds=false )const noexcept->string;
 		α LocalDateDisplay()const noexcept->string;
-		α LocalDisplay()const noexcept->string;
+		α LocalDisplay( bool seconds, bool milli )const noexcept->string;
 		α ToIsoString()const noexcept->string;
 		Ω ToIsoString(const tm& timeStruct)noexcept->string;
 		Ω ParseMonth( sv month )noexcept(false)->uint8;
@@ -117,7 +117,8 @@ namespace Jde::Chrono
 	Ξ EndOfDay( TimePoint time)noexcept->TimePoint{ DateTime date{time}; return DateTime(date.Year(), date.Month(), date.Day(), 23, 59, 59).GetTimePoint(); }
 	Ξ BeginningOfDay( TimePoint time)noexcept->TimePoint{ DateTime date{time}; return DateTime(date.Year(), date.Month(), date.Day(), 0, 0, 0).GetTimePoint(); }
 	Ξ BeginningOfMonth( TimePoint time={} )noexcept->TimePoint{ DateTime date{time==TimePoint{} ? Clock::now() : time }; return DateTime{date.Year(), date.Month(), 1}.GetTimePoint(); }
-	Ξ Display( time_t t )noexcept->string{ return DateTime{t}.LocalDisplay(); }
+	//Ξ Display( time_t t, bool seconds=false, bool milli=false )noexcept->string{ return DateTime{t}.LocalDisplay(seconds, milli); }
+	Ξ Display( TP t, bool seconds=false, bool milli=false )noexcept->string{ return DateTime{t}.LocalDisplay(seconds, milli); }
 	Ξ TimeDisplay( time_t t ) noexcept->string{ return DateTime{t}.TimeDisplay(); }
 	ẗ ToClock( typename V::time_point from )noexcept->typename K::time_point
 	{
