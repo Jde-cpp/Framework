@@ -24,7 +24,7 @@ namespace Jde::Threading
 
 	α IWorker::StartThread()noexcept->void
 	{
-		_pThread = make_unique<jthread>( [&]( stop_token st ){ Run( st );} );
+		_pThread = mu<jthread>( [&]( stop_token st ){ Run( st );} );
 	}
 
 	α IWorker::Run( stop_token /*st*/ )noexcept->void
@@ -68,7 +68,7 @@ namespace Jde::Threading
 		_lastRequest = Clock::now();
 		while( !st.stop_requested() )
 		{
-			if( var p = Poll(); !p || *p )
+			if( var p = Poll(); p )//null=nothing left to process, false=stuff to process, but not ready, true=processed
 				continue;
 			TimePoint lastRequest = _lastRequest;
 			if( !_calls && Clock::now()>lastRequest+keepAlive )

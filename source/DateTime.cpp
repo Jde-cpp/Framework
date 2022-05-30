@@ -188,7 +188,7 @@ namespace Jde
 	α DateTime::TimeT()const noexcept->time_t
 	{
 		if( !_pTime )
-			_pTime = make_unique<time_t>( system_clock::to_time_t(_time_point) );
+			_pTime = mu<time_t>( system_clock::to_time_t(_time_point) );
 		return *_pTime;
 	}
 
@@ -210,7 +210,7 @@ namespace Jde
 	α DateTime::LocalTm()const noexcept->up<std::tm>
 	{
 		time_t time = TimeT();
-		auto pLocal = make_unique<std::tm>();
+		auto pLocal = mu<std::tm>();
 #ifdef _MSC_VER
 		_localtime64_s( pLocal.get(), &time );
 #else

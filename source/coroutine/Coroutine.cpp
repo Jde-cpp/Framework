@@ -135,7 +135,7 @@ namespace Jde::Coroutine
 			}
 			else if( !_pQueue )
 			{
-				_pQueue = make_unique<QueueMove<CoroutineParam>>();
+				_pQueue = mu<QueueMove<CoroutineParam>>();
 				_pQueue->Push( move(param) );
 				if( _pThread )
 					_pThread->Join();

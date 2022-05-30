@@ -95,11 +95,11 @@ namespace Jde
 
 	BoostCodeException::BoostCodeException( const boost::system::error_code& c, sv msg, SL sl )noexcept:
 		IException{ string{msg}, ELogLevel::Debug, (uint)c.value(), sl },
-		_errorCode{ make_unique<boost::system::error_code>(c) }
+		_errorCode{ mu<boost::system::error_code>(c) }
 	{}
 	BoostCodeException::BoostCodeException( BoostCodeException&& e )noexcept:
 		IException{ move(e) },
-		_errorCode{ make_unique<boost::system::error_code>(*e._errorCode) }
+		_errorCode{ mu<boost::system::error_code>(*e._errorCode) }
 	{}
 	BoostCodeException::~BoostCodeException()
 	{}

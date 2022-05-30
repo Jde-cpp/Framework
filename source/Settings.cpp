@@ -11,7 +11,7 @@ namespace Jde::Settings
 	up<Settings::Container> _pGlobal;
 
 	Container::Container( path jsonFile, SL sl )noexcept(false):
-		_pJson{ make_unique<nlohmann::json>() }
+		_pJson{ mu<nlohmann::json>() }
 	{
 		CHECK_PATH( jsonFile, sl );
 		var fileString = jsonFile.string();

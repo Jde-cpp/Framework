@@ -348,7 +348,7 @@ namespace Jde
 		string result; bool innerText{ false };
 		for( auto token{parser.Next()}; token.size(); token=parser.Next(!innerText) )
 		{
-			//DEBUG_IF( parser.Line()==1227 );
+			//DEBUG_IF( parser.Line()==4839 );
 			if( token=="begin"sv )
 			{
 				uint iStart{ parser.Index() }; uint line{ parser.Line() };
@@ -428,7 +428,7 @@ namespace Jde
 				//var dbg = false;//iStart==9817;//Str::ToUpper(tag)=="B";
 				//if( dbg )
 				//	BREAK;
-				var closing = haveClose
+				var closing = haveClose 
 					? next.size()<3 ? ">" : next[next.size()-2]=='/' ? "/>" : ">" //tag does not work with <br />
 					: parser.NextToken( {"/>",">"} );
 				if( !closing.ends_with("/>") )/*closing.ends_with(">") &&*/
@@ -443,6 +443,14 @@ namespace Jde
 						LOGL( level, "old = '{}'", parser.Text.substr(i-70, 100) );
 						LOGL( level, "new = '{}'", newXml.substr(i-70, 100) );
 						ASSERT( newXml[i+1]=='>' );
+						parser.SetText( newXml, i+1, parser.Line() );
+					}
+					else if( next.size() && next.ends_with("<") ) //<font <br, TODO, combine with 'if' above.
+					{
+						var start = i-next.size()-closing.size()+tag.size()+1;
+						var newXml = string{ parser.Text.substr(0, start) }+string{"/>"}+string{ parser.Text.substr(start) };
+						LOGL( level, "old = '{}'", parser.Text.substr(i-70, 100) );
+						LOGL( level, "new = '{}'", newXml.substr(i-70, 100) );
 						parser.SetText( newXml, i+1, parser.Line() );
 					}
 					else
@@ -1643,21 +1651,6 @@ void XMLAttribute::SetAttribute( unsigned v )
 }
 
 
-void XMLAttribute::SetAttribute(int64_t v)
-{
-	char buf[BUF_SIZE];
-	ToStr(v, buf, BUF_SIZE);
-	_value.SetStr(buf);
-}
-
-void XMLAttribute::SetAttribute(uint64_t v)
-{
-	 char buf[BUF_SIZE];
-	 ToStr(v, buf, BUF_SIZE);
-	 _value.SetStr(buf);
-}
-
-
 void XMLAttribute::SetAttribute( bool v )
 {
 	 char buf[BUF_SIZE];
@@ -1665,19 +1658,10 @@ void XMLAttribute::SetAttribute( bool v )
 	 _value.SetStr( buf );
 }
 
-void XMLAttribute::SetAttribute( double v )
-{
-	 char buf[BUF_SIZE];
-	 ToStr( v, buf, BUF_SIZE );
-	 _value.SetStr( buf );
-}
-
-void XMLAttribute::SetAttribute( float v )
-{
-	 char buf[BUF_SIZE];
-	 ToStr( v, buf, BUF_SIZE );
-	 _value.SetStr( buf );
-}
+void XMLAttribute::SetAttribute( int64_t v ){ _value.SetStr(std::to_string(v)); }
+void XMLAttribute::SetAttribute( uint64_t v ){ _value.SetStr(std::to_string(v)); }
+void XMLAttribute::SetAttribute( double v ){ _value.SetStr(std::to_string(v)); }
+void XMLAttribute::SetAttribute( float v ){ _value.SetStr(std::to_string(v)); }
 
 
 // --------- XMLElement ---------- //
@@ -1842,12 +1826,21 @@ sv XMLElement::Text()Ι
 	auto p = FirstChildElement( elementName );
 	return p ? p->Attr( attributeName ) : sv{};
 }
+
+void XMLElement::SetText( sv inText )
+{
+	if( FirstChild() && FirstChild()->ToText() )
+		FirstChild()->SetValue( inText );
+	else 
+		InsertFirstChild( GetDocument().NewText(inText) );
+}
+
 void	XMLElement::SetText( const char* inText )
 {
 	if ( FirstChild() && FirstChild()->ToText() )
 		FirstChild()->SetValue( inText );
 	else {
-		XMLText*	theText = GetDocument()->NewText( inText );
+		XMLText*	theText = GetDocument().NewText( inText );
 		InsertFirstChild( theText );
 	}
 }
@@ -1869,19 +1862,10 @@ void XMLElement::SetText( unsigned v )
 }
 
 
-void XMLElement::SetText(int64_t v)
-{
-	char buf[BUF_SIZE];
-	ToStr(v, buf, BUF_SIZE);
-	SetText(buf);
-}
-
-void XMLElement::SetText(uint64_t v) {
-	 char buf[BUF_SIZE];
-	 ToStr(v, buf, BUF_SIZE);
-	 SetText(buf);
-}
-
+void XMLElement::SetText( int64_t v ){	SetText( std::to_string(v) ); }
+void XMLElement::SetText( uint64_t v ){ SetText( std::to_string(v) ); }
+void XMLElement::SetText( float v ){ SetText( std::to_string(v) ); }
+void XMLElement::SetText( double v ){ SetText( std::to_string(v) ); }
 
 void XMLElement::SetText( bool v )
 {
@@ -1891,20 +1875,6 @@ void XMLElement::SetText( bool v )
 }
 
 
-void XMLElement::SetText( float v )
-{
-	 char buf[BUF_SIZE];
-	 ToStr( v, buf, BUF_SIZE );
-	 SetText( buf );
-}
-
-
-void XMLElement::SetText( double v )
-{
-	 char buf[BUF_SIZE];
-	 ToStr( v, buf, BUF_SIZE );
-	 SetText( buf );
-}
 
 /*
 XMLError XMLElement::QueryIntText( int* ival ) const
@@ -2117,12 +2087,20 @@ char* XMLElement::ParseAttributes( char* p, uint& line )
 			p = attrib->ParseDeep( p, *_document );
 
 			var n = attrib->Name();
-			if ( !p || (*this)[n] ) //Attribute(n)
+			if( !p ) //Attribute(n)
 			{
 				BREAK;
 				DeleteAttribute( attrib );
 				_document->SetError( XML_ERROR_PARSING_ATTRIBUTE, attrLineNum, "XMLElement name=%s", Name() );
-				p = nullptr;
+				break;
+			}
+			if( (*this)[n] )
+			{
+				if( GetDocument().Fix )
+					continue;
+				BREAK;
+				DeleteAttribute( attrib );
+				_document->SetError( XML_ERROR_PARSING_ATTRIBUTE, attrLineNum, "XMLElement name=%s, duplicate attribute %s", Name(), n );
 				break;
 			}
 			// There is a minor bug here: if the attribute in the source xml document is duplicated, it will not be detected and the attribute will be doubly added. However, tracking the 'prevAttribute' avoids re-scanning the attribute list. Preferring performance for now, may reconsider in the future.
@@ -2738,7 +2716,7 @@ void XMLDocument::PopDepth()
 	--_parsingDepth;
 }
 
-α XMLNode::IsCaseInsensitive()Ι->bool{ return GetDocument() && GetDocument()->IsCaseInsensitive(); }
+α XMLNode::IsCaseInsensitive()Ι->bool{ return GetDocument().IsCaseInsensitive(); }
 α XMLNode::Find( const std::span<sv>& entries )Ι->const XMLElement*
 {
 	ASSERT( entries.size() );
@@ -2812,8 +2790,6 @@ void XMLDocument::PopDepth()
 	const XMLNode* pThis = this;
 	if( tags.empty() )
 	{
-		//auto pParent = Parent();
-		//auto value = pParent->Value();
 		for( const XMLNode* p=this; (p=p->Parent())!=nullptr && p->Value().size(); )
 			tags.insert( tags.begin(), string{p->Value()} );
 	}
@@ -2822,26 +2798,18 @@ start:
 	if( pElement )
 		tags.push_back( string{pThis->Value()} );
 	const XMLNode* y{};
-	//DEBUG_IF( pThis->_parseLineNum==224 /*&& entries.front()!="NAME"*/ );
+	//DEBUG_IF( pThis->_parseLineNum==225 /*&& entries.front()!="NAME"*/ );
 
 	string where;
 	if( var c{searchChildren ? pThis->FirstChild() : nullptr}; c )
-	{
-		//var* e = c->ToElement();
-		//var text = e ? String{} : XmlTrim<String>( c->Value<iv>() );//element c->FindOneOf should find. String{ ToIV(e->Text()) }
-		//if( entryLocation = text.size() ? Str::FindPhrase(text, entries, stem) : nullopt; entryLocation && entryLocation->NextEntry>=entries.size() )
-		//	y = c;
-		//else
 		y = c->FindOneOf( entries, stem, pThis, true, entryLocation, tags );
-	}
-	if( auto p{y || pThis->ToElement() ? nullptr : pThis/*->ToElement()*/}; p )//element child above would have picked up.
+	if( auto p{y || pThis->ToElement() ? nullptr : pThis}; p )//element child above would have picked up.
 	{
 		var text = p->HtmlText<String>();
 		if( text.size() )
 		{
 			if( entryLocation )
 			{
-			//	DEBUG_IF( pThis->_parseLineNum==224 /*&& entries.front()!="NAME"*/ );
 				bool equal = false; uint i = entryLocation->NextEntry, size;
 				auto f = [&]( auto words )
 				{
@@ -2873,9 +2841,8 @@ start:
 		tags.pop_back();
 	if( const XMLNode* n{pThis->NextSibling()}; !y && n )//<divs>
 	{
-	//	y = n->FindOneOf( entries, pCalledFrom, true, tags, stem );stack overflow if 100s of siblings
-		pThis = n;
-		searchChildren = true;
+		pThis = n; searchChildren = true;
+		//entryLocation = {}; don't zero out, could be half way through
 		goto start;
 	}
 	else if( const XMLNode* p{ !y && pThis->Parent() && pThis->Parent()!=pCalledFrom ? pThis->Parent() : nullptr}; p )//td

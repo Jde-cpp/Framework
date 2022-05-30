@@ -18,6 +18,15 @@
 			</ArrayItems>
 		</Expand>
 	</Type>
+	<Type Name="boost::container::flat_multimap&lt;*,*,*,*&gt;">
+		<DisplayString>{{size=={m_flat_tree.m_data.m_seq.m_holder.m_size}}}</DisplayString>
+		<Expand>
+			<ArrayItems>
+				<Size>m_flat_tree.m_data.m_seq.m_holder.m_size</Size>
+				<ValuePointer>m_flat_tree.m_data.m_seq.m_holder.m_start</ValuePointer>
+			</ArrayItems>
+		</Expand>
+	</Type>
 	<Type Name="boost::container::flat_tree&lt;*&gt;::impl_tree_t">
 		<DisplayString>{{impl_tree_t}}</DisplayString>
 		<!-- <DisplayString>{{xxxsize = {m_flat_tree.m_data.m_seq.m_holder.m_size}}}</DisplayString> -->

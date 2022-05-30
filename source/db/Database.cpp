@@ -77,10 +77,10 @@ namespace Jde
 		static sp<flat_map<string,sp<Jde::DB::IDataSource>>> _pConnections; static mutex _connectionsMutex;
 	};
 	sp<flat_map<string,sp<DB::IDataSource>>> DataSourceApi::_pConnections = make_shared<flat_map<string,sp<DB::IDataSource>>>(); mutex DataSourceApi::_connectionsMutex;
-	up<flat_map<string,sp<DataSourceApi>>> _pDataSources = make_unique<flat_map<string,sp<DataSourceApi>>>(); mutex _dataSourcesMutex;
+	up<flat_map<string,sp<DataSourceApi>>> _pDataSources = mu<flat_map<string,sp<DataSourceApi>>>(); mutex _dataSourcesMutex;
 	sp<DB::Syntax> _pSyntax;
 	sp<DB::IDataSource> _pDefault;
-	up<vector<function<void()>>> _pDBShutdowns = make_unique<vector<function<void()>>>();
+	up<vector<function<void()>>> _pDBShutdowns = mu<vector<function<void()>>>();
 	α DB::ShutdownClean( function<void()>& shutdown )noexcept->void
 	{
 		_pDBShutdowns->push_back( shutdown );

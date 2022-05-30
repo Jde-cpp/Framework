@@ -33,7 +33,7 @@ namespace Jde::Logging
 	{
 		try
 		{
-			SetServer( make_unique<ServerSink>() );
+			SetServer( mu<ServerSink>() );
 		}
 		catch( const IException& )
 		{}
@@ -84,7 +84,7 @@ namespace Jde::Logging
 				var& ack = item.acknowledgement();
 				Logging::LogNoServer( Logging::MessageBase("ServerSink::ServerSink( Host='{}', Port='{}' InstanceId={} )", ELogLevel::Information, MY_FILE, __func__, __LINE__), Host, Port, ack.instanceid() );
 
-				auto p = make_unique<Proto::Instance>();
+				auto p = mu<Proto::Instance>();
 				p->set_application( _applicationName = IApplication::ApplicationName() );
 				p->set_host( IApplication::HostName() );
 				p->set_pid( (int32)OSApp::ProcessId() );
@@ -114,7 +114,7 @@ namespace Jde::Logging
 
 	up<Proto::RequestString> ToRequestString( Proto::EFields field, uint32 id, sv text )
 	{
-		auto pResult = make_unique<Proto::RequestString>();
+		auto pResult = mu<Proto::RequestString>();
 		pResult->set_field( field );
 		pResult->set_id( id );
 		pResult->set_value( text.data(), text.size() );
@@ -123,7 +123,7 @@ namespace Jde::Logging
 	}
 	α ServerSink::SendCustom( uint32 requestId, const std::string& bytes )noexcept->void
 	{
-		auto pCustom = make_unique<Proto::CustomMessage>();
+		auto pCustom = mu<Proto::CustomMessage>();
 		pCustom->set_requestid( requestId );
 		pCustom->set_message( bytes );
 
@@ -134,7 +134,7 @@ namespace Jde::Logging
 
 	α ServerSink::Write( const MessageBase& m, TimePoint time, vector<string>* pValues )noexcept->void
 	{
-		auto pProto = make_unique<Proto::Message>();
+		auto pProto = mu<Proto::Message>();
 		pProto->set_allocated_time( IO::Proto::ToTimestamp(time).release() );
 		pProto->set_level( (Proto::ELogLevel)m.Level );
 		pProto->set_messageid( (uint32)m.MessageId );
@@ -209,7 +209,7 @@ namespace Jde::Logging
 			Message{ rhs },
 			Timestamp{ rhs.Timestamp },
 			Variables{ rhs.Variables },
-			_pFunction{ rhs._pFunction ? make_unique<string>(*rhs._pFunction) : nullptr }
+			_pFunction{ rhs._pFunction ? mu<string>(*rhs._pFunction) : nullptr }
 		{
 			if( _pFunction )
 				Function = _pFunction->c_str();

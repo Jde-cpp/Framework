@@ -259,7 +259,7 @@ namespace Jde
 			}
 		}
 	}
-	up<vector<function<void()>>> _pShutdownFunctions = make_unique<vector<function<void()>>>();
+	up<vector<function<void()>>> _pShutdownFunctions = mu<vector<function<void()>>>();
 	α IApplication::AddShutdownFunction( function<void()>&& shutdown )noexcept->void
 	{
 		_pShutdownFunctions->push_back( shutdown );

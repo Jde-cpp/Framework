@@ -65,7 +65,7 @@ namespace Jde::IO
 
 	ⓣ Proto::Deserialize( const vector<char>& data )noexcept(false)->up<T>
 	{
-		auto p = make_unique<T>();
+		auto p = mu<T>();
 		Internal::Deserialize<T>( (google::protobuf::uint8*)data.data(), (uint32)data.size(), *p );
 		return p;
 	}
@@ -104,7 +104,7 @@ namespace Jde::IO
 
 	ⓣ Proto::Load( path path, SL sl )noexcept(false)->up<T>
 	{
-		auto p = make_unique<T>();
+		auto p = mu<T>();
 		Load( path, *p, sl );
 		return p;
 	}
@@ -133,7 +133,7 @@ namespace Jde::IO
 
 	Ξ Proto::ToTimestamp( TimePoint t )->up<google::protobuf::Timestamp>
 	{
-		auto pTime = make_unique<google::protobuf::Timestamp>();
+		auto pTime = mu<google::protobuf::Timestamp>();
 		var seconds = Clock::to_time_t( t );
 		var nanos = std::chrono::duration_cast<std::chrono::nanoseconds>( t-TimePoint{} )-std::chrono::duration_cast<std::chrono::nanoseconds>( std::chrono::seconds(seconds) );
 		pTime->set_seconds( seconds );
