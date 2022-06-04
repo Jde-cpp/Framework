@@ -1,5 +1,4 @@
 ﻿#include "DateTime.h"
-//#include <chrono>
 #include <jde/Str.h>
 #include "math/MathUtilities.h"
 
@@ -225,11 +224,16 @@ namespace Jde
 	}
 	α DateTime::LocalTimeDisplay( bool seconds, bool milli )const noexcept->string
 	{
-		auto pLocal = LocalTm();
-		string suffix{ seconds ? format(":{:0>2}", pLocal->tm_sec) : string{} };
-		if( milli )
-			suffix = format( "{}.{:0>2}", suffix, _time_point.time_since_epoch().count()%1000 );
-		return fmt::format( "{:0>2}:{:0>2}{}", pLocal->tm_hour, pLocal->tm_min, suffix );
+		string y{ "null" };
+		if( _time_point!=TP{} )
+		{
+			auto pLocal = LocalTm();
+			string suffix{ seconds ? format(":{:0>2}", pLocal->tm_sec) : string{} };
+			if( milli )
+				suffix = format( "{}.{:0>2}", suffix, _time_point.time_since_epoch().count()%1000 );
+			y = fmt::format( "{:0>2}:{:0>2}{}", pLocal->tm_hour, pLocal->tm_min, suffix );
+		}
+		return y;
 	}
 	α DateTime::LocalDateDisplay()const noexcept->string
 	{
