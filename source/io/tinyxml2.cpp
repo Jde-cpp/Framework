@@ -348,7 +348,7 @@ namespace Jde
 		string result; bool innerText{ false };
 		for( auto token{parser.Next()}; token.size(); token=parser.Next(!innerText) )
 		{
-			//DEBUG_IF( parser.Line()==4839 );
+			//DEBUG_IF( parser.Line()==2414 );
 			if( token=="begin"sv )
 			{
 				uint iStart{ parser.Index() }; uint line{ parser.Line() };
@@ -425,38 +425,49 @@ namespace Jde
 			}
 			else //<html
 			{
-				//var dbg = false;//iStart==9817;//Str::ToUpper(tag)=="B";
-				//if( dbg )
-				//	BREAK;
+				//DEBUG_IF( parser.Line()==139 );
 				var closing = haveClose 
 					? next.size()<3 ? ">" : next[next.size()-2]=='/' ? "/>" : ">" //tag does not work with <br />
-					: parser.NextToken( {"/>",">"} );
-				if( !closing.ends_with("/>") )/*closing.ends_with(">") &&*/
+					: parser.NextToken( {"/>",">","<"} );
+				if( !closing.ends_with("/>") )
 				{
-					ASSERT( closing.ends_with(">") );
-					ASSERT( parser.Text[parser.Index()-1]=='>' );
-					var i = parser.Text[parser.Index()]=='>' ? parser.Index() : parser.Index()-1;
-					ASSERT( parser.Text[i]=='>' );
-					if( tag=="hr" || tag=="br" ) //https://www.w3.org/TR/html401/index/elements.html
+					if( closing.ends_with("<") ) //<font </p>  //<HR <P
 					{
-						var newXml = string{ parser.Text.substr(0, i) }+string{"/"}+string{ parser.Text.substr(i) };
-						LOGL( level, "old = '{}'", parser.Text.substr(i-70, 100) );
-						LOGL( level, "new = '{}'", newXml.substr(i-70, 100) );
-						ASSERT( newXml[i+1]=='>' );
-						parser.SetText( newXml, i+1, parser.Line() );
-					}
-					else if( next.size() && next.ends_with("<") ) //<font <br, TODO, combine with 'if' above.
-					{
-						var start = i-next.size()-closing.size()+tag.size()+1;
-						var newXml = string{ parser.Text.substr(0, start) }+string{"/>"}+string{ parser.Text.substr(start) };
-						LOGL( level, "old = '{}'", parser.Text.substr(i-70, 100) );
-						LOGL( level, "new = '{}'", newXml.substr(i-70, 100) );
-						parser.SetText( newXml, i+1, parser.Line() );
+						var endIndex = parser.Index()-1;
+						var newXml = string{ parser.Text.substr(0, parser.Index()-1) }+"/>"+string{ parser.Text.substr(endIndex) };
+
+						LOGL( level, "[{}]({})noclosetag = '{}|||{}", parser.Line(), tag, parser.Text.substr(parser.Index()-120, 120), parser.Text.substr(parser.Index(), 30) );
+						LOGL( level, "new = '{}", newXml.substr(parser.Index()-120, 150) );
+						result = Close( Parser{newXml, &parser, endIndex}, openTags );
+						break;
 					}
 					else
 					{
-						openTags.push_back( {i, parser.Line(), String{tag}, innerText} );
-						innerText = true;
+						ASSERT( closing.ends_with(">") );
+						ASSERT( parser.Text[parser.Index()-1]=='>' );
+						var i = parser.Text[parser.Index()]=='>' ? parser.Index() : parser.Index()-1;
+						ASSERT( parser.Text[i]=='>' );
+						if( tag=="hr" || tag=="br" ) //https://www.w3.org/TR/html401/index/elements.html
+						{
+							var newXml = string{ parser.Text.substr(0, i) }+string{"/"}+string{ parser.Text.substr(i) };
+							LOGL( level, "old = '{}'", parser.Text.substr(i-70, 100) );
+							LOGL( level, "new = '{}'", newXml.substr(i-70, 100) );
+							ASSERT( newXml[i+1]=='>' );
+							parser.SetText( newXml, i+1, parser.Line() );
+						}
+						else if( next.size() && next.ends_with("<") ) //<font <br, TODO, combine with 'if' above.
+						{
+							var start = i-next.size()-closing.size()+tag.size()+1;
+							var newXml = string{ parser.Text.substr(0, start) }+string{"/>"}+string{ parser.Text.substr(start) };
+							LOGL( level, "old = '{}'", parser.Text.substr(i-70, 100) );
+							LOGL( level, "new = '{}'", newXml.substr(i-70, 100) );
+							parser.SetText( newXml, i+1, parser.Line() );
+						}
+						else
+						{
+							openTags.push_back( {i, parser.Line(), String{tag}, innerText} );
+							innerText = true;
+						}
 					}
 				}
 			}
@@ -800,18 +811,15 @@ bool XMLUtil::ToUnsigned64(const char* str, uint64_t* value) {
 }
 */
 
-char* XMLDocument::Identify( char* p, XMLNode** node )
+α XMLDocument::Identify( char* p, const XMLNode& parent )ι->tuple<char*,XMLNode*>
 {
-	 TIXMLASSERT( node );
-	 TIXMLASSERT( p );
+	 ASSERT( p );
 	 char* const start = p;
 	 var startLine = _parseCurLineNum;
-	 p = SkipWhiteSpace( p, &_parseCurLineNum );
-	 if( !*p ) {
-		  *node = 0;
-		  TIXMLASSERT( p );
-		  return p;
-	 }
+	 if( WhitespaceMode()!=PRESERVE_WHITESPACE || parent.Value<iv>()!="P" )
+		p = SkipWhiteSpace( p, &_parseCurLineNum );
+	 if( !*p ) 
+		return make_tuple( p, nullptr );
 
 	 // These strings define the matching patterns:
 	 static const char* xmlHeader		= { "<?" };
@@ -826,8 +834,8 @@ char* XMLDocument::Identify( char* p, XMLNode** node )
 	 static const int dtdHeaderLen		= 2;
 	 static const int elementHeaderLen	= 1;
 
-	 TIXMLASSERT( sizeof( XMLComment ) == sizeof( XMLUnknown ) );		// use same memory pool
-	 TIXMLASSERT( sizeof( XMLComment ) == sizeof( XMLDeclaration ) );	// use same memory pool
+	 static_assert( sizeof( XMLComment ) == sizeof( XMLUnknown ) );		// use same memory pool
+	 static_assert( sizeof( XMLComment ) == sizeof( XMLDeclaration ) );	// use same memory pool
 	 XMLNode* returnNode = 0;
 	 if ( StringEqual( p, xmlHeader, xmlHeaderLen ) ) {
 		  returnNode = CreateUnlinkedNode<XMLDeclaration>( _commentPool );
@@ -863,10 +871,8 @@ char* XMLDocument::Identify( char* p, XMLNode** node )
 		  _parseCurLineNum = startLine;
 	 }
 
-	 TIXMLASSERT( returnNode );
-	 TIXMLASSERT( p );
-	 *node = returnNode;
-	 return p;
+	 ASSERT( returnNode ); ASSERT( p );
+	 return make_tuple( p, returnNode );
 }
 
 
@@ -1175,15 +1181,15 @@ char* XMLNode::ParseDeep( char* p, StrPair* parentEndTag, uint* curLineNumPtr )
 	uint line{0};
 	while( p && *p )
 	{
-		XMLNode* node = nullptr;
-//		DBG( "line={}", line );
-		p = _document->Identify( p, &node ); TIXMLASSERT( p );
+		XMLNode* node;
+		//DEBUG_IF( _document->Line()==138 );
+		std::tie(p,node) = _document->Identify( p, *this ); 
 		if( !node )
 			break;
 		var initialLineNum = line = node->_parseLineNum;
 
 		StrPair endTag;
-		//DEBUG_IF( initialLineNum==1127 );
+		//DEBUG_IF( initialLineNum==138 );
 		p = node->ParseDeep( p, &endTag, curLineNumPtr );
 		if ( !p )
 		{
@@ -2063,9 +2069,9 @@ void XMLElement::DeleteAttribute( sv name )
 }
 
 
-char* XMLElement::ParseAttributes( char* p, uint& line )
+α XMLElement::ParseAttributes( char* p, uint& line )->char*
 {
-	for( XMLAttribute* prevAttribute = nullptr; p && (p = SkipWhiteSpace(p, &line)); )
+	for( XMLAttribute* prevAttribute{}; p && (p = SkipWhiteSpace(p, &line)); )
 	{
 		if( !*p )
 		{
@@ -2130,6 +2136,12 @@ char* XMLElement::ParseAttributes( char* p, uint& line )
 		}
 		else
 		{
+			if( GetDocument().Fix && *p=='<' )
+			{
+				++p;
+				continue;
+			}
+
 			BREAK;
 			_document->SetError( XML_ERROR_PARSING_ELEMENT, _parseLineNum, 0 );
 			p = nullptr;
@@ -2138,7 +2150,7 @@ char* XMLElement::ParseAttributes( char* p, uint& line )
 	return p;
 }
 
-void XMLElement::DeleteAttribute( XMLAttribute* attribute )
+α XMLElement::DeleteAttribute( XMLAttribute* attribute )->void
 {
 	 if ( attribute == 0 ) {
 		  return;
@@ -2735,23 +2747,39 @@ void XMLDocument::PopDepth()
 
 α XMLNode::NextHtmlText( iv prev )Ι->const XMLNode*
 {
-	const String text{ prev.size() ? prev : HtmlText<String>() };
+	const String text{ prev.size() ? prev : get<0>(HtmlText<String>()) };
 	auto n = NextHtml();
-	auto next{ n ? n->HtmlText<String>() : String{} };
-	for( ; n->ToText() && (next.empty() || next==text); next = n->HtmlText<String>() )//text should have been included in parent.
+	auto next{ n ? get<0>(n->HtmlText<String>()) : String{} };
+	for( ; n->ToText() && (next.empty() || next==text); next = get<0>(n->HtmlText<String>()) )//text should have been included in parent.
 		n = n->NextHtml();
 
 	var equal = next.empty() || next==text;
 	return !equal ? n : n ? n->NextHtmlText( text ) : nullptr;
 }
 
-α XMLNode::NextHtml( bool children )Ι->const XMLNode*
+α XMLNode::NextHtml( bool children, bool continuation )Ι->const XMLNode*
 {
-	var* y{ children ? FirstChild() : nullptr };
-	if( var* s{y && !y->IsHtmlStyle() ? nullptr : NextSibling()}; s )
-		y = s->IsHtmlStyle() ? s->NextHtml() : s;
-	else if( const XMLNode* p{y ? nullptr : Parent()}; p )
-		y = p->NextHtml( false );
+	var* y{ children && !IsHtmlStyle() ? FirstChild() : nullptr };
+	
+	if( !y && NextSibling() )
+		y = NextSibling()->NextHtml();
+	else if( y && y->IsHtmlStyle() && continuation )
+		y = y->NextHtml( false );
+	else if( y && y->ToText() && y->NextSibling() && y->NextSibling() && y->NextSibling()->IsHtmlStyle() ) //A<small>ggregate
+		y = y->NextSibling()->NextHtml( false );
+	else if( y && y->IsHtmlStyle() && continuation )
+	{
+		if( var s=y->NextSibling(); s )
+			y = s->IsHtmlStyle() ? s->NextHtml() : s;
+		else if( y->ToText() )
+			y = y->NextHtml();
+		else if( continuation )
+			y = nullptr;
+	}
+	//else if( var* s{y && y->IsHtmlStyle() ? NextSibling() : nullptr}; s )
+	//	y = s->IsHtmlStyle() ? s->NextHtml() : s;
+	if( !y && Parent() )
+		y = Parent()->NextHtml( false );
 	return y;
 }
 α XMLNode::Next( bool children )Ι->const XMLNode*
@@ -2785,7 +2813,7 @@ void XMLDocument::PopDepth()
 	return equal;
 }
 */
-α XMLNode::FindOneOf( const vector<iv>& entries, bool stem, const XMLNode* pCalledFrom, bool searchChildren, optional<FindPhraseResult>& entryLocation, vector<string> tags )Ι->const XMLNode*
+α XMLNode::FindOneOf( const vector<iv>& entries, bool stem, const XMLNode* pCalledFrom, bool searchChildren, optional<FindOneOfStruct>& entryLocation, vector<string> tags )Ι->const XMLNode*
 {
 	const XMLNode* pThis = this;
 	if( tags.empty() )
@@ -2795,18 +2823,31 @@ void XMLDocument::PopDepth()
 	}
 start:
 	var pElement = pThis->ToElement();
+	static vector<tuple<uint,String>> tags2;
 	if( pElement )
+	{
+		//DEBUG_IF( pThis->Value()=="body" );
+		DBG( "[{}]{}", pThis->GetLineNum(), pThis->Value() );
+		tags2.push_back( make_tuple(pThis->GetLineNum(), String(pThis->Value<iv>())) );
 		tags.push_back( string{pThis->Value()} );
+	}
 	const XMLNode* y{};
-	//DEBUG_IF( pThis->_parseLineNum==225 /*&& entries.front()!="NAME"*/ );
+	//DEBUG_IF( pThis->_parseLineNum==138/*&& entries.front()!="NAME"*/ );
 
 	string where;
 	if( var c{searchChildren ? pThis->FirstChild() : nullptr}; c )
+	{
+		//auto foo = c->Value<iv>();
+		//DEBUG_IF( foo=="Sayuri Childs, Chief Compliance Officer" );
 		y = c->FindOneOf( entries, stem, pThis, true, entryLocation, tags );
+	}
 	if( auto p{y || pThis->ToElement() ? nullptr : pThis}; p )//element child above would have picked up.
 	{
-		var text = p->HtmlText<String>();
-		if( text.size() )
+		auto foo = pThis->Value<iv>();
+		DEBUG_IF( foo=="Sayuri Childs, Chief Compliance Officer" );
+		var textNode = p->HtmlText<String>();
+		pThis = get<1>( textNode );
+		if( var text = get<0>(textNode); text.size() )
 		{
 			if( entryLocation )
 			{
@@ -2820,11 +2861,11 @@ start:
 					f( Str::StemmedWords<iv>(text) );
 				else
 					f( Str::Words<iv>(text) );
-				if( equal )
-					y = p;
-				else if( i>entryLocation->NextEntry && i-entryLocation->NextEntry==size )//all matched, just not enough
+				if( equal && i==entries.size() )
+					y = entryLocation->StartNodePtr;
+				else if( equal )//all matched, just not enough
 				{
-					BREAK;//step through to make sure logic correct.
+				//	BREAK;//step through to make sure logic correct.
 					entryLocation->NextEntry=i;
 				}
 				else
@@ -2832,18 +2873,28 @@ start:
 			}
 			if( !y && !entryLocation )
 			{
-				if( entryLocation = Str::FindPhrase(text, entries, stem); entryLocation && entryLocation->NextEntry>=entries.size() )
+				optional<Str::FindPhraseResult> result;
+				if( result = Str::FindPhrase(text, entries, stem); result && result->NextEntry>=entries.size() )
 					y = p;
+				else if( result )
+				{
+					ASSERT( p->ToText() );
+					entryLocation = FindOneOfStruct{ result.value(), p->Parent() };
+				}
 			}
 		}
 	}
 	if( pElement )
+	{
 		tags.pop_back();
+		tags2.pop_back();
+		DBG( "~[{}]{}", pThis->GetLineNum(), pThis->Value() );
+	}
 	if( const XMLNode* n{pThis->NextSibling()}; !y && n )//<divs>
 	{
 		pThis = n; searchChildren = true;
 		//entryLocation = {}; don't zero out, could be half way through
-		goto start;
+		goto start;//stack-overflow
 	}
 	else if( const XMLNode* p{ !y && pThis->Parent() && pThis->Parent()!=pCalledFrom ? pThis->Parent() : nullptr}; p )//td
 		y = p->FindOneOf( entries, stem, pCalledFrom, false, entryLocation, tags.size() ? vector<string>{tags.begin(), tags.begin()+tags.size()-1} : vector<string>{} );

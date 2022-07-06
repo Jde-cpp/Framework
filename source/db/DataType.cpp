@@ -138,7 +138,11 @@ namespace Jde
 				THROW_IFX( !j.is_boolean(), Exception(sl, "{} could not conver to boolean {}", memberName, j.dump()) );
 				value = object{ j.get<bool>() };
 				break;
-			case EType::Int16: case EType::Int: case EType::Int8: case EType::Long:
+			case EType::Int8: 
+				THROW_IFX( !j.is_number(), Exception(sl, "{} could not conver to int {}", memberName, j.dump()) );
+				value = object{ j.get<int8_t>() };
+				break;
+			case EType::Int16: case EType::Int: case EType::Long:
 				THROW_IFX( !j.is_number(), Exception(sl, "{} could not conver to int {}", memberName, j.dump()) );
 				value = object{ j.get<_int>() };
 				break;

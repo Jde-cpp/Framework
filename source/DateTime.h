@@ -83,8 +83,8 @@ namespace Jde
 	Ξ ToIsoString( TimePoint time )ι->string{ return DateTime(time).ToIsoString(); }
 	Ξ ToIsoString( fs::file_time_type time )ι->string{ return DateTime(time).ToIsoString(); }
 	Ξ LocalTimeDisplay( TimePoint time, bool seconds=false, bool miliseconds=false )ι->string{ return DateTime{time}.LocalTimeDisplay(seconds, miliseconds); }
-	Ξ DateDisplay( TimePoint time)ι->string{ return DateTime{time}.DateDisplay(); }
-	Ξ DateDisplay( DayIndex day)ι->string{ return DateTime{Chrono::FromDays(day)}.DateDisplay(); }
+	Ξ DateDisplay( TimePoint time )ι->string{ return DateTime{time}.DateDisplay(); }
+	Ξ DateDisplay( DayIndex day )ι->string{ return DateTime{Chrono::FromDays(day)}.DateDisplay(); }
 }
 #define var const auto
 namespace Jde::Timezone

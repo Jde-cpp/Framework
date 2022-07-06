@@ -17,6 +17,13 @@ namespace Jde
 	using nlohmann::ordered_json;
 	static var& _logLevel{ Logging::TagLevel("sql") };
 
+	α DB::ToParamString( uint c )->string
+	{
+		string y{'?'}; y.reserve( c*2-1 );
+		for( uint i=1; i<c; ++i )
+			y+=",?";
+		return y;
+	}
 	α DB::LogDisplay( sv sql, const vector<object>* pParameters, string error )noexcept->string
 	{
 		ostringstream os;
@@ -141,9 +148,10 @@ namespace Jde
 		}
 		return _pDefault;
 	}
-	α DB::DataSource()noexcept(false)->IDataSource&
+	α DB::DataSource()ι->IDataSource&
 	{
-		auto p = DataSourcePtr(); THROW_IF( !p, "No default datasource" );
+		auto p = DataSourcePtr(); 
+		THROW_IF( !p, "No default datasource" );//ie terminate
 		return *p;
 	}
 

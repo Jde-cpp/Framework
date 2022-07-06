@@ -86,7 +86,7 @@ namespace Jde::Coroutine
 
 		source_location _sl;
 	protected:
-		Task::promise_type* _pPromise{ nullptr };
+		Task::promise_type* _pPromise{};
 		friend Task;
 
 	};

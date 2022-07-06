@@ -11,7 +11,7 @@
 
 namespace Jde
 {
-	IException::IException( string value, ELogLevel level, uint code, SL sl )noexcept:
+	IException::IException( string value, ELogLevel level, uint code, SL sl )ι:
 		_stack{ sl },
 		_what{ move(value) },
 		Code( code ? code : Calc32RunTime(value) ),
@@ -20,7 +20,7 @@ namespace Jde
 		BreakLog();
 	}
 
-	IException::IException( vector<string>&& args, string&& format, SL sl, uint c, ELogLevel level )noexcept:
+	IException::IException( vector<string>&& args, string&& format, SL sl, uint c, ELogLevel level )ι:
 		_stack{ sl },
 		_format{ move(format) },
 		_args{ move(args) },
@@ -30,7 +30,7 @@ namespace Jde
 		BreakLog();
 	}
 
-	IException::IException( IException&& from )noexcept:
+	IException::IException( IException&& from )ι:
 		_stack{ move(from._stack) },
 		_what{ move(from._what) },
 		_pInner{ move(from._pInner) },
@@ -48,7 +48,7 @@ namespace Jde
 		Log();
 	}
 
-	α IException::BreakLog()const noexcept->void
+	α IException::BreakLog()Ι->void
 	{
 //#ifndef NDEBUG
 		if( Level()!=ELogLevel::None && Level()>Logging::BreakLevel() )
@@ -58,7 +58,7 @@ namespace Jde
 		}
 //#endif
 	}
-	α IException::Log()const noexcept->void
+	α IException::Log()Ι->void
 	{
 		if( Level()==ELogLevel::NoLog )
 			return;
@@ -70,7 +70,7 @@ namespace Jde
 			Logging::LogServer( Logging::Messages::ServerMessage{Logging::Message{Level(), what(), sl}, vector<string>{_args}} );
 	}
 
-	α IException::what()const noexcept->const char*
+	α IException::what()Ι->const char*
 	{
 		if( _what.empty() )
 		{
@@ -78,7 +78,14 @@ namespace Jde
 			vector<fmt::basic_format_arg<ctx>> args2;
 			for( var& a : _args )
 				args2.push_back( fmt::detail::make_arg<ctx>(a) );
-			_what = fmt::vformat( _format, fmt::basic_format_args<ctx>(args2.data(), (int)args2.size()) );
+			try
+			{
+				_what = fmt::vformat( _format, fmt::basic_format_args<ctx>(args2.data(), (int)args2.size()) );
+			}
+			catch( const fmt::format_error& e )
+			{
+				_what = format( "format error _format='{}' - {}", _format, e.what() );
+			}
 		}
 		return _what.c_str();
 	}
@@ -93,18 +100,18 @@ namespace Jde
 		CodeException( format("{}-{}", code.value(), code.message()), move(code), level, sl )
 	{}
 
-	BoostCodeException::BoostCodeException( const boost::system::error_code& c, sv msg, SL sl )noexcept:
+	BoostCodeException::BoostCodeException( const boost::system::error_code& c, sv msg, SL sl )ι:
 		IException{ string{msg}, ELogLevel::Debug, (uint)c.value(), sl },
 		_errorCode{ mu<boost::system::error_code>(c) }
 	{}
-	BoostCodeException::BoostCodeException( BoostCodeException&& e )noexcept:
+	BoostCodeException::BoostCodeException( BoostCodeException&& e )ι:
 		IException{ move(e) },
 		_errorCode{ mu<boost::system::error_code>(*e._errorCode) }
 	{}
 	BoostCodeException::~BoostCodeException()
 	{}
 
-	α CodeException::ToString( const std::error_code& errorCode )noexcept->string
+	α CodeException::ToString( const std::error_code& errorCode )ι->string
 	{
 		var value = errorCode.value();
 		var& category = errorCode.category();
@@ -112,9 +119,9 @@ namespace Jde
 		return format( "({}){} - {})", value, category.name(), message );
 	}
 
-	α CodeException::ToString( const std::error_category& errorCategory )noexcept->string{	return errorCategory.name(); }
+	α CodeException::ToString( const std::error_category& errorCategory )ι->string{	return errorCategory.name(); }
 
-	α CodeException::ToString( const std::error_condition& errorCondition )noexcept->string
+	α CodeException::ToString( const std::error_condition& errorCondition )ι->string
 	{
 		const int value = errorCondition.value();
 		const std::error_category& category = errorCondition.category();
@@ -122,7 +129,7 @@ namespace Jde
 		return format( "({}){} - {})", value, category.name(), message );
 	}
 
-	OSException::OSException( TErrorCode result, string&& msg, SL sl )noexcept:
+	OSException::OSException( TErrorCode result, string&& msg, SL sl )ι:
 #ifdef _MSC_VER
 		IException{ {std::to_string(result), std::to_string(GetLastError()), move(msg)}, "result={}/error={} - {}", sl, GetLastError() }
 #else
@@ -130,26 +137,26 @@ namespace Jde
 #endif
 	{}
 
-	Exception::Exception( string what, ELogLevel l, SL sl )noexcept:
+	Exception::Exception( string what, ELogLevel l, SL sl )ι:
 		IException{ move(what), l, 0, sl }
 	{}
 
-	α IOException::Path()const noexcept->path
+	α IOException::Path()Ι->path
 	{
 		return  _pUnderLying? _pUnderLying->path1() : _path;
 	}
-	α IOException::SetWhat()const noexcept->void
+	α IOException::SetWhat()Ι->void
 	{
 		_what = _pUnderLying ? _pUnderLying->what() : Code
 			? format( "({}) {} - {} path='{}'", Code, std::strerror(errno), IException::what(), Path().string() )
 			: format( "({}){}", Path(), IException::what() );
 	}
-	α IOException::what()const noexcept->const char*
+	α IOException::what()Ι->const char*
 	{
 		return _what.c_str();
 	}
 
-	NetException::NetException( sv host, sv target, uint code, string result, ELogLevel level, SL sl )noexcept:
+	NetException::NetException( sv host, sv target, uint code, string result, ELogLevel level, SL sl )ι:
 		IException{ {string{host}, string{target}, std::to_string(code), string{result.substr(0,100)}}, "{}{} ({}){}", sl, code }, //"
 		Host{ host },
 		Target{ target },
@@ -166,7 +173,7 @@ namespace Jde
 		//Log();
 	}
 
-	α NetException::Log( string extra )const noexcept->void
+	α NetException::Log( string extra )Ι->void
 	{
 		if( Level()==ELogLevel::NoLog )
 			return;

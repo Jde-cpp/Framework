@@ -191,7 +191,7 @@ namespace Jde
 		_logMemory = Settings::Get<bool>("logging/memory").value_or( false );
 		var minLevel = std::accumulate( _sinks.begin(), _sinks.end(), (uint8)ELogLevel::None, [](uint8 min, auto& p){return std::min((uint8)p->level(),min);} );
 		_logger.set_level( (spdlog::level::level_enum)minLevel );
-		var flushOn = Settings::Get<ELogLevel>( "logging/flushOn" ).value_or( ELogLevel::Information );
+		var flushOn = Settings::Get<ELogLevel>( "logging/flushOn" ).value_or( _debug ? ELogLevel::Debug : ELogLevel::Information );
 		_logger.flush_on( (spdlog::level::level_enum)flushOn );
 		auto pServer = IServerSink::Enabled() ? ServerSink::Create() : nullptr;
 

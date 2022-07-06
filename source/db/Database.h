@@ -6,56 +6,60 @@
 namespace Jde::DB
 {
 	struct IDataSource; struct Syntax;
-	Φ DataSource()noexcept(false)->IDataSource&;
-	Φ DataSource( path libraryName, string connectionString )noexcept(false)->sp<IDataSource>;
-	Φ DataSourcePtr()noexcept(false)->sp<IDataSource>;
+	Φ DataSource()ι->IDataSource&;
+	Φ DataSource( path libraryName, string connectionString )ε->sp<IDataSource>;
+	Φ DataSourcePtr()ε->sp<IDataSource>;
 	Ξ Driver()ι->string{ return Settings::Env("db/driver").value_or( _msvc ? "Jde.DB.Odbc.dll" : "libJde.MySql.so" ); }
-	ⓣ SelectEnum( sv tableName, SRCE )noexcept(false)->up<IAwait>{ return DataSource().SelectEnum<T>( tableName ); }//sp<flat_map<T,string>>
-	template<class K=uint,class V=string> α SelectEnumSync( sv tableName, SRCE )noexcept(false)->sp<flat_map<K,V>>{ return DataSource().SelectEnumSync<K,V>( tableName, sl ); }//sp<flat_map<T,string>>
-	Φ IdFromName( sv tableName, string name, SRCE )noexcept->SelectAwait<uint>;
+	ⓣ SelectEnum( sv tableName, SRCE )ε->SelectCacheAwait<flat_map<T,string>>{ return DataSource().SelectEnum<T>(tableName, sl); }//sp<flat_map<T,string>>
+	template<class K=uint,class V=string> α SelectEnumSync( sv tableName, SRCE )ε->sp<flat_map<K,V>>{ return DataSource().SelectEnumSync<K,V>( tableName, sl ); }//sp<flat_map<T,string>>
+	Φ IdFromName( sv tableName, string name, SRCE )ι->SelectAwait<uint>;
+	Φ ToParamString( uint c )->string;
 
-	Φ LogDisplay( sv sql, const vector<object>* pParameters, string error={} )noexcept->string;
-	Φ Log( sv sql, const vector<object>* pParameters, SL sl )noexcept->void;
-	α Log( sv sql, const vector<object>* pParameters, ELogLevel level, string error, SL sl )noexcept->void;
-	α LogNoServer( string sql, const vector<object>* pParameters, ELogLevel level, string error, SL sl )noexcept->void;
-	Φ DefaultSyntax()noexcept->const DB::Syntax&;
-	Φ CreateSchema()noexcept(false)->void;
-	Φ DefaultSchema()noexcept(false)->Schema&;
-	Φ CleanDataSources()noexcept->void;
-	Φ ShutdownClean( function<void()>& shutdown )noexcept->void;
+	Φ LogDisplay( sv sql, const vector<object>* pParameters, string error={} )ι->string;
+	Φ Log( sv sql, const vector<object>* pParameters, SL sl )ι->void;
+	α Log( sv sql, const vector<object>* pParameters, ELogLevel level, string error, SL sl )ι->void;
+	α LogNoServer( string sql, const vector<object>* pParameters, ELogLevel level, string error, SL sl )ι->void;
+	Φ DefaultSyntax()ι->const DB::Syntax&;
+	Φ CreateSchema()ε->void;
+	Φ DefaultSchema()ε->Schema&;
+	Φ CleanDataSources()ι->void;
+	Φ ShutdownClean( function<void()>& shutdown )ι->void;
 
-	Ξ ExecuteProc( string sql, vector<object>&& parameters, SRCE )noexcept(false)->uint{ return DataSource().ExecuteProc( move(sql), parameters, sl ); }
-	Ξ ExecuteProcCo( string&& sql, vec<object>&& parameters, SRCE )noexcept{ return DataSource().ExecuteProcCo( move(sql), move(parameters), sl ); }
-	Φ Execute( string sql, vector<object>&& parameters, SRCE )noexcept(false)->uint;
+	Ξ ExecuteProc( string sql, vector<object>&& parameters, SRCE )ε->uint{ return DataSource().ExecuteProc( move(sql), parameters, sl ); }
+	Ξ ExecuteProcCo( string&& sql, vector<object>&& parameters, SRCE )ι{ return DataSource().ExecuteProcCo( move(sql), move(parameters), sl ); }
+	Φ Execute( string sql, vector<object>&& parameters, SRCE )ε->uint;
+	Ξ ExecuteCo( string&& sql, vector<object>&& parameters, SRCE )ι{ return DataSource().ExecuteCo( move(sql), move(parameters), sl ); }
 
-	ⓣ TryScaler( string sql, vec<object>& parameters, SRCE )noexcept->optional<T>;
-	ⓣ Scaler( string sql, vec<object>& parameters={}, SRCE )noexcept(false)->optional<T>;
-	ⓣ ScalerCo( string sql, vec<object> parameters, SRCE )noexcept(false)->SelectAwait<T>;
+	ⓣ TryScaler( string sql, vec<object>& parameters, SRCE )ι->optional<T>;
+	ⓣ Scaler( string sql, vec<object>& parameters={}, SRCE )ε->optional<T>;
+	ⓣ ScalerCo( string sql, vec<object> parameters, SRCE )ε->SelectAwait<T>;
 
-	Φ Select( string sql, std::function<void(const IRow&)> f, vec<object>& values, SRCE )noexcept(false)->void;
-	Φ Select( string sql, std::function<void(const IRow&)> f, SRCE )noexcept(false)->void;
-	Φ SelectIds( string sql, const std::set<uint>& ids, std::function<void(const IRow&)> f, SRCE )noexcept(false)->void;
+	Φ Select( string sql, std::function<void(const IRow&)> f, vec<object>& values, SRCE )ε->void;
+	ⓣ SelectCo( string sql, vec<object> params, CoRowΛ<T> fnctn, SRCE )ε->SelectAwait<T>{ return DataSource().SelectCo<T>( move(sql), params, fnctn, sl ); }
+	
+	Φ Select( string sql, std::function<void(const IRow&)> f, SRCE )ε->void;
+	Φ SelectIds( string sql, const std::set<uint>& ids, std::function<void(const IRow&)> f, SRCE )ε->void;
 
-	ẗ SelectMap( string sql, SRCE )noexcept{ return DataSource().SelectMap<K,V>( move(sql), sl ); }
-	ẗ SelectMap( string sql, string cacheName, SRCE )noexcept{ return DataSource().SelectMap<K,V>( move(sql), move(cacheName), sl ); }
-	ⓣ SelectSet( string sql, vector<object>&& params, SRCE )noexcept{ return DataSource().SelectSet<T>( move(sql), move(params), sl ); }
-	ⓣ SelectSet( string sql, vector<object>&& params, string cacheName, SRCE )noexcept{ return DataSource().SelectSet<T>( move(sql), move(params), move(cacheName), sl ); }
+	ẗ SelectMap( string sql, SRCE )ι{ return DataSource().SelectMap<K,V>( move(sql), sl ); }
+	ẗ SelectMap( string sql, string cacheName, SRCE )ι{ return DataSource().SelectMap<K,V>( move(sql), move(cacheName), sl ); }
+	ⓣ SelectSet( string sql, vector<object>&& params, SRCE )ι{ return DataSource().SelectSet<T>( move(sql), move(params), sl ); }
+	ⓣ SelectSet( string sql, vector<object>&& params, string cacheName, SRCE )ι{ return DataSource().SelectSet<T>( move(sql), move(params), move(cacheName), sl ); }
 
-	Φ SelectName( string sql, uint id, sv cacheName, SRCE )noexcept(false)->CIString;
+	Φ SelectName( string sql, uint id, sv cacheName, SRCE )ε->CIString;
 }
 
 namespace Jde
 {
 	using boost::container::flat_set;
-	ⓣ DB::Scaler( string sql, vec<object>& parameters, SL sl )noexcept(false)->optional<T>
+	ⓣ DB::Scaler( string sql, vec<object>& parameters, SL sl )ε->optional<T>
 	{
 		return DataSource().Scaler<T>( move(sql), parameters, sl );
 	}
-	ⓣ DB::TryScaler( string sql, vec<object>& parameters, SL sl )noexcept->optional<T>
+	ⓣ DB::TryScaler( string sql, vec<object>& parameters, SL sl )ι->optional<T>
 	{
 		return DataSource().TryScaler<T>( move(sql), parameters, sl );
 	}
-	ⓣ DB::ScalerCo( string sql, vec<object> parameters, SL sl )noexcept(false)->SelectAwait<T>
+	ⓣ DB::ScalerCo( string sql, vec<object> parameters, SL sl )ε->SelectAwait<T>
 	{
 		return DataSource().ScalerCo<T>( move(sql), parameters, sl );
 	}
