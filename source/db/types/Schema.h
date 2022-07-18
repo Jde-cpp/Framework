@@ -61,7 +61,7 @@ namespace Jde::DB
 	{
 		return plural.ends_with('s') ? plural.substr( 0, plural.size()-1 ) : plural;
 	}
-	ⓣ Schema::ToPlural( BSV singular )noexcept->RESULT
+	Ŧ Schema::ToPlural( BSV singular )noexcept->RESULT
 	{
 		return singular.ends_with( 's' ) ? RESULT{ singular } : RESULT{ singular }+"s";
 	}

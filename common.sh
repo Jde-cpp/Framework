@@ -88,25 +88,21 @@ function fetchFile
 
 function fetch
 {
-	url=$([ ! -z "$JDE_TOKEN" ] && echo $JDE_TOKEN@ || echo "");
-	if [ ! -d $1 ]; then
-		echo calling git clone $1
-		git clone https://"$url"github.com/Jde-cpp/$1.git -q; cd $1;
-	else
-		cd $1;
-		if  [[ $shouldFetch -eq 1 ]]; then git pull -q; fi;
-	fi;
+	fetchDir $1 $shouldFetch;
+	cd $1;
 	if [ -d source ];then cd source; fi;
 }
 
 function fetchDir
 {
-    local dir=${1};
-    local fetch=${2};
+	local dir=${1}; local fetch=${2};
+	url=$([ ! -z "$jde_token" ] && echo $jde_token@ || echo "");
 	if [ ! -d $dir ]; then
-		git clone https://github.com/Jde-cpp/$dir.git;
-	elif (( $fetch == 1 )); then
-		cd $dir; git pull; cd ..;
+		git clone https://"$url"github.com/Jde-cpp/$dir.git -q;
+	else
+		cd $dir;
+		if  [[ $fetch -eq 1 ]]; then git pull -q; fi;
+		cd ..;
 	fi;
 }
 

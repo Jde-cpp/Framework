@@ -1,1 +1,40 @@
-c_cpp_properties.json
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "browse": { "path": [
+					"${workspaceFolder}",
+					"${env:REPO_DIR}/spdlog/include/",
+					"${env:REPO_DIR}/llvm-project/libcxx/include",
+					"${env:REPO_DIR}/json/include",
+					"${env:REPO_DIR}/tws-api/source/cppclient/client",
+					"${env:REPO_DIR}/IntelRDFPMathLib20U2/LIBRARY/src",
+					"${env:JDE_DIR}/Public",
+					"${env:JDE_DIR}/Framework/tests/.obj/asan/googletest-src/googletest/include",
+					".."
+					], "limitSymbolsToIncludedHeaders": true },
+            "includePath": [
+					"/usr/local/include/c++/v1",
+					".",
+					"${workspaceFolder}/**",
+					 "..",
+					 "${env:REPO_DIR}/llvm-project/libcxx/include",
+					 "${env:REPO_DIR}/spdlog/include/",
+					 "${env:REPO_DIR}/json/include",
+					 "${env:REPO_DIR}/tws-api/source/cppclient/client",
+					 "${env:REPO_DIR}/IntelRDFPMathLib20U2/LIBRARY/src",
+					 "${BOOST_ROOT}",
+					 "${env:JDE_DIR}/Public",
+					 "${env:JDE_DIR}/Framework/tests/.obj/asan/googletest-src/googletest/include"
+					],
+				"defines": [],
+				"forcedInclude": ["pc.h"],
+            "compilerPath": "/usr/local/bin/clang++",
+            "cStandard": "c11",
+            "cppStandard": "c++20",
+            "intelliSenseMode": "clang-x64",
+            "compilerArgs": []
+        }
+    ],
+    "version": 4
+}

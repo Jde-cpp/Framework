@@ -8,27 +8,27 @@
 #define var const auto
 namespace Jde
 {
-	ⓣ Find( const T& collection, typename T::key_type key )->typename T::mapped_type
+	Ŧ Find( const T& collection, typename T::key_type key )->typename T::mapped_type
 	{
 		auto pItem = collection.find( key );
 		return pItem==collection.end() ? typename T::mapped_type{} : pItem->second;
 	}
 
-	ⓣ Find( const T& collection, const typename T::mapped_type& value )->optional<typename T::key_type>
+	Ŧ Find( const T& collection, const typename T::mapped_type& value )->optional<typename T::key_type>
 	{
 		auto pBegin = collection.begin(); auto pEnd = collection.end();
 		auto p = boost::container::find_if( pBegin, pEnd, [&value](var& x)->bool{ return x.second==value; } );
 		return p==collection.end() ? nullopt : optional<typename T::key_type>{ p->first };
 	}
 
-	ⓣ EmplaceShared( T& map, typename T::key_type key )->typename T::mapped_type&
+	Ŧ EmplaceShared( T& map, typename T::key_type key )->typename T::mapped_type&
 	{
 		auto p = map.find( key );
 		if( p==map.end() )
 			p = map.try_emplace( key, ms<typename T::mapped_type::element_type>() ).first;
 		return p->second;
 	}
-	ⓣ EmplaceUnique( T& map, typename T::key_type key )->typename T::mapped_type&
+	Ŧ EmplaceUnique( T& map, typename T::key_type key )->typename T::mapped_type&
 	{
 		auto p = map.find( key );
 		if( p==map.end() )
@@ -65,7 +65,7 @@ namespace Jde
 		return y;
 	}
 
-	ⓣ Replace( T& map, const typename T::key_type& key, typename T::mapped_type&& value )->void
+	Ŧ Replace( T& map, const typename T::key_type& key, typename T::mapped_type&& value )->void
 	{
 		if( auto p = map.find(key); p!=map.end() )
 			p->second = move( value );
@@ -113,7 +113,7 @@ namespace Jde::Collections
 		return y;
 	}
 
-	ⓣ Values( const T& map )->std::vector<typename T::mapped_type>
+	Ŧ Values( const T& map )->std::vector<typename T::mapped_type>
 	{
 		std::vector<typename T::mapped_type> y;
 		for( const auto& keyValue : map )

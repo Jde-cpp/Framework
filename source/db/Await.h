@@ -43,7 +43,7 @@ namespace Jde::DB
 	};
 
 	Τ TSelect<T>::~TSelect(){};
-	ⓣ TSelect<T>::Select( HCoroutine h )->Task//called from await_suspend
+	Ŧ TSelect<T>::Select( HCoroutine h )->Task//called from await_suspend
 	{
 		try
 		{
@@ -79,7 +79,7 @@ namespace Jde::DB
 		α await_resume()noexcept->AwaitResult override;
 	};
 
-	ⓣ SelectCacheAwait<T>::await_resume()noexcept->AwaitResult
+	Ŧ SelectCacheAwait<T>::await_resume()noexcept->AwaitResult
 	{
 		const bool haveValue = (bool)_pValue;
 		auto y = haveValue ? AwaitResult{ move(_pValue) } : IAwait::await_resume();

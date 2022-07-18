@@ -251,7 +251,7 @@ namespace Jde
 		return p;
 	}
 
-	ⓣ QueueMove<T>::PopAll()noexcept->vector<T>
+	Ŧ QueueMove<T>::PopAll()noexcept->vector<T>
 	{
 		LOCK;
 		vector<T> results; results.reserve( _queue.size() );

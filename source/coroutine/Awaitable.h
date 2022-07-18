@@ -81,7 +81,7 @@ namespace Jde::Coroutine
 				ro.Clear();
 		}
 		α await_resume()ι->AwaitResult override{ AwaitResume(); ASSERT(_pPromise); return move(_pPromise->get_return_object().Result()); }
-		ⓣ Set( up<T>&& p )->void{ ASSERT( _pPromise ); _pPromise->get_return_object().SetResult<T>( move(p) ); }
+		Ŧ Set( up<T>&& p )->void{ ASSERT( _pPromise ); _pPromise->get_return_object().SetResult<T>( move(p) ); }
 		α SetException( up<IException> p )->void{ ASSERT( _pPromise ); _pPromise->get_return_object().SetResult( move(*p) ); }
 
 		source_location _sl;
@@ -125,18 +125,18 @@ namespace Jde::Coroutine
 		function<void()> _fnctn;
 	};
 
-	ⓣ CallAwait( std::promise<up<T>>&& p_, IAwait&& a )->Task
+	Ŧ CallAwait( std::promise<up<T>>&& p_, IAwait&& a )->Task
 	{
 		auto p = move( p_ );
 		AwaitResult r = co_await a;
 		ASSERTSL( !r.HasShared() && !r.HasBool(), a._sl );
 		if( r.HasError() )
 			p.set_exception( r.Error()->Ptr() );
-		else 
+		else
 			p.set_value( r.UP<T>() );
 	}
 
-	ⓣ Future( IAwait&& a )->std::future<up<T>>
+	Ŧ Future( IAwait&& a )->std::future<up<T>>
 	{
 		auto p = std::promise<up<T>>();
 		std::future<up<T>> f = p.get_future();
@@ -182,7 +182,7 @@ namespace Jde::Coroutine
 		return f;
 	}
 
-	ⓣ CallAwait( std::promise<sp<T>>&& p_, IAwait&& a )->Task
+	Ŧ CallAwait( std::promise<sp<T>>&& p_, IAwait&& a )->Task
 	{
 		auto p = move( p_ );
 		AwaitResult r = co_await a;
@@ -199,7 +199,7 @@ namespace Jde::Coroutine
 			ASSERT( false );
 	}
 
-	ⓣ SFuture( IAwait&& a )->std::future<sp<T>>
+	Ŧ SFuture( IAwait&& a )->std::future<sp<T>>
 	{
 		std::promise<sp<T>> p;
 		std::future<sp<T>> f = p.get_future();
@@ -253,7 +253,7 @@ namespace Jde::Coroutine
 	};
 	inline CancelAwait::~CancelAwait() {}
 
-	ⓣ TPoolAwait<T>::await_resume()ι->AwaitResult
+	Ŧ TPoolAwait<T>::await_resume()ι->AwaitResult
 	{
 		AwaitResume();
 		try

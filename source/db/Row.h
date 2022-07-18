@@ -22,7 +22,7 @@ namespace Jde::DB
 		β GetUInt32( uint position, SRCE )Ε->uint32_t{ return static_cast<uint32_t>(GetUInt(position, sl)); }
 		β GetUInt16( uint position, SRCE )Ε->uint16_t{ return static_cast<uint16_t>(GetUInt(position, sl)); }
 		β GetUIntOpt( uint position, SRCE )Ε->std::optional<uint> = 0;
-		ⓣ Get( uint position, SRCE )Ε->T;
+		Ŧ Get( uint position, SRCE )Ε->T;
 
 		friend α operator>>( const IRow& row, string& str )ε->const IRow&{ str=row.GetString(row._index++); return row; }
 		friend α operator>>( const IRow& row, uint8_t& value )ε->const IRow&{ value=static_cast<uint8_t>(row.GetUInt(row._index++)); return row; }

@@ -30,6 +30,7 @@ function buildConfig
 		configClean=1;
 	fi;
 	cmd="$sourceBuildDir/cmake/buildc.sh `pwd` $config $configClean";
+	echo $cmd
 	$cmd; if [ $? -ne 0 ]; then echo "FAILED"; echo `pwd`; echo $cmd; exit 1; fi;
 }
 
@@ -43,10 +44,10 @@ function buildLinux
 	fi;
 	if [ $local -eq 1 ]; then
 	   ./buildc.sh asan $projectClean 0;
-	   ./buildc.sh release $projectClean 0;
+	   ./buildc.sh RelWithDebInfo $projectClean 0;
 	else
 		buildConfig asan $projectClean
-		buildConfig release $projectClean
+		buildConfig RelWithDebInfo $projectClean
 	fi;
 }
 function buildWindows2
@@ -153,7 +154,7 @@ function buildTest
 function fetchBuild
 {
 	fetchDefault $1;
-	echo fetchDefault $1 finished;
+	#echo fetchDefault $1 finished;
 	build $1 $2 $3;
 }
 function findProtoc

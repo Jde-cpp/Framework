@@ -68,7 +68,7 @@ namespace Jde::Threading
 	};
 
 
-	ⓣ TWorker<T>::Start()noexcept->sp<IWorker>
+	Ŧ TWorker<T>::Start()noexcept->sp<IWorker>
 	{
 		AtomicGuard l{ _mutex };
 		if( !_pInstance || !_pInstance->HasThread() )

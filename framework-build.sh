@@ -132,19 +132,20 @@ function protocBuildWin
 }
 function protocBuildLinux
 {
-	cd $REPO_DIR/protobuf;
-	git submodule update --init --recursive;
-	./autogen.sh;
-	export CXX='clang++';
-	export CXXFLAGS='-std=c++20 -stdlib=libc++';
-	export LDFLAGS='-stdlib=libc++';
-	export CC=clang;
-	./configure;
-	if (( $clean == 1 )); then make clean; fi;
-	make;
-	make check;
-	sudo make install;
-	sudo ldconfig;
+	echo protocBuildLinux;
+	# cd $REPO_DIR/protobuf;
+	# git submodule update --init --recursive;
+	# ./autogen.sh;
+	# export CXX='clang++';
+	# export CXXFLAGS='-std=c++20 -stdlib=libc++';
+	# export LDFLAGS='-stdlib=libc++';
+	# export CC=clang;
+	# ./configure;
+	# if (( $clean == 1 )); then make clean; fi;
+	# make;
+	# make check;
+	# sudo make install;
+	# sudo ldconfig;
 }
 if [ $buildProto -eq 1 ]; then
 	echo building protoc clean=$clean; echo `pwd`;

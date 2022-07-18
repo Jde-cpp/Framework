@@ -11,14 +11,14 @@
 #define var const auto
 namespace Jde::IO::Proto
 {
-	ⓣ Load( path path, SRCE )noexcept(false)->up<T>;
-	ⓣ TryLoad( path path, SRCE )noexcept->up<T>;
-	ⓣ Load( path path, T& p, SRCE )noexcept(false)->void;
+	Ŧ Load( path path, SRCE )noexcept(false)->up<T>;
+	Ŧ TryLoad( path path, SRCE )noexcept->up<T>;
+	Ŧ Load( path path, T& p, SRCE )noexcept(false)->void;
 
-	ⓣ Deserialize( const vector<char>& data )noexcept(false)->up<T>;
-	ⓣ Deserialize( const google::protobuf::uint8* p, int size )noexcept(false)->T;
-	ⓣ Deserialize( string&& x )noexcept(false)->T;
-	ⓣ ToVector( const google::protobuf::RepeatedPtrField<T>& x )noexcept->vector<T>;
+	Ŧ Deserialize( const vector<char>& data )noexcept(false)->up<T>;
+	Ŧ Deserialize( const google::protobuf::uint8* p, int size )noexcept(false)->T;
+	Ŧ Deserialize( string&& x )noexcept(false)->T;
+	Ŧ ToVector( const google::protobuf::RepeatedPtrField<T>& x )noexcept->vector<T>;
 
 	α Save( const google::protobuf::MessageLite& msg, fs::path path, SL )noexcept(false)->void;
 	α ToString( const google::protobuf::MessageLite& msg )noexcept(false)->string;
@@ -26,7 +26,7 @@ namespace Jde::IO::Proto
 	α ToTimestamp( TimePoint t )->up<google::protobuf::Timestamp>;
 	namespace Internal
 	{
-		ⓣ Deserialize( const google::protobuf::uint8* p, int size, T& proto )noexcept(false)->void
+		Ŧ Deserialize( const google::protobuf::uint8* p, int size, T& proto )noexcept(false)->void
 		{
 			google::protobuf::io::CodedInputStream input{ p, (int)size };
 			THROW_IF( !proto.MergePartialFromCodedStream(&input), "MergePartialFromCodedStream returned false." );
@@ -63,19 +63,19 @@ namespace Jde::IO
 		FileUtilities::Save( move(path), p, sl );
 	}
 
-	ⓣ Proto::Deserialize( const vector<char>& data )noexcept(false)->up<T>
+	Ŧ Proto::Deserialize( const vector<char>& data )noexcept(false)->up<T>
 	{
 		auto p = mu<T>();
 		Internal::Deserialize<T>( (google::protobuf::uint8*)data.data(), (uint32)data.size(), *p );
 		return p;
 	}
-	ⓣ Proto::Deserialize( const google::protobuf::uint8* p, int size )noexcept(false)->T
+	Ŧ Proto::Deserialize( const google::protobuf::uint8* p, int size )noexcept(false)->T
 	{
 		T y;
 		Internal::Deserialize<T>( p, size, y );
 		return y;
 	}
-	ⓣ Proto::Deserialize( string&& x )noexcept(false)->T
+	Ŧ Proto::Deserialize( string&& x )noexcept(false)->T
 	{
 		T y;
 		Internal::Deserialize<T>( (google::protobuf::uint8*)x.data(), (int)x.size(), y );
@@ -83,7 +83,7 @@ namespace Jde::IO
 		return y;
 	}
 
-	ⓣ Proto::Load( path path, T& proto, SL sl )noexcept(false)->void
+	Ŧ Proto::Load( path path, T& proto, SL sl )noexcept(false)->void
 	{
 		up<vector<char>> pBytes;
 		try
@@ -102,14 +102,14 @@ namespace Jde::IO
 		Internal::Deserialize( (google::protobuf::uint8*)pBytes->data(), (uint32)pBytes->size(), proto );
 	}
 
-	ⓣ Proto::Load( path path, SL sl )noexcept(false)->up<T>
+	Ŧ Proto::Load( path path, SL sl )noexcept(false)->up<T>
 	{
 		auto p = mu<T>();
 		Load( path, *p, sl );
 		return p;
 	}
 
-	ⓣ Proto::TryLoad( path path, SL sl )noexcept->up<T>
+	Ŧ Proto::TryLoad( path path, SL sl )noexcept->up<T>
 	{
 		up<T> pValue{};
 		if( fs::exists(path) )
@@ -124,7 +124,7 @@ namespace Jde::IO
 		return pValue;
 	}
 
-	ⓣ Proto::ToVector( const google::protobuf::RepeatedPtrField<T>& x )noexcept->vector<T>
+	Ŧ Proto::ToVector( const google::protobuf::RepeatedPtrField<T>& x )noexcept->vector<T>
 	{
 		vector<T> y;
 		for_each( x.begin(), x.end(), [&y]( auto item ){ y.push_back(item); } );

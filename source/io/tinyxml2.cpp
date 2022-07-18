@@ -335,7 +335,7 @@ void StrPair::CollapseWhitespace()
 }
 namespace Jde
 {
-	ⓣ Xml::XmlTrim( bsv<typename T::traits_type> txt )ι->T
+	Ŧ Xml::XmlTrim( bsv<typename T::traits_type> txt )ι->T
 	{
 		return T{ Trim<T>(UnEscape<T>(txt)) }; static_assert( std::is_same<T, string>::value || std::is_same<T, String>::value, "can't be sv" );
 	}
@@ -426,7 +426,7 @@ namespace Jde
 			else //<html
 			{
 				//DEBUG_IF( parser.Line()==139 );
-				var closing = haveClose 
+				var closing = haveClose
 					? next.size()<3 ? ">" : next[next.size()-2]=='/' ? "/>" : ">" //tag does not work with <br />
 					: parser.NextToken( {"/>",">","<"} );
 				if( !closing.ends_with("/>") )
@@ -818,7 +818,7 @@ bool XMLUtil::ToUnsigned64(const char* str, uint64_t* value) {
 	 var startLine = _parseCurLineNum;
 	 if( WhitespaceMode()!=PRESERVE_WHITESPACE || parent.Value<iv>()!="P" )
 		p = SkipWhiteSpace( p, &_parseCurLineNum );
-	 if( !*p ) 
+	 if( !*p )
 		return make_tuple( p, nullptr );
 
 	 // These strings define the matching patterns:
@@ -1183,7 +1183,7 @@ char* XMLNode::ParseDeep( char* p, StrPair* parentEndTag, uint* curLineNumPtr )
 	{
 		XMLNode* node;
 		//DEBUG_IF( _document->Line()==138 );
-		std::tie(p,node) = _document->Identify( p, *this ); 
+		std::tie(p,node) = _document->Identify( p, *this );
 		if( !node )
 			break;
 		var initialLineNum = line = node->_parseLineNum;
@@ -1837,7 +1837,7 @@ void XMLElement::SetText( sv inText )
 {
 	if( FirstChild() && FirstChild()->ToText() )
 		FirstChild()->SetValue( inText );
-	else 
+	else
 		InsertFirstChild( GetDocument().NewText(inText) );
 }
 
@@ -2760,7 +2760,7 @@ void XMLDocument::PopDepth()
 α XMLNode::NextHtml( bool children, bool continuation )Ι->const XMLNode*
 {
 	var* y{ children && !IsHtmlStyle() ? FirstChild() : nullptr };
-	
+
 	if( !y && NextSibling() )
 		y = NextSibling()->NextHtml();
 	else if( y && y->IsHtmlStyle() && continuation )

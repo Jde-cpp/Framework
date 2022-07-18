@@ -10,7 +10,7 @@ namespace Jde::DB
 	Φ DataSource( path libraryName, string connectionString )ε->sp<IDataSource>;
 	Φ DataSourcePtr()ε->sp<IDataSource>;
 	Ξ Driver()ι->string{ return Settings::Env("db/driver").value_or( _msvc ? "Jde.DB.Odbc.dll" : "libJde.MySql.so" ); }
-	ⓣ SelectEnum( sv tableName, SRCE )ε->SelectCacheAwait<flat_map<T,string>>{ return DataSource().SelectEnum<T>(tableName, sl); }//sp<flat_map<T,string>>
+	Ŧ SelectEnum( sv tableName, SRCE )ε->SelectCacheAwait<flat_map<T,string>>{ return DataSource().SelectEnum<T>(tableName, sl); }//sp<flat_map<T,string>>
 	template<class K=uint,class V=string> α SelectEnumSync( sv tableName, SRCE )ε->sp<flat_map<K,V>>{ return DataSource().SelectEnumSync<K,V>( tableName, sl ); }//sp<flat_map<T,string>>
 	Φ IdFromName( sv tableName, string name, SRCE )ι->SelectAwait<uint>;
 	Φ ToParamString( uint c )->string;
@@ -30,20 +30,20 @@ namespace Jde::DB
 	Φ Execute( string sql, vector<object>&& parameters, SRCE )ε->uint;
 	Ξ ExecuteCo( string&& sql, vector<object>&& parameters, SRCE )ι{ return DataSource().ExecuteCo( move(sql), move(parameters), sl ); }
 
-	ⓣ TryScaler( string sql, vec<object>& parameters, SRCE )ι->optional<T>;
-	ⓣ Scaler( string sql, vec<object>& parameters={}, SRCE )ε->optional<T>;
-	ⓣ ScalerCo( string sql, vec<object> parameters, SRCE )ε->SelectAwait<T>;
+	Ŧ TryScaler( string sql, vec<object>& parameters, SRCE )ι->optional<T>;
+	Ŧ Scaler( string sql, vec<object>& parameters={}, SRCE )ε->optional<T>;
+	Ŧ ScalerCo( string sql, vec<object> parameters, SRCE )ε->SelectAwait<T>;
 
 	Φ Select( string sql, std::function<void(const IRow&)> f, vec<object>& values, SRCE )ε->void;
-	ⓣ SelectCo( string sql, vec<object> params, CoRowΛ<T> fnctn, SRCE )ε->SelectAwait<T>{ return DataSource().SelectCo<T>( move(sql), params, fnctn, sl ); }
-	
+	Ŧ SelectCo( string sql, vec<object> params, CoRowΛ<T> fnctn, SRCE )ε->SelectAwait<T>{ return DataSource().SelectCo<T>( move(sql), params, fnctn, sl ); }
+
 	Φ Select( string sql, std::function<void(const IRow&)> f, SRCE )ε->void;
 	Φ SelectIds( string sql, const std::set<uint>& ids, std::function<void(const IRow&)> f, SRCE )ε->void;
 
 	ẗ SelectMap( string sql, SRCE )ι{ return DataSource().SelectMap<K,V>( move(sql), sl ); }
 	ẗ SelectMap( string sql, string cacheName, SRCE )ι{ return DataSource().SelectMap<K,V>( move(sql), move(cacheName), sl ); }
-	ⓣ SelectSet( string sql, vector<object>&& params, SRCE )ι{ return DataSource().SelectSet<T>( move(sql), move(params), sl ); }
-	ⓣ SelectSet( string sql, vector<object>&& params, string cacheName, SRCE )ι{ return DataSource().SelectSet<T>( move(sql), move(params), move(cacheName), sl ); }
+	Ŧ SelectSet( string sql, vector<object>&& params, SRCE )ι{ return DataSource().SelectSet<T>( move(sql), move(params), sl ); }
+	Ŧ SelectSet( string sql, vector<object>&& params, string cacheName, SRCE )ι{ return DataSource().SelectSet<T>( move(sql), move(params), move(cacheName), sl ); }
 
 	Φ SelectName( string sql, uint id, sv cacheName, SRCE )ε->CIString;
 }
@@ -51,15 +51,15 @@ namespace Jde::DB
 namespace Jde
 {
 	using boost::container::flat_set;
-	ⓣ DB::Scaler( string sql, vec<object>& parameters, SL sl )ε->optional<T>
+	Ŧ DB::Scaler( string sql, vec<object>& parameters, SL sl )ε->optional<T>
 	{
 		return DataSource().Scaler<T>( move(sql), parameters, sl );
 	}
-	ⓣ DB::TryScaler( string sql, vec<object>& parameters, SL sl )ι->optional<T>
+	Ŧ DB::TryScaler( string sql, vec<object>& parameters, SL sl )ι->optional<T>
 	{
 		return DataSource().TryScaler<T>( move(sql), parameters, sl );
 	}
-	ⓣ DB::ScalerCo( string sql, vec<object> parameters, SL sl )ε->SelectAwait<T>
+	Ŧ DB::ScalerCo( string sql, vec<object> parameters, SL sl )ε->SelectAwait<T>
 	{
 		return DataSource().ScalerCo<T>( move(sql), parameters, sl );
 	}

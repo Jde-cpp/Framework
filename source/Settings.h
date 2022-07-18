@@ -38,15 +38,15 @@ namespace Jde::Settings
 		α TryMembers( sv path )noexcept->flat_map<string,Container>;
 		α Have( sv path )noexcept->bool;
 		α FindPath( sv path )const noexcept->optional<json>;
-		ⓣ TryArray( sv path, vector<T> dflt )noexcept->vector<T>;
-		ⓣ Map( sv path )noexcept->flat_map<string,T>;
+		Ŧ TryArray( sv path, vector<T> dflt )noexcept->vector<T>;
+		Ŧ Map( sv path )noexcept->flat_map<string,T>;
 		Variant operator[]( sv path )noexcept(false);
 
 		α ForEach( sv path, function<void(sv, const nlohmann::json&)> f )noexcept->void;
 
 		α SubContainer( sv entry )const noexcept(false)->sp<Container>;
 		α TrySubContainer( sv entry )const noexcept->optional<Container>;
-		ⓣ Getɛ( sv path, SRCE )const noexcept(false)->T;
+		Ŧ Getɛ( sv path, SRCE )const noexcept(false)->T;
 		template<class T=string> auto Get( sv path )const noexcept->optional<T>;
 
 		α& Json()noexcept{ /*ASSERT(_pJson);*/ return *_pJson; }
@@ -61,7 +61,7 @@ namespace Jde::Settings
 	$ Container::Getɛ<TimePoint>( sv path, const source_location& sl )const noexcept(false)->TimePoint{ return DateTime{ Getɛ<string>(path, sl) }.GetTimePoint(); }
 	$ Container::Getɛ<fs::path>( sv path, const source_location& )const noexcept(false)->fs::path{ var p = Get<string>(path); return p.has_value() ? fs::path{*p} : fs::path{}; }
 
-	ⓣ Container::Getɛ( sv path, const source_location& sl )const noexcept(false)->T
+	Ŧ Container::Getɛ( sv path, const source_location& sl )const noexcept(false)->T
 	{
 		auto p = Get<T>( path ); if( !p ) throw Exception{ sl, ELogLevel::Debug, "'{}' was not found in settings.", path };//mysql precludes using THROW_IF
 		return *p;
@@ -113,7 +113,7 @@ namespace Jde::Settings
 		return p ? optional<fs::path>(*p) : nullopt;
 	}
 
-	ⓣ Container::Get( sv path )const noexcept->optional<T>
+	Ŧ Container::Get( sv path )const noexcept->optional<T>
 	{
 		auto p = FindPath( path );
 		try
@@ -145,9 +145,9 @@ namespace Jde::Settings
 	α Save( const json& j, sv what, SRCE )noexcept(false)->void;
 	α Set( sv what, const Container::Variant& v, bool save=true, SRCE )noexcept(false)->void;
 
-	ⓣ TryArray( sv path, vector<T> dflt={} )noexcept{ return Global().TryArray<T>(path, dflt); }
+	Ŧ TryArray( sv path, vector<T> dflt={} )noexcept{ return Global().TryArray<T>(path, dflt); }
 
-	ⓣ Container::TryArray( sv path, vector<T> dflt )noexcept->vector<T>
+	Ŧ Container::TryArray( sv path, vector<T> dflt )noexcept->vector<T>
 	{
 		vector<T> values;
 		if( auto p = FindPath(path); p && p->is_array() )
@@ -160,7 +160,7 @@ namespace Jde::Settings
 		return values;
 	}
 
-	ⓣ Container::Map( sv path )noexcept->flat_map<string,T>
+	Ŧ Container::Map( sv path )noexcept->flat_map<string,T>
 	{
 		auto pItem = _pJson->find( path );
 		flat_map<string,T> values;
@@ -183,7 +183,7 @@ namespace Jde::Settings
 	}
 
 
-	ⓣ Getɛ( sv path, SRCE )noexcept(false){ return Global().Getɛ<T>( path, sl ); }
+	Ŧ Getɛ( sv path, SRCE )noexcept(false){ return Global().Getɛ<T>( path, sl ); }
 	template<class T=string> auto Get( sv path )noexcept->optional<T>{ return Global().Get<T>( path ); }
 	$ Get<Duration>( sv path )noexcept->optional<Duration>{ return Global().Get<Duration>( path ); }
 	Ξ TryMembers( sv path )noexcept->flat_map<string,Container>{ return Global().TryMembers( path ); }
@@ -220,7 +220,7 @@ namespace Jde::Settings
 		const T Value;
 	};
 
-	ⓣ TryGetSubcontainer( sv container, sv path )noexcept->optional<T>
+	Ŧ TryGetSubcontainer( sv container, sv path )noexcept->optional<T>
 	{
 		optional<T> v;
 		if( auto pSub=Global().TrySubContainer( container ); pSub )
