@@ -121,7 +121,7 @@ namespace Jde::DB
 					continue;
 				if( _syntax.ProcFileSuffix().size() )
 					name = name.parent_path()/( name.stem().string()+string{_syntax.ProcFileSuffix()}+name.extension().string() );
-				var path = relativePath/name; THROW_IF( !fs::exists(path), "Could not find {}"sv, path.string() );
+				var path = relativePath/name; CHECK_PATH( path, SRCE_CUR );
 				var text = IO::FileUtilities::Load( path );
 				DBG( "Executing '{}'"sv, path.string() );
 				var queries = Str::Split<sv,iv>( text, "\ngo"_iv );
@@ -208,11 +208,11 @@ namespace Jde::DB
 				if( _pDataSource->Scaler<uint>( osSelect.str(), selectParams)==0 )
 				{
 					ostringstream sql;
-					var haveSequence = pTable->HaveSequence();
-					if( haveSequence )
+					var identityInsert = pTable->HaveSequence() && _syntax.NeedsIdentityInsert();
+					if( identityInsert )
 						sql << "SET IDENTITY_INSERT " << tableName << " ON;" << endl;
 					sql << format( "insert into {}({})values({})", tableName, osInsertColumns.str(), osInsertValues.str() );
-					if( haveSequence )
+					if( identityInsert )
 						sql << endl << "SET IDENTITY_INSERT " << tableName << " OFF;";
 					_pDataSource->Execute( sql.str(), params );
 				}

@@ -9,7 +9,7 @@ namespace Jde
 
 namespace Jde::Coroutine
 {
-	Ξ ForceSuspend()->bool
+	Ξ ForceSuspend()ι->bool
 	{
 		bool y{ false };
 		if constexpr( _debug )
@@ -182,7 +182,7 @@ namespace Jde::Coroutine
 		return f;
 	}
 
-	Ŧ CallAwait( std::promise<sp<T>>&& p_, IAwait&& a )->Task
+	Ŧ CallAwait( std::promise<sp<T>>&& p_, IAwait&& a )ι->Task
 	{
 		auto p = move( p_ );
 		AwaitResult r = co_await a;
@@ -199,7 +199,7 @@ namespace Jde::Coroutine
 			ASSERT( false );
 	}
 
-	Ŧ SFuture( IAwait&& a )->std::future<sp<T>>
+	Ŧ SFuture( IAwait&& a )ι->std::future<sp<T>>
 	{
 		std::promise<sp<T>> p;
 		std::future<sp<T>> f = p.get_future();
@@ -223,7 +223,7 @@ namespace Jde::Coroutine
 	{
 		using base=AsyncAwait;
 	public:
-		AsyncReadyAwait():base{ [](HCoroutine){return Task{};} },_ready{ [](){return AwaitResult{};} }{}
+		AsyncReadyAwait()ι:base{ [](HCoroutine){return Task{};} },_ready{ [](){return AwaitResult{};} }{}
 		AsyncReadyAwait( function<optional<AwaitResult>()> ready, function<Task(HCoroutine)> fnctn, SRCE, str name={} )ι:base{fnctn, sl, name}, _ready{ready}{};
 
 		α await_ready()ι->bool override{  _result=_ready(); return _result.has_value(); }

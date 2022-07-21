@@ -54,6 +54,7 @@ namespace Jde
 		if( Level()!=ELogLevel::None && Level()>Logging::BreakLevel() )
 		{
 			Log();
+			SetLevel( ELogLevel::None );
 			BREAK;
 		}
 //#endif

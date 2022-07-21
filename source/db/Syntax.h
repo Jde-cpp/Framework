@@ -11,7 +11,8 @@
 		β HasUnsigned()Ι->bool{ return false; }
 		β IdentityColumnSyntax()Ι->sv{ return "identity(1001,1)"sv; }
 		β IdentitySelect()Ι->sv{ return "@@identity"sv; }
-		β Limit( str syntax, uint limit )const noexcept(false)->string;
+		β Limit( str syntax, uint limit )Ε->string;
+		β NeedsIdentityInsert()Ι->bool{ return true; }
 		β NowDefault()Ι->iv{ return UtcNow(); }
 		β ProcFileSuffix()Ι->sv{ return ".ms"; }
 		β ProcParameterPrefix()Ι->sv{ return "@"sv; }
@@ -31,7 +32,8 @@
 		α HasUnsigned()Ι->bool override{ return true; }
 		α IdentityColumnSyntax()Ι->sv override{ return "AUTO_INCREMENT"sv; }
 		α IdentitySelect()Ι->sv override{ return "LAST_INSERT_ID()"sv; }
-		β Limit( str sql, uint limit )Ι->string override{ return format("{} limit {}", sql, limit); }
+		α Limit( str sql, uint limit )Ι->string override{ return format("{} limit {}", sql, limit); }
+		α NeedsIdentityInsert()Ι->bool override{ return false; }
 		α ProcEnd()Ι->sv override{ return "end"sv; }
 		α ProcParameterPrefix()Ι->sv override{ return ""sv; }
 		α ProcStart()Ι->sv override{ return "begin"sv; }
@@ -43,10 +45,10 @@
 		α ProcFileSuffix()Ι->sv override{ return ""; }
 	};
 
-	Ξ Syntax::Limit( str sql, uint limit )const noexcept(false)->string
+	Ξ Syntax::Limit( str sql, uint limit )Ε->string
 	{
 		if( sql.size()<7 )//mysql precludes using THROW, THROW_IF, CHECK
-			throw Jde::Exception{ SRCE_CUR, Jde::ELogLevel::Debug, "expecting sql length>7 - {}", sql };
+			throw Exception{ SRCE_CUR, Jde::ELogLevel::Debug, "expecting sql length>7 - {}", sql };
 		return format("{} top {} {}", sql.substr(0,7), limit, sql.substr(7) );
 	};
 }

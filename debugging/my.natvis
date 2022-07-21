@@ -78,7 +78,31 @@
 			</ArrayItems>
 		</Expand>
 	</Type>
-	<Type Name="std::__1::__basic_string_common&lt;true&gt;">
+	<Type Name="std::__1::basic_string&lt;*&gt;">
+		<DisplayString Condition="(__r_.__value_.__s.__size_ &amp; 1) == 0">{__r_.__value_.__s.__data_, s8b}</DisplayString>
+		<DisplayString Condition="(__r_.__value_.__s.__size_ &amp; 1) != 0">{__r_.__value_.__l.__data_, s8b}</DisplayString>
+		<Expand>
+			<Item Name="[size z(packed)]" Condition="(__r_.__value_.__s.__size_ &amp; 1) == 0">(__r_.__value_.__s.__size_ &gt;&gt; 1) % 256</Item>
+			<Item Name="[size]" Condition="(__r_.__value_.__s.__size_ &amp; 1) != 0">__r_.__value_.__l.__size_</Item>
+		</Expand>
+	</Type>
+	<Type Name="std::__1::string">
+		<DisplayString Condition="(__r_.__value_.__s.__size_ &amp; 1) == 0">{__r_.__value_.__s.__data_, s8b}</DisplayString>
+		<DisplayString Condition="(__r_.__value_.__s.__size_ &amp; 1) != 0">{__r_.__value_.__l.__data_, s8b}</DisplayString>
+		<Expand>
+			<Item Name="[size z(packed)]" Condition="(__r_.__value_.__s.__size_ &amp; 1) == 0">(__r_.__value_.__s.__size_ &gt;&gt; 1) % 256</Item>
+			<Item Name="[size]" Condition="(__r_.__value_.__s.__size_ &amp; 1) != 0">__r_.__value_.__l.__size_</Item>
+		</Expand>
+	</Type>
+	<Type Name="Jde::str">
+		<DisplayString Condition="(__r_.__value_.__s.__size_ &amp; 1) == 0">{__r_.__value_.__s.__data_, s8b}</DisplayString>
+		<DisplayString Condition="(__r_.__value_.__s.__size_ &amp; 1) != 0">{__r_.__value_.__l.__data_, s8b}</DisplayString>
+		<Expand>
+			<Item Name="[size z(packed)]" Condition="(__r_.__value_.__s.__size_ &amp; 1) == 0">(__r_.__value_.__s.__size_ &gt;&gt; 1) % 256</Item>
+			<Item Name="[size]" Condition="(__r_.__value_.__s.__size_ &amp; 1) != 0">__r_.__value_.__l.__size_</Item>
+		</Expand>
+	</Type>
+	<Type Name="std::__1::__fs::filesystem::path::string_type">
 		<DisplayString Condition="(__r_.__value_.__s.__size_ &amp; 1) == 0">{__r_.__value_.__s.__data_, s8b}</DisplayString>
 		<DisplayString Condition="(__r_.__value_.__s.__size_ &amp; 1) != 0">{__r_.__value_.__l.__data_, s8b}</DisplayString>
 		<Expand>
@@ -171,5 +195,12 @@
 				<Item Name="[value]" Condition="index() ==  9" Optional="true">_Tail._Tail._Tail._Tail._Tail._Tail._Tail._Tail._Tail._Head</Item>
 				<Item Name="[value]" Condition="index() == 10" Optional="true">_Tail._Tail._Tail._Tail._Tail._Tail._Tail._Tail._Tail._Tail._Head</Item>
 			</Expand>
+	</Type>
+	<Type Name="std::__1::basic_string_view&lt;char,*&gt;">
+		<DisplayString>{__data,[__size]s8b}</DisplayString>
+		<Expand>
+			<Item Name="[size]">__size</Item>
+			<Item Name="data">__data</Item>
+		</Expand>
 	</Type>
 </AutoVisualizer>
