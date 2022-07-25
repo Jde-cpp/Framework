@@ -397,9 +397,9 @@ namespace Jde
 					for( size_t i=0; !equal && i<openTags.size(); ++i )
 						LOGL( level, "[{}][{}]{}", openTags[i].Line, openTags[i].Index, openTags[i].Tag );
 					var endIndex = parser.Index()-tag.size()-2;
-					var newXml = string{ parser.Text.substr(0, endIndex) }+format( "<{}>", endTag )+string{ parser.Text.substr(endIndex) };
+					var newXml = string{ parser.Text.substr(0, endIndex) }+format( "<{}>", ToSV(endTag) )+string{ parser.Text.substr(endIndex) };
 
-					LOGL( level, "[{}]({})noopentag = '{}|||{}", parser.Line(), endTag, parser.Text.substr(parser.Index()-120, 120), parser.Text.substr(parser.Index(), 30) );
+					LOGL( level, "[{}]({})noopentag = '{}|||{}", parser.Line(), ToSV(endTag), parser.Text.substr(parser.Index()-120, 120), parser.Text.substr(parser.Index(), 30) );
 					LOGL( level, "new = '{}", newXml.substr(parser.Index()-120, 150) );
 					result = Close( Parser{newXml, &parser, parser.Index()}, openTags );
 					break;
@@ -415,7 +415,7 @@ namespace Jde
 						var newXml = string{ parser.Text.substr(0, startTag.Index) }+string{"/"}+string{ parser.Text.substr(startTag.Index) };
 						if( Settings::Get<bool>("xml/closeLog").value_or(false) )
 						{
-							LOGL( level, "({})start = [{}]'{}', end= [{}]'{}'", parser.Line(), startTag.Index, startTag.Tag, parser.Index(), endTag );
+							LOGL( level, "({})start = [{}]'{}', end= [{}]'{}'", parser.Line(), startTag.Index, ToStr(startTag.Tag), parser.Index(), ToSV(endTag) );
 							LOGL( level, "old = '{}'", parser.Text.substr(startTag.Index-70, 100) );
 							LOGL( level, "new = '{}'", newXml.substr(startTag.Index-70, 100) );
 						}
@@ -436,7 +436,7 @@ namespace Jde
 						var endIndex = parser.Index()-1;
 						var newXml = string{ parser.Text.substr(0, parser.Index()-1) }+"/>"+string{ parser.Text.substr(endIndex) };
 
-						LOGL( level, "[{}]({})noclosetag = '{}|||{}", parser.Line(), tag, parser.Text.substr(parser.Index()-120, 120), parser.Text.substr(parser.Index(), 30) );
+						LOGL( level, "[{}]({})noclosetag = '{}|||{}", parser.Line(), ToSV(tag), parser.Text.substr(parser.Index()-120, 120), parser.Text.substr(parser.Index(), 30) );
 						LOGL( level, "new = '{}", newXml.substr(parser.Index()-120, 150) );
 						result = Close( Parser{newXml, &parser, endIndex}, openTags );
 						break;

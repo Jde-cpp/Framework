@@ -10,7 +10,7 @@ namespace Jde::DB
 {
 	using nlohmann::json;
 
-	Column::Column( sv name, uint ordinalPosition, sv dflt, bool isNullable, EType type, optional<uint> maxLength, bool isIdentity, bool isId, optional<uint> numericPrecision, optional<uint> numericScale )noexcept:
+	Column::Column( sv name, uint ordinalPosition, sv dflt, bool isNullable, EType type, optional<uint> maxLength, bool isIdentity, bool isId, optional<uint> numericPrecision, optional<uint> numericScale )ι:
 		Name{name},
 		OrdinalPosition{ordinalPosition},
 		Default{dflt},
@@ -23,11 +23,11 @@ namespace Jde::DB
 		NumericScale{numericScale}
 	{}
 
-	Column::Column( sv name )noexcept:
+	Column::Column( sv name )ι:
 		Name{ name }
 	{}
 
-	Column::Column( sv name, const nlohmann::json& j, const flat_map<string,Column>& commonColumns, const flat_map<string,Table>& parents, const nlohmann::ordered_json& schema )noexcept(false):
+	Column::Column( sv name, const nlohmann::json& j, const flat_map<string,Column>& commonColumns, const flat_map<string,Table>& parents, const nlohmann::ordered_json& schema )ε:
 		Name{ name }
 	{
 		auto getType = [this,&commonColumns, &schema, &parents]( sv typeName )
@@ -91,11 +91,11 @@ namespace Jde::DB
 		else if( j.is_string() )
 			getType( j.get<string>() );
 	}
-	α Column::DataTypeString( const Syntax& syntax )const noexcept->SchemaName
+	α Column::DataTypeString( const Syntax& syntax )Ι->SchemaName
 	{
-		return MaxLength ? format("{}({})", ToString(Type, syntax), *MaxLength) : ToStr( ToString(Type, syntax) );
+		return MaxLength ? format("{}({})", ToStr(ToString(Type, syntax)), *MaxLength) : ToStr( ToString(Type, syntax) );
 	}
-	α Column::Create( const Syntax& syntax )const noexcept->string
+	α Column::Create( const Syntax& syntax )Ι->string
 	{
 		var null = IsNullable ? "null"sv : "not null"sv;
 		const string sequence = IsIdentity ?  " "+string{syntax.IdentityColumnSyntax()} : string{};
@@ -185,13 +185,13 @@ namespace Jde::DB
 		}
 	}
 
-	α Table::InsertProcName()const noexcept->SchemaName
+	α Table::InsertProcName()Ι->SchemaName
 	{
 		var haveSequence = std::find_if( Columns.begin(), Columns.end(), [](var& c){return c.IsIdentity;} )!=Columns.end();
 		return !haveSequence || CustomInsertProc ? SchemaName{} : format( "{}_insert", DB::Schema::ToSingular(Name) );
 	}
 
-	α Table::InsertProcText( const Syntax& syntax )const noexcept->string
+	α Table::InsertProcText( const Syntax& syntax )Ι->string
 	{
 		ostringstream osCreate, osInsert, osValues;
 		osCreate << "create procedure " << InsertProcName() << "(";
@@ -223,7 +223,7 @@ namespace Jde::DB
 		return CIString{ osCreate.str() };
 	}
 
-	α Table::Create( const Syntax& syntax )const noexcept->string
+	α Table::Create( const Syntax& syntax )Ι->string
 	{
 		ostringstream createStatement;
 		createStatement << "Create table " << Name << "(" << endl;
@@ -242,7 +242,7 @@ namespace Jde::DB
 		return createStatement.str();
 	}
 
-	Index::Index( sv indexName, sv tableName, bool primaryKey, vector<string>* pColumns, bool unique, optional<bool> clustered )noexcept:
+	Index::Index( sv indexName, sv tableName, bool primaryKey, vector<string>* pColumns, bool unique, optional<bool> clustered )ι:
 		Name{ indexName },
 		TableName{ tableName },
 		Columns{ pColumns ? *pColumns : vector<string>{} },
@@ -250,7 +250,7 @@ namespace Jde::DB
 		Unique{ unique },
 		PrimaryKey{ primaryKey }
 	{}
-	Index::Index( sv indexName, sv tableName, const Index& y )noexcept:
+	Index::Index( sv indexName, sv tableName, const Index& y )ι:
 		Name{ indexName },
 		TableName{ tableName },
 		Columns{ y.Columns },
@@ -259,7 +259,7 @@ namespace Jde::DB
 		PrimaryKey{ y.PrimaryKey }
 	{}
 
-	α Index::Create( sv name, sv tableName, const Syntax& syntax )const noexcept->string
+	α Index::Create( sv name, sv tableName, const Syntax& syntax )Ι->string
 	{
 		string unique = Unique ? "unique" : "";
 		ostringstream os;
@@ -273,14 +273,14 @@ namespace Jde::DB
 		return os.str();
 	}
 
-	α ForeignKey::Create( sv name, sv columnName, const DB::Table& pkTable, sv foreignTable )noexcept(false)->string
+	α ForeignKey::Create( sv name, sv columnName, const DB::Table& pkTable, sv foreignTable )ε->string
 	{
 		THROW_IF( pkTable.SurrogateKey.size()!=1, "{} has {} columns in pk, !1 has not implemented", pkTable.Name, pkTable.SurrogateKey.size() );
 		ostringstream os;
 		os << "alter table " << foreignTable << " add constraint " << name << " foreign key(" << columnName << ") references " << pkTable.Name << "(" << Str::AddCommas(pkTable.SurrogateKey) << ")";
 		return os.str();
 	}
-	const Column* Table::FindColumn( sv name )const noexcept
+	const Column* Table::FindColumn( sv name )Ι
 	{
 		auto pColumn = find_if( Columns.begin(), Columns.end(), [&name](var& c){return c.Name==name;} );
 		return pColumn==Columns.end() ? nullptr : &(*pColumn);
@@ -292,42 +292,42 @@ namespace Jde::DB
 		return pColumn==table.Columns.end() ? SchemaName{} : pColumn->Name;
 	}
 
-	α TableNamePart( const Table& table, uint8 index )noexcept(false)->sv
+	α TableNamePart( const Table& table, uint8 index )ε->sv
 	{
 		var name = table.NameWithoutType();//split returns temp
 		var nameParts = Str::Split( name, '_' );
 		return nameParts.size()>index ? DB::Schema::ToSingular( nameParts[index] ) : "";
 	}
-	α Table::Prefix()const noexcept->sv{ return Str::Split( Name, '_' )[0]; }
-	α Table::NameWithoutType()const noexcept->sv{ var underscore = Name.find_first_of('_'); return underscore==string::npos ? Name : sv{Name.data()+underscore+1, Name.size()-underscore-1 }; }
+	α Table::Prefix()Ι->sv{ return Str::Split( Name, '_' )[0]; }
+	α Table::NameWithoutType()Ι->sv{ var underscore = Name.find_first_of('_'); return underscore==string::npos ? Name : sv{Name.data()+underscore+1, Name.size()-underscore-1 }; }
 
-	α Table::FKName()const noexcept->SchemaName{ return string{Schema::ToSingular(NameWithoutType())}+"_id"; }
-	α Table::JsonTypeName()const noexcept->string
+	α Table::FKName()Ι->SchemaName{ return string{Schema::ToSingular(NameWithoutType())}+"_id"; }
+	α Table::JsonTypeName()Ι->string
 	{
 		auto name = Schema::ToJson( Schema::ToSingular(NameWithoutType()) );
 		if( name.size() )
 			name[0] = (char)std::toupper( name[0] );
 		return name;
 	}
-	α Table::ChildId()const noexcept(false)->SchemaName
+	α Table::ChildId()Ε->SchemaName
 	{
 		var part = TableNamePart( *this, 0 );
 		return part.empty() ? string{ part } : ColumnStartingWith( *this, part );
 	}
 
-	α Table::ChildTable( const DB::Schema& schema )const noexcept(false)->sp<const Table>
+	α Table::ChildTable( const DB::Schema& schema )Ε->sp<const Table>
 	{
 		var part = TableNamePart( *this, 0 );
 		return part.empty() ? sp<const Table>{} : schema.TryFindTableSuffix( Schema::ToPlural(part) );
 	}
 
-	α Table::ParentId()const noexcept(false)->SchemaName
+	α Table::ParentId()Ε->SchemaName
 	{
 		var part = TableNamePart( *this, 1 );
 		return part.empty() ? string{ part } : ColumnStartingWith( *this, part );
 	}
 
-	α Table::ParentTable( const DB::Schema& schema )const noexcept(false)->sp<const Table>
+	α Table::ParentTable( const DB::Schema& schema )Ε->sp<const Table>
 	{
 		var part = TableNamePart( *this, 1 );
 		return part.empty() ? sp<const Table>{} : schema.TryFindTableSuffix( Schema::ToPlural(part) );

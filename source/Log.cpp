@@ -166,7 +166,16 @@ namespace Jde
 				var path = pPath && !pPath->empty() ? *pPath/fileNameWithExt : OSApp::ApplicationDataFolder()/"logs"/fileNameWithExt;
 				var truncate = sink.Get<bool>( "truncate" ).value_or( true );
 				additional = format( " truncate='{}' path='{}'", truncate, path.string() );
-				pSink = ms<spdlog::sinks::basic_file_sink_mt>( path.string(), truncate );
+				try
+				{
+					pSink = ms<spdlog::sinks::basic_file_sink_mt>( path.string(), truncate );
+				}
+				catch( const spdlog::spdlog_ex& e )
+				{
+					LogMemoryDetail( Logging::Message{"settings", ELogLevel::Error, "Could not create log:  ({}) path='{}' - {}"}, name, path.string(), e.what() );
+					std::cerr << format( "Could not create log:  ({}) path='{}' - {}", name, path.string(), path.string(), e.what() ) << std::endl;
+					continue;
+				}
 				if( pattern.empty() )
 					pattern = markdown ? "%^%3!l%$-%H:%M:%S.%e [%v](%@)\\" : "%^%3!l%$-%H:%M:%S.%e %-64@ %v";
 			}

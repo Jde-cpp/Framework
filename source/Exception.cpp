@@ -150,7 +150,7 @@ namespace Jde
 	{
 		_what = _pUnderLying ? _pUnderLying->what() : Code
 			? format( "({}) {} - {} path='{}'", Code, std::strerror(errno), IException::what(), Path().string() )
-			: format( "({}){}", Path(), IException::what() );
+			: format( "({}){}", Path().string(), IException::what() );
 	}
 	α IOException::what()Ι->const char*
 	{

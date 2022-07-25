@@ -25,12 +25,12 @@ namespace Jde
 		template<>
 		α operator()( DB::DBTimePoint x )ι->string{ return ToIsoString( x ); }
 	};
-	α DB::ToString( const object& p )noexcept(false)->string
+	α DB::ToString( const object& p )ε->string
 	{
 		return std::visit( Visit{}, p );
 	}
 
-	α  DB::ToType( iv typeName )noexcept->DB::EType
+	α  DB::ToType( iv typeName )ι->DB::EType
 	{
 		//String typeName{ t };
 		EType type{ EType::None };
@@ -89,11 +89,11 @@ namespace Jde
 		else if( typeName=="money" )
 			type = EType::Money;
 		else
-			TRACE( "Unknown datatype({})."sv, typeName );
+			TRACE( "Unknown datatype({}).", ToSV(typeName) );
 		return type;
 	}
 
-	α DB::ToString( EType type, const Syntax& syntax )noexcept->String
+	α DB::ToString( EType type, const Syntax& syntax )ι->String
 	{
 		String typeName;
 		if( syntax.HasUnsigned() && type == EType::UInt ) typeName = "int unsigned";
@@ -127,7 +127,7 @@ namespace Jde
 		return typeName;
 	}
 
-	α DB::ToObject( EType type, const json& j, sv memberName, SL sl )noexcept(false)->DB::object
+	α DB::ToObject( EType type, const json& j, sv memberName, SL sl )ε->DB::object
 	{
 		object value{ nullptr };
 		if( !j.is_null() )
@@ -138,7 +138,7 @@ namespace Jde
 				THROW_IFX( !j.is_boolean(), Exception(sl, "{} could not conver to boolean {}", memberName, j.dump()) );
 				value = object{ j.get<bool>() };
 				break;
-			case EType::Int8: 
+			case EType::Int8:
 				THROW_IFX( !j.is_number(), Exception(sl, "{} could not conver to int {}", memberName, j.dump()) );
 				value = object{ j.get<int8_t>() };
 				break;
@@ -173,7 +173,7 @@ namespace Jde
 		}
 		return value;
 	}
-	α DB::ToJson( const object& v, json& j )noexcept->void
+	α DB::ToJson( const object& v, json& j )ι->void
 	{
 		var index = (EObject)v.index();
 		if( index==EObject::String )

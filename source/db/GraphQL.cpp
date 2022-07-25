@@ -45,32 +45,32 @@ namespace Jde
 	}
 namespace DB
 {
-	α MutationQL::TableSuffix()const noexcept->string
+	α MutationQL::TableSuffix()Ι->string
 	{
 		if( _tableSuffix.empty() )
 			_tableSuffix = DB::Schema::ToPlural<string>( DB::Schema::FromJson<string,string>(JsonName) );
 		return _tableSuffix;
 	}
 
-	α MutationQL::InputParam( sv name )const noexcept(false)->json
+	α MutationQL::InputParam( sv name )Ε->json
 	{
 		var input = Input();
 		var p = input.find( name ); THROW_IF( p==input.end(), "Could not find '{}' argument. {}", name, input.dump() );
 		return *p;
 	}
-	α MutationQL::Input()const noexcept(false)->json
+	α MutationQL::Input()Ε->json
 	{
 		var pInput = Args.find("input"); THROW_IF( pInput==Args.end(), "Could not find input argument. {}", Args.dump() );
 		return *pInput;
 	}
 
-	α TableQL::DBName()const noexcept->string
+	α TableQL::DBName()Ι->string
 	{
 		return DB::Schema::ToPlural( DB::Schema::FromJson(JsonName) );
 	}
 }
 #define TEST_ACCESS(a,b,c) TRACE( "TEST_ACCESS({},{},{})"sv, a, b, c )
-	α ToJsonName( DB::Column c )noexcept(false)
+	α ToJsonName( DB::Column c )ε
 	{
 		string tableName;
 		auto memberName{ DB::Schema::ToJson(c.Name) };
@@ -84,7 +84,7 @@ namespace DB
 		}
 		return make_tuple( memberName, tableName );
 	}
-	α Insert( const DB::Table& table, const DB::MutationQL& m )noexcept(false)->uint
+	α Insert( const DB::Table& table, const DB::MutationQL& m )ε->uint
 	{
 		ostringstream sql{ string{DB::Schema::ToSingular(table.Name)}, std::ios::ate }; sql << "_insert(";
 		vector<DB::object> parameters; parameters.reserve( table.Columns.size() );
@@ -122,8 +122,8 @@ namespace DB
 		_pDataSource->ExecuteProc( sql.str(), parameters, result );
 		return id;
 	}
-	//um_permissions 
-	α SubWhere( const DB::Table& table, const DB::Column& c, vector<DB::object>& params, uint paramIndex )noexcept(false)->string
+	//um_permissions
+	α SubWhere( const DB::Table& table, const DB::Column& c, vector<DB::object>& params, uint paramIndex )ε->string
 	{
 		ostringstream sql{ "=( select id from ", std::ios::ate }; sql << table.Name << " where " << c.Name;
 		if( c.QLAppend.size() )
@@ -143,7 +143,7 @@ namespace DB
 			sql << "=? )";
 		return sql.str();
 	}
-	
+
 	α Update( const DB::Table& table, const DB::MutationQL& m, const DB::Syntax& syntax )->uint
 	{
 		ostringstream sql{ format("update {} set ", table.Name), std::ios::ate };
@@ -180,7 +180,7 @@ namespace DB
 					//	THROW( "Could not get criterial from {}", m.Args.dump() );
 				}
 				else if( c.Name=="updated" )
-					sqlUpdate = format( ",{}={}", c.Name, syntax.UtcNow() );
+					sqlUpdate = format( ",{}={}", c.Name, ToSV(syntax.UtcNow()) );
 			}
 			else
 			{
@@ -239,7 +239,7 @@ namespace DB
 		ostringstream sql{ "update ", std::ios::ate }; sql << table.Name << " set deleted=null where id=?";
 		return _pDataSource->Execute( sql.str(), parameters );
 	}
-	α Purge( sv tableName, const DB::MutationQL& m, UserPK userId, SRCE )noexcept(false)->uint
+	α Purge( sv tableName, const DB::MutationQL& m, UserPK userId, SRCE )ε->uint
 	{
 		var pId = m.Args.find( "id" ); THROW_IF( pId==m.Args.end(), "Could not find id argument. {}", m.Args.dump() );
 		vector<DB::object> parameters;
@@ -265,7 +265,7 @@ namespace DB
 			parameters.push_back( p->get<string>() );
 		else
 			THROW( "Could not find '{}' or name in '{}'", parentId, input.dump() );
-				
+
 		return parameters;
 	};
 	α Add( const DB::Table& table, const json& input )->uint
@@ -292,7 +292,7 @@ namespace DB
 	α Remove( const DB::Table& table, const json& input )->uint
 	{
 		auto params = ChildParentParams( DB::Schema::ToJson(table.ChildId()), DB::Schema::ToJson(table.ParentId()), input );
-		ostringstream sql{ "delete from ", std::ios::ate }; sql << table.Name << " where " << table.ChildId(); 
+		ostringstream sql{ "delete from ", std::ios::ate }; sql << table.Name << " where " << table.ChildId();
 		if( (EObject)params[0].index()==EObject::String )
 		{
 			var pTable = table.ChildTable(_schema); CHECK( pTable );
@@ -310,7 +310,7 @@ namespace DB
 /*			sql << "=( select id from " << pTable->Name << " where name";
 			if( pName->QLAppend.size() )
 			{
-				
+
 				var split = Str::Split( get<string>(params[1]), "\\" ); CHECK( split.size() );
 				var appendColumnName = DB::Schema::FromJson( pName->QLAppend );
 				var pColumn = pTable->FindColumn( appendColumnName ); CHECK( pColumn ); CHECK( pColumn->PKTable.size() );
@@ -330,10 +330,10 @@ namespace DB
 		return _pDataSource->Execute( sql.str(), params );
 	}
 
-	α Mutation( const DB::MutationQL& m, UserPK userId )noexcept(false)->uint
+	α Mutation( const DB::MutationQL& m, UserPK userId )ε->uint
 	{
 		var& t = _schema.FindTableSuffix( m.TableSuffix() );
-		if( var pAuthorizer = UM::FindAuthorizer(t.Name); pAuthorizer ) 
+		if( var pAuthorizer = UM::FindAuthorizer(t.Name); pAuthorizer )
 			pAuthorizer->Test( m.Type, userId );
 		uint result;
 		if( m.Type==DB::EMutationQL::Create )
@@ -364,7 +364,7 @@ namespace DB
 		return result;
 	}
 
-	α DB::ColumnQL::QLType( const DB::Column& column, SL sl )noexcept(false)->string
+	α DB::ColumnQL::QLType( const DB::Column& column, SL sl )ε->string
 	{
 		string qlTypeName = "ID";
 		if( !column.IsId )
@@ -397,7 +397,7 @@ namespace DB
 		}
 		return qlTypeName;
 	}
-	α IntrospectFields( sv typeName, const DB::Table& dbTable, const DB::TableQL& fieldTable, json& jData )noexcept(false)
+	α IntrospectFields( sv typeName, const DB::Table& dbTable, const DB::TableQL& fieldTable, json& jData )ε
 	{
 		auto fields = json::array();
 		var pTypeTable = fieldTable.FindTable( "type" );
@@ -510,7 +510,7 @@ namespace DB
 		jTable["name"] = dbTable.JsonTypeName();
 		jData["__type"] = jTable;
 	}
-	α IntrospectEnum( sv /*typeName*/, const DB::Table& dbTable, const DB::TableQL& fieldTable, json& jData )noexcept(false)
+	α IntrospectEnum( sv /*typeName*/, const DB::Table& dbTable, const DB::TableQL& fieldTable, json& jData )ε
 	{
 		auto fields = json::array();
 		ostringstream sql{ "select ", std::ios::ate };
@@ -533,7 +533,7 @@ namespace DB
 		jTable["enumValues"] = fields;
 		jData["__type"] = jTable;
 	}
-	α QueryType( const DB::TableQL& typeTable, json& jData )noexcept(false)
+	α QueryType( const DB::TableQL& typeTable, json& jData )ε
 	{
 		THROW_IF( typeTable.Args.find("name")==typeTable.Args.end(), "__type data for all names '{}' not supported", typeTable.JsonName );
 		var typeName = typeTable.Args["name"].get<string>();
@@ -548,7 +548,7 @@ namespace DB
 				THROW( "__type data for '{}' not supported", pQlTable->JsonName );
 		}
 	}
-	α QuerySchema( const DB::TableQL& schemaTable, json& jData )noexcept(false)->void
+	α QuerySchema( const DB::TableQL& schemaTable, json& jData )ε->void
 	{
 		THROW_IF( schemaTable.Tables.size()!=1, "Only Expected 1 table type for __schema {}", schemaTable.Tables.size() );
 		var pMutationTable = schemaTable.Tables[0]; THROW_IF( pMutationTable->JsonName!="mutationType", "Only mutationType implemented for __schema - {}", pMutationTable->JsonName );
@@ -601,7 +601,7 @@ namespace DB
 		json jSchema; jSchema["mutationType"] = jmutationType;
 		jData["__schema"] = jmutationType;
 	}
-	α QueryTable( const DB::TableQL& table, uint userId, json& jData )noexcept(false)->void
+	α QueryTable( const DB::TableQL& table, uint userId, json& jData )ε->void
 	{
 		TEST_ACCESS( "Read", table.DBName(), userId ); //TODO implement.
 		if( table.JsonName=="__type" )
@@ -612,7 +612,7 @@ namespace DB
 			DB::GraphQL::Query( table, jData, userId );
 	}
 
-	α QueryTables( const vector<DB::TableQL>& tables, uint userId )noexcept(false)->json
+	α QueryTables( const vector<DB::TableQL>& tables, uint userId )ε->json
 	{
 		json data;
 		for( var& table : tables )
@@ -621,7 +621,7 @@ namespace DB
 	}
 
 
-	α DB::Query( sv query, UserPK userId )noexcept(false)->json
+	α DB::Query( sv query, UserPK userId )ε->json
 	{
 		LOGS( string{query} );
 		var qlType = ParseQL( query );
@@ -756,7 +756,7 @@ namespace DB
 		params = StringifyKeys( params );
 		return json::parse( params );
 	}
-	α LoadTable( Parser2& q, sv jsonName )noexcept(false)->DB::TableQL//__type(name: "Account") { fields { name type { name kind ofType{name kind} } } }
+	α LoadTable( Parser2& q, sv jsonName )ε->DB::TableQL//__type(name: "Account") { fields { name type { name kind ofType{name kind} } } }
 	{
 		var j = q.Peek()=="(" ? ParseJson( q ) : json{};
 		THROW_IF( q.Next()!="{", "Expected '{{' after table name. i='{}', text='{}'", q.Index(), q.AllText() );
@@ -770,7 +770,7 @@ namespace DB
 		}
 		return table;
 	}
-	α LoadTables( Parser2& q, sv jsonName )noexcept(false)->vector<DB::TableQL>
+	α LoadTables( Parser2& q, sv jsonName )ε->vector<DB::TableQL>
 	{
 		vector<DB::TableQL> results;
 		do
@@ -802,7 +802,7 @@ namespace DB
 		DB::MutationQL ql{ string{tableJsonName}, type, j, result/*, parentJsonName*/ };
 		return ql;
 	}
-	α DB::ParseQL( sv query )noexcept(false)->DB::RequestQL
+	α DB::ParseQL( sv query )ε->DB::RequestQL
 	{
 		uint i = query.find_first_of( "{" ); THROW_IF( i==sv::npos || i>query.size()-2, "Invalid query '{}'", query );
 		Parser2 parser{ query.substr(i+1), "{}()," };

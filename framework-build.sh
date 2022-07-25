@@ -61,8 +61,8 @@ function winBoost
 {
 	lib=$1;
 	echo winBoost - $lib
-	winBoostConfig boost_$lib-vc143-mt-x64-1_78 release;
-	winBoostConfig boost_$lib-vc143-mt-gd-x64-1_78 debug;
+	winBoostConfig boost_$lib-vc143-mt-x64-1_79 release;
+	winBoostConfig boost_$lib-vc143-mt-gd-x64-1_79 debug;
 }
 if windows; then
 	pushd `pwd` > /dev/null;
@@ -71,7 +71,13 @@ if windows; then
 	moveToDir release; popd  > /dev/null;
 	if [ $shouldFetch -eq 1 ]; then
 		if [ ! -d $REPO_BASH/vcpkg/installed/x64-windows/include/nlohmann ]; then vcpkg.exe install nlohmann-json --triplet x64-windows; fi;
-		if [ ! -d $REPO_BASH/vcpkg/installed/x64-windows/lib/zlib.lib ]; then vcpkg.exe install zlib --triplet x64-windows; fi;
+		if [ ! -d $REPO_BASH/vcpkg/installed/x64-windows/lib/zlib.lib ]; 
+		then 
+			vcpkg.exe install zlib --triplet x64-windows; 
+			pushd `pwd` > /dev/null;
+			cd $stageDir/debug; mklink zlibd1.dll $REPO_BASH/vcpkg/installed/x64-windows/debug/bin;
+			cd $stageDir/release; mklink zlib1.dll $REPO_BASH/vcpkg/installed/x64-windows/bin;
+		fi;
 		if [ -z $BOOST_DIR ]; then echo \$BOOST_DIR not set; exit 1; fi;
 		toBashDir $BOOST_DIR BOOST_BASH;
 		if [ ! -d $BOOST_BASH ]; then
@@ -104,7 +110,7 @@ if windows; then
 		cd fmt; echo pulling fmt; git pull;
 	fi;
 	if [ ! -d build ]; then
-		cmake -DCMAKE_CXX_STANDARD=20 ..;
+		moveToDir buil;cmake -DCMAKE_CXX_STANDARD=20 ..;
 	else
 		cd build;
 	fi;
