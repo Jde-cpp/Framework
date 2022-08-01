@@ -7,14 +7,14 @@ namespace Jde::DB
 {
 	struct IDataSource;
 	using namespace Coroutine;
-	using RowΛ=function<void( const IRow& )noexcept(false)>;
-	Τ using CoRowΛ=function<void( T& pResult, const IRow& r )noexcept(false)>;
+	using RowΛ=function<void( const IRow& )ι(false)>;
+	Τ using CoRowΛ=function<void( T& pResult, const IRow& r )ι(false)>;
 	struct ISelect
 	{
-		ISelect( sp<IDataSource> ds )noexcept:_ds{ds}{}
-		β Results()noexcept->void* = 0;
-		β OnRow( const IRow& r )noexcept->void=0;
-		β SelectCo( string sql, vector<object>&& params, SRCE )noexcept->up<IAwait>;
+		ISelect( sp<IDataSource> ds )ι:_ds{ds}{}
+		β Results()ι->void* = 0;
+		β OnRow( const IRow& r )ι->void=0;
+		β SelectCo( string sql, vector<object>&& params, SRCE )ι->up<IAwait>;
 	protected:
 		sp<IDataSource> _ds;
 	};
@@ -22,12 +22,12 @@ namespace Jde::DB
 	Τ class TSelect : public ISelect  //TODO need a TSelect for scaler, _pResult can be null in that case.
 	{
 	protected:
-		TSelect( IAwait& base_, sp<IDataSource> ds, string sql, CoRowΛ<T> fnctn, vector<object> params )noexcept:ISelect{ds}, _base{base_},_sql{move(sql)}, _fnctn{fnctn}, _params{move(params)}{}
+		TSelect( IAwait& base_, sp<IDataSource> ds, string sql, CoRowΛ<T> fnctn, vector<object> params )ι:ISelect{ds}, _base{base_},_sql{move(sql)}, _fnctn{fnctn}, _params{move(params)}{}
 		virtual ~TSelect()=0;
 		α Select( HCoroutine h )->Task;
-		α Results()noexcept->void* override{ return _pResult.release(); }
-		α OnRow( const IRow& r )noexcept->void override{ _fnctn(*_pResult,r); }
-		string ToString()noexcept;
+		α Results()ι->void* override{ return _pResult.release(); }
+		α OnRow( const IRow& r )ι->void override{ _fnctn( *_pResult, r ); }
+		string ToString()ι;
 		IAwait& _base;
 		string _sql;
 		CoRowΛ<T> _fnctn;
@@ -38,8 +38,8 @@ namespace Jde::DB
 	};
 	Τ struct SelectAwait final: IAwait, TSelect<T>
 	{
-		SelectAwait( sp<IDataSource> ds, string sql, CoRowΛ<T> fnctn, vector<object> params, SL sl )noexcept:IAwait{sl},TSelect<T>( *this, ds, move(sql), fnctn, move(params) ){}
-		α await_suspend( HCoroutine h )noexcept->void override{ IAwait::await_suspend( h ); TSelect<T>::Select( move(h) ); }
+		SelectAwait( sp<IDataSource> ds, string sql, CoRowΛ<T> fnctn, vector<object> params, SL sl )ι:IAwait{sl},TSelect<T>( *this, ds, move(sql), fnctn, move(params) ){}
+		α await_suspend( HCoroutine h )ι->void override{ IAwait::await_suspend( h ); TSelect<T>::Select( move(h) ); }
 	};
 
 	Τ TSelect<T>::~TSelect(){};
@@ -65,8 +65,8 @@ namespace Jde::DB
 	public:
 		ICacheAwait( string name, SL sl ):base{sl},_name{move(name)}{ ASSERT(_name.size()); }
 		virtual ~ICacheAwait()=0;
-		Φ await_ready()noexcept->bool;
-		Φ await_resume()noexcept->AwaitResult;
+		Φ await_ready()ι->bool;
+		Φ await_resume()ι->AwaitResult;
 	protected:
 		sp<void> _pValue;
 		string _name;
@@ -75,11 +75,11 @@ namespace Jde::DB
 	Τ struct SelectCacheAwait final: ICacheAwait, TSelect<T>
 	{
 		SelectCacheAwait( sp<IDataSource> ds, string sql, string cache, CoRowΛ<T> fnctn, vector<object> params, SL sl ):ICacheAwait{cache,sl},TSelect<T>{ *this, ds, move(sql), fnctn, move(params) }{}
-		α await_suspend( HCoroutine h )noexcept->void override{ IAwait::await_suspend( h ); TSelect<T>::Select( move(h) ); }
-		α await_resume()noexcept->AwaitResult override;
+		α await_suspend( HCoroutine h )ι->void override{ IAwait::await_suspend( h ); TSelect<T>::Select( move(h) ); }
+		α await_resume()ι->AwaitResult override;
 	};
 
-	Ŧ SelectCacheAwait<T>::await_resume()noexcept->AwaitResult
+	Ŧ SelectCacheAwait<T>::await_resume()ι->AwaitResult
 	{
 		const bool haveValue = (bool)_pValue;
 		auto y = haveValue ? AwaitResult{ move(_pValue) } : IAwait::await_resume();

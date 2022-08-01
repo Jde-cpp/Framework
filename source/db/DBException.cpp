@@ -3,7 +3,7 @@
 
 namespace Jde::DB
 {
-	α CopyParams( const std::vector<object>* pValues )->const std::vector<object>
+	α CopyParams( const std::vector<object>* pValues )ι->const std::vector<object>
 	{
 		std::vector<object> y;
 		if( pValues )
@@ -14,22 +14,23 @@ namespace Jde::DB
 		return y;
 	}
 
-	DBException::DBException( int32 errorCode, string sql, const std::vector<object>* pValues, string what, SL sl )noexcept:
-		IException{ move(what), ELogLevel::Error, (uint)errorCode, sl },
+	DBException::DBException( int32 errorCode, string sql, const std::vector<object>* pValues, string what, SL sl )ι:
+		IException{ move(what), ELogLevel::NoLog, (uint)errorCode, sl },
 		Sql{ sql },
 		Parameters{ CopyParams(pValues) }
 	{
+		SetLevel( ELogLevel::Error );
 		BreakLog();
 	}
 
-	α DBException::what()const noexcept->const char*
+	α DBException::what()Ι->const char*
 	{
 		if( Sql.size() && _what.empty() )
 			_what =  DB::LogDisplay( Sql, &Parameters, IException::what() );
 		return IException::what();
 	}
 
-	α DBException::Log()const noexcept->void
+	α DBException::Log()Ι->void
 	{
 		if( Level()==ELogLevel::NoLog )
 			return;

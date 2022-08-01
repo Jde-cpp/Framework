@@ -14,24 +14,21 @@ namespace Jde
 	public:
 		UnorderedMapValue( )=default;
 		UnorderedMapValue( const UnorderedMapValue& copy )=delete;
-		void erase( const TKey& item )noexcept{ unique_lock<std::shared_mutex> l( _mutex ); base::erase( item ); }
+		void erase( const TKey& item )ι{ unique_lock<std::shared_mutex> l( _mutex ); base::erase( item ); }
 		const std::unordered_map<TKey,TValue> Find( std::function<bool(const TValue&)> func )const;
-		optional<TValue> Find( const TKey& key )noexcept;
-		uint ForEach( std::function<void(const TKey&, const TValue&)> fncn )const noexcept;
-		bool Has( const TKey& key )const noexcept;
-		template<class... Args > bool emplace( Args&&... args )noexcept;
-		void Replace( const TKey& id, const TValue& value )noexcept;
-		bool MoveIn( const TKey& id, TValue v )noexcept{ return base::emplace(id,move(v)).second; }
-		optional<TValue> MoveOut( const TKey& item )noexcept;
-
-		//std::unique_lock<std::shared_mutex> UniqueLock()noexcept{return std::unique_lock<std::shared_mutex>{_mutex};}
-		//base& Underlying()noexcept{ return *this; }
+		optional<TValue> Find( const TKey& key )ι;
+		uint ForEach( std::function<void(const TKey&, const TValue&)> fncn )Ι;
+		bool Has( const TKey& key )Ι;
+		ψ emplace( Args&&... args )ι->bool;
+		void Replace( const TKey& id, const TValue& value )ι;
+		bool MoveIn( const TKey& id, TValue v )ι{ return base::emplace(id,move(v)).second; }
+		optional<TValue> MoveOut( const TKey& item )ι;
+		α size()ι->uint{ return base::size(); }
 	private:
 		mutable std::shared_mutex _mutex;
 	};
 	template<typename TKey, typename TValue>
-	template<class... Args >
-	bool UnorderedMapValue<TKey,TValue>::emplace( Args&&... args )noexcept
+	ψ UnorderedMapValue<TKey,TValue>::emplace( Args&&... args )ι->bool
 	{
 		std::unique_lock<std::shared_mutex> l{ _mutex };
 		const auto result = base::emplace( args... );
@@ -51,7 +48,7 @@ namespace Jde
 	}
 
 	template<typename TKey, typename TValue>
-	optional<TValue> UnorderedMapValue<TKey,TValue>::Find( const TKey& key )noexcept//TODO forward args like try_emplace
+	optional<TValue> UnorderedMapValue<TKey,TValue>::Find( const TKey& key )ι//TODO forward args like try_emplace
 	{
 		shared_lock<std::shared_mutex> l(_mutex);
 		const auto pKeyValue = base::find( key );
@@ -59,7 +56,7 @@ namespace Jde
 	}
 
 	template<typename TKey, typename TValue>
-	void UnorderedMapValue<TKey,TValue>::Replace( const TKey& id, const TValue& value )noexcept
+	void UnorderedMapValue<TKey,TValue>::Replace( const TKey& id, const TValue& value )ι
 	{
 		unique_lock<std::shared_mutex> l(_mutex);
 		if( base::find(id)!=base::end() )
@@ -68,14 +65,14 @@ namespace Jde
 			base::emplace( id, value );
 	}
 	template<typename TKey, typename TValue>
-	bool UnorderedMapValue<TKey,TValue>::Has( const TKey& id )const noexcept
+	bool UnorderedMapValue<TKey,TValue>::Has( const TKey& id )Ι
 	{
 		shared_lock<std::shared_mutex> l(_mutex);
 		return base::find(id)!=base::end();
 	}
 
 	template<typename TKey, typename TValue>
-	uint UnorderedMapValue<TKey,TValue>::ForEach( std::function<void(const TKey&, const TValue&)> fncn )const noexcept
+	uint UnorderedMapValue<TKey,TValue>::ForEach( std::function<void(const TKey&, const TValue&)> fncn )Ι
 	{
  		shared_lock<std::shared_mutex> l(_mutex);
 		const auto count = base::size();
@@ -84,7 +81,7 @@ namespace Jde
 		return count;
 	}
 	template<typename TKey, typename TValue>
-	optional<TValue> UnorderedMapValue<TKey,TValue>::MoveOut( const TKey& id )noexcept
+	optional<TValue> UnorderedMapValue<TKey,TValue>::MoveOut( const TKey& id )ι
 	{
 		optional<TValue> v;
 		unique_lock<std::shared_mutex> l( _mutex );

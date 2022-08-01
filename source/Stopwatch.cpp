@@ -17,17 +17,19 @@ namespace Jde
 
 	Stopwatch::SDuration Stopwatch::_minimumToLog = 1s;
 
-	Stopwatch::Stopwatch( sv what, bool started )noexcept:
+	Stopwatch::Stopwatch( sv what, bool started, SL sl )ι:
 		_what{ what },
-		_start{ started ? SClock::now() : STimePoint{} }
+		_start{ started ? SClock::now() : STimePoint{} },
+		_sl{ sl }
 	{}
 
-	Stopwatch::Stopwatch( Stopwatch* pParent, sv what, sv instance, bool started )noexcept:
+	Stopwatch::Stopwatch( Stopwatch* pParent, sv what, sv instance, bool started, SL sl )ι:
 		_what{ what },
 		_instance{instance},
 		_start{ started ? SClock::now() : STimePoint{} },
 		_pParent{ pParent },
-		_logMemory{ false }
+		_logMemory{ false },
+		_sl{ sl }
 	{}
 
 	Stopwatch::~Stopwatch()
@@ -36,13 +38,13 @@ namespace Jde
 			Finish();
 	}
 
-	Stopwatch::SDuration Stopwatch::Elapsed()const
+	α Stopwatch::Elapsed()Ι->Stopwatch::SDuration
 	{
 		auto end = SClock::now();
 		var asNano = duration_cast<SDuration>( end - _start - _elapsedPause );
 		return asNano;
 	}
-	string Stopwatch::Progress( uint index, uint total, sv context, bool force/*=false*/ )const
+	α Stopwatch::Progress( uint index, uint total, sv context, bool force/*=false*/ )Ι->string
 	{
 		if( index==0 )
 			index = 1;
@@ -87,19 +89,19 @@ namespace Jde
 		_previousProgressElapsed = elapsed;
 		return result;
 	}
-	void Stopwatch::Output( sv what, const SDuration& elapsed, bool logMemory, SL sl )
+	α Stopwatch::Output( sv what, const SDuration& elapsed, bool logMemory, SL sl )ι->void
 	{
 		if( logMemory )
 			Logging::Log( Logging::Message{ELogLevel::Debug, "{{}) time:  {} - {} Gigs", sl}, what, FormatSeconds(elapsed), IApplication::MemorySize()/std::pow(2,30) );
 		else
 			Logging::Log( Logging::Message{ELogLevel::Debug, "({}) time:  {}", sl}, what, FormatSeconds(elapsed) );
 	}
-	void Stopwatch::Finish( bool /*remove=true*/ )
+	α Stopwatch::Finish( bool /*remove=true*/ )ι->void
 	{
 		Finish( ""sv );
 	}
 
-	void Stopwatch::Finish( sv description )
+	α Stopwatch::Finish( sv description )ι->void
 	{
 		var elapsed = Elapsed();
 		Pause();
@@ -109,17 +111,17 @@ namespace Jde
 		if( delta>_minimumToLog || _children.size()>0 )
 		{
 			_previousProgressElapsed = elapsed;
-			Output( description.size() ? description : _instance.size() ? _instance : _what, delta, _logMemory );
+			Output( description.size() ? description : _instance.size() ? _instance : _what, delta, _logMemory, _sl );
 			for( var& child : _children )
 			{
 				if( child.second>_minimumToLog )
-					Output( /*StopwatchTypes::Other,*/ child.first.c_str(), child.second, false );
+					Output( /*StopwatchTypes::Other,*/ child.first.c_str(), child.second, false, _sl );
 			}
 		}
 		_finished=true;
 	}
 
-	string Stopwatch::FormatSeconds( const SDuration& duration )
+	string Stopwatch::FormatSeconds( const SDuration& duration )ι
 	{
 		double seconds = duration_cast<milliseconds>(duration).count()/1000.0; //;
 		string fmt;
@@ -138,7 +140,7 @@ namespace Jde
 		return fmt;
 	}
 
-	string Stopwatch::FormatCount( double count )
+	string Stopwatch::FormatCount( double count )ι
 	{
 		string fmt;
 		if( count > 100000.0 )
@@ -150,7 +152,7 @@ namespace Jde
 		return fmt;
 	}
 
-	void Stopwatch::UnPause()
+	α Stopwatch::UnPause()ι->void
 	{
 		if( _startPause!=STimePoint{} )
 		{
@@ -158,7 +160,7 @@ namespace Jde
 			_startPause = STimePoint{};
 		}
 	}
-	void Stopwatch::Pause()
+	α Stopwatch::Pause()ι->void
 	{
 		if( _startPause==STimePoint{} )
 			_startPause = SClock::now();
