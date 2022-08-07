@@ -10,7 +10,7 @@ namespace Jde::Settings
 	static const LogTag& _logLevel = Logging::TagLevel( "settings" );
 	up<Settings::Container> _pGlobal;
 
-	Container::Container( path jsonFile, SL sl )noexcept(false):
+	Container::Container( path jsonFile, SL sl )ε:
 		_pJson{ mu<nlohmann::json>() }
 	{
 		CHECK_PATH( jsonFile, sl );
@@ -20,12 +20,12 @@ namespace Jde::Settings
 	}
 	Container::Container( const nlohmann::json& json )noexcept:_pJson{ make_unique<nlohmann::json>(json) }{}
 
-	α Container::TrySubContainer( sv entry )const noexcept->optional<Container>
+	α Container::TrySubContainer( sv entry )Ι->optional<Container>
 	{
 		auto p = _pJson->find( entry );
 		return p==_pJson->end() ? optional<Container>{} : Container( *p );
 	}
-	α Container::SubContainer( sv entry )const noexcept(false)->sp<Container>
+	α Container::SubContainer( sv entry )Ε->sp<Container>
 	{
 		auto item = _pJson->find( entry );
 		THROW_IF( item==_pJson->end(), "Could not find {}", entry );
@@ -34,7 +34,7 @@ namespace Jde::Settings
 
 	α Container::Have( sv path )noexcept->bool{ return _pJson->find(path)!=_pJson->end(); }//TODO rename contains
 
-	α Container::FindPath( sv path )const noexcept->optional<json>
+	α Container::FindPath( sv path )Ι->optional<json>
 	{
 		var values = Str::Split( path, '/' );
 		auto j = _pJson.get();
@@ -53,7 +53,7 @@ namespace Jde::Settings
 		return result;
 	}
 
-	JsonNumber::JsonNumber( json j )noexcept(false)
+	JsonNumber::JsonNumber( json j )ε
 	{
 		if( j.is_number_float() )
 			Value = j.get<double>();
@@ -62,7 +62,7 @@ namespace Jde::Settings
 		else
 			THROW( "{} not implemented", (uint)j.type() );
 	}
-	Container::Variant Container::operator[]( sv path )noexcept(false)
+	Container::Variant Container::operator[]( sv path )ε
 	{
 		auto j = FindPath( path );
 		Variant result;
@@ -78,13 +78,13 @@ namespace Jde::Settings
 }
 namespace Jde
 {
-	α Settings::Save( const json& j, sv what, SL sl )noexcept(false)->void
+	α Settings::Save( const json& j, sv what, SL sl )ε->void
 	{
 		var path = Path();
 		IO::FileUtilities::Save( path, j.dump(), std::ios_base::out, sl );
 		LOG( "({})Saved for '{}'", path, what );
 	}
-	α Settings::Set( sv what, const Container::Variant& v, bool save, SL sl )noexcept(false)->void
+	α Settings::Set( sv what, const Container::Variant& v, bool save, SL sl )ε->void
 	{
 		var values = Str::Split( what, '/' );
 		auto j = &Global().Json();

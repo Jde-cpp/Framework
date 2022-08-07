@@ -142,6 +142,9 @@
     <ClCompile Include="coroutine\Lock.cpp">
       <Filter>Source\coroutine</Filter>
     </ClCompile>
+    <ClCompile Include="net\WebSocket.cpp">
+      <Filter>Source\net</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Stopwatch.h">
@@ -470,6 +473,9 @@
     </Filter>
     <Filter Include="Headers\windows">
       <UniqueIdentifier>{be3130a9-4d16-49b7-aee1-d6dda54f6961}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\net">
+      <UniqueIdentifier>{ceeefe76-138b-46d8-a7aa-c953a4a0c083}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

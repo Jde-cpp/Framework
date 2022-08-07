@@ -24,9 +24,9 @@ namespace Jde::Logging
 	static const LogTag& _statusLevel = Logging::TagLevel( "status" );
 	static const LogTag& _logLevel = Logging::TagLevel( "settings" );
 	const ELogLevel _breakLevel{ Settings::Get<ELogLevel>("logging/breakLevel").value_or(ELogLevel::Warning) };
-	ELogLevel BreakLevel()noexcept{ return _breakLevel; }
+	ELogLevel BreakLevel()ι{ return _breakLevel; }
 
-	α SetTag( sv tag, vector<LogTag>& existing )noexcept->sv
+	α SetTag( sv tag, vector<LogTag>& existing )ι->sv
 	{
 		var log{ tag.size()<1 || tag[0]!='_' };
 		var tagName = log ? tag : tag.substr(1);
@@ -66,7 +66,7 @@ namespace Jde::Logging
 		return (*pc)->Id;
 	}
 
-	α AddTags( vector<LogTag>& tags, sv path )noexcept->void
+	α AddTags( vector<LogTag>& tags, sv path )ι->void
 	{
 		vector<sv> tagIds;
 		var settings = Settings::TryArray<string>( path );
@@ -83,9 +83,9 @@ namespace Jde
 {
 	TimePoint _startTime = Clock::now(); Logging::Proto::Status _status; mutex _statusMutex; TimePoint _lastStatusUpdate;
 
-	α Logging::SetTag( sv tag, ELogLevel, bool file )noexcept->void{ SetTag( tag, file ? _tags : _serverTags ); }
+	α Logging::SetTag( sv tag, ELogLevel, bool file )ι->void{ SetTag( tag, file ? _tags : _serverTags ); }
 
-	α Logging::TagLevel( sv tag )noexcept->const LogTag&
+	α Logging::TagLevel( sv tag )ι->const LogTag&
 	{
 		if( !_pCumulativeTags )
 			_pCumulativeTags = mu<vector<LogTag*>>();
@@ -109,27 +109,27 @@ namespace Jde
 	};
 
 #define PREFIX unique_lock l{ MemoryLogMutex }; if( !_pMemoryLog ) _pMemoryLog = mu<vector<Logging::Messages::ServerMessage>>();
-	α Logging::LogMemory( const Logging::MessageBase& m )noexcept->void
+	α Logging::LogMemory( const Logging::MessageBase& m )ι->void
 	{
 		PREFIX
 		_pMemoryLog->emplace_back( move(m) );
 	}
 
-	α Logging::LogMemory( Logging::Message&& m, vector<string> values )noexcept->void
+	α Logging::LogMemory( Logging::Message&& m, vector<string> values )ι->void
 	{
 		PREFIX
 		_pMemoryLog->emplace_back( move(m), move(values) );
 	}
 
-	α Logging::LogMemory( const Logging::MessageBase& m, vector<string> values )noexcept->void
+	α Logging::LogMemory( const Logging::MessageBase& m, vector<string> values )ι->void
 	{
 		PREFIX
 		_pMemoryLog->emplace_back( m, move(values) );
 	}
 
-	α Logging::LogMemory()noexcept->bool{ return _logMemory; }
+	α Logging::LogMemory()ι->bool{ return _logMemory; }
 
-	α LoadSinks()noexcept->vector<spdlog::sink_ptr>
+	α LoadSinks()ι->vector<spdlog::sink_ptr>
 	{
 		vector<spdlog::sink_ptr> sinks;
 		var sinkSettings = Settings::TryMembers( "logging" );
@@ -193,7 +193,7 @@ namespace Jde
 
 	spdlog::logger _logger{ "my_logger", _sinks.begin(), _sinks.end() };
 
-	α Logging::Initialize()noexcept->void
+	α Logging::Initialize()ι->void
 	{
 		_status.set_starttime( (google::protobuf::uint32)Clock::to_time_t(_startTime) );
 
@@ -239,24 +239,24 @@ namespace Jde
 		LOG( "log minLevel='{}' flushOn='{}'", ELogLevelStrings[minLevel], ELogLevelStrings[(uint8)flushOn] );//TODO add flushon to Server
 	}
 
-	α Logging::LogServer( const MessageBase& m )noexcept->void
+	α Logging::LogServer( const MessageBase& m )ι->void
 	{
 		ASSERTX( Server() && m.Level!=ELogLevel::NoLog );
 		Server()->Log( m );
 	}
-	α Logging::LogServer( const MessageBase& m, vector<string>& values )noexcept->void
+	α Logging::LogServer( const MessageBase& m, vector<string>& values )ι->void
 	{
 		ASSERTX( Server() && m.Level!=ELogLevel::NoLog );
 		Server()->Log( m, values );
 	}
-	α Logging::LogServer( Messages::ServerMessage& m )noexcept->void
+	α Logging::LogServer( Messages::ServerMessage& m )ι->void
 	{
 		ASSERTX( Server() && m.Level!=ELogLevel::NoLog );
 		Server()->Log( m );
 	}
 
-	TimePoint Logging::StartTime()noexcept{ return _startTime;}
-	α SendStatus()noexcept->void
+	TimePoint Logging::StartTime()ι{ return _startTime;}
+	α SendStatus()ι->void
 	{
 		lock_guard l{_statusMutex};
 		vector<string> variables; variables.reserve( _status.details_size()+1 );
@@ -271,7 +271,7 @@ namespace Jde
 			Logging::Server()->SendStatus = true;
 		_lastStatusUpdate = Clock::now();
 	}
-	α Logging::SetLogLevel( ELogLevel client, ELogLevel server )noexcept->void
+	α Logging::SetLogLevel( ELogLevel client, ELogLevel server )ι->void
 	{
 		if( _logger.level()!=(spdlog::level::level_enum)client )
 		{
@@ -289,7 +289,7 @@ namespace Jde
 		}
 		SendStatus();
 	}
-	α Logging::SetStatus( const vector<string>& values )noexcept->void
+	α Logging::SetStatus( const vector<string>& values )ι->void
 	{
 		{
 			lock_guard l{_statusMutex};
@@ -301,33 +301,33 @@ namespace Jde
 		if( _lastStatusUpdate+10s<now )
 			SendStatus();
 	}
-	α Logging::GetStatus()noexcept->up<Logging::Proto::Status>
+	α Logging::GetStatus()ι->up<Logging::Proto::Status>
 	{
 		lock_guard l{_statusMutex};
 		return mu<Proto::Status>( _status );
 	}
 
-	α Logging::ShouldLogOnce( const Logging::MessageBase& messageBase )noexcept->bool
+	α Logging::ShouldLogOnce( const Logging::MessageBase& messageBase )ι->bool
 	{
 		std::unique_lock l( OnceMessageMutex );
 		auto& messages = _pOnceMessages->emplace( messageBase.FileId, set<string>{} ).first->second;
 		return messages.emplace(messageBase.MessageView).second;
 	}
-	α Logging::LogOnce( const Logging::MessageBase& messageBase )noexcept->void
+	α Logging::LogOnce( const Logging::MessageBase& messageBase )ι->void
 	{
 		if( ShouldLogOnce(messageBase) )
 			Log( move(messageBase) );
 	}
-	bool HaveLogger()noexcept{ return true; }
+	bool HaveLogger()ι{ return true; }
 
-	spdlog::logger& Logging::Default()noexcept{ return _logger; }
+	spdlog::logger& Logging::Default()ι{ return _logger; }
 
-	α ClearMemoryLog()noexcept->void
+	α ClearMemoryLog()ι->void
 	{
 		unique_lock l{ Logging::MemoryLogMutex };
 		Logging::_pMemoryLog = Logging::_logMemory ? mu<vector<Logging::Messages::ServerMessage>>() : nullptr;
 	}
-	vector<Logging::Messages::ServerMessage> FindMemoryLog( uint32 messageId )noexcept
+	vector<Logging::Messages::ServerMessage> FindMemoryLog( uint32 messageId )ι
 	{
 		shared_lock l{ Logging::MemoryLogMutex };
 		ASSERT( Logging::_pMemoryLog );
@@ -339,7 +339,7 @@ namespace Jde
 
 	namespace Logging
 	{
-		MessageBase::MessageBase( ELogLevel level, const source_location& sl )noexcept:
+		MessageBase::MessageBase( ELogLevel level, const source_location& sl )ι:
 			Fields{ EFields::File | EFields::FileId | EFields::Function | EFields::FunctionId | EFields::LineNumber },
 			Level{ level },
 			MessageId{ 0 },//{},
@@ -352,7 +352,7 @@ namespace Jde
 			if( level!=ELogLevel::Trace )
 				Fields |= EFields::Level;
 		}
-		MessageBase::MessageBase( ELogLevel level, sv message, const char* file, const char* function, uint_least32_t line )noexcept:
+		MessageBase::MessageBase( ELogLevel level, sv message, const char* file, const char* function, uint_least32_t line )ι:
 			Fields{ EFields::Message | EFields::File | EFields::FileId | EFields::Function | EFields::FunctionId | EFields::LineNumber },
 			Level{ level },
 			MessageId{ Calc32RunTime(message) },//{},
@@ -364,14 +364,14 @@ namespace Jde
 		{}
 
 
-		Message::Message( const MessageBase& b )noexcept:
+		Message::Message( const MessageBase& b )ι:
 			MessageBase{ b },
 			_fileName{ FileName(b.File) }
 		{
 			File = _fileName.c_str();
 		}
 
-		Message::Message( ELogLevel level, string message, const source_location& sl )noexcept:
+		Message::Message( ELogLevel level, string message, const source_location& sl )ι:
 			MessageBase( level, sl ),
 			_pMessage{ mu<string>(move(message)) },
 			_fileName{ FileName(sl.file_name()) }
@@ -381,7 +381,7 @@ namespace Jde
 			MessageId = Calc32RunTime( MessageView );
 		}
 
-		Message::Message( sv tag, ELogLevel level, string message, const source_location& sl )noexcept:
+		Message::Message( sv tag, ELogLevel level, string message, const source_location& sl )ι:
 			MessageBase( level, sl ),
 			Tag{ tag },
 			_pMessage{ mu<string>(move(message)) },
@@ -391,8 +391,19 @@ namespace Jde
 			MessageView = *_pMessage;
 			MessageId = Calc32RunTime( MessageView );
 		}
+		
+		Message::Message( sv tag, ELogLevel level, string message, char const* file, char const * function, boost::uint_least32_t line )ι:
+			MessageBase{ level, message, file, function, line },
+			Tag{ tag },
+			_pMessage{ mu<string>(move(message)) },
+			_fileName{ FileName(file) }
+		{
+			File = _fileName.c_str();
+			MessageView = *_pMessage;
+			MessageId = Calc32RunTime( MessageView );
+		}
 
-		Message::Message( const Message& x )noexcept:
+		Message::Message( const Message& x )ι:
 			MessageBase{ x },
 			Tag{ x.Tag },
 			_pMessage{ x._pMessage ? mu<string>(*x._pMessage) : nullptr },

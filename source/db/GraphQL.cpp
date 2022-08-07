@@ -620,7 +620,10 @@ namespace DB
 		return data;
 	}
 
-
+	α DB::CoQuery( string q_, UserPK u_, SL sl )ι->Coroutine::PoolAwait
+	{
+		return Coroutine::PoolAwait( [q=move(q_), u=u_](){ Query(q,u); }, sl );
+	}
 	α DB::Query( sv query, UserPK userId )ε->json
 	{
 		LOGS( string{query} );
