@@ -27,15 +27,14 @@
 			</ArrayItems>
 		</Expand>
 	</Type>
-	<Type Name="boost::container::flat_map&lt;*&gt;">
-		<DisplayString>{{zzzsize=-1}}</DisplayString>
-		<!-- <DisplayString>{{size={m_flat_tree.m_data.m_seq.m_holder.m_size}}}</DisplayString>
+	<Type Name="boost::container::flat_map&lt;*,*,*,*&gt;">
+		<DisplayString>{{size={m_flat_tree.m_data.m_seq.m_holder.m_size}}}</DisplayString>
 		<Expand>
 			<ArrayItems>
 				<Size>m_flat_tree.m_data.m_seq.m_holder.m_size</Size>
 				<ValuePointer>m_flat_tree.m_data.m_seq.m_holder.m_start</ValuePointer>
 			</ArrayItems>
-		</Expand> -->
+		</Expand>
 	</Type>
 	<Type Name="boost::container::flat_multimap&lt;*,*,*,*&gt;">
 		<DisplayString>{{size=={m_flat_tree.m_data.m_seq.m_holder.m_size}}}</DisplayString>
@@ -102,6 +101,20 @@
 			<Item Name="[size]" Condition="(__r_.__value_.__s.__size_ &amp; 1) != 0">__r_.__value_.__l.__size_</Item>
 		</Expand>
 	</Type>
+	<Type Name="Jde::DB::SchemaName">
+		<DisplayString Condition="(__r_.__value_.__s.__size_ &amp; 1) == 0">{__r_.__value_.__s.__data_, s8b}</DisplayString>
+		<DisplayString Condition="(__r_.__value_.__s.__size_ &amp; 1) != 0">{__r_.__value_.__l.__data_, s8b}</DisplayString>
+		<Expand>
+			<Item Name="[size z(packed)]" Condition="(__r_.__value_.__s.__size_ &amp; 1) == 0">(__r_.__value_.__s.__size_ &gt;&gt; 1) % 256</Item>
+			<Item Name="[size]" Condition="(__r_.__value_.__s.__size_ &amp; 1) != 0">__r_.__value_.__l.__size_</Item>
+		</Expand>
+	</Type>
+	<Type Name="Jde::Coroutine::AwaitResult::Value">
+		<DisplayString Condition="index() ==  0" Optional="true">{{ up, value={_Head} }}</DisplayString>
+		<DisplayString Condition="index() ==  1" Optional="true">{{ sp, value={_Tail._Head} }}</DisplayString>
+		<DisplayString Condition="index() ==  2" Optional="true">{{ exception, value={_Tail._Tail._Head} }}</DisplayString>
+		<DisplayString Condition="index() ==  3" Optional="true">{{ bool, value={_Tail._Tail._Tail._Head} }}</DisplayString>
+	</Type>
 	<Type Name="std::__1::__fs::filesystem::path::string_type">
 		<DisplayString Condition="(__r_.__value_.__s.__size_ &amp; 1) == 0">{__r_.__value_.__s.__data_, s8b}</DisplayString>
 		<DisplayString Condition="(__r_.__value_.__s.__size_ &amp; 1) != 0">{__r_.__value_.__l.__data_, s8b}</DisplayString>
@@ -116,11 +129,29 @@
 	<Type Name="std::__1::string_view">
 		<DisplayString>{__data}</DisplayString>
 	</Type>
+	<Type Name="Jde::sv">
+		<DisplayString>{{x={__data,[__size]s8b}}}</DisplayString>
+		<Expand>
+			<Item Name="[size]">__size</Item>
+			<Item Name="data">__data</Item>
+		</Expand>
+	</Type>
 	<Type Name="std::__1::basic_string_view&lt;*&gt;">
-		<DisplayString>{__data}</DisplayString>
+		<DisplayString>{__data,[__size]s8b}</DisplayString>
+		<Expand>
+			<Item Name="[size]">__size</Item>
+			<Item Name="data">__data</Item>
+		</Expand>
+	</Type>
+	<Type Name="Jde::sp&lt;*&gt;">
+		<!-- <DisplayString Condition="__ptr_!=0">{{__ptr_={*__ptr_}}}</DisplayString> -->
+		<DisplayString Condition="__ptr_==0">{{nullptr}}</DisplayString>
+		<Expand>
+      	<Item Name="[ptr]">*__ptr_</Item>
+    	</Expand>
 	</Type>
 	<Type Name="std::__1::shared_ptr&lt;*&gt;">
-		<DisplayString Condition="__ptr_!=0">{__ptr_}</DisplayString>
+		<DisplayString Condition="__ptr_!=0">{*__ptr_}</DisplayString>
 		<DisplayString Condition="__ptr_==0">{{nullptr}}</DisplayString>
 	</Type>
 	<Type Name="std::__1::unique_ptr&lt;*&gt;">

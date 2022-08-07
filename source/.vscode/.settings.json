@@ -96,7 +96,8 @@
 		"__bits": "cpp",
 		"__errc": "cpp",
 		"__tree": "cpp",
-		"stack": "cpp"
+		"stack": "cpp",
+		"format": "cpp"
 	},
 	"C_Cpp.intelliSenseEngineFallback": "Disabled",
 	"window.title": "Core",

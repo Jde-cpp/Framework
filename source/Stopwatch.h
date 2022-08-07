@@ -28,22 +28,22 @@ namespace Jde
 		using SClock=std::chrono::steady_clock;
 		using SDuration=SClock::duration;
 		using STimePoint=SClock::time_point;
-		Stopwatch( sv what, bool started=true )noexcept;
-		Stopwatch( Stopwatch* pParent, sv what="", sv instance="", bool started=true )noexcept;
+		Stopwatch( sv what, bool started=true, SRCE )ι;
+		Stopwatch( Stopwatch* pParent, sv what="", sv instance="", bool started=true, SRCE )ι;
 		virtual ~Stopwatch();
 
-		void Finish( sv description );
-		void Finish( bool remove=true );
-		string Progress( uint count, uint total=0 )const{ return Progress( count, total, "" ); }
-		string Progress( uint count, uint total, sv context, bool force=false )const;
-		SDuration Elapsed()const;
-		static std::string FormatSeconds( const SDuration& seconds );
-		static std::string FormatCount( double total );
-		void Pause();
-		void UnPause();
-		void Restart(){ _start = std::chrono::steady_clock::now(); }
+		void Finish( sv description )ι;
+		void Finish( bool remove=true )ι;
+		string Progress( uint count, uint total=0 )Ι{ return Progress( count, total, "" ); }
+		string Progress( uint count, uint total, sv context, bool force=false )Ι;
+		SDuration Elapsed()Ι;
+		static std::string FormatSeconds( const SDuration& seconds )ι;
+		static std::string FormatCount( double total )ι;
+		void Pause()ι;
+		void UnPause()ι;
+		void Restart()ι{ _start = std::chrono::steady_clock::now(); }
 	private:
-		static void Output( sv what, const SDuration& elapsed, bool logMemory, SRCE );
+		static void Output( sv what, const SDuration& elapsed, bool logMemory, SRCE )ι;
 
 		const std::string _what;
 		const std::string _instance;
@@ -60,5 +60,6 @@ namespace Jde
 
 		STimePoint _startPause;
 		SDuration _elapsedPause{0};
+		source_location _sl;
 	};
 }

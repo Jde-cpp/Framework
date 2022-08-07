@@ -80,7 +80,14 @@ namespace Jde::Coroutine
 			if( auto& ro = _pPromise->get_return_object(); ro.HasResult() )
 				ro.Clear();
 		}
-		α await_resume()ι->AwaitResult override{ AwaitResume(); ASSERT(_pPromise); return move(_pPromise->get_return_object().Result()); }
+		α await_resume()ι->AwaitResult override
+		{
+			ASSERT( _pPromise );
+			AwaitResume();
+			auto& y = _pPromise->get_return_object();
+			y.Push( _sl );
+			return move(y.Result());
+		}
 		Ŧ Set( up<T>&& p )->void{ ASSERT( _pPromise ); _pPromise->get_return_object().SetResult<T>( move(p) ); }
 		α SetException( up<IException> p )->void{ ASSERT( _pPromise ); _pPromise->get_return_object().SetResult( move(*p) ); }
 

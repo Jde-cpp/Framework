@@ -86,7 +86,8 @@ namespace Jde::DB
 			}
 			else
 			{
-				_pDataSource->Execute( pTable->Create(_syntax) );
+				var v = pTable->Create( _syntax );
+				_pDataSource->Execute( v );
 				DBG( "Created table '{}'."sv, tableName );
 				if( pTable->HaveSequence() )
 				{
