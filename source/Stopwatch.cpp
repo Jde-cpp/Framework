@@ -1,4 +1,4 @@
-#include "Stopwatch.h"
+﻿#include "Stopwatch.h"
 
 #include <cmath>
 #include <iomanip>

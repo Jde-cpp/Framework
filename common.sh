@@ -1,8 +1,12 @@
 #!/bin/bash
-windows() { [[ -n "$WINDIR" ]]; }
 jdeDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
+if ! source $jdeDir/Framework/scripts/common-error.sh; then exit 1; fi;
+windows() { [[ -n "$WINDIR" ]]; }
+
 export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
-startIndex() {
+
+startIndex()
+{
   x="${1%%$2*}"
   [[ "$x" = "$1" ]] && echo -1 || echo "${#x}"
 }
