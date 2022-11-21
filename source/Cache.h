@@ -10,51 +10,109 @@ namespace Jde
 {
 #define var const auto
 #define Φ Γ Ω
-	struct Cache final //: public Jde::IShutdown
+	struct Cache2
 	{
-		~Cache(){ if( HaveLogger() ) DBG("~Cache"sv); }
-		Ω Has( str name )noexcept{ return Instance().InstanceHas( name ); }
-		Ω Duration( str /*name*/ )noexcept{ return Settings::Get<Jde::Duration>( "cache/default/duration" ).value_or( Duration::max() ); }
-		Ṫ Emplace( str name )noexcept->sp<T>{ return Instance().InstanceEmplace<T>( name ); }
-		Ṫ Get( str name )noexcept{ return Instance().InstanceGet<T>(name); }
-		Φ Double( string name )noexcept->double;
-		Φ SetDouble( string name, double v, TP t=TP::max() )noexcept->bool;
-		Ṫ Set( str name, sp<T> p )noexcept->sp<T>{ return Instance().InstanceSet<T>(name, p); }
-		Φ Clear( sv name )noexcept->bool{ return Instance().InstanceClear( name ); }
-		template<class K,class V> static α GetValue( str n, K id )noexcept->sp<V>{ return Instance().InstanceGetValue<K,V>( n, id ); }
+		Φ Has( str id )ι->bool;
 
+		Φ Duration( str id )ι->Duration;
+		Ṫ Emplace( str id )ι->sp<T>;
+		Ṫ Get( str id )ι->sp<T>;
+		Φ Double( str id )ι->double;
+		Φ SetDouble( str id, double v, TP t=TP::max() )ι->bool;
+		Ṫ Set( str id, sp<T> p )ι->sp<T>;
+		Φ Clear( sv id )ι->bool;
+		template<class K,class V> static α GetValue( str n, K id )ι->sp<V>;
 	private:
-		α InstanceClear( sv name )noexcept->bool;
-		α InstanceHas( str name )const noexcept->bool{ shared_lock l{_cacheLock}; return _cache.find( name )!=_cache.end(); }
-		Ŧ InstanceGet( str name )noexcept->sp<T>;
-		ẗ InstanceGetValue( str n, K id )noexcept->sp<V>;
-		Ŧ InstanceEmplace( str name )noexcept->sp<T>;
-		Ŧ InstanceSet( str name, sp<T> pValue )noexcept->sp<T>;
-		Φ Instance()noexcept->Cache&;
-		std::map<string,sp<void>,std::less<>> _cache; mutable shared_mutex _cacheLock;
-		Φ LogLevel()->const LogTag&;
+		static std::map<string,sp<void>> _cache; static  shared_mutex _cacheLock;
+		Φ LogLevel()Ι->const LogTag&;
 	};
 
-	Ŧ Cache::InstanceGet( str name )noexcept->sp<T>
+	Ŧ Cache2::Emplace( str id )ι->sp<T>
 	{
-		shared_lock l{_cacheLock};
+		sp<T> p;
+		if(var d = Duration( id ); d<=Jde::Duration::zero )
+			p = make_shared<T>();
+		else
+		{
+			ul l{ _cacheLock };
+			auto i = _cache.find( id );
+			p = i==_cache.end()
+				? std::static_pointer_cast<T>( _cache.try_emplace(id, make_shared<T>)->first->second )
+				: i->second;
+		}
+		return p;
+	}
+
+	Ŧ Cache2::Get( str id )ι->sp<T>
+	{
+		sl l{_cacheLock};
+		auto p = _cache.find( id );
+		return p==_cache.end() ? sp<T>{} : std::static_pointer_cast<T>( p->second );
+	}
+
+#define _logLevel LogLevel()
+	Ŧ Cache2::Set( str id, sp<T> p )ι->sp<T>
+	{
+		ul l{_cacheLock};
+		if( !p )
+		{
+			var erased = _cache.erase( id );
+			TRACE( "Cache::{} erased={}"sv, id, erased );
+		}
+		else
+		{
+			_cache[id] = pValue;
+			TRACE( "Cache::{} set"sv, id );
+		}
+		return pValue;
+	}
+
+
+	struct Cache final
+	{
+		~Cache(){ if( HaveLogger() ) DBG("~Cache"sv); }
+		Ω Has( str name )ι{ return Instance().InstanceHas( name ); }
+		Ω Duration( str /*name*/ )ι{ return Settings::Get<Jde::Duration>( "cache/default/duration" ).value_or( Duration::max() ); }
+		Ṫ Emplace( str name )ι->sp<T>{ return Instance().InstanceEmplace<T>( name ); }
+		Ṫ Get( str name )ι{ return Instance().InstanceGet<T>(name); }
+		Φ Double( string name )ι->double;
+		Φ SetDouble( string name, double v, TP t=TP::max() )ι->bool;
+		Ṫ Set( str name, sp<T> p )ι->sp<T>{ return Instance().InstanceSet<T>(name, p); }
+		Φ Clear( sv name )ι->bool{ return Instance().InstanceClear( name ); }
+		template<class K,class V> static α GetValue( str n, K id )ι->sp<V>{ return Instance().InstanceGetValue<K,V>( n, id ); }
+
+	private:
+		α InstanceClear( sv name )ι->bool;
+		α InstanceHas( str name )Ι->bool{ sl l{_cacheLock}; return _cache.find( name )!=_cache.end(); }
+		Ŧ InstanceGet( str name )ι->sp<T>;
+		ẗ InstanceGetValue( str n, K id )ι->sp<V>;
+		Ŧ InstanceEmplace( str name )ι->sp<T>;
+		Ŧ InstanceSet( str name, sp<T> pValue )ι->sp<T>;
+		Φ Instance()ι->Cache&;
+		std::map<string,sp<void>,std::less<>> _cache; mutable shared_mutex _cacheLock;
+		Φ LogLevel()Ι->const LogTag&;
+	};
+
+	Ŧ Cache::InstanceGet( str name )ι->sp<T>
+	{
+		sl l{_cacheLock};
 		auto p = _cache.find( name );
 		return p==_cache.end() ? sp<T>{} : std::static_pointer_cast<T>( p->second );
 	}
 
-	Ŧ Cache::InstanceEmplace( str name )noexcept->sp<T>
+	Ŧ Cache::InstanceEmplace( str name )ι->sp<T>
 	{
-		shared_lock l{_cacheLock};
+		sl l{_cacheLock};
 		auto p = _cache.find( name );
 		if( p==_cache.end() )
 			p = _cache.try_emplace( name, make_shared<T>() ).first;
 		return std::static_pointer_cast<T>( p->second );
 	}
 
-	ẗ Cache::InstanceGetValue( str cacheName, K id )noexcept->sp<V>
+	ẗ Cache2::GetValue( str cacheName, K id )ι->sp<V>
 	{
 		sp<V> pValue;
-		shared_lock l{_cacheLock};
+		sl l{_cacheLock};
 		if( auto p = _cache.find( cacheName ); p!=_cache.end() )
 		{
 			if( var pMap = std::static_pointer_cast<flat_map<K,sp<V>>>(p->second); pMap )
@@ -65,10 +123,24 @@ namespace Jde
 		}
 		return pValue;
 	}
-#define _logLevel LogLevel()
-	Ŧ Cache::InstanceSet( str name, sp<T> pValue )noexcept->	sp<T>
+
+	ẗ Cache::InstanceGetValue( str cacheName, K id )ι->sp<V>
 	{
-		unique_lock l{_cacheLock};
+		sp<V> pValue;
+		sl l{_cacheLock};
+		if( auto p = _cache.find( cacheName ); p!=_cache.end() )
+		{
+			if( var pMap = std::static_pointer_cast<flat_map<K,sp<V>>>(p->second); pMap )
+			{
+				if( auto pItem = pMap->find( id ); pItem != pMap->end() )
+					pValue = pItem->second;
+			}
+		}
+		return pValue;
+	}
+	Ŧ Cache::InstanceSet( str name, sp<T> pValue )ι->	sp<T>
+	{
+		ul l{_cacheLock};
 		if( !pValue )
 		{
 			const bool erased = _cache.erase( name );

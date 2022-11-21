@@ -1,4 +1,3 @@
-#export CXX=g++-8
 cmake_minimum_required(VERSION 3.16)
 project(Jde)
 set( CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../cmake )
@@ -20,13 +19,12 @@ add_library( Jde SHARED ${sources} )
 #add_library( Jde.UM SHARED um/UM.cpp )
 
 #######################################################
-include_directories( "../../Public" )
+#include_directories( "../../Public" )
 target_link_libraries(Jde)
 #######################################################
 #######################################################
 target_precompile_headers(Jde
   PRIVATE
-  	<jde/TypeDefs.h>
 	<functional>
 	<iostream>
 	<boost/crc.hpp>
@@ -34,10 +32,10 @@ target_precompile_headers(Jde
 	<boost/core/noncopyable.hpp>
 	<spdlog/spdlog.h>
 	<spdlog/sinks/basic_file_sink.h>
-	<spdlog/fmt/ostr.h>
 
-	<jde/Assert.h>
-	<jde/Exports.h>
-	<jde/Log.h>
+  	#<jde/TypeDefs.h>
+	#<jde/Assert.h>
+	#<jde/Exports.h>
+	#<jde/Log.h>
 	#"log/server/proto/messages.pb.h"
 )
