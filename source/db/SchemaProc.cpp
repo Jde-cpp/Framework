@@ -181,7 +181,6 @@ namespace Jde::DB
 				THROW_IF( selectParams.empty(), "Could not find keys in data for '{}'", tableName );
 				osSelect << osWhere.str();
 
-
 				ostringstream osInsertValues;
 				ostringstream osInsertColumns;
 				for( var& column : pTable->Columns )

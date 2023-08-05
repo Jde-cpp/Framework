@@ -13,7 +13,7 @@ shouldFetch=${2:-1};
 tests=${3:-1}
 scriptDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 if [[ -z $sourceBuild ]]; then source $scriptDir/source-build.sh; fi;
-echo framework-build.sh clean=$clean shouldFetch=$shouldFetch
+echo framework-build.sh clean=$clean shouldFetch=$shouldFetch tests=$tests;
 cd $REPO_DIR;
 
 if windows; then
@@ -26,12 +26,13 @@ if windows; then
 		fi;
 		findExecutable vcpkg.exe `pwd`/vcpkg
 	fi;
-else
-	pushd `pwd` > /dev/null;
-	cd $BOOST_ROOT;
-	popd  > /dev/null;
+# else
+# 	pushd `pwd` > /dev/null;
+# 	cd $BOOST_ROOT;
+# 	popd  > /dev/null;
 fi;
-fetchDefault Public;
+fetchDefault Public; if [ $? -ne 0 ]; then echo fetchDefault Public failed;  exit 1; fi;
+
 cd $scriptDir/../Public;
 if [[ -z $JDE_BASH ]]; then JDE_BASH=$scriptDir/..; fi;
 stageDir=$JDE_BASH/Public/stage
@@ -71,9 +72,9 @@ if windows; then
 	moveToDir release; popd  > /dev/null;
 	if [ $shouldFetch -eq 1 ]; then
 		if [ ! -d $REPO_BASH/vcpkg/installed/x64-windows/include/nlohmann ]; then vcpkg.exe install nlohmann-json --triplet x64-windows; fi;
-		if [ ! -d $REPO_BASH/vcpkg/installed/x64-windows/lib/zlib.lib ]; 
-		then 
-			vcpkg.exe install zlib --triplet x64-windows; 
+		if [ ! -d $REPO_BASH/vcpkg/installed/x64-windows/lib/zlib.lib ];
+		then
+			vcpkg.exe install zlib --triplet x64-windows;
 			pushd `pwd` > /dev/null;
 			cd $stageDir/debug; mklink zlibd1.dll $REPO_BASH/vcpkg/installed/x64-windows/debug/bin;
 			cd $stageDir/release; mklink zlib1.dll $REPO_BASH/vcpkg/installed/x64-windows/bin;
@@ -93,6 +94,7 @@ if windows; then
 		fi;
 	fi;
 fi;
+echo -------------Placeholder-------------
 buildProto=$shouldFetch
 cd $REPO_BASH;
 if [ ! -d protobuf ]; then  git clone https://github.com/Jde-cpp/protobuf.git; buildProto=1; fi;
@@ -119,7 +121,7 @@ if windows; then
 	if [ ! -f $stageDir/debug/fmtd.lib ]; then echo build fmtd.lib; buildWindows2 "$baseCmd" fmtd.lib debug; fi;
 	cd ../..;
 fi;
-
+echo -------------Placeholder2-------------
 function protocBuildWin
 {
 	type=sln;#lib;
@@ -196,6 +198,7 @@ function frameworkProtoc
 	fi;
 	cd ../../..;
 }
+
 fetchDefault Framework;
 frameworkProtoc;
 build Framework 0;

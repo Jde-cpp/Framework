@@ -1,6 +1,6 @@
 #!/bin/bash
 jdeDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
-if ! source $jdeDir/Framework/scripts/common-error.sh; then exit 1; fi;
+#if ! source $jdeDir/Framework/scripts/common-error.sh; then exit 1; fi;  findExecutable false was triggering
 windows() { [[ -n "$WINDIR" ]]; }
 
 export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
@@ -11,17 +11,17 @@ startIndex()
   [[ "$x" = "$1" ]] && echo -1 || echo "${#x}"
 }
 
-function anyDir
-{
-	echo a
-	path=$1;
-	echo $path
-	index=$(startIndex "$path" /*/);
-	if [ $index -ne -1 ]; then
-		echo hi;
-	fi;
-	echo $index;
-}
+# function anyDir
+# {
+# 	echo a;
+# 	path=$1;
+# 	echo $path
+# 	index=$(startIndex "$path" /*/);
+# 	if [ $index -ne -1 ]; then
+# 		echo hi;
+# 	fi;
+# 	echo $index;
+# }
 
 function findExecutable
 {
@@ -38,10 +38,8 @@ function findExecutable
 				echo common.sh:17 can not find "${defaultPath//\\}/$exe";
 				exit 1;
 			fi;
-			false; return;
 		fi;
 	fi;
-	true;
 }
 
 function toBashDir
@@ -92,7 +90,9 @@ function fetchFile
 
 function fetch
 {
-	fetchDir $1 $shouldFetch;
+	#trap error ERR;
+	#echo shouldFetch=$shouldFetch;
+	fetchDir $1 $shouldFetch; #if [ $? -ne 0 ]; then exit $?; fi;
 	cd $1;
 	if [ -d source ];then cd source; fi;
 }
@@ -105,7 +105,9 @@ function fetchDir
 		git clone https://"$url"github.com/Jde-cpp/$dir.git -q;
 	else
 		cd $dir;
-		if  [[ $fetch -eq 1 ]]; then git pull -q; fi;
+		if  [[ $fetch -eq 1 ]]; then
+			git pull -q; if [ $? -ne 0 ]; then echo fetch failed:  `pwd`; exit 1; fi;
+		fi;
 		cd ..;
 	fi;
 }
