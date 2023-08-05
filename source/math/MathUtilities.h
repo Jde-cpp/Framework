@@ -10,13 +10,19 @@ namespace Jde
 }
 namespace Jde::Math
 {
-	template<typename T>
-	struct StatResult
+	Τ struct StatResult
 	{
 		T Average{0.0};
 		T Variance{0.0};
 		T Min{0.0};
 		T Max{0.0};
+	};
+
+	template<typename T=double> struct Point
+	{
+		α Distance( Point<T> o )Ι->T{ return std::pow( std::pow(o.X-X,2.0)+std::pow(o.Y-Y,2) ,.5); }
+		T X{0.0};
+		T Y{0.0};
 	};
 
 #define var const auto

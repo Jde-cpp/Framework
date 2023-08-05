@@ -58,7 +58,7 @@
 			</ArrayItems>
 		</Expand>
 	</Type>
-	<Type Name="boost::container::dtl::flat_tree&lt;*&gt;::container_type">
+	<Type Name="boost::container::dtl::flat_tree&lt;*&gt;">
 		<DisplayString>{{container_type}}</DisplayString>
 		<!-- <DisplayString>{{xxxsize = {m_flat_tree.m_data.m_seq.m_holder.m_size}}}</DisplayString> -->
 	</Type>
@@ -179,7 +179,15 @@
 			</ArrayItems>
 		</Expand>
 	</Type>
-	<Type Name="std::__1::map&lt;*&gt;">
+	<Type Name="const boost::container::flat_set&lt;*&gt;">
+		<DisplayString>{{sizex={m_data.m_seq.m_holder.m_size}}}</DisplayString>
+		 <Expand>
+			<ArrayItems>
+				<Size>m_data.m_seq.m_holder.m_size</Size>
+				<ValuePointer>m_data.m_seq.m_holder.m_start</ValuePointer>
+			</ArrayItems>
+		</Expand>
+	</Type>	<Type Name="std::__1::map&lt;*&gt;">
    	<DisplayString>{{size = {__tree_.__pair3_.__value_}}}</DisplayString>
 		<Expand>
 			<TreeItems>

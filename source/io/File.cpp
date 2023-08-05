@@ -264,3 +264,95 @@ namespace Jde::IO
 		Save( destination, sourceContent );
 	}
 }
+namespace Jde
+{
+	α IO::ForEachLine( path path, function<void(const vector<double>&, uint lineIndex)> function, const flat_set<uint>& columnIndexes_, const uint maxLines/*=std::numeric_limits<uint>::max()*/, const uint startLine/*=0*/, const uint /*chunkSize=1073741824*/, uint maxColumnCount/*=1500*/, Stopwatch* /*sw=nullptr*/, double emptyValue/*=0.0*/ )->uint
+	{
+		var pBuffer = FileUtilities::LoadBinary( path );
+		var& buffer = *pBuffer;
+		vector<uint_fast8_t> columnIndexes;
+		for( uint i=0, index=0; columnIndexes_.size() && i<maxColumnCount; ++i )
+			columnIndexes.push_back( columnIndexes_.find(index++)!=columnIndexes_.end() ? uint_fast8_t(1) : uint_fast8_t(0) );
+
+		const char* p = buffer.data(), *pEnd = p+buffer.size();
+		uint i = 0;
+		for( ; i<startLine && p<pEnd; ++i, ++p )
+			p = strchr( p, '\n' );
+
+		vector<double> tokens;
+		for( ; p<pEnd && maxLines>i-startLine; ++i )
+		{
+			tokens.clear();
+			auto pStart = p;
+			for( uint j=0; p<pEnd && (p==pStart || (*(p-1)!='\r' && *(p-1)!='\n')); ++p, ++j )
+			{
+				if( !columnIndexes_.empty() && !columnIndexes[j] )
+					for( ; *p!=',' && *p!='\n' && *p!='\r'; ++p );
+				else
+				{
+					var empty = *p==',' || *p=='\n';
+					double value = empty ? emptyValue : 0.0;
+					if( !empty )
+					{
+						const bool negative = *p == '-';
+						if( negative )
+							++p;
+						for( ;*p >= '0' && *p <= '9'; ++p )
+							value = value*10.0 + *p - '0';
+						if (*p == '.')
+						{
+							++p;
+							int n = 0;
+							double f = 0.0;
+							for( ;*p >= '0' && *p <= '9'; ++p,++n )
+								f = f*10.0 + *p - '0';
+							value += f / std::pow(10.0, n);
+						}
+						if( *p=='e' )//2.31445e+06
+						{
+							++p;
+							bool positiveExponent = *p=='+';
+							++p;
+							_int exponent = 0;
+							for( ;*p >= '0' && *p <= '9'; ++p )
+								exponent = exponent*10 + *p - '0';
+							if( !positiveExponent )
+								exponent*=-1;
+							value = value*double( pow(10,exponent) );
+						}
+						if( negative )
+							value = -value;
+					}
+					tokens.push_back( value );
+				}
+			}
+			function( tokens, i );
+		}
+		return i-startLine;
+	}
+
+	α IO::LoadColumnNames( path path, const vector<string>& columnNamesToFetch, bool notColumns )->tuple<vector<string>,flat_set<uint>>
+	{
+		vector<string> columnNames;
+		flat_set<uint> columnIndexes;
+		std::ifstream f( path ); THROW_IFX( f.fail(), IOException(path, "Could not open file") );
+		string line;
+		if( std::getline<char>(f, line) )
+		{
+			auto tokens = Str::Split( line );
+			int iToken=0;
+			for( var& token : tokens )
+			{
+				if( (!notColumns && std::find( columnNamesToFetch.begin(), columnNamesToFetch.end(), token)!=columnNamesToFetch.end())
+					|| (notColumns && std::find( columnNamesToFetch.begin(), columnNamesToFetch.end(), token)==columnNamesToFetch.end()) )
+				{
+					columnNames.push_back( string{token} );
+					columnIndexes.insert( iToken );
+				}
+				++iToken;
+			}
+		};
+
+		return make_tuple( columnNames, columnIndexes );
+	}
+}
