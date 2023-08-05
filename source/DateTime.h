@@ -60,7 +60,7 @@ namespace Jde
 		α DateDisplay()const noexcept->string;
 		α DateDisplay4()const noexcept->string;
 		α TimeDisplay()const noexcept->string;
-		α LocalTimeDisplay( bool seconds=false, bool miliseconds=false )const noexcept->string;
+		α LocalTimeDisplay( bool seconds=false, bool milliseconds=false )const noexcept->string;
 		α LocalDateDisplay()const noexcept->string;
 		α LocalDisplay( bool seconds, bool milli )const noexcept->string;
 		α ToIsoString()const noexcept->string;
@@ -82,7 +82,7 @@ namespace Jde
 
 	Ξ ToIsoString( TimePoint time )ι->string{ return DateTime(time).ToIsoString(); }
 	Ξ ToIsoString( fs::file_time_type time )ι->string{ return DateTime(time).ToIsoString(); }
-	Ξ LocalTimeDisplay( TimePoint time, bool seconds=false, bool miliseconds=false )ι->string{ return DateTime{time}.LocalTimeDisplay(seconds, miliseconds); }
+	Ξ LocalTimeDisplay( TimePoint time, bool seconds=false, bool milliseconds=false )ι->string{ return DateTime{time}.LocalTimeDisplay(seconds, milliseconds); }
 	Ξ DateDisplay( TimePoint time )ι->string{ return DateTime{time}.DateDisplay(); }
 	Ξ DateDisplay( DayIndex day )ι->string{ return DateTime{Chrono::FromDays(day)}.DateDisplay(); }
 }

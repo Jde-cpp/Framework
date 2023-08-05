@@ -40,7 +40,7 @@ namespace Jde
 				os << argv[i] << " ";
 			Logging::Default().log( spdlog::source_loc{FileName(SRCE_CUR.file_name()).c_str(),SRCE_CUR.line(),SRCE_CUR.function_name()}, (spdlog::level::level_enum)ELogLevel::Information, os.str() ); //TODO add cwd.
 		}
-		_pApplicationName = make_unique<string>( appName );
+		_pApplicationName = mu<string>( appName );
 
 		bool console = false;
 		const string arg0{ argv[0] };

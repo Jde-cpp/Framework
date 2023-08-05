@@ -15,8 +15,11 @@ namespace Jde::IO::Sockets
 	using SessionPK=uint32;
 	struct ISession
 	{
+		ISession( SessionPK id ):Id{id}{}
+		virtual ~ISession()=0;
 		const SessionPK Id;
 	};
+	inline ISession::~ISession(){}
 
 	struct Γ IOContextThread final //: IShutdown
 	{

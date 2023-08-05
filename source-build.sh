@@ -16,8 +16,8 @@ if windows; then
 	findExecutable MSBuild.exe '/c/Program\ Files/Microsoft\ Visual\ Studio/2022/BuildTools/MSBuild/Current/Bin' 0
 	findExecutable MSBuild.exe '/c/Program\ Files/Microsoft\ Visual\ Studio/2022/Enterprise/MSBuild/Current/Bin'
 	findExecutable cmake.exe '/c/Program\ Files/CMake/bin'
-	findExecutable cl.exe '/c/Program\ Files/Microsoft\ Visual\ Studio/2022/BuildTools/VC/Tools/MSVC/14.31.31103/bin/Hostx64/x64' 0  #TODO go to any directory
-	findExecutable cl.exe '/c/Program\ Files/Microsoft\ Visual\ Studio/2022/Enterprise/VC/Tools/MSVC/14.31.31103/bin/Hostx64/x64' 1
+	findExecutable cl.exe '/c/Program\ Files/Microsoft\ Visual\ Studio/2022/BuildTools/VC/Tools/MSVC/14.34.31933/bin/Hostx64/x64' 0  #TODO go to any directory
+	findExecutable cl.exe '/c/Program\ Files/Microsoft\ Visual\ Studio/2022/Enterprise/VC/Tools/MSVC/14.34.31933/bin/Hostx64/x64' 1
 	findExecutable vswhere.exe '/c/Program\ Files\ \(X86\)/Microsoft\ Visual\ Studio/installer' 0
 fi;
 
@@ -98,6 +98,7 @@ function buildWindows
 		else
 			file="Jde.$dir.dll";
 		fi;
+		echo file=$file;
 	fi;
 	projFile=$([ "${PWD##*/}" = "tests" ] && echo "Tests.$dir" || echo "$dir");
 	baseCmd="msbuild.exe $projFile.vcxproj -p:Platform=x64 -maxCpuCount -nologo -v:q /clp:ErrorsOnly -p:Configuration"
@@ -129,6 +130,7 @@ function fetchDefault
 {
 	cd $baseDir/$jdeRoot;
 	fetch $1;
+	return $?;
 }
 function build
 {

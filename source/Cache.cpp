@@ -3,12 +3,14 @@
 namespace Jde
 {
 	std::map<string,tuple<double,TP>> _cacheDouble; shared_mutex _cacheDoubleLock;
+	
+	std::map<string,sp<void>> Cache2::_cache; shared_mutex Cache2::_cacheLock;
 
-	Φ Cache2::Has( str id )ι{ return sl l{_cacheLock}; return _cache.find( id )!=_cache.end(); }
-	Φ Cache2::Duration( str id )ι->Duration
+	α Cache2::Has( str id )ι->bool{ sl _{_cacheLock}; return _cache.find( id )!=_cache.end(); }
+	α Cache2::Duration( str id )ι->Jde::Duration
 	{
-		return Settings::Get<Duration>( format("cache/{}/duration",id) ).value_or(
-			Settings::Get<Duration>( "cache/default/duration" ).value_or( Duration::max() );
+		return Settings::Get<Jde::Duration>( format("cache/{}/duration",id) ).value_or(
+			Settings::Get<Jde::Duration>( "cache/default/duration" ).value_or( Jde::Duration::max() ));
 	}
 
 	α Cache2::Double( str id )ι->double
@@ -19,7 +21,7 @@ namespace Jde
 	}
 
 	//Find out about this...
-	Φ Cache2::SetDouble( str id, double v, TP t=TP::max() )ι->bool
+	α Cache2::SetDouble( str id, double v, TP t )ι->bool
 	{
 		if( t==TP::max() )
 		{
@@ -33,7 +35,7 @@ namespace Jde
 	}
 
 	static const LogTag& _logLevel = Logging::TagLevel( "cache" );
-	α Cache::LogLevel()->const LogTag&{ return _logLevel; }
+	α Cache::LogLevel()ι->const LogTag& { return _logLevel; }
 	Cache _instance;
 	α Cache::Instance()ι->Cache& { return _instance; }
 
