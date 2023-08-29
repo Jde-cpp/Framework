@@ -103,8 +103,7 @@ namespace Jde::Coroutine
 	Τ struct TPoolAwait final : IAwait//todo rename FromSyncAwait?
 	{
 		using base=IAwait;
-		TPoolAwait( function<up<T>()> fnctn )ι:
-			_fnctn{fnctn}
+		TPoolAwait( function<up<T>()> fnctn, SRCE )ι:base{sl},_fnctn{fnctn}
 		{};
 		α await_suspend( HCoroutine h )ι->void override{ base::await_suspend(h); CoroutinePool::Resume( move(h) ); }
 

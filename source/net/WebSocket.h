@@ -20,7 +20,7 @@ namespace Jde::WebSocket
 	using namespace Jde::IO::Sockets;
 #pragma endregion
 
-	struct Γ WebListener /*abstract*/ : IO::Sockets::IServerSocket, std::enable_shared_from_this<WebListener>
+	struct Γ WebListener /*abstract*/ : IO::Sockets::IServerSocket
 	{
 		WebListener( PortType port )ε;
 		~WebListener(){ _acceptor.close(); DBG("~WebListener"); }
@@ -67,7 +67,6 @@ namespace Jde::WebSocket
 	private:
 		α OnRun()ι->void;
 		α DoRead()ι->void;
-		α OnNetRead( beast::error_code ec, std::size_t bytes_transferred )ι->void;
 		β OnRead( const char* p, uint size )ι->void=0;
 		α OnWrite( beast::error_code ec, std::size_t bytes_transferred )ι->void;
 
@@ -123,7 +122,6 @@ namespace Jde::WebSocket
 			if( ec || p->size()!=bytes_transferred )
 			{
 				Logging::LogNoServer( Logging::Message(ELogLevel::Debug, "Error writing to Session:  '{}'"), boost::diagnostic_information(ec) );
-				//LOGX( sv,  );
 				try
 				{
 					_ws.close( websocket::close_code::none );

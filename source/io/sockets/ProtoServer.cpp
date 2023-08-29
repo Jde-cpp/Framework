@@ -1,7 +1,6 @@
 ﻿#include "ProtoServer.h"
 #include "../../threading/Thread.h"
 #include "../../threading/InterruptibleThread.h"
-#include "../../Settings.h"
 
 #define var const auto
 namespace Jde::IO::Sockets
@@ -61,7 +60,7 @@ namespace Jde::IO::Sockets
 			}
 		});
 	}
-	
+
 	α ProtoSession::Write( up<google::protobuf::uint8[]> p, uint c )noexcept->void
 	{
 		auto b = net::buffer( p.get(), c );

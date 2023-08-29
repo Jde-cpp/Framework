@@ -1,6 +1,5 @@
 ﻿#pragma once
 #include <jde/Exports.h>
-//#include "Socket.h"
 #include "ProtoClient.h"
 #include "google/protobuf/message.h"
 #include "../ProtoUtilities.h"

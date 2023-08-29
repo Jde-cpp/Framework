@@ -1,5 +1,6 @@
 {
 	"files.associations": {
+		"*.sqlm": "sql",
 		"streambuf": "cpp",
 		"mutex": "cpp",
 		"*.ipp": "cpp",
@@ -97,7 +98,8 @@
 		"__errc": "cpp",
 		"__tree": "cpp",
 		"stack": "cpp",
-		"format": "cpp"
+		"format": "cpp",
+		"charconv": "cpp"
 	},
 	"C_Cpp.intelliSenseEngineFallback": "Disabled",
 	"window.title": "Core",

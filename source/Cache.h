@@ -14,7 +14,7 @@ namespace Jde
 	{
 		Φ Has( str id )ι->bool;
 
-		Φ Duration( str id )ι->Duration;
+		Φ Duration( str id )ι->Jde::Duration;
 		Ṫ Emplace( str id )ι->sp<T>;
 		Ṫ Get( str id )ι->sp<T>;
 		Φ Double( str id )ι->double;
@@ -31,7 +31,7 @@ namespace Jde
 	{
 		sp<T> p;
 		Jde::Duration d = Cache2::Duration( id );
-		Jde::Duration d2 = Duration::zero;
+		Jde::Duration d2 = Jde::Duration::zero();
 		if( d <= d2 )
 			p = make_shared<T>();
 		else

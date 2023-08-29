@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include <numeric>
+#include <random>
 
 namespace Jde
 {
@@ -17,6 +18,19 @@ namespace Jde::Math
 		T Min{0.0};
 		T Max{0.0};
 	};
+
+  static up<std::mt19937> _engine;
+	Ξ Random()->uint32
+	{
+		if( !_engine )
+		{
+			_engine = mu<std::mt19937>();
+#ifdef NDEBUG
+			_engine->seed( std::random_device::seed() );
+#endif
+		}
+		return (*_engine)();
+	}
 
 	template<typename T=double> struct Point
 	{

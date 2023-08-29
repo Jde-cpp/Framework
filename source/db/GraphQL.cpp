@@ -620,9 +620,9 @@ namespace DB
 		return data;
 	}
 
-	α DB::CoQuery( string q_, UserPK u_, SL sl )ι->Coroutine::PoolAwait
+	α DB::CoQuery( string&& q_, UserPK u_, SL sl )ι->TPoolAwait<json>
 	{
-		return Coroutine::PoolAwait( [q=move(q_), u=u_](){ Query(q,u); }, sl );
+		return Coroutine::TPoolAwait<json>( [q=move(q_), u=u_](){ return mu<json>(Query(q,u)); }, sl );
 	}
 	α DB::Query( sv query, UserPK userId )ε->json
 	{
@@ -641,8 +641,9 @@ namespace DB
 		}
 		else
 			tableQueries = get<vector<DB::TableQL>>( qlType );
-
-		return tableQueries.size() ? QueryTables( tableQueries, userId ) : j;
+		json y = tableQueries.size() ? QueryTables( tableQueries, userId ) : j;
+		Dbg( y.dump() );
+		return y;
 	}
 	struct Parser2
 	{
@@ -657,7 +658,7 @@ namespace DB
 				if( i<_text.size() )
 				{
 					uint start=i;
-					i = start+std::distance( _text.begin()+i, find_if(_text.begin()+i, _text.end(), [this]( char ch )noexcept{ return isspace(ch) || Delimiters.find(ch)!=sv::npos;}) );
+					i = start+std::distance( _text.begin()+i, std::find_if(_text.begin()+i, _text.end(), [this]( char ch )noexcept{ return isspace(ch) || Delimiters.find(ch)!=sv::npos;}) );
 					result = i==start ? _text.substr( i++, 1 ) : _text.substr( start, i-start );
 				}
 			}

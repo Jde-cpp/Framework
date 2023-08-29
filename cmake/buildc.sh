@@ -4,7 +4,7 @@ type=${2:-asan}
 clean=${3:-0}
 dir=${4:-../..}
 cwd=`pwd`
-#export CXX=clang++
+export CXX=clang++
 output=$path/.obj/$type
 cd $path
 if [ ! -d .obj ]; then mkdir .obj; fi;

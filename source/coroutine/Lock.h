@@ -7,7 +7,7 @@ namespace Jde
 	using namespace Coroutine;
 	struct Γ LockKeyAwait final : Await
 	{
-		LockKeyAwait( string key, bool shared )noexcept:Key{move(key)}, _shared{shared}{}
+		LockKeyAwait( string key, bool shared )noexcept:Key{move(key)}/*, _shared{shared}*/{}
 		//~LockKeyAwait(){ DBG( "~LockKeyAwait" ); }
 
 		α await_ready()noexcept->bool override;
@@ -16,7 +16,7 @@ namespace Jde
 	private:
 		HCoroutine Handle{nullptr};
 		const string Key;
-		const bool _shared;//TODO implement
+		//const bool _shared;//TODO implement
 	};
 	Ξ CoLockKey( string key, bool shared )noexcept{ return LockKeyAwait{move(key), shared}; }
 
