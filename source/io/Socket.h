@@ -1,10 +1,11 @@
 ﻿#pragma once
+#include <thread>
 #include <boost/asio.hpp>
 #include <boost/asio/io_context.hpp>
 #include <jde/Exports.h>
 #include <jde/App.h>
-#include "../../threading/jthread.h"
-#include "../../collections/UnorderedMap.h"
+//#include "../../threading/jthread.h"
+#include "../collections/UnorderedMap.h"
 
 namespace Jde::Threading{ struct InterruptibleThread; }
 
@@ -20,20 +21,6 @@ namespace Jde::IO::Sockets
 		const SessionPK Id;
 	};
 	inline ISession::~ISession(){}
-
-	struct Γ IOContextThread final //: IShutdown
-	{
-		static sp<IOContextThread> Instance()noexcept;
-		net::io_context& Context()noexcept{ return _ioc; }
-		~IOContextThread(){ DBG( "~IOContextThread" ); _ioc.stop(); _thread.join(); }
-	private:
-		IOContextThread()noexcept;
-		void Run()noexcept;
-		net::io_context _ioc;
-		net::executor_work_guard<boost::asio::io_context::executor_type> _keepAlive;
-		std::thread _thread;
-		static constexpr sv ThreadName{ "IOContextThread" };
-	};
 
 	struct Γ ISocket
 	{

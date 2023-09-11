@@ -1,9 +1,11 @@
 ﻿#pragma once
-#include "Socket.h"
-#include "../../collections/Queue.h"
-#include "../ProtoUtilities.h"
+#include <boost/asio.hpp>
 #include <jde/Log.h>
 #include <jde/Exception.h>
+#include "../collections/Queue.h"
+#include "AsioContextThread.h"
+#include "ProtoUtilities.h"
+#include "Socket.h"
 
 DISABLE_WARNINGS
 #include <google/protobuf/message_lite.h>
@@ -29,7 +31,7 @@ namespace Jde::IO::Sockets
 		α Write( up<google::protobuf::uint8[]> p, uint c )noexcept->void;
 		virtual void Process( google::protobuf::uint8* pData, int size )noexcept=0;
 
-		sp<IOContextThread> _pIOContext;
+		sp<AsioContextThread> _pIOContext;
 		tcp::socket _socket;
 		char _readMessageSize[4];
 	};

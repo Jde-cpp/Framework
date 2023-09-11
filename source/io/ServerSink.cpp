@@ -1,6 +1,6 @@
 ﻿#include "ServerSink.h"
-#include "../../threading/Thread.h"
-#include "../../DateTime.h"
+#include "../threading/Thread.h"
+#include "../DateTime.h"
 #define var const auto
 
 namespace Jde::Logging
@@ -12,15 +12,17 @@ namespace Jde::Logging
 
 namespace Jde
 {
-	α Logging::Server()noexcept->up<Logging::IServerSink>&{ return _pServerSink; }
-	α Logging::SetServer( up<Logging::IServerSink> p )noexcept->void{ _pServerSink=move(p); if( _pServerSink ) _serverLogLevel=Settings::Get<ELogLevel>("logging/server/level").value_or(ELogLevel::Error); }
-	α Logging::ServerLevel()noexcept->ELogLevel{ return _serverLogLevel; }
-	α Logging::SetServerLevel( ELogLevel serverLevel )noexcept->void{ _serverLogLevel=serverLevel; }
-	α Logging::ClientLevel()noexcept->ELogLevel{ return Settings::Get<ELogLevel>("logging/file/level").value_or(ELogLevel::Debug); }
+	α Logging::Server()ι->up<Logging::IServerSink>&{ return _pServerSink; }
+	α Logging::SetServer( up<Logging::IServerSink> p )ι->void{ _pServerSink=move(p); if( _pServerSink ) _serverLogLevel=Settings::Get<ELogLevel>("logging/server/level").value_or(ELogLevel::Error); }
+	α Logging::ServerLevel()ι->ELogLevel{ return _serverLogLevel; }
+	α Logging::SetServerLevel( ELogLevel serverLevel )ι->void{ _serverLogLevel=serverLevel; }
+	α Logging::ClientLevel()ι->ELogLevel{ return Settings::Get<ELogLevel>("logging/file/level").value_or(ELogLevel::Debug); }
 }
 
 namespace Jde::Logging
 {
+	flat_map<SessionPK, vector<HCoroutine>> _sessionInfoHandles; mutex _sessionInfoHandleMutex;
+
 	bool IServerSink::_enabled{ Settings::Get<PortType>("logging/server/port").value_or(0)!=0 };
 	IServerSink::~IServerSink()
 	{
@@ -29,7 +31,7 @@ namespace Jde::Logging
 		LOGX( "_pServerSink = nullptr" );
 	}
 	ServerSink::~ServerSink(){ LOGX("~ServerSink"); }
-	α ServerSink::Create()noexcept->ServerSink*
+	α ServerSink::Create()ι->ServerSink*
 	{
 		try
 		{
@@ -40,16 +42,16 @@ namespace Jde::Logging
 		return (ServerSink*)_pServerSink.get();
 	}
 
-	ServerSink::ServerSink()noexcept(false):
+	ServerSink::ServerSink()ι(false):
 		ProtoBase{ "logging/server", 0 }//,don't wan't default port, no-port=don't use
 	{
 		LOG( "ServerSink::ServerSink( Host='{}', Port='{}' )", Host, Port );
 	}
 
-	α ServerSink::OnConnected()noexcept->void{}
+	α ServerSink::OnConnected()ι->void{}
 
 
-	α ServerSink::OnDisconnect()noexcept->void
+	α ServerSink::OnDisconnect()ι->void
 	{
 		LOG( "Disconnected from LogServer."sv );
 		_messagesSent.clear();
@@ -60,7 +62,7 @@ namespace Jde::Logging
 		_instanceId = 0;
 	}
 
-	α ServerSink::OnReceive( Proto::FromServer& transmission )noexcept->void
+	α ServerSink::OnReceive( Proto::FromServer& transmission )ι->void
 	{
 		for( auto i2=0; i2<transmission.messages_size(); ++i2 )
 		{
@@ -109,6 +111,17 @@ namespace Jde::Logging
 				else
 					ERR_ONCE( "No custom function set" );
 			}
+			else if( item.has_session_info() )
+			{
+				var& info = item.session_info();
+				lock_guard _{_sessionInfoHandleMutex};
+				if( auto p = _sessionInfoHandles.find(info.session_id()); p!=_sessionInfoHandles.end() )
+				{
+					for( auto h : p->second )
+						h.promise().get_return_object().SetResult( mu<Proto::SessionInfo>(info) );
+					_sessionInfoHandles.erase( info.session_id() );
+				}
+			}
 		}
 	}
 
@@ -121,7 +134,7 @@ namespace Jde::Logging
 
 		return pResult;
 	}
-	α ServerSink::SendCustom( uint32 requestId, const std::string& bytes )noexcept->void
+	α ServerSink::SendCustom( uint32 requestId, const std::string& bytes )ι->void
 	{
 		auto pCustom = mu<Proto::CustomMessage>();
 		pCustom->set_requestid( requestId );
@@ -132,7 +145,7 @@ namespace Jde::Logging
 		base::Write( t );
 	}
 
-	α ServerSink::Write( const MessageBase& m, TimePoint time, vector<string>* pValues )noexcept->void
+	α ServerSink::Write( const MessageBase& m, TimePoint time, vector<string>* pValues )ι->void
 	{
 		auto pProto = mu<Proto::Message>();
 		pProto->set_allocated_time( IO::Proto::ToTimestamp(time).release() );
@@ -194,9 +207,22 @@ namespace Jde::Logging
 			processMessage( _buffer );
 		}
 	}
+
+	α SessionInfoAwait::await_suspend( HCoroutine h )ι->void
+	{
+		IAwait::await_suspend( h );
+		{
+			lock_guard _{ _sessionInfoHandleMutex };
+			_sessionInfoHandles[_sessionId].push_back( h );
+		}
+		auto m=mu<Proto::RequestSessionInfo>(); m->set_session_id(_sessionId);
+		Proto::ToServer t;
+		auto u = t.add_messages(); u->set_allocated_session_info( m.release() );
+		((ProtoBase*)Server().get())->Write( t );
+	};
 	namespace Messages
 	{
-		ServerMessage::ServerMessage( const MessageBase& base, vector<string> values )noexcept:
+		ServerMessage::ServerMessage( const MessageBase& base, vector<string> values )ι:
 			Message{ base },
 			Timestamp{ Clock::now() },
 			Variables{ move(values) }

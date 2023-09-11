@@ -1,8 +1,8 @@
 ﻿#include "Socket.h"
 #include <iostream>
-#include "../../threading/Thread.h"
-#include "../../threading/InterruptibleThread.h"
-#include "../../Settings.h"
+#include "../threading/Thread.h"
+#include "../threading/InterruptibleThread.h"
+#include "../Settings.h"
 
 #define var const auto
 
@@ -10,26 +10,6 @@ namespace Jde::IO::Sockets
 {
 	static var _logLevel{ Logging::TagLevel("sockets") };
 	α LogLevel()noexcept->const LogTag&{ return _logLevel; }
-	sp<IOContextThread> _pInstance;
-	sp<IOContextThread> IOContextThread::Instance()noexcept
-	{
-		return _pInstance ?  _pInstance : _pInstance = sp<IOContextThread>( new IOContextThread() );
-	}
-
-	IOContextThread::IOContextThread()noexcept:
-		_ioc{1},
-		_keepAlive{ net::make_work_guard(_ioc) },
-		_thread{ [&](){Run();} }
-	{}
-
-	void IOContextThread::Run()noexcept
-	{
-		Threading::SetThreadDscrptn( ThreadName );
-		LOG( "({})Thread - Entering.", ThreadName );
-		boost::system::error_code ec;
-		_ioc.run( ec );
-		LOG( "({})Thread - Leaving - {} - {}.", ThreadName, ec.value(), ec.message() );
-	}
 
 	using std::system_error;
 	PortType CheckPort( PortType v )noexcept(false)

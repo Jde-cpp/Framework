@@ -5,7 +5,6 @@
 
 #include "Cache.h"
 #include <jde/io/File.h>
-#include "log/server/ServerSink.h"
 #include "Settings.h"
 #include "threading/InterruptibleThread.h"
 

@@ -58,3 +58,4 @@ tests/packages/*
 Tests.Framework.log
 *.aps
 tests/Tests.Framework.json
+source/io/proto/timestamp.proto

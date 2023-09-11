@@ -1,4 +1,5 @@
-﻿#include <variant>
+﻿#pragma once
+#include <variant>
 #include <nlohmann/json.hpp>
 #include <jde/Str.h>
 #include "../coroutine/Awaitable.h"

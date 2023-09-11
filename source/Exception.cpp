@@ -5,7 +5,7 @@
 #include <boost/system/error_code.hpp>
 
 #include <jde/Log.h>
-#include "log/server/ServerSink.h"
+#include "io/ServerSink.h"
 #include <jde/TypeDefs.h>
 #define var const auto
 

@@ -5,7 +5,7 @@
 #include <boost/exception/diagnostic_information.hpp>
 #include <jde/App.h>
 //#include "../collections/UnorderedMap.h"
-#include "../io/sockets/Socket.h"
+#include "../io/Socket.h"
 #include "../io/ProtoUtilities.h"
 #include "../threading/Mutex.h"
 #define var const auto
@@ -29,7 +29,7 @@ namespace Jde::WebSocket
 		α DoAccept()ι->void;
 		α OnAccept( beast::error_code ec, tcp::socket socket )ι->void;
 		atomic<bool> _shutdown{false};
-		sp<IOContextThread> _pContextThread;
+		sp<IO::AsioContextThread> _pContextThread;
 	protected:
 		tcp::acceptor _acceptor;
 	};

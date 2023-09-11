@@ -1,13 +1,13 @@
 ﻿#include "ProtoClient.h"
-#include "../../threading/Thread.h"
-#include "../../threading/InterruptibleThread.h"
+#include "../threading/Thread.h"
+#include "../threading/InterruptibleThread.h"
 #define var const auto
 
 namespace Jde::IO::Sockets
 {
 #define _logLevel Sockets::LogLevel()
 	ProtoClientSession::ProtoClientSession( /*boost::asio::io_context& context*/ ):
-		_pIOContext{ IOContextThread::Instance() },
+		_pIOContext{ AsioContextThread::Instance() },
 		_socket{ _pIOContext->Context() }
 	{}
 	uint32 ProtoClientSession::MessageLength( char* readMessageSize )noexcept
@@ -89,7 +89,7 @@ namespace Jde::IO::Sockets
 	α ProtoClient::Connect()noexcept(false)->void
 	{
 		if( !_pIOContext )
-			_pIOContext = IOContextThread::Instance();
+			_pIOContext = AsioContextThread::Instance();
 
 		tcp::resolver resolver( _pIOContext->Context() );
 		auto endpoints = resolver.resolve( Host, std::to_string(Port).c_str() );

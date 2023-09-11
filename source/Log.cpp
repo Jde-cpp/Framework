@@ -8,7 +8,7 @@
 #endif
 #include <boost/lexical_cast.hpp>
 #include "Settings.h"
-#include "log/server/ServerSink.h"
+#include "io/ServerSink.h"
 #include "collections/Collections.h"
 
 #define var const auto
@@ -20,7 +20,7 @@ namespace Jde::Logging
 	up<vector<LogTag*>> _pCumulativeTags;
 	bool _logMemory{true};
 	up<vector<Logging::Messages::ServerMessage>> _pMemoryLog; shared_mutex MemoryLogMutex;
-	auto _pOnceMessages = mu<flat_map<uint,set<string>>>(); std::shared_mutex OnceMessageMutex;
+	auto _pOnceMessages = mu<flat_map<uint,std::set<string>>>(); std::shared_mutex OnceMessageMutex;
 	static const LogTag& _statusLevel = Logging::TagLevel( "status" );
 	static const LogTag& _logLevel = Logging::TagLevel( "settings" );
 	const ELogLevel _breakLevel{ Settings::Get<ELogLevel>("logging/breakLevel").value_or(ELogLevel::Warning) };
@@ -154,7 +154,7 @@ namespace Jde
 #else
 					pattern = "%^%3!l%$-%H:%M:%S.%e %-64@  %v";
 				//$-10:12:34.025 %JDE_DIR%\Private\tests\markets\edgar\MainTests.cpp:71            c:\temp\unchanged.xml
-					
+
 #endif
 				pSink = ms<spdlog::sinks::stdout_color_sink_mt>();
 			}
@@ -391,7 +391,7 @@ namespace Jde
 			MessageView = *_pMessage;
 			MessageId = Calc32RunTime( MessageView );
 		}
-		
+
 		Message::Message( sv tag, ELogLevel level, string message, char const* file, char const * function, boost::uint_least32_t line )ι:
 			MessageBase{ level, message, file, function, line },
 			Tag{ tag },
@@ -401,6 +401,7 @@ namespace Jde
 			File = _fileName.c_str();
 			MessageView = *_pMessage;
 			MessageId = Calc32RunTime( MessageView );
+			ASSERT( level>=ELogLevel::NoLog && level<=ELogLevel::None );
 		}
 
 		Message::Message( const Message& x )ι:
