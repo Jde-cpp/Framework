@@ -10,7 +10,7 @@ namespace Jde::IO::Sockets
 		_pIOContext{ AsioContextThread::Instance() },
 		_socket{ _pIOContext->Context() }
 	{}
-	uint32 ProtoClientSession::MessageLength( char* readMessageSize )noexcept
+	uint32 ProtoClientSession::MessageLength( char* readMessageSize )ι
 	{
 		uint32_t length;
 		char* pDestination = reinterpret_cast<char*>( &length );
@@ -18,18 +18,21 @@ namespace Jde::IO::Sockets
 		std::copy( pStart, pStart+4, pDestination );
 		return ntohl( length );
 	}
-	void ProtoClientSession::ReadHeader()noexcept
+	void ProtoClientSession::ReadHeader()ι
 	{
 		net::async_read( _socket, net::buffer(static_cast<void*>(_readMessageSize), sizeof(_readMessageSize)), [this]( std::error_code ec, std::size_t headerLength )
 		{
 			if( ec )
 			{
 				if( ec.value()==2 )
-					LOG( "ProtoClientSession::ReadHeader closing - 2 '{}'", CodeException::ToString(ec) );
+					DBG( "ProtoClientSession::ReadHeader closing - 2 '{}'", CodeException::ToString(ec) );
 				else if( ec.value()==125 )
-					LOG( "_socket.close() ec='{}'", CodeException::ToString(ec) );
+					DBG( "_socket.close() ec='{}'", CodeException::ToString(ec) );
 				else
 					DBG( "Client::ReadHeader Failed - ({}){} closing"sv, ec.value(), ec.message() );
+				_socket.close();
+				_pIOContext = nullptr;
+				OnDisconnect();
 			}
 			else if( !headerLength )
 				ERR( "Failed no length"sv );
@@ -41,7 +44,7 @@ namespace Jde::IO::Sockets
 		});
 	}
 
-	α ProtoClientSession::ReadBody( int messageLength )noexcept->void
+	α ProtoClientSession::ReadBody( int messageLength )ι->void
 	{
 		google::protobuf::uint8 buffer[4096];
 		up<google::protobuf::uint8[]> pData;
@@ -64,7 +67,7 @@ namespace Jde::IO::Sockets
 			ReadHeader();
 		}
 	}
-	α ProtoClientSession::Write( up<google::protobuf::uint8[]> p, uint c )noexcept->void
+	α ProtoClientSession::Write( up<google::protobuf::uint8[]> p, uint c )ι->void
 	{
 		auto b = net::buffer( p.get(), c );
 		net::async_write( _socket, b, [this, _=move(p), c, b2=move(b)]( std::error_code ec, uint length )
@@ -80,13 +83,13 @@ namespace Jde::IO::Sockets
 		});
 	}
 /////////////////////////////////////////////////////////////////////////////////////
-	ProtoClient::ProtoClient( str settingsPath, PortType defaultPort )noexcept(false):
+	ProtoClient::ProtoClient( str settingsPath, PortType defaultPort )ε:
 		IClientSocket{ settingsPath, defaultPort }
 	{
 		Connect();
 	}
 
-	α ProtoClient::Connect()noexcept(false)->void
+	α ProtoClient::Connect()ε->void
 	{
 		if( !_pIOContext )
 			_pIOContext = AsioContextThread::Instance();
@@ -100,7 +103,7 @@ namespace Jde::IO::Sockets
 		}
 		catch( const boost::system::system_error& e )
 		{
-			throw NetException{ format("{}:{}", Host, Port), {}, (uint)e.code().value(), string{e.what()}, Jde::ELogLevel::Warning };
+			throw NetException{ format("{}:{}", Host, Port), {}, (uint)e.code().value(), string{e.what()}, Jde::ELogLevel::Debug };
 		}
 	}
 }

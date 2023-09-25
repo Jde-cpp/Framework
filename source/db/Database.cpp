@@ -24,7 +24,7 @@ namespace Jde
 			y+=",?";
 		return y;
 	}
-	α DB::LogDisplay( sv sql, const vector<object>* pParameters, string error )noexcept->string
+	α DB::LogDisplay( sv sql, const vector<object>* pParameters, string error )ι->string
 	{
 		ostringstream os;
 		if( error.size() )
@@ -44,17 +44,17 @@ namespace Jde
 			os << sql.substr( prevIndex );
 		return os.str();
 	}
-	α DB::Log( sv sql, const vector<object>* pParameters, SL sl )noexcept->void
+	α DB::Log( sv sql, const vector<object>* pParameters, SL sl )ι->void
 	{
 		var l = _logLevel.Level;
 		Logging::Log( Logging::Message{l, LogDisplay(sql, pParameters, {}), sl} );
 	}
 
-	α DB::Log( sv sql, const vector<object>* pParameters, ELogLevel level, string error, SL sl )noexcept->void
+	α DB::Log( sv sql, const vector<object>* pParameters, ELogLevel level, string error, SL sl )ι->void
 	{
 		Logging::Log( Logging::Message{level, LogDisplay(sql, pParameters, move(error)), sl} );
 	}
-	α DB::LogNoServer( string sql, const vector<object>* pParameters, ELogLevel level, string error, SL sl )noexcept->void
+	α DB::LogNoServer( string sql, const vector<object>* pParameters, ELogLevel level, string error, SL sl )ι->void
 	{
 		Logging::LogNoServer( Logging::Message{level, LogDisplay(move(sql), pParameters, move(error)), sl} );
 	}
@@ -88,11 +88,11 @@ namespace Jde
 	sp<DB::Syntax> _pSyntax;
 	sp<DB::IDataSource> _pDefault;
 	up<vector<function<void()>>> _pDBShutdowns = mu<vector<function<void()>>>();
-	α DB::ShutdownClean( function<void()>& shutdown )noexcept->void
+	α DB::ShutdownClean( function<void()>& shutdown )ι->void
 	{
 		_pDBShutdowns->push_back( shutdown );
 	}
-	α DB::CleanDataSources()noexcept->void
+	α DB::CleanDataSources()ι->void
 	{
 		DBG( "CleanDataSources"sv );
 		DB::ClearQLDataSource();
@@ -114,15 +114,15 @@ namespace Jde
 	}
 	#define db DataSource()
 	DB::Schema _schema;
-	α DB::DefaultSchema()noexcept(false)->Schema&{ return _schema; }
-	α DB::CreateSchema()noexcept(false)->void
+	α DB::DefaultSchema()ι->Schema&{ return _schema; }
+	α DB::CreateSchema()ε->void
 	{
-		var path = Settings::Global().Getɛ<fs::path>( "metaDataPath" );
+		var path = Settings::Global().Getɛ<fs::path>( "db/meta" );
 		INFO( "db meta='{}'"sv, path.string() );
 		ordered_json j = json::parse( IO::FileUtilities::Load(path) );
 		_schema = db.SchemaProc()->CreateSchema( j, path.parent_path() );
 	}
-	α DB::DefaultSyntax()noexcept->const DB::Syntax&
+	α DB::DefaultSyntax()ι->const DB::Syntax&
 	{
 		if( !_pSyntax )
 			_pSyntax = Driver()=="Jde.DB.Odbc.dll" ? make_shared<Syntax>() : make_shared<MySqlSyntax>();
@@ -130,7 +130,7 @@ namespace Jde
 	}
 
 	std::once_flag _singleShutdown;
-	α Initialize( path libraryName )noexcept(false)->void
+	α Initialize( path libraryName )ε->void
 	{
 		static DataSourceApi api{ libraryName };
 		_pDefault = sp<Jde::DB::IDataSource>{ api.GetDataSourceFunction(), [](auto) {
@@ -138,7 +138,7 @@ namespace Jde
       } };
 	}
 
-	α DB::DataSourcePtr()noexcept(false)->sp<IDataSource>
+	α DB::DataSourcePtr()ε->sp<IDataSource>
 	{
 		if( !_pDefault )
 		{
@@ -150,7 +150,7 @@ namespace Jde
 	}
 	α DB::DataSource()ι->IDataSource&
 	{
-		auto p = DataSourcePtr(); 
+		auto p = DataSourcePtr();
 		THROW_IF( !p, "No default datasource" );//ie terminate
 		return *p;
 	}
@@ -167,20 +167,20 @@ namespace Jde
 		return pSource->second->Emplace( move(connectionString) );
 	}
 
-	α DB::Select( string sql, function<void(const IRow&)> f, SL sl )noexcept(false)->void{ db.Select(move(sql), f, sl); }
-	α DB::Select( string sql, function<void(const IRow&)> f, const vector<object>& values, SL sl )noexcept(false)->void{ db.Select(move(sql), f, values, sl); }
+	α DB::Select( string sql, function<void(const IRow&)> f, SL sl )ε->void{ db.Select(move(sql), f, sl); }
+	α DB::Select( string sql, function<void(const IRow&)> f, const vector<object>& values, SL sl )ε->void{ db.Select(move(sql), f, values, sl); }
 
-	α DB::IdFromName( sv tableName, string name, SL sl )noexcept->SelectAwait<uint>
+	α DB::IdFromName( sv tableName, string name, SL sl )ι->SelectAwait<uint>
 	{
 		return db.ScalerCo<uint>( format("select id from {} where name=?", tableName), {name}, sl );
 	}
 
-	α DB::Execute( string sql, vector<object>&& parameters, SL sl )noexcept(false)->uint
+	α DB::Execute( string sql, vector<object>&& parameters, SL sl )ε->uint
 	{
 		return db.Execute( move(sql), parameters, sl );
 	}
 
-	α DB::SelectName( string sql, uint id, sv cacheName, SL sl )noexcept(false)->CIString
+	α DB::SelectName( string sql, uint id, sv cacheName, SL sl )ε->CIString
 	{
 		CIString y;
 		if( auto p = cacheName.size() ? Cache::GetValue<uint,CIString>(string{cacheName}, id) : sp<CIString>{}; p )
@@ -190,7 +190,7 @@ namespace Jde
 		return y;
 	}
 
-	α DB::SelectIds( string sql, const std::set<uint>& ids, function<void(const IRow&)> f, SL sl )noexcept(false)->void
+	α DB::SelectIds( string sql, const std::set<uint>& ids, function<void(const IRow&)> f, SL sl )ε->void
 	{
 		vector<object> params; params.reserve( ids.size() );
 		string s; s.reserve( ids.size()*2 );

@@ -22,7 +22,7 @@ namespace Jde::IO::Proto
 
 	α Save( const google::protobuf::MessageLite& msg, fs::path path, SL )ε->void;
 	α ToString( const google::protobuf::MessageLite& msg )ε->string;
-	α SizePrefixed( const google::protobuf::MessageLite& m )ε->tuple<up<google::protobuf::uint8[]>,uint>;
+	α SizePrefixed( const google::protobuf::MessageLite&& m )ι->tuple<up<google::protobuf::uint8[]>,uint>;
 	α ToTimestamp( TimePoint t )ι->up<google::protobuf::Timestamp>;
 	namespace Internal
 	{
@@ -44,7 +44,7 @@ namespace Jde::IO
 		return output;
 	}
 
-	Ξ Proto::SizePrefixed( const google::protobuf::MessageLite& m )ε->tuple<up<google::protobuf::uint8[]>,uint>
+	Ξ Proto::SizePrefixed( const google::protobuf::MessageLite&& m )ι->tuple<up<google::protobuf::uint8[]>,uint>
 	{
 		const uint32_t length = (uint32_t)m.ByteSizeLong();
 		var size = length+4;

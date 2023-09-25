@@ -1,48 +1,84 @@
 ﻿#include "ServerSink.h"
 #include "../threading/Thread.h"
+#include "../coroutine/Alarm.h"
 #include "../DateTime.h"
 #define var const auto
 
 namespace Jde::Logging
 {
-	ELogLevel _serverLogLevel{ ELogLevel::None };
-	up<Logging::IServerSink> _pServerSink;
+	sp<Logging::IServerSink> _pServerSink;
 	static var _logLevel{ Logging::TagLevel("log-server") };
+	namespace Server
+	{
+		bool _enabled{ Settings::Get<PortType>("logging/server/port").value_or(0) };
+		atomic<ELogLevel> _logLevel{ _enabled ? Settings::Get<ELogLevel>("logging/server/level").value_or(ELogLevel::Error) : ELogLevel::None };
+
+#define OR(a,b) auto p=_pServerSink; return p ? p->a : b;
+		α ApplicationId()ι->ApplicationPK{OR(ApplicationId(),0);}
+		α InstanceId()ι->ApplicationInstancePK{OR(InstanceId(),0);}
+		α IsLocal()ι->bool{ OR(IsLocal(),false); }
+
+		α Level()ι->ELogLevel{ return _logLevel; }
+		α SetLevel( ELogLevel x )ι->void{ _logLevel = x; }
+		α Set( sp<Logging::IServerSink>&& p )ι->void{ _pServerSink = move(p); }
+		α Destroy()ι->void{ _pServerSink = nullptr; }
+#define IF(x) if( auto p=_pServerSink; p ) x; throw Exception("Not connected")
+		α FetchSessionInfo( SessionPK sessionId )ε->SessionInfoAwait{ IF( return p->FetchSessionInfo(sessionId) ); }
+		α Write( Logging::Proto::ToServer&& message )ε->void{ IF( p->Write(move(message)) ); }
+		α Log( const Messages::ServerMessage& m )ι->void
+		{
+			if( auto p=_pServerSink; p )
+				p->Log( m );
+		}
+		α Log( const Messages::ServerMessage& m, vector<string>& values )ι->void
+		{
+			if( auto p=_pServerSink; p )
+				p->Log( m, values );
+		}
+		atomic_flag _sendStatus{};
+		α SetSendStatus()ι->void{ _sendStatus.test_and_set(); }
+		α WebSubscribe( ELogLevel level )ι->void{ if( auto p=_pServerSink; p )p->WebSubscribe( level ); }
+ 	}
+	α ClientLevel()ι->ELogLevel{ return Settings::Get<ELogLevel>("logging/file/level").value_or(ELogLevel::Debug); }
+/*	α Write( Logging::Proto::ToServer&& message )ι->void
+	{
+		if( auto p = _pServerSink; p )
+			p->Write( t );
+	}*/
 }
 
-namespace Jde
-{
-	α Logging::Server()ι->up<Logging::IServerSink>&{ return _pServerSink; }
-	α Logging::SetServer( up<Logging::IServerSink> p )ι->void{ _pServerSink=move(p); if( _pServerSink ) _serverLogLevel=Settings::Get<ELogLevel>("logging/server/level").value_or(ELogLevel::Error); }
-	α Logging::ServerLevel()ι->ELogLevel{ return _serverLogLevel; }
-	α Logging::SetServerLevel( ELogLevel serverLevel )ι->void{ _serverLogLevel=serverLevel; }
-	α Logging::ClientLevel()ι->ELogLevel{ return Settings::Get<ELogLevel>("logging/file/level").value_or(ELogLevel::Debug); }
-}
 
 namespace Jde::Logging
 {
 	flat_map<SessionPK, vector<HCoroutine>> _sessionInfoHandles; mutex _sessionInfoHandleMutex;
 
-	bool IServerSink::_enabled{ Settings::Get<PortType>("logging/server/port").value_or(0)!=0 };
 	IServerSink::~IServerSink()
 	{
 		LOGX( "~IServerSink" );
-		SetServer( nullptr );
+		Server::Set( nullptr );
 		LOGX( "_pServerSink = nullptr" );
 	}
 	ServerSink::~ServerSink(){ LOGX("~ServerSink"); }
-	α ServerSink::Create()ι->ServerSink*
+	α ServerSink::Create(bool wait/*=false*/)ι->Task
 	{
-		try
+		while( !_pServerSink )
 		{
-			SetServer( mu<ServerSink>() );
+			if( wait )
+				co_await Threading::Alarm::Wait( 5s );
+			try
+			{
+				Server::Set( ms<ServerSink>() );
+			}
+			catch( const IException& e )
+			{
+				if( e.Code==2406168687 )//port=0
+					break;
+				wait = true;
+			}
 		}
-		catch( const IException& )
-		{}
-		return (ServerSink*)_pServerSink.get();
 	}
 
-	ServerSink::ServerSink()ι(false):
+	ServerSink::ServerSink()ε:
 		ProtoBase{ "logging/server", 0 }//,don't wan't default port, no-port=don't use
 	{
 		LOG( "ServerSink::ServerSink( Host='{}', Port='{}' )", Host, Port );
@@ -53,13 +89,15 @@ namespace Jde::Logging
 
 	α ServerSink::OnDisconnect()ι->void
 	{
+		Server::Set( nullptr );
 		LOG( "Disconnected from LogServer."sv );
-		_messagesSent.clear();
+/*		_messagesSent.clear();
 		_filesSent.clear();
 		_functionsSent.clear();
 		_usersSent.clear();
 		_threadsSent.clear();
-		_instanceId = 0;
+		_instanceId = 0;*/
+		Create( true );
 	}
 
 	α ServerSink::OnReceive( Proto::FromServer& transmission )ι->void
@@ -90,9 +128,14 @@ namespace Jde::Logging
 				p->set_application( _applicationName = IApplication::ApplicationName() );
 				p->set_host( IApplication::HostName() );
 				p->set_pid( (int32)OSApp::ProcessId() );
-				p->set_server_log_level( (Logging::Proto::ELogLevel)Logging::ServerLevel() );
+				p->set_server_log_level( (Logging::Proto::ELogLevel)Logging::Server::Level() );
 				p->set_client_log_level( (Logging::Proto::ELogLevel)Logging::ClientLevel() );
 				p->set_start_time( (google::protobuf::uint32)Clock::to_time_t(Logging::StartTime()) );
+				p->set_rest_port( Settings::Get<PortType>("rest/port").value_or(0) );
+				p->set_websocket_port(Settings::Get<PortType>("websocket/port").value_or(0) );
+				var defaultInstanceName = _debug ? "debug" : "release";
+				p->set_instance_name(Settings::Get<string>("instance").value_or(defaultInstanceName) );
+
 				Proto::ToServer t;
 				t.add_messages()->set_allocated_instance( p.release() );
 				base::Write( move(t) );
@@ -142,7 +185,7 @@ namespace Jde::Logging
 
 		Proto::ToServer t;
 		t.add_messages()->set_allocated_custom( pCustom.release() );
-		base::Write( t );
+		base::Write( move(t) );
 	}
 
 	α ServerSink::Write( const MessageBase& m, TimePoint time, vector<string>* pValues )ι->void
@@ -196,9 +239,12 @@ namespace Jde::Logging
 			}
 			processMessage( t );
 			t.add_messages()->set_allocated_message( pProto.release() );
-			if( SendStatus.exchange(false) )
+			if( Server::_sendStatus.test() )
+			{
+				Server::_sendStatus.clear();
 				t.add_messages()->set_allocated_status( GetStatus().release() );
-			base::Write( t );
+			}
+			base::Write( move(t) );
 		}
 		else
 		{
@@ -218,7 +264,7 @@ namespace Jde::Logging
 		auto m=mu<Proto::RequestSessionInfo>(); m->set_session_id(_sessionId);
 		Proto::ToServer t;
 		auto u = t.add_messages(); u->set_allocated_session_info( m.release() );
-		((ProtoBase*)Server().get())->Write( t );
+		Logging::Server::Write( move(t) );
 	};
 	namespace Messages
 	{

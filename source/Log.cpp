@@ -25,6 +25,7 @@ namespace Jde::Logging
 	static const LogTag& _logLevel = Logging::TagLevel( "settings" );
 	const ELogLevel _breakLevel{ Settings::Get<ELogLevel>("logging/breakLevel").value_or(ELogLevel::Warning) };
 	ELogLevel BreakLevel()ι{ return _breakLevel; }
+	α ServerLevel()ι->ELogLevel{ return Server::Level(); }
 
 	α SetTag( sv tag, vector<LogTag>& existing )ι->sv
 	{
@@ -105,7 +106,7 @@ namespace Jde
 			_pMemoryLog = nullptr;
 			_logMemory = false;
 		}
-		SetServer( nullptr );
+		Server::Destroy();
 	};
 
 #define PREFIX unique_lock l{ MemoryLogMutex }; if( !_pMemoryLog ) _pMemoryLog = mu<vector<Logging::Messages::ServerMessage>>();
@@ -202,10 +203,11 @@ namespace Jde
 		_logger.set_level( (spdlog::level::level_enum)minLevel );
 		var flushOn = Settings::Get<ELogLevel>( "logging/flushOn" ).value_or( _debug ? ELogLevel::Debug : ELogLevel::Information );
 		_logger.flush_on( (spdlog::level::level_enum)flushOn );
-		auto pServer = IServerSink::Enabled() ? ServerSink::Create() : nullptr;
-
-		if( pServer )
+		if( Server::Enabled() )
+		{
 			AddTags( _serverTags, "logging/server/tags" );
+			ServerSink::Create();
+		}
 		AddTags( _tags, "logging/tags" );
 
 		if( _pMemoryLog )
@@ -229,8 +231,8 @@ namespace Jde
 				{
 					ERR( "{} - {}", m.MessageView, e.what() );
 				}
-				if( pServer && ServerLevel()<=m.Level )
-					pServer->Log( Messages::ServerMessage{m} );
+				if( Server::Enabled() && Server::Level()<=m.Level )
+					Server::Log( Messages::ServerMessage{m} );
 			}
 			if( !_logMemory )
 				ClearMemoryLog();
@@ -241,18 +243,18 @@ namespace Jde
 
 	α Logging::LogServer( const MessageBase& m )ι->void
 	{
-		ASSERTX( Server() && m.Level!=ELogLevel::NoLog );
-		Server()->Log( m );
+		ASSERTX( m.Level!=ELogLevel::NoLog );
+		Server::Log( m );
 	}
 	α Logging::LogServer( const MessageBase& m, vector<string>& values )ι->void
 	{
-		ASSERTX( Server() && m.Level!=ELogLevel::NoLog );
-		Server()->Log( m, values );
+		ASSERTX( m.Level!=ELogLevel::NoLog );
+		Server::Log( m, values );
 	}
 	α Logging::LogServer( Messages::ServerMessage& m )ι->void
 	{
-		ASSERTX( Server() && m.Level!=ELogLevel::NoLog );
-		Server()->Log( m );
+		ASSERTX( m.Level!=ELogLevel::NoLog );
+		Server::Log( m );
 	}
 
 	TimePoint Logging::StartTime()ι{ return _startTime;}
@@ -267,8 +269,8 @@ namespace Jde
 			os << ";  " << _status.details(i);
 
 		Logging::Log( Logging::Message(Logging::_statusLevel.Level, os.str()) );
-		if( Logging::Server() )
-			Logging::Server()->SendStatus = true;
+		if( Logging::Server::Enabled() )
+			Logging::Server::SetSendStatus();
 		_lastStatusUpdate = Clock::now();
 	}
 	α Logging::SetLogLevel( ELogLevel client, ELogLevel server )ι->void
@@ -280,8 +282,7 @@ namespace Jde
 			Settings::Set( "logging/file/level", string{ToString(client)} );
 			//TODO remvoe comment _logger.set_level( (spdlog::level::level_enum)client );
 		}
-		if( Server() )
-			SetServerLevel( server );
+		Logging::Server::SetLevel( server );
 		{
 			lock_guard l{_statusMutex};
 			_status.set_serverloglevel( (Proto::ELogLevel)server );

@@ -21,15 +21,15 @@ namespace Jde::IO::Sockets
 	{
 		ProtoClientSession();
 		virtual ~ProtoClientSession(){ LOGX( "~ProtoClientSession -start"); _socket.close(); LOGX( "~ProtoClientSession-end"); };
-		void Close( std::condition_variable* pCvClient=nullptr )noexcept;
-		virtual void OnConnected()noexcept{};
-		static uint32 MessageLength( char* readMessageSize )noexcept;
+		void Close( std::condition_variable* pCvClient=nullptr )ι;
+		virtual void OnConnected()ι{};
+		static uint32 MessageLength( char* readMessageSize )ι;
 	protected:
-		virtual void OnDisconnect()noexcept=0;
-		α ReadHeader()noexcept->void;
-		α ReadBody( int messageLength )noexcept->void;
-		α Write( up<google::protobuf::uint8[]> p, uint c )noexcept->void;
-		virtual void Process( google::protobuf::uint8* pData, int size )noexcept=0;
+		virtual void OnDisconnect()ι=0;
+		α ReadHeader()ι->void;
+		α ReadBody( int messageLength )ι->void;
+		α Write( up<google::protobuf::uint8[]> p, uint c )ι->void;
+		virtual void Process( google::protobuf::uint8* pData, int size )ι=0;
 
 		sp<AsioContextThread> _pIOContext;
 		tcp::socket _socket;
@@ -39,9 +39,9 @@ namespace Jde::IO::Sockets
 #pragma warning( disable : 4459 )
 	struct ProtoClient : IClientSocket, ProtoClientSession
 	{
-		ProtoClient( str settingsPath, PortType defaultPort )noexcept(false);
+		ProtoClient( str settingsPath, PortType defaultPort )ε;
 		virtual ~ProtoClient()=0;
-		void Connect()noexcept(false);
+		void Connect()ε;
 	};
 	inline ProtoClient::~ProtoClient(){}
 #pragma warning(pop)
@@ -49,17 +49,17 @@ namespace Jde::IO::Sockets
 	template<typename TOut, typename TIn>
 	struct TProtoClient : ProtoClient
 	{
-		TProtoClient( str settingsPath, PortType defaultPort )noexcept(false):
+		TProtoClient( str settingsPath, PortType defaultPort )ε:
 			ProtoClient{ settingsPath, defaultPort }
 		{}
 
    	virtual ~TProtoClient()=default;
-		void Process( google::protobuf::uint8* pData, int size )noexcept override;
-		void Write( const TOut& message )noexcept;
-		virtual void OnReceive( TIn& pIn )noexcept=0;
+		void Process( google::protobuf::uint8* pData, int size )ι override;
+		void Write( TOut&& message )ι;
+		virtual void OnReceive( TIn& pIn )ι=0;
 	};
 #define var const auto
-	$::Process( google::protobuf::uint8* pData, int size )noexcept->void
+	$::Process( google::protobuf::uint8* pData, int size )ι->void
 	{
 		try
 		{
@@ -70,9 +70,9 @@ namespace Jde::IO::Sockets
 		{}
 	}
 
-	$::Write( const TOut& m )noexcept->void
+	$::Write( TOut&& m )ι->void
 	{
-		auto [p,size] = IO::Proto::SizePrefixed( m );
+		auto [p,size] = IO::Proto::SizePrefixed( move(m) );
 		ProtoClientSession::Write( move(p), size );
 	}
 }

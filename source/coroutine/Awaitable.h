@@ -1,5 +1,4 @@
 ﻿#pragma once
-//#include <jde/Exports.h>
 #include <jde/coroutine/Task.h>
 #include "Coroutine.h"
 namespace Jde
@@ -91,13 +90,26 @@ namespace Jde::Coroutine
 		Ŧ Set( up<T>&& p )->void{ ASSERT( _pPromise ); _pPromise->get_return_object().SetResult<T>( move(p) ); }
 		α SetException( up<IException> p )->void{ ASSERT( _pPromise ); _pPromise->get_return_object().SetResult( move(*p) ); }
 
-		source_location _sl;
+		const source_location _sl;
 	protected:
 		Task::promise_type* _pPromise{};
 		friend Task;
-
 	};
 	inline IAwait::~IAwait(){}
+
+	//Holds a result variable for await_ready
+	struct IAwaitCache : IAwait
+	{
+		IAwaitCache( SRCE )ι:IAwait{sl}{};
+		IAwaitCache( string name, SRCE )ι:IAwait{move(name), sl}{};
+		//virtual ~IAwait()=0;
+		α await_suspend( HCoroutine h )ι->void override{ IAwait::await_suspend(h); }
+		α await_resume()ι->AwaitResult override{ if(_pPromise) _result = IAwait::await_resume(); else{ AwaitResume(); _result.Push(_sl);}return move(_result);}
+	protected:
+		AwaitResult _result;
+		Task::promise_type* _pPromise{};
+		friend Task;
+	};
 
 	//run synchronous function in coroutine pool thread.
 	Τ struct TPoolAwait final : IAwait//todo rename FromSyncAwait?
@@ -111,6 +123,7 @@ namespace Jde::Coroutine
 	private:
 		function<up<T>()> _fnctn;
 	};
+	//run synchronous function returning void in coroutine pool thread.
 	struct PoolAwait final : IAwait//todo rename FromSyncAwait?
 	{
 		using base=IAwait;
@@ -252,6 +265,7 @@ namespace Jde::Coroutine
 	};
 	struct CancelAwait /*abstract*/ : Await
 	{
+		CancelAwait()ι:_hClient{ NextHandle() }{}
 		CancelAwait( ClientHandle& handle )ι:_hClient{ NextHandle() }{ handle = _hClient; }
 		virtual ~CancelAwait()=0;
 	protected:

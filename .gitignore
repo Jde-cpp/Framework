@@ -59,3 +59,5 @@ Tests.Framework.log
 *.aps
 tests/Tests.Framework.json
 source/io/proto/timestamp.proto
+source/io/proto/messages.pb.cc
+source/io/proto/messages.pb.h

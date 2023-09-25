@@ -67,7 +67,7 @@ namespace Jde
 		const string fileName{ strlen(sl.file_name()) ? FileName(sl.file_name()) : "{Unknown}\0"sv };
 		var functionName = strlen(sl.file_name()) ? sl.function_name() : "{Unknown}\0";
 		Logging::Default().log( spdlog::source_loc{fileName.c_str(), (int)sl.line(), functionName}, (spdlog::level::level_enum)Level(), what() );
-		if( Logging::Server() )
+		if( Logging::Server::Enabled() )
 			Logging::LogServer( Logging::Messages::ServerMessage{Logging::Message{Level(), what(), sl}, vector<string>{_args}} );
 	}
 

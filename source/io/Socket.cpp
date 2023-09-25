@@ -26,7 +26,7 @@ namespace Jde::IO::Sockets
 		ISocket{ settingsPath, defaultPort },
 		Host{ Settings::Get<string>(settingsPath+"/host").value_or("localhost") }
 	{
-		TRACE( "IClientSocket::IClientSocket( path='{}', Host='{}', Port='{}' )", settingsPath, Host, Port );
+		DBG( "IClientSocket::IClientSocket( path='{}', Host='{}', Port='{}' )", settingsPath, Host, Port );
 	}
 
 	IClientSocket::~IClientSocket()

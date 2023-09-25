@@ -11,7 +11,8 @@ namespace Jde::Threading
 	using namespace Coroutine;
 	struct Γ AlarmAwait final : CancelAwait
 	{
-		AlarmAwait( TimePoint& alarm, Handle& handle )noexcept:CancelAwait{handle}, _alarm{alarm}{}
+		AlarmAwait( TimePoint when, Handle& handle )noexcept:CancelAwait{handle}, _alarm{when}{}
+		AlarmAwait( TimePoint when )noexcept:_alarm{when}{}
 		bool await_ready()noexcept override{ return _alarm<Clock::now(); }
 		void await_suspend( coroutine_handle<Task::promise_type> h )noexcept override;
 		α await_resume()noexcept->AwaitResult override{ TRACE("({})AlarmAwait::await_resume"sv, std::this_thread::get_id()); return {}; }//returns the result value for co_await expression.
@@ -25,6 +26,7 @@ namespace Jde::Threading
 		Alarm():base{}{};
 		~Alarm(){  DBG("Alarm::~Alarm"sv); }
 		static auto Wait( TimePoint t, Handle& handle )noexcept{ return AlarmAwait{t, handle}; }
+		static auto Wait( Duration d )noexcept{ return AlarmAwait{Clock::now()+d}; }
 		static void Cancel( Handle handle )noexcept;
 		static constexpr sv Name{ "Alarm" };
 	private:

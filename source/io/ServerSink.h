@@ -1,21 +1,24 @@
 ﻿#pragma once
 #include <jde/coroutine/Task.h>
+#include "ProtoClient.h"
+//#include "typedefs.h"
 #include "../threading/Interrupt.h"
 #include "../collections/Queue.h"
 #include "../collections/UnorderedSet.h"
-#include "ProtoClient.h"
 
 DISABLE_WARNINGS
 #include "./proto/messages.pb.h"
 ENABLE_WARNINGS
 
+namespace Jde
+{
+	using ApplicationInstancePK=uint32;
+	using ApplicationPK=uint32;
+}
 namespace Jde::Logging
 {
-	struct IServerSink;
 	namespace Messages{ struct ServerMessage; }
-	Γ α Server()ι->up<Logging::IServerSink>&; Γ α SetServer( up<Logging::IServerSink> p )ι->void;
-	Γ α ServerLevel()ι->ELogLevel; Γ α SetServerLevel( ELogLevel serverLevel )ι->void;
-
+	struct IServerSink;
 	struct SessionInfoAwait final : IAwait
 	{
 		SessionInfoAwait( SessionPK sessionId, SRCE )ι:IAwait{sl},_sessionId{sessionId}{}
@@ -23,7 +26,26 @@ namespace Jde::Logging
 	private:
 		SessionPK _sessionId;
 	};
-
+#define Φ Γ auto
+	namespace Server
+	{
+		Φ ApplicationId()ι->ApplicationPK;
+		α Destroy()ι->void;
+		extern bool _enabled;
+		Ξ Enabled()ι->bool{ return _enabled; }
+		Φ FetchSessionInfo( SessionPK sessionId )ε->SessionInfoAwait;
+		Φ InstanceId()ι->ApplicationInstancePK;
+		Φ IsLocal()ι->bool;
+		Φ Level()ι->ELogLevel; α SetLevel( ELogLevel x )ι->void;
+		Φ Log( const Messages::ServerMessage& message )ι->void;
+		Φ Log( const Messages::ServerMessage& message, vector<string>& values )ι->void;
+		Φ Set( sp<Logging::IServerSink>&& p )ι->void;
+		α SetSendStatus()ι->void;
+		Φ WebSubscribe( ELogLevel level )ι->void;
+		Φ Write( Logging::Proto::ToServer&& message )ε->void;
+		//Γ α SetServerLevel( ELogLevel serverLevel )ι->void;
+	}
+#undef Φ
 	struct Γ IServerSink //: private boost::noncopyable debugging issues
 	{
 		using ID=uint32;
@@ -31,6 +53,8 @@ namespace Jde::Logging
 		IServerSink( const unordered_set<ID>& msgs )ι:_messagesSent{msgs}{}
 		virtual ~IServerSink();
 
+		β ApplicationId()ι->ApplicationPK{return 0;}
+		β InstanceId()ι->ApplicationInstancePK{return _instanceId;}
 		β IsLocal()ι->bool{ return false; }
 		β Log( Messages::ServerMessage& message )ι->void=0;
 		β Log( const MessageBase& messageBase )ι->void=0;
@@ -42,16 +66,15 @@ namespace Jde::Logging
 		α ShouldSendUser( ID messageId )ι->bool{ return _usersSent.emplace(messageId); }
 		α ShouldSendThread( ID messageId )ι->bool{ return _threadsSent.emplace(messageId); }
 		β SendCustom( ID /*requestId*/, str /*bytes*/ )ι->void{ CRITICAL("SendCustom not implemented"); }
-		Ω Enabled()ι->bool{ return _enabled; }
-		atomic<bool> SendStatus{false};
+		β WebSubscribe( ELogLevel /*level*/ )ι->void{ CRITICAL("WebSubscribe only for application server"); }
+		β Write( Proto::ToServer&& m )ι->void=0;
 	protected:
+		ApplicationInstancePK _instanceId;
 		UnorderedSet<ID> _messagesSent;
 		UnorderedSet<ID> _filesSent;
 		UnorderedSet<ID> _functionsSent;
 		UnorderedSet<ID> _usersSent;
 		UnorderedSet<ID> _threadsSent;
-	private:
-		static bool _enabled;
 	};
 	namespace Messages
 	{
@@ -73,12 +96,12 @@ namespace Jde::Logging
 		};
 	}
 
-	typedef IO::Sockets::TProtoClient<Logging::Proto::ToServer,Logging::Proto::FromServer> ProtoBase;
+	typedef IO::Sockets::TProtoClient<Proto::ToServer,Proto::FromServer> ProtoBase;
 	struct ServerSink final: IServerSink, ProtoBase
 	{
 		using base=ProtoBase;
-		static α Create()ι->ServerSink*;
-		ServerSink()ι(false);
+		static α Create( bool wait = false )ι->Task;
+		ServerSink()ε;
 		~ServerSink();
 		α Log( Messages::ServerMessage& m )ι->void override{ Write( m, m.Timestamp, &m.Variables ); }
 		α Log( const MessageBase& m )ι->void override{ Write( m, Clock::now() ); }
@@ -89,10 +112,10 @@ namespace Jde::Logging
 		α OnConnected()ι->void override;
 		α SendCustom( uint32 requestId, str bytes )ι->void override;
 		α SetCustomFunction( function<Coroutine::Task(uint32,string&&)>&& fnctn )ι{_customFunction=fnctn;}
+		α Write( Proto::ToServer&& m )ι->void override{ ProtoBase::Write(move(m)); };
 	private:
 		α Write( const MessageBase& message, TimePoint time, vector<string>* pValues=nullptr )ι->void;
 		α OnReceive( Logging::Proto::FromServer& fromServer )ι->void override;
-		uint _instanceId{0};
 		atomic<bool> _stringsLoaded{false};
 		string _applicationName;
 		function<Coroutine::Task(uint32,string&&)> _customFunction;

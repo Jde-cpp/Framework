@@ -21,7 +21,7 @@ namespace Jde::DB
 	α LogNoServer( string sql, const vector<object>* pParameters, ELogLevel level, string error, SL sl )ι->void;
 	Φ DefaultSyntax()ι->const DB::Syntax&;
 	Φ CreateSchema()ε->void;
-	Φ DefaultSchema()ε->Schema&;
+	Φ DefaultSchema()ι->Schema&;
 	Φ CleanDataSources()ι->void;
 	Φ ShutdownClean( function<void()>& shutdown )ι->void;
 

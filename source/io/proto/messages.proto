@@ -25,10 +25,13 @@ message Instance
 {
 	string application=1;
 	string host=2;
-	int32 pid=3;
+	uint32 pid=3;
 	ELogLevel server_log_level=4;
 	ELogLevel client_log_level=5;
 	uint32 start_time=6;
+	uint32 rest_port=7;
+	uint32 websocket_port=8;
+	string instance_name=9;
 }
 
 message Message

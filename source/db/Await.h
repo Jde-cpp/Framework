@@ -7,8 +7,8 @@ namespace Jde::DB
 {
 	struct IDataSource;
 	using namespace Coroutine;
-	using RowΛ=function<void( const IRow& )ι(false)>;
-	Τ using CoRowΛ=function<void( T& pResult, const IRow& r )ι(false)>;
+	using RowΛ=function<void( const IRow& )ε>;
+	Τ using CoRowΛ=function<void( T& pResult, const IRow& r )ε>;
 	struct ISelect
 	{
 		ISelect( sp<IDataSource> ds )ι:_ds{ds}{}

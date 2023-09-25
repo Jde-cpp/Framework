@@ -78,16 +78,16 @@
 		</Expand>
 	</Type>
 	<Type Name="std::__1::basic_string&lt;*&gt;">
-		<DisplayString Condition="(__r_.__value_.__s.__size_ &amp; 1) == 0">{__r_.__value_.__s.__data_, s8b}</DisplayString>
-		<DisplayString Condition="(__r_.__value_.__s.__size_ &amp; 1) != 0">{__r_.__value_.__l.__data_, s8b}</DisplayString>
+		<DisplayString Condition="(__r_.__value_.__s.__size_ \&amp; 1) == 1">{{s={__r_.__value_.__s.__data_, s8b}}}</DisplayString>
+		<DisplayString Condition="(__r_.__value_.__s.__size_ \&amp; 1) != 1">{{v={__r_.__value_.__l.__data_, s8b}}}</DisplayString>
 		<Expand>
-			<Item Name="[size z(packed)]" Condition="(__r_.__value_.__s.__size_ &amp; 1) == 0">(__r_.__value_.__s.__size_ &gt;&gt; 1) % 256</Item>
-			<Item Name="[size]" Condition="(__r_.__value_.__s.__size_ &amp; 1) != 0">__r_.__value_.__l.__size_</Item>
+			<Item Name="[size z(packed)]" Condition="(__r_.__value_.__s.__size_ &amp; 1) == 1">(__r_.__value_.__s.__size_ &gt;&gt; 1) % 256</Item>
+			<Item Name="[size]" Condition="(__r_.__value_.__s.__size_ &amp; 1) != 1">__r_.__value_.__l.__size_</Item>
 		</Expand>
 	</Type>
 	<Type Name="std::__1::string">
-		<DisplayString Condition="(__r_.__value_.__s.__size_ &amp; 1) == 0">{__r_.__value_.__s.__data_, s8b}</DisplayString>
-		<DisplayString Condition="(__r_.__value_.__s.__size_ &amp; 1) != 0">{__r_.__value_.__l.__data_, s8b}</DisplayString>
+		<DisplayString Condition="(__r_.__value_.__s.__size_ &amp; 1) == 0">{{s1={__r_.__value_.__s.__data_, s8b}}}</DisplayString>
+		<DisplayString Condition="(__r_.__value_.__s.__size_ &amp; 1) != 0">{{l1={__r_.__value_.__l.__data_, s8b}}}</DisplayString>
 		<Expand>
 			<Item Name="[size z(packed)]" Condition="(__r_.__value_.__s.__size_ &amp; 1) == 0">(__r_.__value_.__s.__size_ &gt;&gt; 1) % 256</Item>
 			<Item Name="[size]" Condition="(__r_.__value_.__s.__size_ &amp; 1) != 0">__r_.__value_.__l.__size_</Item>
@@ -159,7 +159,7 @@
 		<DisplayString Condition="__ptr_==0">{{nullptr}}</DisplayString>
 	</Type>
 	<Type Name="std::__1::optional&lt;*&gt;">
-		<DisplayString Condition="__engaged_">{{__val_={__val_}}}</DisplayString>
+		<DisplayString Condition="__engaged_">{__val_}</DisplayString>
 		<DisplayString Condition="!__engaged_">{{null}}</DisplayString>
 	</Type>
 	<Type Name="std::__1::__compressed_pair_elem&lt;*&gt;">
