@@ -40,6 +40,7 @@ namespace Jde::Threading
 	protected:
 		void Run( stop_token st )noexcept override;
 		atomic<TimePoint> _lastRequest;
+		α Calls()noexcept->uint{ return _calls; }
 	private:
 		atomic<uint> _calls{0};
 	};

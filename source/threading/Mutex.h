@@ -45,9 +45,9 @@ namespace Jde
 	{
 		α Lock(){ return LockAwait{*this}; }
 	private:
-		α TestAndSet()->up<CoGuard>;
-		α Push( HCoroutine h )->up<CoGuard>;
-		α Clear()->void;
+		α TestAndSet()ι->up<CoGuard>;
+		α Push( HCoroutine h )ι->up<CoGuard>;
+		α Clear()ι->void;
 
 		std::queue<HCoroutine> _queue; mutex _mutex;
 		atomic_flag _flag;
@@ -67,7 +67,6 @@ namespace Jde::Threading
 {
 	Φ UniqueLock( str key )noexcept->std::unique_lock<std::shared_mutex>;
 
-	
 
 #ifndef NDEBUG //TODORefactor move somewhere else
 	struct MyLock

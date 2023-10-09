@@ -143,7 +143,7 @@ namespace Jde
 		//TODO wait for signal
 		INFO( "Pause returned - {}.", _exitReason );
 		{
-			lock_guard l{_threadMutex};
+			lg _{_threadMutex};
 			for( auto& pThread : *_pBackgroundThreads )
 				pThread->Interrupt();
 		}
@@ -155,7 +155,7 @@ namespace Jde
 		INFO( "Waiting for process to complete. {}"sv, OSApp::ProcessId() );
 		GarbageCollect();
 		{
-			lock_guard l{ _objectMutex };
+			lg _{ _objectMutex };
 			for( auto pShutdown : _shutdowns )
 			{
 				if( pShutdown )//not sure why it would be null.
@@ -187,13 +187,13 @@ namespace Jde
 	α IApplication::AddThread( sp<Threading::InterruptibleThread> pThread )noexcept->void
 	{
 		TRACE( "Adding Backgound thread"sv );
-		lock_guard l{_threadMutex};
+		lg _{_threadMutex};
 		_pBackgroundThreads->push_back( pThread );
 	}
 
 	α IApplication::RemoveThread( sv name )noexcept->sp<Threading::InterruptibleThread>
 	{
-		lock_guard l{_threadMutex};
+		lg _{_threadMutex};
 		auto ppThread = find_if( _pBackgroundThreads->begin(), _pBackgroundThreads->end(), [name](var& p){ return p->Name==name;} );
 		auto p = ppThread==_pBackgroundThreads->end() ? sp<Threading::InterruptibleThread>{} : *ppThread;
 		if( ppThread!=_pBackgroundThreads->end() )
@@ -202,7 +202,7 @@ namespace Jde
 	}
 	α IApplication::RemoveThread( sp<Threading::InterruptibleThread> pThread )noexcept->void
 	{
-		lock_guard l{_threadMutex};
+		lg _{_threadMutex};
 		_pDeletedThreads->push_back( pThread );
 		for( auto ppThread = _pBackgroundThreads->begin(); ppThread!=_pBackgroundThreads->end();  )
 		{
@@ -216,7 +216,7 @@ namespace Jde
 	}
 	α IApplication::GarbageCollect()noexcept->void
 	{
-		lock_guard l{_threadMutex};
+		lg _{_threadMutex};
 		for( auto ppThread = _pDeletedThreads->begin(); ppThread!=_pDeletedThreads->end(); )
 		{
 			(*ppThread)->Join();
@@ -226,20 +226,20 @@ namespace Jde
 
 	α IApplication::Add( sp<void> pShared )noexcept->void
 	{
-		lock_guard l{ _objectMutex };
+		lg _{ _objectMutex };
 		_objects.push_back( pShared );
 	}
 
 	α IApplication::AddShutdown( sp<IShutdown> pShared )noexcept->void
 	{
-		lock_guard l{ _objectMutex };
+		lg _{ _objectMutex };
 		_objects.push_back( pShared );
 		_shutdowns.push_back( pShared );
 	}
 	α IApplication::RemoveShutdown( sp<IShutdown> pShutdown )noexcept->void
 	{
 		Remove( pShutdown );
-		lock_guard l{ _objectMutex };
+		lg _{ _objectMutex };
 		if( auto p=find( _shutdowns.begin(), _shutdowns.end(), pShutdown ); p!=_shutdowns.end() )
 			_shutdowns.erase( p );
 		else
@@ -248,7 +248,7 @@ namespace Jde
 
 	α IApplication::Remove( sp<void> pShared )noexcept->void
 	{
-		lock_guard l{ _objectMutex };
+		lg _{ _objectMutex };
 		for( auto ppObject = _objects.begin(); ppObject!=_objects.end(); ++ppObject )
 		{
 			if( *ppObject==pShared )

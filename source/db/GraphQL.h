@@ -21,7 +21,7 @@ namespace Jde::DB
 	constexpr array<sv,8> QLFieldKindStrings = { "SCALAR", "OBJECT", "INTERFACE", "UNION", "ENUM", "INPUT_OBJECT", "LIST", "NON_NULL" };
 
 	Φ Query( sv query, UserPK userId )ε->nlohmann::json;
-	Φ CoQuery( string&& query, UserPK userId, SRCE )ι->Coroutine::TPoolAwait<json>;
+	Φ CoQuery( string&& query, UserPK userId, str threadName, SRCE )ι->Coroutine::TPoolAwait<json>;
 	struct ColumnQL final
 	{
 		string JsonName;

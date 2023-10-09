@@ -357,7 +357,7 @@ namespace DB
 		}
 		if( t.Name.starts_with("um_") )
 			Try( [&]{UM::ApplyMutation( m, result );} );
-		shared_lock l{ _applyMutationListenerMutex };
+		sl _{ _applyMutationListenerMutex };
 		if( var p = ApplyMutationListeners().find(string{t.Prefix()}); p!=ApplyMutationListeners().end() )
 			std::for_each( p->second.begin(), p->second.end(), [&](var& f){f(m, result);} );
 
@@ -620,9 +620,9 @@ namespace DB
 		return data;
 	}
 
-	α DB::CoQuery( string&& q_, UserPK u_, SL sl )ι->TPoolAwait<json>
+	α DB::CoQuery( string&& q_, UserPK u_, str threadName, SL sl )ι->TPoolAwait<json>
 	{
-		return Coroutine::TPoolAwait<json>( [q=move(q_), u=u_](){ return mu<json>(Query(q,u)); }, sl );
+		return Coroutine::TPoolAwait<json>( [q=move(q_), u=u_](){ return mu<json>(Query(q,u)); }, threadName, sl );
 	}
 	α DB::Query( sv query, UserPK userId )ε->json
 	{

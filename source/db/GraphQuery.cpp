@@ -152,6 +152,7 @@ namespace Jde::DB
 
 	α GraphQL::Query( const DB::TableQL& table, json& jData, UserPK userId )noexcept(false)->void
 	{
+		ASSERT(_db);
 		var isPlural = table.JsonName.ends_with( "s" );
 		var& schemaTable = _schema.FindTableSuffix( table.DBName() );
 		vector<tuple<string,string>> jsonMembers;

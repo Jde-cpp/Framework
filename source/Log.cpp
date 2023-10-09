@@ -260,7 +260,7 @@ namespace Jde
 	TimePoint Logging::StartTime()ι{ return _startTime;}
 	α SendStatus()ι->void
 	{
-		lock_guard l{_statusMutex};
+		lg _{_statusMutex};
 		vector<string> variables; variables.reserve( _status.details_size()+1 );
 		_status.set_memory( IApplication::MemorySize() );
 		ostringstream os;
@@ -284,7 +284,7 @@ namespace Jde
 		}
 		Logging::Server::SetLevel( server );
 		{
-			lock_guard l{_statusMutex};
+			lg _{_statusMutex};
 			_status.set_serverloglevel( (Proto::ELogLevel)server );
 			_status.set_clientloglevel( (Proto::ELogLevel)_logger.level() );
 		}
@@ -293,7 +293,7 @@ namespace Jde
 	α Logging::SetStatus( const vector<string>& values )ι->void
 	{
 		{
-			lock_guard l{_statusMutex};
+			lg _{_statusMutex};
 			_status.clear_details();
 			for( var& value : values )
 				_status.add_details( value );
@@ -304,7 +304,7 @@ namespace Jde
 	}
 	α Logging::GetStatus()ι->up<Logging::Proto::Status>
 	{
-		lock_guard l{_statusMutex};
+		lg _{_statusMutex};
 		return mu<Proto::Status>( _status );
 	}
 

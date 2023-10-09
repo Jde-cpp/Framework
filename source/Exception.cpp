@@ -50,14 +50,14 @@ namespace Jde
 
 	α IException::BreakLog()Ι->void
 	{
-//#ifndef NDEBUG
+#ifndef NDEBUG
 		if( Level()!=ELogLevel::None && Level()>Logging::BreakLevel() )
 		{
 			Log();
 			SetLevel( ELogLevel::None );
 			BREAK;
 		}
-//#endif
+#endif
 	}
 	α IException::Log()Ι->void
 	{

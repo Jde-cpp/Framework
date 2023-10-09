@@ -9,6 +9,9 @@
 
 namespace Jde
 {
+	const string empty;
+	α Str::Empty()ι->str{ return empty; };
+
 	α Str::Replace( sv source, char find, char replace )ι->string
 	{
 		string result{ source };

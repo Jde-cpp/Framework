@@ -67,6 +67,7 @@ namespace Jde::IO::Sockets
 			ReadHeader();
 		}
 	}
+	#pragma clang diagnostic ignored "-Wunused-lambda-capture"
 	α ProtoClientSession::Write( up<google::protobuf::uint8[]> p, uint c )ι->void
 	{
 		auto b = net::buffer( p.get(), c );

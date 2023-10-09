@@ -52,7 +52,7 @@ namespace Jde
 			var pGroupRoles = _groupRoles.find(groupId); if( pGroupRoles==_groupRoles.end() ) continue;
 			for( var roleId : pGroupRoles->second )
 			{
-				shared_lock l{_rolePermissionMutex};
+				sl _{_rolePermissionMutex};
 				var pRolePermissions = _rolePermissions.find( roleId ); if( pRolePermissions==_rolePermissions.end() ) continue;
 				for( var& [permissionPK, access] : pRolePermissions->second )
 					_userAccess.try_emplace( userId ).first->second.try_emplace( permissionPK, access );
@@ -101,6 +101,10 @@ namespace Jde
 		{
 			j = json::parse( IO::FileUtilities::Load(path) );
 		}
+		catch( const IOException& e )
+		{
+			THROW( "Could not load db meta at path={}", path.string() );
+		}
 		catch( const std::exception& e )//nlohmann::detail::parse_error
 		{
 			throw IOException{ path, e.what(), SRCE_CUR };
@@ -125,7 +129,7 @@ namespace Jde
 	α IsTarget( sv url )noexcept{ return CIString{url}.starts_with(UMSettings().Target); }
 	α UM::TestAccess( EAccess access, UserPK userId, PermissionPK permissionId )noexcept(false)->void
 	{
-		shared_lock l{ _userAccessMutex };
+		sl _{ _userAccessMutex };
 		var pUser = _userAccess.find( userId ); THROW_IF( pUser==_userAccess.end(), "User '{}' not found.", userId );
 		var pAccess = pUser->second.find( permissionId ); THROW_IF( pAccess==pUser->second.end(), "User '{}' does not have api '{}' access.", userId, permissionId );
 		THROW_IF( (pAccess->second & access)==EAccess::None, "User '{}' api '{}' access is limited to:  '{}'. requested:  '{}'.", userId, permissionId, (uint8)pAccess->second, (uint8)access );
@@ -189,16 +193,16 @@ namespace Jde
 			//	SetRolePermissions();
 			flat_set<uint> groupIds;
 			{
-				shared_lock l{ _groupRoleMutex };
+				sl _{ _groupRoleMutex };
 				for( var& [groupId,roleIds] : _groupRoles )
 				{
-					if( find(roleIds.begin(), roleIds.end(), *pRoleId)!=roleIds.end() )
+					if( roleIds.find(*pRoleId)!=roleIds.end() )
 						groupIds.emplace( groupId );
 				}
 			}
 			flat_set<uint> userIds;
 			{
-				shared_lock l{_userGroupMutex};
+				sl _{_userGroupMutex};
 				for( var& [userId,userGroupIds] : _userGroups )
 				{
 					for( var permissionGroupId : groupIds )

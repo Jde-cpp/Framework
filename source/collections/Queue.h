@@ -214,8 +214,7 @@ namespace Jde
 			ForEach( func );
 		return result;
 	}
-#define SLOCK shared_lock l(_mtx)
-#define LOCK unique_lock l(_mtx)
+
 	template<typename T>
 	class QueueMove
 	{
@@ -224,8 +223,8 @@ namespace Jde
 		QueueMove( T&& initial )noexcept{ _queue.push(move(initial)); }
 		void Push( T&& new_value )noexcept;
 		optional<T> TryPop( Duration duration )noexcept;
-		bool empty()const noexcept{ SLOCK; return _queue.empty(); }
-		uint size()const noexcept{ SLOCK; return _queue.size(); }
+		bool empty()const noexcept{ sl _(_mtx); return _queue.empty(); }
+		uint size()const noexcept{ sl _(_mtx); return _queue.size(); }
 		optional<T> Pop()noexcept;
 		α PopAll()noexcept->vector<T>;
 	private:
@@ -236,14 +235,14 @@ namespace Jde
 	template<typename T>
 	void QueueMove<T>::Push( T&& new_value )noexcept
 	{
-		LOCK;
+		ul _(_mtx);
 		_queue.push( std::move(new_value) );
 		_cv.notify_one();
 	}
 	template<typename T>
 	optional<T> QueueMove<T>::Pop()noexcept
 	{
-		LOCK;
+		ul _(_mtx);
 		var hasSize = !_queue.empty();
 		optional<T> p = hasSize ? optional<T>{ move(_queue.front()) } : std::nullopt;
 		if( p )
@@ -253,7 +252,7 @@ namespace Jde
 
 	Ŧ QueueMove<T>::PopAll()noexcept->vector<T>
 	{
-		LOCK;
+		ul _(_mtx);
 		vector<T> results; results.reserve( _queue.size() );
 		while( !_queue.empty() )
 		{
@@ -266,7 +265,7 @@ namespace Jde
 	template<typename T>
 	optional<T> QueueMove<T>::TryPop( Duration duration )noexcept
 	{
-		SLOCK;
+		sl l(_mtx);
 		optional<T> result;
 		if( _cv.wait_for(l, duration, [this]{return !_queue.empty();}) )
 		{
@@ -279,5 +278,3 @@ namespace Jde
 	}
 }
 #undef var
-#undef SLOCK
-#undef LOCK

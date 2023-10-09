@@ -157,7 +157,7 @@ namespace Jde::Logging
 			else if( item.has_session_info() )
 			{
 				var& info = item.session_info();
-				lock_guard _{_sessionInfoHandleMutex};
+				lg _{_sessionInfoHandleMutex};
 				if( auto p = _sessionInfoHandles.find(info.session_id()); p!=_sessionInfoHandles.end() )
 				{
 					for( auto h : p->second )
@@ -258,7 +258,7 @@ namespace Jde::Logging
 	{
 		IAwait::await_suspend( h );
 		{
-			lock_guard _{ _sessionInfoHandleMutex };
+			lg _{ _sessionInfoHandleMutex };
 			_sessionInfoHandles[_sessionId].push_back( h );
 		}
 		auto m=mu<Proto::RequestSessionInfo>(); m->set_session_id(_sessionId);

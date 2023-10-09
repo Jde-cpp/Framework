@@ -5,7 +5,7 @@ namespace Jde
 {
 	static const LogTag& _logLevel = Logging::TagLevel( "locks" );
 
-	CoGuard::CoGuard( CoLock& lock )noexcept:
+	CoGuard::CoGuard( CoLock& lock )ι:
 		_lock{lock}
 	{
 		LOG( "CoGuard" );
@@ -17,33 +17,33 @@ namespace Jde
 		_lock.Clear();
 	}
 
-	α LockAwait::await_ready()noexcept->bool
+	α LockAwait::await_ready()ι->bool
 	{
 		_pGuard = _lock.TestAndSet();
 		return !!_pGuard;
 	}
-	α LockAwait::await_suspend( HCoroutine h )noexcept->void
+	α LockAwait::await_suspend( HCoroutine h )ι->void
 	{
 		base::await_suspend( h );
 		if( (_pGuard = _lock.Push(h)) )
 			h.resume();
 	}
-	α CoLock::TestAndSet()->up<CoGuard>
+	α CoLock::TestAndSet()ι->up<CoGuard>
 	{
-		lock_guard l{ _mutex };
+		lg l{ _mutex };
 		return _flag.test_and_set(std::memory_order_acquire) ? up<CoGuard>{} : up<CoGuard>( new CoGuard(*this) );
 	}
-	α CoLock::Push( HCoroutine h )->up<CoGuard>
+	α CoLock::Push( HCoroutine h )ι->up<CoGuard>
 	{
-		lock_guard l{ _mutex };
+		lg l{ _mutex };
 		auto p = _flag.test_and_set(std::memory_order_acquire) ? up<CoGuard>{} : up<CoGuard>{ new CoGuard(*this) };
 		if( !p )
 			_queue.push( move(h) );
 		return p;
 	}
-	α CoLock::Clear()->void
+	α CoLock::Clear()ι->void
 	{
-		lock_guard l{ _mutex };
+		lg _{ _mutex };
 		if( !_queue.empty() )
 		{
 			auto h = _queue.front();
@@ -62,12 +62,12 @@ namespace Jde::Threading
 {
 #ifndef NDEBUG
 	ELogLevel Threading::MyLock::_defaultLogLevel{ ELogLevel::Trace };
-	void Threading::MyLock::SetDefaultLogLevel( ELogLevel logLevel )noexcept{ _defaultLogLevel=logLevel; }
-	ELogLevel Threading::MyLock::GetDefaultLogLevel()noexcept{ return _defaultLogLevel; }
+	void Threading::MyLock::SetDefaultLogLevel( ELogLevel logLevel )ι{ _defaultLogLevel=logLevel; }
+	ELogLevel Threading::MyLock::GetDefaultLogLevel()ι{ return _defaultLogLevel; }
 #endif
 	static boost::container::flat_map<string,sp<shared_mutex>> _mutexes;
 	mutex _mutex;
-	unique_lock<shared_mutex> UniqueLock( str key )noexcept
+	unique_lock<shared_mutex> UniqueLock( str key )ι
 	{
 		unique_lock l{_mutex};
 

@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include <numeric>
 #include <random>
+#include <ranges>
 
 namespace Jde
 {
@@ -26,7 +27,10 @@ namespace Jde::Math
 		{
 			_engine = mu<std::mt19937>();
 #ifdef NDEBUG
-			_engine->seed( std::random_device::seed() );
+	    std::random_device rd;
+	    auto rd_range = std::ranges::transform_view(std::ranges::iota_view(static_cast<std::size_t>(0), std::mt19937::state_size), [&rd](size_t){return rd();});
+	    std::seed_seq seeds(rd_range.begin(), rd_range.end());
+			_engine->seed( seeds );
 #endif
 		}
 		return (*_engine)();

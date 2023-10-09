@@ -8,7 +8,7 @@ namespace Jde
 
 namespace Jde::Coroutine
 {
-	Ξ ForceSuspend()ι->bool
+/*	Ξ ForceSuspend()ι->bool
 	{
 		bool y{ false };
 		if constexpr( _debug )
@@ -17,7 +17,7 @@ namespace Jde::Coroutine
 			y = ++i%2==0;
 		}
 		return y;
-	}
+	}*/
 	using ClientHandle = uint;
 	/*https://stackoverflow.com/questions/44960760/msvc-dll-exporting-class-that-inherits-from-template-cause-lnk2005-already-defin
 	template<class TTask=Task>
@@ -50,7 +50,7 @@ namespace Jde::Coroutine
 	struct Await
 	{
 		Await()ι=default;
-		Await( string name )ι:_name{move(name)}{};
+		Await( str name )ι:_name{name}{};
 
 		β await_ready()ι->bool{ return false; }
 		β await_resume()ι->AwaitResult=0;
@@ -69,7 +69,7 @@ namespace Jde::Coroutine
 	struct IAwait : Base
 	{
 		IAwait( SRCE )ι:_sl{sl}{};
-		IAwait( string name, SRCE )ι:Base{move(name)},_sl{sl}{};
+		IAwait( str name, SRCE )ι:Base{name},_sl{sl}{};
 		virtual ~IAwait()=0;
 		α await_suspend( HCoroutine h )ι->void override
 		{
@@ -104,10 +104,17 @@ namespace Jde::Coroutine
 		IAwaitCache( string name, SRCE )ι:IAwait{move(name), sl}{};
 		//virtual ~IAwait()=0;
 		α await_suspend( HCoroutine h )ι->void override{ IAwait::await_suspend(h); }
-		α await_resume()ι->AwaitResult override{ if(_pPromise) _result = IAwait::await_resume(); else{ AwaitResume(); _result.Push(_sl);}return move(_result);}
+		α await_resume()ι->AwaitResult override{
+			if(_pPromise)
+				_result = IAwait::await_resume();
+			else{
+				AwaitResume();
+				_result.Push(_sl);
+			}
+			return move(_result);
+		}
 	protected:
 		AwaitResult _result;
-		Task::promise_type* _pPromise{};
 		friend Task;
 	};
 
@@ -115,9 +122,15 @@ namespace Jde::Coroutine
 	Τ struct TPoolAwait final : IAwait//todo rename FromSyncAwait?
 	{
 		using base=IAwait;
-		TPoolAwait( function<up<T>()> fnctn, SRCE )ι:base{sl},_fnctn{fnctn}
-		{};
-		α await_suspend( HCoroutine h )ι->void override{ base::await_suspend(h); CoroutinePool::Resume( move(h) ); }
+		TPoolAwait( function<up<T>()> fnctn, SRCE )ι:base{sl},_fnctn{fnctn}{};
+		TPoolAwait( function<up<T>()> fnctn, str threadName, SRCE )ι:base{threadName, sl},_fnctn{fnctn}{};
+		α await_suspend( HCoroutine h )ι->void override
+		{
+			base::await_suspend(h);
+			if( _name.size() )
+				OriginalThreadParamPtr = { _name, Threading::GetAppThreadHandle() };
+			CoroutinePool::Resume( move(h) );
+		}
 
 		α await_resume()ι->AwaitResult override;
 	private:
@@ -278,6 +291,7 @@ namespace Jde::Coroutine
 		AwaitResume();
 		try
 		{
+			Threading::SetThreadDscrptn( _name );
 			return AwaitResult{ _fnctn().release() };
 		}
 		catch( IException& e )

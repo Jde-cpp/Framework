@@ -57,7 +57,7 @@ namespace Jde::Threading
 			var next = Next().value_or(dflt);
 			var until = std::min( dflt, next );
 			if( ++i%10==0 )
-				LOG( "Alarm wait until:  {}"sv, LocalTimeDisplay(until, true, true) );
+				LOG( "Alarm wait until:  {}, calls={}"sv, LocalTimeDisplay(until, true, true), Calls() );
 			/*var status =*/ _cv.wait_for( lk, until-now );
 		}
 		unique_lock l{ _coroutineMutex };
