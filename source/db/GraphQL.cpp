@@ -108,7 +108,7 @@ namespace DB
 				if( c.IsEnum && pValue->is_string() )
 				{
 					var pValues = SFuture<flat_map<uint,string>>( _pDataSource->SelectEnum<uint>(tableName) ).get();
-					optional<uint> pEnum = Find( *pValues, pValue->get<string>() ); THROW_IF( !pEnum, "Could not find '{}' for {}", pValue->get<string>(), memberName );
+					optional<uint> pEnum = FindKey( *pValues, pValue->get<string>() ); THROW_IF( !pEnum, "Could not find '{}' for {}", pValue->get<string>(), memberName );
 					value = *pEnum;
 				}
 				else

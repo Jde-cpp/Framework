@@ -23,7 +23,7 @@ namespace Jde::IO::Proto
 	α Save( const google::protobuf::MessageLite& msg, fs::path path, SL )ε->void;
 	α ToString( const google::protobuf::MessageLite& msg )ε->string;
 	α SizePrefixed( const google::protobuf::MessageLite&& m )ι->tuple<up<google::protobuf::uint8[]>,uint>;
-	α ToTimestamp( TimePoint t )ι->up<google::protobuf::Timestamp>;
+	α ToTimestamp( TimePoint t )ι->google::protobuf::Timestamp;
 	namespace Internal
 	{
 		Ŧ Deserialize( const google::protobuf::uint8* p, int size, T& proto )ε->void
@@ -131,14 +131,14 @@ namespace Jde::IO
 		return y;
 	}
 
-	Ξ Proto::ToTimestamp( TimePoint t )ι->up<google::protobuf::Timestamp>
+	Ξ Proto::ToTimestamp( TimePoint t )ι->google::protobuf::Timestamp
 	{
-		auto pTime = mu<google::protobuf::Timestamp>();
+		google::protobuf::Timestamp proto;
 		var seconds = Clock::to_time_t( t );
 		var nanos = std::chrono::duration_cast<std::chrono::nanoseconds>( t-TimePoint{} )-std::chrono::duration_cast<std::chrono::nanoseconds>( std::chrono::seconds(seconds) );
-		pTime->set_seconds( seconds );
-		pTime->set_nanos( (int)nanos.count() );
-		return pTime;
+		proto.set_seconds( seconds );
+		proto.set_nanos( (int)nanos.count() );
+		return proto;
 	}
 }
 #undef var

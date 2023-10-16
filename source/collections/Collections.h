@@ -8,27 +8,25 @@
 #define var const auto
 namespace Jde
 {
-	Ŧ Find( const T& collection, typename T::key_type key )->typename T::mapped_type
-	{
+	Ŧ Find( const T& collection, typename T::key_type key )ι->typename T::mapped_type{
 		auto pItem = collection.find( key );
 		return pItem==collection.end() ? typename T::mapped_type{} : pItem->second;
 	}
 
-	Ŧ Find( const T& collection, const typename T::mapped_type& value )->optional<typename T::key_type>
-	{
-		auto pBegin = collection.begin(); auto pEnd = collection.end();
-		auto p = boost::container::find_if( pBegin, pEnd, [&value](var& x)->bool{ return x.second==value; } );
-		return p==collection.end() ? nullopt : optional<typename T::key_type>{ p->first };
+	Ŧ FindKey( const T& collection, const typename T::mapped_type& value )ι->optional<typename T::key_type>{
+		auto pEnd = collection.end();
+		auto p = boost::container::find_if( collection.begin(), pEnd, [&value](var& x)ι->bool{ return x.second==value; } );
+		return p==pEnd ? nullopt : optional<typename T::key_type>{ p->first };
 	}
 
-	Ŧ EmplaceShared( T& map, typename T::key_type key )->typename T::mapped_type&
+	Ŧ EmplaceShared( T& map, typename T::key_type key )ι->typename T::mapped_type&
 	{
 		auto p = map.find( key );
 		if( p==map.end() )
 			p = map.try_emplace( key, ms<typename T::mapped_type::element_type>() ).first;
 		return p->second;
 	}
-	Ŧ EmplaceUnique( T& map, typename T::key_type key )->typename T::mapped_type&
+	Ŧ EmplaceUnique( T& map, typename T::key_type key )ι->typename T::mapped_type&
 	{
 		auto p = map.find( key );
 		if( p==map.end() )
@@ -39,19 +37,19 @@ namespace Jde
 	#define LAZY( x ) LazyWrap{ [&](){ return x;} }//doesn't work in ms
 	template<class F> struct LazyWrap //https://stackoverflow.com/questions/62577415/lazy-argument-evaluation-for-try-emplace
 	{
-		LazyWrap( F&& f ):_f(f) {}
+		LazyWrap( F&& f )ι:_f(f) {}
 		Τ operator T() { return _f(); }
 		F _f;
 	};
 
 	Τ struct SPCompare
 	{
-		α operator()( const sp<T>& a, const sp<T>& b )const noexcept->bool{ return *a < *b; }
-		α operator()(const sp<T>& a, const T& b)const noexcept->bool{ return *a < b; }
-		α operator()( const T& a, const sp<T>& b)const noexcept->bool{ return a < *b; }
+		α operator()( const sp<T>& a, const sp<T>& b )Ι->bool{ return *a < *b; }
+		α operator()(const sp<T>& a, const T& b)Ι->bool{ return *a < b; }
+		α operator()( const T& a, const sp<T>& b)Ι->bool{ return a < *b; }
 	};
 
-	ẗ TryGetValue( const flat_map<K,V>& map, const K& key, V dflt={} )->V
+/*	ẗ TryGetValue( const flat_map<K,V>& map, const K& key, V dflt={} )ι->V
 	{
 		const auto& pItem = map.find(key);
 		return pItem==map.end() ? dflt : pItem->second;
@@ -64,8 +62,8 @@ namespace Jde
 		std::for_each( v.begin(), v.end(), [f,&y](var& i){ y.push_back( f(i) );} );
 		return y;
 	}
-
-	Ŧ Replace( T& map, const typename T::key_type& key, typename T::mapped_type&& value )->void
+*/
+	Ŧ Replace( T& map, const typename T::key_type& key, typename T::mapped_type&& value )ι->void
 	{
 		if( auto p = map.find(key); p!=map.end() )
 			p->second = move( value );
@@ -75,8 +73,8 @@ namespace Jde
 }
 namespace Jde::Collections
 {
-	uint32 Crc( const vector<string> values )noexcept;
-	std::vector<uint> Indexes( const std::vector<string>& population, const std::vector<string>& subset )noexcept;
+	uint32 Crc( const vector<string> values )ι;
+	std::vector<uint> Indexes( const std::vector<string>& population, const std::vector<string>& subset )ι;
 
 	template<typename Y, typename T>
 	Y Map( const T& map, function<void( const typename T::key_type&, const typename T::mapped_type&, Y&)> f )
@@ -86,14 +84,14 @@ namespace Jde::Collections
 		return y;
 	}
 
-	ẗ Invert( const flat_map<K,V>& map )noexcept->flat_map<V,K>
+	ẗ Invert( const flat_map<K,V>& map )ι->flat_map<V,K>
 	{
 		flat_map<V,K> results;
 		for_each( map.begin(), map.end(), [&results](var& x){results.emplace(x.second,x.first); } );
 		return results;
 	}
 
-	ẗ Keys( const std::map<K,V>& map )noexcept->up<std::set<K>>
+	ẗ Keys( const std::map<K,V>& map )ι->up<std::set<K>>
 	{
 		auto pResults = mu<std::set<K>>();
 		for( const auto& keyValue : map )
@@ -102,7 +100,7 @@ namespace Jde::Collections
 		return pResults;
 	}
 
-	ẗ Keys( const flat_map<K,V>& map, function<bool(const V&)> f )noexcept->flat_set<K>
+	ẗ Keys( const flat_map<K,V>& map, function<bool(const V&)> f )ι->flat_set<K>
 	{
 		flat_set<K> y;
 		for( var& kv : map )
@@ -113,7 +111,7 @@ namespace Jde::Collections
 		return y;
 	}
 
-	Ŧ Values( const T& map )->std::vector<typename T::mapped_type>
+	Ŧ Values( const T& map )ι->std::vector<typename T::mapped_type>
 	{
 		std::vector<typename T::mapped_type> y;
 		for( const auto& keyValue : map )
@@ -128,13 +126,13 @@ namespace Jde::Collections
 		std::for_each( values.begin(), values.end(), function );
 	}
 
-	ẗ ForEachMap( const std::map<K,V>& map, std::function<void(const K& key, const V& value)> func )->void
+	ẗ ForEachMap( const std::map<K,V>& map, std::function<void(const K& key, const V& value)> func )ι->void
 	{
 		for( const auto& keyValue : map )
 			func( keyValue.first, keyValue.second );
 	}
 
-	ẗ ForEachValue( const std::map<K,V>& map, std::function<void(const V& value)> func )->void
+	ẗ ForEachValue( const std::map<K,V>& map, std::function<void(const V& value)> func )ι->void
 	{
 		for( const auto& keyValue : map )
 			func( keyValue.second );
@@ -180,7 +178,7 @@ namespace Jde::Collections
 		return result;
 	}
 
-	ẗ FindFirst( const std::map<K,sp<V>>& collection, std::function<bool(const V&)> func )->const sp<V>
+	ẗ FindFirst( const std::map<K,sp<V>>& collection, std::function<bool(const V&)> func )ι->const sp<V>
 	{
 		sp<V> pValue{nullptr};
 		for( const auto& keyValuePtr : collection )
@@ -194,7 +192,7 @@ namespace Jde::Collections
 		return pValue;
 	}
 
-	ẗ FindFirst( std::map<K,sp<V>>& collection, std::function<bool(const V&)> func )->sp<V>
+	ẗ FindFirst( std::map<K,sp<V>>& collection, std::function<bool(const V&)> func )ι->sp<V>
 	{
 		sp<V> pValue{nullptr};
 		for( const auto& keyValuePtr : collection )
@@ -208,7 +206,7 @@ namespace Jde::Collections
 		return pValue;
 	}
 
-	ẗ Erase( std::map<K,sp<V>>& collection, std::function<bool(const V&)> func )->void
+	ẗ Erase( std::map<K,sp<V>>& collection, std::function<bool(const V&)> func )ι->void
 	{
 		std::forward_list<K> doomed;
 		for( const auto& keyValuePtr : collection )
@@ -222,7 +220,7 @@ namespace Jde::Collections
 
 
 	template<typename T>
-	α ContainsAll( const std::set<T>& universe, const std::set<T>& set )->bool
+	α ContainsAll( const std::set<T>& universe, const std::set<T>& set )ι->bool
 	{
 		bool in = set.size() <= universe.size();
 		if( in )
@@ -238,7 +236,7 @@ namespace Jde::Collections
 	}
 
 
-	inline std::vector<uint> Indexes( const std::vector<string>& population, const std::vector<string>& subset )noexcept
+	inline std::vector<uint> Indexes( const std::vector<string>& population, const std::vector<string>& subset )ι
 	{
 		std::vector<uint> results; results.reserve( subset.size() );
 		for( const auto& subsetItem : subset )
@@ -252,7 +250,7 @@ namespace Jde::Collections
 	}
 
 	template<template<class, class,class...> class M, class K, class V, class... Ts>
-	up<V>& InsertUnique( M<K,up<V>,Ts...>& map, const K& key )noexcept
+	up<V>& InsertUnique( M<K,up<V>,Ts...>& map, const K& key )ι
 	{
 		auto p = map.find( key );//M<K,std::up<V>>::iterator
 		if( p == map.end() )

@@ -26,7 +26,6 @@ target_precompile_headers(Jde
   PRIVATE
 	<functional>
 	<iostream>
-	<boost/crc.hpp>
 	<boost/exception/diagnostic_information.hpp>
 	<boost/core/noncopyable.hpp>
 	<spdlog/spdlog.h>

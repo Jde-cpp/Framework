@@ -191,7 +191,7 @@ namespace Jde::Logging
 	α ServerSink::Write( const MessageBase& m, TimePoint time, vector<string>* pValues )ι->void
 	{
 		auto pProto = mu<Proto::Message>();
-		pProto->set_allocated_time( IO::Proto::ToTimestamp(time).release() );
+		pProto->set_allocated_time( new google::protobuf::Timestamp{IO::Proto::ToTimestamp(time)} );
 		pProto->set_level( (Proto::ELogLevel)m.Level );
 		pProto->set_messageid( (uint32)m.MessageId );
 		pProto->set_fileid( (uint32)m.FileId );
