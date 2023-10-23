@@ -7,16 +7,7 @@
 #include <jde/Str.h>
 #include <jde/App.h>
 
-#pragma warning(push)
-#pragma warning( disable : 4715)
-#include <nlohmann/json.hpp>
-#pragma warning(pop)
-
 #define var const auto
-namespace Jde
-{
-	using nlohmann::json;
-}
 namespace Jde::Settings
 {
 	α Path()ι->fs::path;

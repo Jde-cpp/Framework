@@ -91,13 +91,13 @@ namespace Jde
 		return _what.c_str();
 	}
 
-	CodeException::CodeException( string value, std::error_code&& code, ELogLevel level, SL sl ):
+	CodeException::CodeException( string value, std::error_code&& code, ELogLevel level, SL sl )ι:
 		IException{ move(value), level, (uint)code.value(), sl },
 		_errorCode{ move(code) }
 	{
 	}
 
-	CodeException::CodeException( std::error_code&& code, ELogLevel level, SL sl ):
+	CodeException::CodeException( std::error_code&& code, ELogLevel level, SL sl )ι:
 		CodeException( format("{}-{}", code.value(), code.message()), move(code), level, sl )
 	{}
 

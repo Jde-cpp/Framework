@@ -27,7 +27,16 @@
 			</ArrayItems>
 		</Expand>
 	</Type>
-	<Type Name="boost::container::flat_map&lt;*,*,*,*&gt;">
+	<Type Name="boost::container::flat_map&lt;*&gt;">
+		<DisplayString>{{size={m_flat_tree.m_data.m_seq.m_holder.m_size}}}</DisplayString>
+		<Expand>
+			<ArrayItems>
+				<Size>m_flat_tree.m_data.m_seq.m_holder.m_size</Size>
+				<ValuePointer>m_flat_tree.m_data.m_seq.m_holder.m_start</ValuePointer>
+			</ArrayItems>
+		</Expand>
+	</Type>
+	<Type Name="boost::container::flat_map&lt;*&gt;&amp;&amp;">
 		<DisplayString>{{size={m_flat_tree.m_data.m_seq.m_holder.m_size}}}</DisplayString>
 		<Expand>
 			<ArrayItems>
@@ -78,51 +87,51 @@
 		</Expand>
 	</Type>
 	<Type Name="std::__1::basic_string&lt;*&gt;">
-		<DisplayString Condition="(__r_.__value_.__s.__size_ \&amp; 1) != 1">{{s={__r_.__value_.__s.__data_, s8b}}}</DisplayString>
-		<DisplayString Condition="(__r_.__value_.__s.__size_ \&amp; 1) == 1">{{v={__r_.__value_.__l.__data_, s8b}}}</DisplayString>
+		<DisplayString Condition="!__r_.__value_.__s.__is_long_">{{s={__r_.__value_.__s.__data_, s8b}}}</DisplayString>
+		<DisplayString Condition="__r_.__value_.__s.__is_long_">{{v={__r_.__value_.__l.__data_, s8b}}}</DisplayString>
 		<Expand>
-			<Item Name="[size z(packed)]" Condition="(__r_.__value_.__s.__size_ &amp; 1) != 1">(__r_.__value_.__s.__size_ &gt;&gt; 1) % 256</Item>
-			<Item Name="[size]" Condition="(__r_.__value_.__s.__size_ &amp; 1) != 1">__r_.__value_.__l.__size_</Item>
+			<Item Name="[size z(packed)]" Condition="(!__r_.__value_.__s.__is_long_">__r_.__value_.__s.__size_ &gt;&gt; 1 % 256</Item>
+			<Item Name="[size]" Condition="__r_.__value_.__s.__is_long_">__r_.__value_.__l.__size_</Item>
 		</Expand>
 	</Type>
-	<Type Name="std::__1::string">
-		<DisplayString Condition="(__r_.__value_.__s.__size_ \&amp; 1) != 1">{{s2={__r_.__value_.__s.__data_, s8b}}}</DisplayString>
-		<DisplayString Condition="(__r_.__value_.__s.__size_ \&amp; 1) == 1">{{l2={__r_.__value_.__l.__data_, s8b}}}</DisplayString>
+	<Type Name="std::__1::string&lt;*&gt;">
+		<DisplayString Condition="!__r_.__value_.__s.__is_long_">{{s2={__r_.__value_.__s.__data_, s8b}}}</DisplayString>
+		<DisplayString Condition="__r_.__value_.__s.__is_long_">{{l2={__r_.__value_.__l.__data_, s8b}}}</DisplayString>
 		<Expand>
-			<Item Name="[size z(packed)]" Condition="(__r_.__value_.__s.__size_ &amp; 1) == 0">(__r_.__value_.__s.__size_ &gt;&gt; 1) % 256</Item>
-			<Item Name="[size]" Condition="(__r_.__value_.__s.__size_ &amp; 1) != 0">__r_.__value_.__l.__size_</Item>
+			<Item Name="[size z(packed)]" Condition="!__r_.__value_.__s.__is_long_">__r_.__value_.__s.__size_ &gt;&gt; 1 % 256</Item>
+			<Item Name="[size]" Condition="__r_.__value_.__s.__is_long_">__r_.__value_.__l.__size_</Item>
 		</Expand>
 	</Type>
 	<Type Name="std::__1::string&amp;&amp;">
-		<DisplayString Condition="(__r_.__value_.__s.__size_ \&amp; 1) != 1">{{s4={__r_.__value_.__s.__data_, s8b}}}</DisplayString>
-		<DisplayString Condition="(__r_.__value_.__s.__size_ \&amp; 1) == 1">{{l4={__r_.__value_.__l.__data_, s8b}}}</DisplayString>
+		<DisplayString Condition="!__r_.__value_.__s.__is_long_">{{s4={__r_.__value_.__s.__data_, s8b}}}</DisplayString>
+		<DisplayString Condition="__r_.__value_.__s.__is_long_">{{l4={__r_.__value_.__l.__data_, s8b}}}</DisplayString>
 		<Expand>
-			<Item Name="[size z(packed)]" Condition="(__r_.__value_.__s.__size_ &amp; 1) == 0">(__r_.__value_.__s.__size_ &gt;&gt; 1) % 256</Item>
-			<Item Name="[size]" Condition="(__r_.__value_.__s.__size_ &amp; 1) != 0">__r_.__value_.__l.__size_</Item>
+			<Item Name="[size z(packed)]" Condition="(!__r_.__value_.__s.__is_long_">__r_.__value_.__s.__size_ &gt;&gt; 1 % 256</Item>
+			<Item Name="[size]" Condition="__r_.__value_.__s.__is_long_">__r_.__value_.__l.__size_</Item>
 		</Expand>
 	</Type>
 	<Type Name="std::__1::basic_string&lt;*&gt;&amp;">
-		<DisplayString Condition="(__r_.__value_.__s.__size_ \&amp; 1) != 1">{{s5={__r_.__value_.__s.__data_, s8b}}}</DisplayString>
-		<DisplayString Condition="(__r_.__value_.__s.__size_ \&amp; 1) == 1">{{l5={__r_.__value_.__l.__data_, s8b}}}</DisplayString>
+		<DisplayString Condition="!__r_.__value_.__s.__is_long_">{{s5={__r_.__value_.__s.__data_, s8b}}}</DisplayString>
+		<DisplayString Condition="__r_.__value_.__s.__is_long_">{{l5={__r_.__value_.__l.__data_, s8b}}}</DisplayString>
 		<Expand>
-			<Item Name="[size z(packed)]" Condition="(__r_.__value_.__s.__size_ &amp; 1) == 0">(__r_.__value_.__s.__size_ &gt;&gt; 1) % 256</Item>
-			<Item Name="[size]" Condition="(__r_.__value_.__s.__size_ &amp; 1) != 0">__r_.__value_.__l.__size_</Item>
+			<Item Name="[size z(packed)]" Condition="!__r_.__value_.__s.__is_long_">__r_.__value_.__s.__size_ &gt;&gt; 1 % 256</Item>
+			<Item Name="[size]" Condition="__r_.__value_.__s.__is_long_">__r_.__value_.__l.__size_</Item>
 		</Expand>
 	</Type>
 	<Type Name="Jde::str">
-		<DisplayString Condition="(__r_.__value_.__s.__size_ \&amp; 1) != 1">{{s1={__r_.__value_.__s.__data_, s8b}}}</DisplayString>
-		<DisplayString Condition="(__r_.__value_.__s.__size_ \&amp; 1) == 1">{{l1={__r_.__value_.__l.__data_, s8b}}}</DisplayString>
+		<DisplayString Condition="(!__r_.__value_.__s.__is_long_">{{s1={__r_.__value_.__s.__data_, s8b}}}</DisplayString>
+		<DisplayString Condition="__r_.__value_.__s.__is_long_">{{l1={__r_.__value_.__l.__data_, s8b}}}</DisplayString>
 		<Expand>
-			<Item Name="[size z(packed)]" Condition="(__r_.__value_.__s.__size_ &amp; 1) == 0">(__r_.__value_.__s.__size_ &gt;&gt; 1) % 256</Item>
-			<Item Name="[size]" Condition="(__r_.__value_.__s.__size_ &amp; 1) != 0">__r_.__value_.__l.__size_</Item>
+			<Item Name="[size z(packed)]" Condition="!__r_.__value_.__s.__is_long_">__r_.__value_.__s.__size_ &gt;&gt; 1 % 256</Item>
+			<Item Name="[size]" Condition="__r_.__value_.__s.__is_long_">__r_.__value_.__l.__size_</Item>
 		</Expand>
 	</Type>
 	<Type Name="Jde::DB::SchemaName">
-		<DisplayString Condition="(__r_.__value_.__s.__size_ &amp; 1) == 0">{__r_.__value_.__s.__data_, s8b}</DisplayString>
-		<DisplayString Condition="(__r_.__value_.__s.__size_ &amp; 1) != 0">{__r_.__value_.__l.__data_, s8b}</DisplayString>
+		<DisplayString Condition="!__r_.__value_.__s.__is_long_">{__r_.__value_.__s.__data_, s8b}</DisplayString>
+		<DisplayString Condition="__r_.__value_.__s.__is_long_">{__r_.__value_.__l.__data_, s8b}</DisplayString>
 		<Expand>
-			<Item Name="[size z(packed)]" Condition="(__r_.__value_.__s.__size_ &amp; 1) == 0">(__r_.__value_.__s.__size_ &gt;&gt; 1) % 256</Item>
-			<Item Name="[size]" Condition="(__r_.__value_.__s.__size_ &amp; 1) != 0">__r_.__value_.__l.__size_</Item>
+			<Item Name="[size z(packed)]" Condition="!__r_.__value_.__s.__is_long_">__r_.__value_.__s.__size_ &gt;&gt; 1 % 256</Item>
+			<Item Name="[size]" Condition="__r_.__value_.__s.__is_long_">__r_.__value_.__l.__size_</Item>
 		</Expand>
 	</Type>
 	<Type Name="Jde::Coroutine::AwaitResult::Value">
@@ -132,11 +141,11 @@
 		<DisplayString Condition="index() ==  3" Optional="true">{{ bool, value={_Tail._Tail._Tail._Head} }}</DisplayString>
 	</Type>
 	<Type Name="std::__1::__fs::filesystem::path::string_type">
-		<DisplayString Condition="(__r_.__value_.__s.__size_ &amp; 1) == 0">{__r_.__value_.__s.__data_, s8b}</DisplayString>
-		<DisplayString Condition="(__r_.__value_.__s.__size_ &amp; 1) != 0">{__r_.__value_.__l.__data_, s8b}</DisplayString>
+		<DisplayString Condition="!__r_.__value_.__s.__is_long_">{__r_.__value_.__s.__data_, s8b}</DisplayString>
+		<DisplayString Condition="__r_.__value_.__s.__is_long_">{__r_.__value_.__l.__data_, s8b}</DisplayString>
 		<Expand>
-			<Item Name="[size z(packed)]" Condition="(__r_.__value_.__s.__size_ &amp; 1) == 0">(__r_.__value_.__s.__size_ &gt;&gt; 1) % 256</Item>
-			<Item Name="[size]" Condition="(__r_.__value_.__s.__size_ &amp; 1) != 0">__r_.__value_.__l.__size_</Item>
+			<Item Name="[size z(packed)]" Condition="!__r_.__value_.__s.__is_long_">__r_.__value_.__s.__size_ &gt;&gt; 1 % 256</Item>
+			<Item Name="[size]" Condition="__r_.__value_.__s.__is_long_">__r_.__value_.__l.__size_</Item>
 		</Expand>
 	</Type>
 	<Type Name="std::__1::__fs::filesystem::path">
@@ -146,17 +155,17 @@
 		<DisplayString>{__data}</DisplayString>
 	</Type>
 	<Type Name="Jde::sv">
-		<DisplayString>{{x={__data,[__size]s8b}}}</DisplayString>
+		<DisplayString>{{x={__data_,[__size_]s8b}}}</DisplayString>
 		<Expand>
-			<Item Name="[size]">__size</Item>
-			<Item Name="data">__data</Item>
+			<Item Name="[size]">__size_</Item>
+			<Item Name="data">__data_</Item>
 		</Expand>
 	</Type>
 	<Type Name="std::__1::basic_string_view&lt;*&gt;">
-		<DisplayString>{__data,[__size]s8b}</DisplayString>
+		<DisplayString>{__data_,[__size_]s8b}</DisplayString>
 		<Expand>
-			<Item Name="[size]">__size</Item>
-			<Item Name="data">__data</Item>
+			<Item Name="[size]">__size_</Item>
+			<Item Name="data">__data_</Item>
 		</Expand>
 	</Type>
 	<Type Name="Jde::sp&lt;*&gt;">
