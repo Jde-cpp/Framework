@@ -17,52 +17,48 @@ namespace Jde::IO::Sockets
 	namespace net = boost::asio;
 	using tcp = net::ip::tcp;
 
-	struct ProtoClientSession
-	{
+	struct ProtoClientSession : std::enable_shared_from_this<ProtoClientSession>{
 		ProtoClientSession();
-		virtual ~ProtoClientSession(){ LOGX( "~ProtoClientSession -start"); _socket.close(); LOGX( "~ProtoClientSession-end"); };
-		void Close( std::condition_variable* pCvClient=nullptr )ι;
-		virtual void OnConnected()ι{};
-		static uint32 MessageLength( char* readMessageSize )ι;
+		virtual ~ProtoClientSession(){ DBG( "~ProtoClientSession -start" ); _socket.close(); DBG( "~ProtoClientSession-end" ); };
+		α Close( std::condition_variable* pCvClient=nullptr )ι->void;
+		β OnConnected()ι->void{};
+		Ω MessageLength( char* readMessageSize )ι->uint32;
 	protected:
-		virtual void OnDisconnect()ι=0;
+		β OnDisconnect()ι->void=0;
 		α ReadHeader()ι->void;
 		α ReadBody( int messageLength )ι->void;
 		α Write( up<google::protobuf::uint8[]> p, uint c )ι->void;
-		virtual void Process( google::protobuf::uint8* pData, int size )ι=0;
+		β Process( google::protobuf::uint8* pData, int size )ι->void=0;
 
+		sp<ProtoClientSession> _pReadKeepAlive; sp<ProtoClientSession> _pWriteKeepAlive;
 		sp<AsioContextThread> _pIOContext;
 		tcp::socket _socket;
 		char _readMessageSize[4];
 	};
 #pragma warning(push)
 #pragma warning( disable : 4459 )
-	struct ProtoClient : IClientSocket, ProtoClientSession
-	{
+	struct ProtoClient : IClientSocket, ProtoClientSession{
 		ProtoClient( str settingsPath, PortType defaultPort )ε;
 		virtual ~ProtoClient()=0;
-		void Connect()ε;
+		α Connect()ε->void;
 	};
 	inline ProtoClient::~ProtoClient(){}
 #pragma warning(pop)
 #define $ template<typename TOut, typename TIn> auto TProtoClient<TOut,TIn>
 	template<typename TOut, typename TIn>
-	struct TProtoClient : ProtoClient
-	{
+	struct TProtoClient : ProtoClient{
 		TProtoClient( str settingsPath, PortType defaultPort )ε:
 			ProtoClient{ settingsPath, defaultPort }
 		{}
 
    	virtual ~TProtoClient()=default;
-		void Process( google::protobuf::uint8* pData, int size )ι override;
-		void Write( TOut&& message )ι;
-		virtual void OnReceive( TIn& pIn )ι=0;
+		α Process( google::protobuf::uint8* pData, int size )ι->void override;
+		α Write( TOut&& message )ι->void;
+		β OnReceive( TIn& pIn )ι->void=0;
 	};
 #define var const auto
-	$::Process( google::protobuf::uint8* pData, int size )ι->void
-	{
-		try
-		{
+	$::Process( google::protobuf::uint8* pData, int size )ι->void{
+		try{
 			auto transmission = Proto::Deserialize<TIn>( pData, size );
 			OnReceive( transmission );
 		}
@@ -70,8 +66,7 @@ namespace Jde::IO::Sockets
 		{}
 	}
 
-	$::Write( TOut&& m )ι->void
-	{
+	$::Write( TOut&& m )ι->void{
 		auto [p,size] = IO::Proto::SizePrefixed( move(m) );
 		ProtoClientSession::Write( move(p), size );
 	}

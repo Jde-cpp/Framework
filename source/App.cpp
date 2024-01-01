@@ -43,11 +43,7 @@ namespace Jde
 
 		bool console = false;
 		const string arg0{ argv[0] };
-#ifdef NDEBUG
-		bool terminate = true;
-#else
-		bool terminate = false;
-#endif
+		bool terminate = !_debug;
 		flat_set<string> values;
 		for( int i=1; i<argc; ++i )
 		{
@@ -233,8 +229,8 @@ namespace Jde
 	α IApplication::AddShutdown( sp<IShutdown> pShared )noexcept->void
 	{
 		lg _{ _objectMutex };
-		_objects.push_back( pShared );
-		_shutdowns.push_back( pShared );
+		//_objects.push_back( pShared ); not sure why objects would be added also.
+		_shutdowns.push_back( move(pShared) );
 	}
 	α IApplication::RemoveShutdown( sp<IShutdown> pShutdown )noexcept->void
 	{

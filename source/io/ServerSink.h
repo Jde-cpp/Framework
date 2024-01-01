@@ -46,14 +46,14 @@ namespace Jde::Logging
 		//Γ α SetServerLevel( ELogLevel serverLevel )ι->void;
 	}
 #undef Φ
-	struct Γ IServerSink //: private boost::noncopyable debugging issues
-	{
+	struct Γ IServerSink{ //: private boost::noncopyable debugging issues
 		using ID=uint32;
 		IServerSink()ι=default;
 		IServerSink( const unordered_set<ID>& msgs )ι:_messagesSent{msgs}{}
 		virtual ~IServerSink();
 
 		β ApplicationId()ι->ApplicationPK{return 0;}
+		β Close()ι->void=0;
 		β InstanceId()ι->ApplicationInstancePK{return _instanceId;}
 		β IsLocal()ι->bool{ return false; }
 		β Log( Messages::ServerMessage& message )ι->void=0;
@@ -103,6 +103,7 @@ namespace Jde::Logging
 		static α Create( bool wait = false )ι->Task;
 		ServerSink()ε;
 		~ServerSink();
+		α Close()ι->void override{ ProtoBase::Close(); }
 		α Log( Messages::ServerMessage& m )ι->void override{ Write( m, m.Timestamp, &m.Variables ); }
 		α Log( const MessageBase& m )ι->void override{ Write( m, Clock::now() ); }
 		α Log( const MessageBase& m, vector<string>& values )ι->void override{ Write( m, Clock::now(), &values ); };

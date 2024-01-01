@@ -9,6 +9,7 @@
 namespace Jde::DB
 {
 	using nlohmann::json;
+	using std::endl;
 
 	Column::Column( sv name, uint ordinalPosition, sv dflt, bool isNullable, EType type, optional<uint> maxLength, bool isIdentity, bool isId, optional<uint> numericPrecision, optional<uint> numericScale )ι:
 		Name{name},

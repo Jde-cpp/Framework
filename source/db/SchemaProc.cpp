@@ -210,10 +210,10 @@ namespace Jde::DB
 					ostringstream sql;
 					var identityInsert = pTable->HaveSequence() && _syntax.NeedsIdentityInsert();
 					if( identityInsert )
-						sql << "SET IDENTITY_INSERT " << tableName << " ON;" << endl;
+						sql << "SET IDENTITY_INSERT " << tableName << " ON;" << std::endl;
 					sql << format( "insert into {}({})values({})", tableName, osInsertColumns.str(), osInsertValues.str() );
 					if( identityInsert )
-						sql << endl << "SET IDENTITY_INSERT " << tableName << " OFF;";
+						sql << std::endl << "SET IDENTITY_INSERT " << tableName << " OFF;";
 					_pDataSource->Execute( sql.str(), params );
 				}
 			}

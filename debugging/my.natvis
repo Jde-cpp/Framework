@@ -94,12 +94,12 @@
 			<Item Name="[size]" Condition="__r_.__value_.__s.__is_long_">__r_.__value_.__l.__size_</Item>
 		</Expand>
 	</Type>
-	<Type Name="std::__1::string&lt;*&gt;">
+	<Type Name="std::__1::string">
 		<DisplayString Condition="!__r_.__value_.__s.__is_long_">{{s2={__r_.__value_.__s.__data_, s8b}}}</DisplayString>
-		<DisplayString Condition="__r_.__value_.__s.__is_long_">{{l2={__r_.__value_.__l.__data_, s8b}}}</DisplayString>
+		<DisplayString Condition="(nodeString.__r_.__value_.__s.__size_ \&amp; 1)==0">{{l2={__r_.__value_.__l.__data_, s8b}}}</DisplayString>
 		<Expand>
 			<Item Name="[size z(packed)]" Condition="!__r_.__value_.__s.__is_long_">__r_.__value_.__s.__size_ &gt;&gt; 1 % 256</Item>
-			<Item Name="[size]" Condition="__r_.__value_.__s.__is_long_">__r_.__value_.__l.__size_</Item>
+			<Item Name="[size]" Condition="(nodeString.__r_.__value_.__s.__size_ \&amp; 1)==0">__r_.__value_.__l.__size_</Item>
 		</Expand>
 	</Type>
 	<Type Name="std::__1::string&amp;&amp;">
@@ -196,7 +196,7 @@
 	</Type>
 <!-- https://github.com/KindDragon/CPPDebuggerVisualizers/blob/master/VS2019/Visualizers/boost_Containers.natvis -->
 	<Type Name="boost::container::flat_set&lt;*&gt;">
-		<DisplayString>{{sizex={m_data.m_seq.m_holder.m_size}}}</DisplayString>
+		<DisplayString>{{sizep={m_data.m_seq.m_holder.m_size}}}</DisplayString>
 		 <Expand>
 			<ArrayItems>
 				<Size>m_data.m_seq.m_holder.m_size</Size>

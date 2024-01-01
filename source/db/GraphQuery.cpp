@@ -6,6 +6,7 @@
 #define var const auto
 namespace Jde::DB
 {
+	using std::endl;
 	static const LogTag& _logLevel = Logging::TagLevel( "ql" );
 	#define  _schema DB::DefaultSchema()
 	α Where( const DB::TableQL& table, const Table& schemaTable, vector<object>& parameters )noexcept(false)->string

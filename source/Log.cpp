@@ -99,7 +99,6 @@ namespace Jde
 	α Logging::DestroyLogger()->void
 	{
 		TRACE( "Destroying Logger"sv );
-
 		Logging::_pOnceMessages = nullptr;
 		{
 			unique_lock l{ MemoryLogMutex };
@@ -188,17 +187,16 @@ namespace Jde
 			LogMemoryDetail( Logging::Message{"settings", ELogLevel::Information, "({})level='{}' pattern='{}'{}"}, name, ToString(level), pattern, additional );
 			sinks.push_back( pSink );
 		}
+		Logging::_logMemory = Settings::Get<bool>("logging/memory").value_or( false );
 		return sinks;
 	}
 	vector<spdlog::sink_ptr> _sinks = LoadSinks();
-
 	spdlog::logger _logger{ "my_logger", _sinks.begin(), _sinks.end() };
 
 	α Logging::Initialize()ι->void
 	{
 		_status.set_starttime( (google::protobuf::uint32)Clock::to_time_t(_startTime) );
 
-		_logMemory = Settings::Get<bool>("logging/memory").value_or( false );
 		var minLevel = std::accumulate( _sinks.begin(), _sinks.end(), (uint8)ELogLevel::None, [](uint8 min, auto& p){return std::min((uint8)p->level(),min);} );
 		_logger.set_level( (spdlog::level::level_enum)minLevel );
 		var flushOn = Settings::Get<ELogLevel>( "logging/flushOn" ).value_or( _debug ? ELogLevel::Debug : ELogLevel::Information );
@@ -227,7 +225,7 @@ namespace Jde
 					else
 						std::cerr << fmt::vformat( m.MessageView, fmt::basic_format_args<ctx>{args.data(), (int)args.size()} ) << std::endl;
 				}
-				catch( const fmt::v8::format_error& e )
+				catch( const fmt::format_error& e )
 				{
 					ERR( "{} - {}", m.MessageView, e.what() );
 				}

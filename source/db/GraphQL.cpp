@@ -642,7 +642,7 @@ namespace DB
 		else
 			tableQueries = get<vector<DB::TableQL>>( qlType );
 		json y = tableQueries.size() ? QueryTables( tableQueries, userId ) : j;
-		Dbg( y.dump() );
+		//Dbg( y.dump() );
 		return y;
 	}
 	struct Parser2

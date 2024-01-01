@@ -6,8 +6,8 @@
 
 namespace Jde::Logging
 {
-	sp<Logging::IServerSink> _pServerSink;
-	static var _logLevel{ Logging::TagLevel("log-server") };
+	sp<Logging::IServerSink> _pServerSink;//IServerSink=ServerSink=TProtoClient=ProtoClient=ProtoClientSession
+	static var _logLevel{ Logging::TagLevel("logServer") };
 	namespace Server
 	{
 		bool _enabled{ Settings::Get<PortType>("logging/server/port").value_or(0) };
@@ -21,17 +21,21 @@ namespace Jde::Logging
 		α Level()ι->ELogLevel{ return _logLevel; }
 		α SetLevel( ELogLevel x )ι->void{ _logLevel = x; }
 		α Set( sp<Logging::IServerSink>&& p )ι->void{ _pServerSink = move(p); }
-		α Destroy()ι->void{ _pServerSink = nullptr; }
+		α Destroy()ι->void{
+			if( !_pServerSink )
+				return;
+			DBG( "Destroying ServerSink - use_count={}", _pServerSink.use_count() );
+			_pServerSink->Close();
+//			_pServerSink = nullptr;
+		}
 #define IF(x) if( auto p=_pServerSink; p ) x; throw Exception("Not connected")
 		α FetchSessionInfo( SessionPK sessionId )ε->SessionInfoAwait{ IF( return p->FetchSessionInfo(sessionId) ); }
 		α Write( Logging::Proto::ToServer&& message )ε->void{ IF( p->Write(move(message)) ); }
-		α Log( const Messages::ServerMessage& m )ι->void
-		{
+		α Log( const Messages::ServerMessage& m )ι->void{
 			if( auto p=_pServerSink; p )
 				p->Log( m );
 		}
-		α Log( const Messages::ServerMessage& m, vector<string>& values )ι->void
-		{
+		α Log( const Messages::ServerMessage& m, vector<string>& values )ι->void{
 			if( auto p=_pServerSink; p )
 				p->Log( m, values );
 		}
@@ -58,19 +62,17 @@ namespace Jde::Logging
 		Server::Set( nullptr );
 		LOGX( "_pServerSink = nullptr" );
 	}
-	ServerSink::~ServerSink(){ LOGX("~ServerSink"); }
+	ServerSink::~ServerSink(){ LOGX("~ServerSink - Application Socket"); }
 	α ServerSink::Create(bool wait/*=false*/)ι->Task
 	{
-		while( !_pServerSink )
-		{
+		while( !_pServerSink ){
 			if( wait )
 				co_await Threading::Alarm::Wait( 5s );
-			try
-			{
-				Server::Set( ms<ServerSink>() );
+			try{
+				auto p = ms<ServerSink>();
+				Server::Set( move(p) );
 			}
-			catch( const IException& e )
-			{
+			catch( const IException& e ){
 				if( e.Code==2406168687 )//port=0
 					break;
 				wait = true;
@@ -208,8 +210,11 @@ namespace Jde::Logging
 		{
 			if( _messagesSent.emplace(m.MessageId) )
 				t.add_messages()->set_allocated_string( ToRequestString(Proto::EFields::MessageId, (uint32)m.MessageId, m.MessageView).release() );
-			if( _filesSent.emplace(m.FileId) )
+			if( _filesSent.emplace(m.FileId) ){
 				t.add_messages()->set_allocated_string( ToRequestString(Proto::EFields::FileId, (uint32)m.FileId, m.File).release() );
+				uint crc = Calc32RunTime(m.File);
+				ASSERT( crc==m.FileId );
+			}
 			if( _functionsSent.emplace(m.FunctionId) )
 				t.add_messages()->set_allocated_string( ToRequestString(Proto::EFields::FunctionId, (uint32)m.FunctionId, m.Function).release() );
 		};
