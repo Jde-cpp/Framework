@@ -22,26 +22,11 @@
     <ClCompile Include="threading\Interrupt.cpp">
       <Filter>Source\threading</Filter>
     </ClCompile>
-    <ClCompile Include="log\server\ServerSink.cpp">
-      <Filter>Source\log\server</Filter>
-    </ClCompile>
     <ClCompile Include="pc.h">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="io\sockets\ProtoServer.cpp">
-      <Filter>Source\io\sockets</Filter>
-    </ClCompile>
-    <ClCompile Include="log\server\proto\messages.pb.cc">
-      <Filter>Source\log\server\proto</Filter>
-    </ClCompile>
-    <ClCompile Include="io\sockets\ProtoClient.cpp">
-      <Filter>Source\io\sockets</Filter>
-    </ClCompile>
     <ClCompile Include="Settings.cpp">
       <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="io\sockets\Socket.cpp">
-      <Filter>Source\io\sockets</Filter>
     </ClCompile>
     <ClCompile Include="Cache.cpp">
       <Filter>Source</Filter>
@@ -142,8 +127,20 @@
     <ClCompile Include="coroutine\Lock.cpp">
       <Filter>Source\coroutine</Filter>
     </ClCompile>
-    <ClCompile Include="net\WebSocket.cpp">
-      <Filter>Source\net</Filter>
+    <ClCompile Include="io\AsioContextThread.cpp">
+      <Filter>Source\io</Filter>
+    </ClCompile>
+    <ClCompile Include="io\Socket.cpp">
+      <Filter>Source\io</Filter>
+    </ClCompile>
+    <ClCompile Include="io\proto\messages.pb.cc">
+      <Filter>Source\io\Proto</Filter>
+    </ClCompile>
+    <ClCompile Include="io\ServerSink.cpp">
+      <Filter>Source\io</Filter>
+    </ClCompile>
+    <ClCompile Include="io\ProtoClient.cpp">
+      <Filter>Source\io</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -396,9 +393,6 @@
     <Filter Include="Headers\io\sockets">
       <UniqueIdentifier>{f6d0f452-bf96-4861-b070-b8212b54fac1}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source\io\sockets">
-      <UniqueIdentifier>{8bf5a9cd-521a-4661-972d-269d5f51115d}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source\threading">
       <UniqueIdentifier>{ed864d81-96b0-457b-9981-da2f62661ff5}</UniqueIdentifier>
     </Filter>
@@ -426,17 +420,8 @@
     <Filter Include="Headers\collections">
       <UniqueIdentifier>{f7d60aea-b307-40e6-a812-18c5350e7d1f}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source\log">
-      <UniqueIdentifier>{7cca4a77-6d0a-4b3a-b97f-9055286bc36b}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source\log\server">
-      <UniqueIdentifier>{09fd1b1e-8c6f-487d-84e8-695b760c8ff4}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Headers\log\server">
       <UniqueIdentifier>{5ee3b262-ac37-4156-9ca4-5f5202dcd550}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source\log\server\proto">
-      <UniqueIdentifier>{416604aa-ee50-45ca-8005-f648857ab670}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source\io\Zip">
       <UniqueIdentifier>{eb9d0ee5-c92f-4185-b4ed-04e8980aff2f}</UniqueIdentifier>
@@ -474,8 +459,8 @@
     <Filter Include="Headers\windows">
       <UniqueIdentifier>{be3130a9-4d16-49b7-aee1-d6dda54f6961}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source\net">
-      <UniqueIdentifier>{ceeefe76-138b-46d8-a7aa-c953a4a0c083}</UniqueIdentifier>
+    <Filter Include="Source\io\Proto">
+      <UniqueIdentifier>{5bbd8d58-22c6-4063-bae9-7eb09becfca6}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

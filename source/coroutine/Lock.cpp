@@ -90,7 +90,7 @@ namespace Jde
 	}
 	α LockWrapperAwait::await_resume()noexcept->AwaitResult
 	{
-		auto p = _pPromise ? ms<AwaitResult>( move(_pPromise->get_return_object().Result()) ) : ReadyResult();
+		auto p = _pPromise ? ms<AwaitResult>( move(_pPromise->MoveResult()) ) : ReadyResult();
 		if( _f.index()==0 )
 			get<0>( _f )( *p );
 		else

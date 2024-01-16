@@ -1,16 +1,14 @@
 //MKLINK timestamp.proto C:\code\libraries\protobuf\src\google\protobuf\timestamp.proto
 //ln -s $REPO_DIR/protobuf/src/google/protobuf/timestamp.proto .
-//protoc --cpp_out dllexport_decl=Γ:. -I$REPO_DIR/protobuf/src/ -I. messages.proto
-//%REPO_DIR%\protobuf\cmake\build\debug\protoc --cpp_out dllexport_decl=Γ:. -I%REPO_DIR%/protobuf/src/ -I. messages.proto
+//protoc --cpp_out dllexport_decl=Γ:. -I. messages.proto
+//%JDE_DIR%\Public\stage\release\protoc --cpp_out dllexport_decl=EXPORT_ME:. -I. messages.proto
 //npx pbjs -t static-module -w es6 -o src/app/proto/messages.js messages.proto & npx pbts -o src/app/proto/messages.d.ts src/app/proto/messages.js
 
 syntax = "proto3";
 
 package Jde.Logging.Proto;
-import "google/protobuf/timestamp.proto";
 
-enum ELogLevel
-{
+enum ELogLevel{
 	Trace = 0;
 	Debug = 1;
 	Information = 2;
@@ -21,8 +19,7 @@ enum ELogLevel
 	NoLog = -1;
 }
 
-message Instance
-{
+message Instance{
 	string application=1;
 	string host=2;
 	uint32 pid=3;
@@ -33,10 +30,14 @@ message Instance
 	uint32 websocket_port=8;
 	string instance_name=9;
 }
+//Linker errors with windows using google.protobuf.Timestamp
+message Timestamp {
+  int64 seconds = 1;
+  int32 nanos = 2;
+}
 
-message Message
-{
-	google.protobuf.Timestamp Time=1;
+message Message{
+	Timestamp Time=1;
 	ELogLevel Level=2;
 	uint32 MessageId=3;
 	uint32 FileId=4;
@@ -47,15 +48,13 @@ message Message
 	repeated string Variables=9;
 }
 
-message SessionInfo
-{
-	google.protobuf.Timestamp expiration=1;
+message SessionInfo{
+	Timestamp expiration=1;
 	uint32 session_id=2;
 	uint32 user_id=3;
 };
 
-enum EFields
-{
+enum EFields{
 	FieldsNone=0;
 	TimestampField=0x1;
 	MessageId=0x2;
@@ -74,15 +73,13 @@ enum EFields
 	SessionId=0x4000;
 }
 
-message RequestString
-{
+message RequestString{
 	EFields Field=1;
 	uint32 Id=2;
 	string Value=3;
 }
 
-message Status
-{
+message Status{
 	uint32 StartTime=1;
 	uint64 Memory=2;
 	ELogLevel ServerLogLevel=3;
@@ -90,26 +87,21 @@ message Status
 	repeated string Details=5;
 }
 
-message CustomMessage
-{
+message CustomMessage{
 	uint32 RequestId=1;
 	bytes Message=2;
 }
 
-message CustomComplete
-{
+message CustomComplete{
 	uint32 RequestId=1;
 }
 
-message RequestSessionInfo
-{
+message RequestSessionInfo{
 	uint32 session_id=1;
 }
 
-message ToServerUnion
-{
-	oneof Value
-	{
+message ToServerUnion{
+	oneof Value{
 		Instance Instance = 1;
 		Message Message = 2;
 		RequestString String = 3;
@@ -120,15 +112,13 @@ message ToServerUnion
 	}
 }
 
-message ToServer
-{
+message ToServer{
 	repeated ToServerUnion Messages = 1;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-enum EFromServer
-{
+enum EFromServer{
 	Ping=0;
 	Error_=1;
 	ReadError=2;
@@ -139,35 +129,29 @@ message Acknowledgement
 	uint32 InstanceId=1;
 }
 
-message GenericFromServer
-{
+message GenericFromServer{
 	EFromServer What = 1;
 	string Description=2;
 }
 
-message Strings
-{
+message Strings{
 	repeated uint32 Messages = 1;
 	repeated uint32 Files = 2;
 	repeated uint32 Functions = 3;
 	repeated uint32 Threads = 4;
 }
 
-message Progress
-{
+message Progress{
 	uint32 RequestId=1;
 	double Value=2;
 }
-message LogLevels
-{
+message LogLevels{
 	ELogLevel Server=1;
 	ELogLevel Client=2;
 }
 
-message FromServerUnion
-{
-	oneof Value
-	{
+message FromServerUnion{
+	oneof Value{
 		Acknowledgement Acknowledgement = 1;
 		GenericFromServer Generic = 2;
 		Strings Strings = 3;
@@ -178,7 +162,6 @@ message FromServerUnion
 	}
 }
 
-message FromServer
-{
+message FromServer{
 	repeated FromServerUnion Messages = 1;
 }

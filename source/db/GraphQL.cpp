@@ -17,7 +17,7 @@ namespace Jde
 	using DB::EType;
 	sp<DB::IDataSource> _pDataSource;
 #define  _schema DB::DefaultSchema()
-	static const LogTag& _logLevel = Logging::TagLevel( "ql" );
+	static sp<LogTag> _logLevel = Logging::TagLevel( "ql" );
 
 	α DB::SetQLDataSource( sp<DB::IDataSource> p )noexcept->void{ _pDataSource = p; }
 
@@ -356,7 +356,7 @@ namespace DB
 				THROW( "unknown type" );
 		}
 		if( t.Name.starts_with("um_") )
-			Try( [&]{UM::ApplyMutation( m, result );} );
+			Try( [&]{UM::ApplyMutation( m, (UserPK)result );} );
 		sl _{ _applyMutationListenerMutex };
 		if( var p = ApplyMutationListeners().find(string{t.Prefix()}); p!=ApplyMutationListeners().end() )
 			std::for_each( p->second.begin(), p->second.end(), [&](var& f){f(m, result);} );
@@ -601,7 +601,7 @@ namespace DB
 		json jSchema; jSchema["mutationType"] = jmutationType;
 		jData["__schema"] = jmutationType;
 	}
-	α QueryTable( const DB::TableQL& table, uint userId, json& jData )ε->void
+	α QueryTable( const DB::TableQL& table, UserPK userId, json& jData )ε->void
 	{
 		TEST_ACCESS( "Read", table.DBName(), userId ); //TODO implement.
 		if( table.JsonName=="__type" )
@@ -612,7 +612,7 @@ namespace DB
 			DB::GraphQL::Query( table, jData, userId );
 	}
 
-	α QueryTables( const vector<DB::TableQL>& tables, uint userId )ε->json
+	α QueryTables( const vector<DB::TableQL>& tables, UserPK userId )ε->json
 	{
 		json data;
 		for( var& table : tables )

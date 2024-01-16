@@ -121,7 +121,7 @@ namespace Jde::Threading
 		up<std::shared_lock<std::shared_mutex>> _pSharedLock;
 		std::string _description;
 		static ELogLevel _defaultLogLevel;
-		const LogTag& _logLevel{ Logging::TagLevel("mutex") };
+		sp<LogTag> _logLevel{ Logging::TagLevel("mutex") };
 	};
 #endif
 #undef Φ

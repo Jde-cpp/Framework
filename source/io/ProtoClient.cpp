@@ -5,7 +5,8 @@
 
 namespace Jde::IO::Sockets{
 
-#define _logLevel Sockets::LogLevel()
+//#define _logLevel Sockets::LogLevel()
+	sp<LogTag> _logLevel{ Logging::TagLevel( "net" ) };
 
 	ProtoClientSession::ProtoClientSession( /*boost::asio::io_context& context*/ ):
 		_pIOContext{ AsioContextThread::Instance() },
@@ -13,8 +14,8 @@ namespace Jde::IO::Sockets{
 	{}
 
 	α ProtoClientSession::Close( std::condition_variable* pCvClient )ι->void{
+		DBG( "ProtoClientSession::Close is_open={}"sv, _socket.is_open() );
 		if( _pIOContext && _socket.is_open() )
-			_pWriteKeepAlive = _pReadKeepAlive = shared_from_this();
 			DBG( "ProtoClientSession::Close IOContext use_count={}"sv, _pIOContext.use_count() );
 			_socket.close();
 		//_pIOContext = nullptr;
@@ -22,7 +23,7 @@ namespace Jde::IO::Sockets{
 			pCvClient->notify_one();
 	}
 
-	α ProtoClientSession::MessageLength( char* readMessageSize )ι->uint32{
+	α ProtoClientSession::MessageLength( const char* readMessageSize )ι->uint32{
 		uint32_t length;
 		char* pDestination = reinterpret_cast<char*>( &length );
 		const char* pStart = readMessageSize;
@@ -31,7 +32,8 @@ namespace Jde::IO::Sockets{
 	}
 
 	α ProtoClientSession::ReadHeader()ι->void{
-		net::async_read( _socket, net::buffer(static_cast<void*>(_readMessageSize), sizeof(_readMessageSize)), [this]( std::error_code ec, std::size_t headerLength )
+		auto pReadKeepAlive = shared_from_this();
+		net::async_read( _socket, net::buffer(static_cast<void*>(_readMessageSize), sizeof(_readMessageSize)), [pThis=move(pReadKeepAlive)]( std::error_code ec, std::size_t headerLength )
 		{
 			if( ec ){
 				if( ec.value()==2 )
@@ -40,19 +42,15 @@ namespace Jde::IO::Sockets{
 					DBG( "_socket.close() ec='{}'", CodeException::ToString(ec) );
 				else
 					DBG( "Client::ReadHeader Failed - ({}){} closing"sv, ec.value(), ec.message() );
-				auto keepAlive = _pIOContext;
-				if( _pIOContext ){
-					if(  _socket.is_open() )
-						_socket.close();
-					_pIOContext = nullptr;
-				}
-				OnDisconnect();
-				_pReadKeepAlive = nullptr;
+//				auto keepAlive = _pIOContext;
+				pThis->Close();
+				pThis->OnDisconnect();
 			}
 			else if( !headerLength )
 				ERR( "Failed no length"sv );
 			else
-				ReadBody( MessageLength(_readMessageSize) );
+				pThis->ReadBody( MessageLength(pThis->_readMessageSize) );
+//			_pReadKeepAlive = nullptr;
 		});
 	}
 
@@ -61,7 +59,7 @@ namespace Jde::IO::Sockets{
 		up<google::protobuf::uint8[]> pData;
 		var useHeap = messageLength>sizeof(buffer);
 		if( useHeap )
-			pData = up<google::protobuf::uint8[]>{ new google::protobuf::uint8[messageLength] };
+			pData = std::make_unique<google::protobuf::uint8[]>( messageLength );
 		auto pBuffer = useHeap ? pData.get() : buffer;
 		boost::system::error_code ec;
 		std::size_t length = net::read( _socket, net::buffer(reinterpret_cast<void*>(pBuffer), messageLength), ec );
@@ -69,7 +67,7 @@ namespace Jde::IO::Sockets{
 			ERR_IF( length!=messageLength, "'{}' read!='{}' expected", length, messageLength );
 			else
 				ERR( "Read Body Failed - {}"sv, ec.value() );
-			_socket.close();
+			Close();
 		}
 		else{
 			Process( pBuffer, messageLength );
@@ -79,16 +77,17 @@ namespace Jde::IO::Sockets{
 	#pragma clang diagnostic ignored "-Wunused-lambda-capture"
 	α ProtoClientSession::Write( up<google::protobuf::uint8[]> p, uint c )ι->void{
 		auto b = net::buffer( p.get(), c );
-		net::async_write( _socket, b, [this, _=move(p), c, b2=move(b)]( std::error_code ec, uint length ){
+		auto pKeepAlive = shared_from_this();
+		net::async_write( _socket, b, [this, thisKeepAlive=move(pKeepAlive), _=move(p), c, b2=move(b)]( std::error_code ec, uint length ){
 			if( ec ){
-				auto keepAlive = _pIOContext;
-				LOGX( "({})Write message returned '{}'.", ec.value(), ec.message() );
-				if( _pIOContext ){
-					if(  _socket.is_open() )
-						_socket.close();
-					_pIOContext = nullptr;
-				}
-				_pWriteKeepAlive = nullptr;
+//				auto keepAlive = _pIOContext;
+				LOGX( "Write message returned '({:x}){}'.", ec.value(), ec.message() );
+				Close();
+				//if( _pIOContext ){
+				//	if(  _socket.is_open() )
+				//		_socket.close();
+				//	_pIOContext = nullptr;
+				//}
 			}
 			else if( c!=length )
 				ERRX( "bufferSize!=length, {}!={}", c, length );
@@ -96,9 +95,8 @@ namespace Jde::IO::Sockets{
 	}
 /////////////////////////////////////////////////////////////////////////////////////
 	ProtoClient::ProtoClient( str settingsPath, PortType defaultPort )ε:
-		IClientSocket{ settingsPath, defaultPort }{
-		Connect();
-	}
+		IClientSocket{ settingsPath, defaultPort }
+	{}
 
 	α ProtoClient::Connect()ε->void{
 		if( !_pIOContext )

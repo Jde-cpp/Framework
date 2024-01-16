@@ -12,7 +12,7 @@
 
 namespace Jde
 {
-	static const LogTag& _logLevel = Logging::TagLevel( "status" );
+	static sp<LogTag> _logLevel = Logging::TagLevel( "status" );
 
 	sp<IApplication> IApplication::_pInstance;
 	up<string> IApplication::_pApplicationName;

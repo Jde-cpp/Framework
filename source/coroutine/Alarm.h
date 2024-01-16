@@ -34,7 +34,7 @@ namespace Jde::Threading
 		optional<bool> Poll()noexcept override;
 		static void Add( TimePoint t, HCoroutine h, Handle myHandle )noexcept;
 		static constexpr Duration WakeDuration{5s};
-		static const LogTag& _logLevel;
+		static sp<LogTag> _logLevel;
 		friend AlarmAwait;
 	};
 }

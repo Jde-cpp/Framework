@@ -9,7 +9,7 @@ namespace Jde
 {
 	constexpr uint NameLength = 255;
 	thread_local char ThreadName[NameLength]={0};//string shows up as memory leak
-	thread_local uint Threading::ThreadId{0};
+	namespace Threading{ thread_local uint ThreadId{0}; }
 	thread_local Threading::HThread AppThreadHandle{0};
 
 	uint Threading::GetAppThreadHandle()noexcept{ return AppThreadHandle; }

@@ -46,7 +46,7 @@ namespace Jde
 	}
 	α DB::Log( sv sql, const vector<object>* pParameters, SL sl )ι->void
 	{
-		var l = _logLevel.Level;
+		var l = _logLevel->Level;
 		Logging::Log( Logging::Message{l, LogDisplay(sql, pParameters, {}), sl} );
 	}
 

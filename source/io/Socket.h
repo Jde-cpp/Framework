@@ -12,7 +12,7 @@ namespace Jde::Threading{ struct InterruptibleThread; }
 namespace Jde::IO::Sockets
 {
 	namespace net=boost::asio;
-	Γ α LogLevel()noexcept->const LogTag&;
+	Γ α LogLevel()noexcept->sp<LogTag>;
 	using SessionPK=uint32;
 	struct ISession
 	{

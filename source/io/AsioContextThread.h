@@ -1,11 +1,12 @@
-#pragma once
+﻿#pragma once
 #include <boost/asio.hpp>
+//#include <jde/Exports.h>
 
 namespace Jde::IO
 {
 	namespace net = boost::asio;
 
-	struct Γ AsioContextThread final //: IShutdown
+	struct __declspec( dllexport ) AsioContextThread final //: IShutdown
 	{
 		static sp<AsioContextThread> Instance()noexcept;
 		net::io_context& Context()noexcept{ return _ioc; }

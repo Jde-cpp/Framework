@@ -11,7 +11,7 @@
 #define var const auto
 namespace Jde
 {
-	static const LogTag& _logLevel{ Logging::TagLevel("users") };
+	static sp<LogTag> _logLevel{ Logging::TagLevel("users") };
 	using nlohmann::json;
 	using boost::container::flat_set;
 	namespace UM
@@ -39,8 +39,8 @@ namespace Jde
 	flat_map<sv, UM::IAuthorize*> _authorizers; shared_mutex _authorizerMutex;
 	UM::GroupAuthorize _groupAuthorize;
 
-	α UM::AddAuthorizer( UM::IAuthorize* p )noexcept->void{ _authorizers.emplace( p->TableName, p ); }//pre-main
-	α UM::FindAuthorizer( sv table )noexcept->IAuthorize*
+	α UM::AddAuthorizer( UM::IAuthorize* p )ι->void{ _authorizers.emplace( p->TableName, p ); }//pre-main
+	α UM::FindAuthorizer( sv table )ι->IAuthorize*
 	{
 		auto p = _authorizers.find( table );
 		return p==_authorizers.end() ? nullptr : p->second;
@@ -59,7 +59,7 @@ namespace Jde
 			}
 		}
 	}
-	α AssignUserGroups( UserPK userId=0 )noexcept(false)->void
+	α AssignUserGroups( UserPK userId=0 )ε->void
 	{
 		ostringstream sql{ "select user_id, group_id from um_user_groups g join um_users u on g.user_id=u.id and u.deleted is null", std::ios::ate };
 		vector<DB::object> params;
@@ -71,16 +71,16 @@ namespace Jde
 		DB::DataSource().Select( sql.str(), [&](var& r)
 		{
 			unique_lock l{_userGroupMutex};
-			_userGroups.try_emplace(r.GetUInt(0)).first->second.emplace( r.GetUInt(1) );
+			_userGroups.try_emplace(r.GetUInt32(0)).first->second.emplace( r.GetUInt(1) );
 		}, params );
 	}
-	α SetRolePermissions()noexcept(false)->void
+	α SetRolePermissions()ε->void
 	{
 		unique_lock _{ _rolePermissionMutex };
 		_rolePermissions.clear();
 		DB::DataSource().Select( "select permission_id, role_id, right_id from um_role_permissions p join um_roles r on p.role_id=r.id where r.deleted is null", [&](const DB::IRow& r){_rolePermissions.try_emplace(r.GetUInt(1)).first->second.emplace( r.GetUInt(0), (UM::EAccess)r.GetUInt(2) );} );
 	}
-	α UM::Configure()noexcept(false)->void
+	α UM::Configure()ε->void
 	{
 		var& globalSettings = Settings::Global().Json();
 		_pSettings = make_shared<UMSettings>();
@@ -101,13 +101,12 @@ namespace Jde
 		{
 			j = json::parse( IO::FileUtilities::Load(path) );
 		}
-		catch( const IOException& e )
-		{
-			THROW( "Could not load db meta at path={}", path.string() );
+		catch( const IOException& e ){
+			THROW( "Could not load db meta at path='{}' - {}", path.string(), e.what() );
 		}
 		catch( const std::exception& e )//nlohmann::detail::parse_error
 		{
-			throw IOException{ path, e.what(), SRCE_CUR };
+			throw IOException{ path, e.what() };
 		}
 		auto& db = *pDataSource;
 		var schema = db.SchemaProc()->CreateSchema( j, path.parent_path() );
@@ -126,25 +125,25 @@ namespace Jde
 		for( var& [userId,groupIds] : _userGroups )
 			AssignUser( userId, groupIds );
 	}
-	α IsTarget( sv url )noexcept{ return CIString{url}.starts_with(UMSettings().Target); }
-	α UM::TestAccess( EAccess access, UserPK userId, PermissionPK permissionId )noexcept(false)->void
+	α IsTarget( sv url )ι{ return CIString{url}.starts_with(UMSettings().Target); }
+	α UM::TestAccess( EAccess access, UserPK userId, PermissionPK permissionId )ε->void
 	{
 		sl _{ _userAccessMutex };
 		var pUser = _userAccess.find( userId ); THROW_IF( pUser==_userAccess.end(), "User '{}' not found.", userId );
 		var pAccess = pUser->second.find( permissionId ); THROW_IF( pAccess==pUser->second.end(), "User '{}' does not have api '{}' access.", userId, permissionId );
 		THROW_IF( (pAccess->second & access)==EAccess::None, "User '{}' api '{}' access is limited to:  '{}'. requested:  '{}'.", userId, permissionId, (uint8)pAccess->second, (uint8)access );
 	}
-	α TestAccess( str tableName, UserPK userId, UM::EAccess access )noexcept(false)->void
+	α TestAccess( str tableName, UserPK userId, UM::EAccess access )ε->void
 	{
 		var pTable = _tablePermissions.find( tableName ); THROW_IF( pTable==_tablePermissions.end(), "Could not find table '{}'", tableName );
 		TestAccess( access, userId, pTable->second );
 	}
-	α UM::TestRead( str tableName, UserPK userId )noexcept(false)->void
+	α UM::TestRead( str tableName, UserPK userId )ε->void
 	{
 		Jde::TestAccess( tableName, userId, EAccess::Read );
 	}
 
-	α UM::ApplyMutation( const DB::MutationQL& m, PK id )noexcept(false)->void
+	α UM::ApplyMutation( const DB::MutationQL& m, UserPK id )ε->void
 	{
 		if( m.JsonName=="user" )
 		{
@@ -159,8 +158,8 @@ namespace Jde
 			}
 			else if( m.Type==DB::EMutationQL::Delete || m.Type==DB::EMutationQL::Purge )
 			{
-				{ unique_lock l{ _userAccessMutex }; _userAccess.erase( id ); }
-				{ unique_lock l{ _userGroupMutex }; _userGroups.erase( id ); }
+				{ unique_lock l{ _userAccessMutex }; _userAccess.erase( (UserPK)id ); }
+				{ unique_lock l{ _userGroupMutex }; _userGroups.erase( (UserPK)id ); }
 			}
 		}
 		else if( m.JsonName=="groupRole" )
@@ -243,7 +242,7 @@ namespace Jde
 namespace Jde::UM
 {
 #pragma warning(disable:4100)
-	α IAuthorize::TestPurge( uint pk, UserPK userId, SL sl )noexcept(false)->void
+	α IAuthorize::TestPurge( uint pk, UserPK userId, SL sl )ε->void
 	{
 		THROW_IFSL( !CanPurge(pk, userId), "Access to purge record denied" );
 	}

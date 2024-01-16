@@ -19,7 +19,7 @@ namespace Jde::Logging
 {
 	namespace Messages{ struct ServerMessage; }
 	struct IServerSink;
-	struct SessionInfoAwait final : IAwait
+	struct Γ SessionInfoAwait final : IAwait
 	{
 		SessionInfoAwait( SessionPK sessionId, SRCE )ι:IAwait{sl},_sessionId{sessionId}{}
 		α await_suspend( HCoroutine h )ι->void override;
@@ -36,7 +36,7 @@ namespace Jde::Logging
 		Φ FetchSessionInfo( SessionPK sessionId )ε->SessionInfoAwait;
 		Φ InstanceId()ι->ApplicationInstancePK;
 		Φ IsLocal()ι->bool;
-		Φ Level()ι->ELogLevel; α SetLevel( ELogLevel x )ι->void;
+		Φ Level()ι->ELogLevel; Φ SetLevel( ELogLevel x )ι->void;
 		Φ Log( const Messages::ServerMessage& message )ι->void;
 		Φ Log( const Messages::ServerMessage& message, vector<string>& values )ι->void;
 		Φ Set( sp<Logging::IServerSink>&& p )ι->void;

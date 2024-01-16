@@ -3,9 +3,8 @@
 #pragma warning( disable : 4127 )
 #pragma warning( disable : 5054 )
 #include <google/protobuf/message.h>
-#include <google/protobuf/timestamp.pb.h>
 #pragma warning(pop)
-
+#include "proto/messages.pb.h"
 #include <jde/io/File.h>
 
 #define var const auto
@@ -23,7 +22,7 @@ namespace Jde::IO::Proto
 	α Save( const google::protobuf::MessageLite& msg, fs::path path, SL )ε->void;
 	α ToString( const google::protobuf::MessageLite& msg )ε->string;
 	α SizePrefixed( const google::protobuf::MessageLite&& m )ι->tuple<up<google::protobuf::uint8[]>,uint>;
-	α ToTimestamp( TimePoint t )ι->google::protobuf::Timestamp;
+	α ToTimestamp( TimePoint t )ι->Logging::Proto::Timestamp;
 	namespace Internal
 	{
 		Ŧ Deserialize( const google::protobuf::uint8* p, int size, T& proto )ε->void
@@ -53,7 +52,7 @@ namespace Jde::IO
 		const char* pLength = reinterpret_cast<const char*>( &length )+3;
 		for( auto i=0; i<4; ++i )
 			*pDestination++ = *pLength--;
-		var result = m.SerializeToArray( pDestination, (int)length ); THROW_IF( !result, "Could not serialize to an array" );
+		var result = m.SerializeToArray( pDestination, (int)length ); if( !result )CRITICAL("Could not serialize to an array:{:x}", result );
 		return make_tuple( move(pData), size );
 	}
 	Ξ Proto::Save( const google::protobuf::MessageLite& msg, fs::path path, SRCE )ε->void
@@ -131,9 +130,9 @@ namespace Jde::IO
 		return y;
 	}
 
-	Ξ Proto::ToTimestamp( TimePoint t )ι->google::protobuf::Timestamp
+	Ξ Proto::ToTimestamp( TimePoint t )ι->Logging::Proto::Timestamp
 	{
-		google::protobuf::Timestamp proto;
+		Logging::Proto::Timestamp proto;
 		var seconds = Clock::to_time_t( t );
 		var nanos = std::chrono::duration_cast<std::chrono::nanoseconds>( t-TimePoint{} )-std::chrono::duration_cast<std::chrono::nanoseconds>( std::chrono::seconds(seconds) );
 		proto.set_seconds( seconds );

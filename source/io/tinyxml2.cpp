@@ -2843,8 +2843,6 @@ start:
 	}
 	if( auto p{y || pThis->ToElement() ? nullptr : pThis}; p )//element child above would have picked up.
 	{
-		auto foo = pThis->Value<iv>();
-		DEBUG_IF( foo=="Sayuri Childs, Chief Compliance Officer" );
 		var textNode = p->HtmlText<String>();
 		pThis = get<1>( textNode );
 		if( var text = get<0>(textNode); text.size() )

@@ -1,5 +1,5 @@
 #!/bin/bash
-jdeDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
+jdeDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )/../.." && pwd )"
 #if ! source $jdeDir/Framework/scripts/common-error.sh; then exit 1; fi;  findExecutable false was triggering
 windows() { [[ -n "$WINDIR" ]]; }
 
@@ -35,7 +35,7 @@ function findExecutable
 		else
 			if [ $exitFailure -eq 1 ]; then
 				echo `pwd`;
-				echo common.sh:17 can not find "${defaultPath//\\}/$exe";
+				echo common.sh:?? can not find "${defaultPath//\\}/$exe";
 				exit 1;
 			fi;
 		fi;

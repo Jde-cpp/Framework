@@ -10,7 +10,7 @@ namespace Jde::Logging
 	static var _logLevel{ Logging::TagLevel("logServer") };
 	namespace Server
 	{
-		bool _enabled{ Settings::Get<PortType>("logging/server/port").value_or(0) };
+		bool _enabled{ Settings::Get<PortType>("logging/server/port").value_or(0)>0 };
 		atomic<ELogLevel> _logLevel{ _enabled ? Settings::Get<ELogLevel>("logging/server/level").value_or(ELogLevel::Error) : ELogLevel::None };
 
 #define OR(a,b) auto p=_pServerSink; return p ? p->a : b;
@@ -63,13 +63,14 @@ namespace Jde::Logging
 		LOGX( "_pServerSink = nullptr" );
 	}
 	ServerSink::~ServerSink(){ LOGX("~ServerSink - Application Socket"); }
-	α ServerSink::Create(bool wait/*=false*/)ι->Task
-	{
+	α ServerSink::Create(bool wait/*=false*/)ι->Task{
+		DBG( "ServerSink::Create" );
 		while( !_pServerSink ){
 			if( wait )
-				co_await Threading::Alarm::Wait( 5s );
+				co_await Threading::Alarm::Wait( wait ? 5s : 0s );//ms asan issue for some reason when not hitting.
 			try{
 				auto p = ms<ServerSink>();
+				p->Connect();
 				Server::Set( move(p) );
 			}
 			catch( const IException& e ){
@@ -78,11 +79,11 @@ namespace Jde::Logging
 				wait = true;
 			}
 		}
+		DBG( "ServerSink::~Create" );
 	}
 
 	ServerSink::ServerSink()ε:
-		ProtoBase{ "logging/server", 0 }//,don't wan't default port, no-port=don't use
-	{
+		ProtoBase{ "logging/server", 0 }{//don't wan't default port, no-port=don't use
 		LOG( "ServerSink::ServerSink( Host='{}', Port='{}' )", Host, Port );
 	}
 
@@ -163,7 +164,7 @@ namespace Jde::Logging
 				if( auto p = _sessionInfoHandles.find(info.session_id()); p!=_sessionInfoHandles.end() )
 				{
 					for( auto h : p->second )
-						h.promise().get_return_object().SetResult( mu<Proto::SessionInfo>(info) );
+						h.promise().SetResult( mu<Proto::SessionInfo>(info) );
 					_sessionInfoHandles.erase( info.session_id() );
 				}
 			}
@@ -193,7 +194,7 @@ namespace Jde::Logging
 	α ServerSink::Write( const MessageBase& m, TimePoint time, vector<string>* pValues )ι->void
 	{
 		auto pProto = mu<Proto::Message>();
-		pProto->set_allocated_time( new google::protobuf::Timestamp{IO::Proto::ToTimestamp(time)} );
+		pProto->set_allocated_time( new Proto::Timestamp{IO::Proto::ToTimestamp(time)} );
 		pProto->set_level( (Proto::ELogLevel)m.Level );
 		pProto->set_messageid( (uint32)m.MessageId );
 		pProto->set_fileid( (uint32)m.FileId );

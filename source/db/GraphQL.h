@@ -7,30 +7,26 @@
 
 #define var const auto
 #define Φ Γ auto
-namespace Jde::DB
-{
+namespace Jde::DB{
 	struct Schema; struct IDataSource; struct Syntax; struct Column;
-	namespace GraphQL
-	{
+	namespace GraphQL{
 		α DataSource()ι->sp<IDataSource>;
 	}
 	α AppendQLSchema( const Schema& schema )ι->void;
-	α SetQLDataSource( sp<IDataSource> p )ι->void;
+	Φ SetQLDataSource( sp<IDataSource> p )ι->void;
 	α ClearQLDataSource()ι->void;
 	enum class QLFieldKind : uint8{ Scalar=0, Object=1, Interface=2, Union=3, Enum=4, InputObject=5, List=6, NonNull=7 };
 	constexpr array<sv,8> QLFieldKindStrings = { "SCALAR", "OBJECT", "INTERFACE", "UNION", "ENUM", "INPUT_OBJECT", "LIST", "NON_NULL" };
 
 	Φ Query( sv query, UserPK userId )ε->nlohmann::json;
 	Φ CoQuery( string&& query, UserPK userId, str threadName, SRCE )ι->Coroutine::TPoolAwait<json>;
-	struct ColumnQL final
-	{
+	struct ColumnQL final{
 		string JsonName;
 		mutable const Column* SchemaColumnPtr{nullptr};
 		Ω QLType( const DB::Column& db, SRCE )ε->string;
 	};
 
-	struct TableQL final
-	{
+	struct TableQL final{
 		α DBName()Ι->string;
 		const ColumnQL* FindColumn( sv jsonName )Ι{ auto p = find_if( Columns.begin(), Columns.end(), [&](var& c){return c.JsonName==jsonName;}); return p==Columns.end() ? nullptr : &*p; }
 		sp<const TableQL> FindTable( sv jsonTableName )Ι{ auto p = find_if( Tables.begin(), Tables.end(), [&](var t){return t->JsonName==jsonTableName;}); return p==Tables.end() ? sp<const TableQL>{} : *p; }
@@ -41,8 +37,7 @@ namespace Jde::DB
 	};
 	enum class EMutationQL : uint8{ Create=0, Update=1, Delete=2, Restore=3, Purge=4, Add=5, Remove=6 };
 	constexpr array<sv,7> MutationQLStrings = { "create", "update", "delete", "restore", "purge", "add", "remove" };
-	struct MutationQL final
-	{
+	struct MutationQL final{
 		MutationQL( sv json, EMutationQL type, const nlohmann::json& args, optional<TableQL> resultPtr/*, sv parent*/ ):JsonName{json}, Type{type}, Args(args), ResultPtr{resultPtr}/*, ParentJsonName{parent}*/{}
 		α TableSuffix()Ι->string;
 		string JsonName;

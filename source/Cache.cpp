@@ -34,8 +34,8 @@ namespace Jde
 		return r.second;
 	}
 
-	static const LogTag& _logLevel = Logging::TagLevel( "cache" );
-	α Cache::LogLevel()ι->const LogTag& { return _logLevel; }
+	static sp<LogTag> _logLevel = Logging::TagLevel( "cache" );
+	α Cache::LogLevel()ι->sp<LogTag> { return _logLevel; }
 	Cache _instance;
 	α Cache::Instance()ι->Cache& { return _instance; }
 

@@ -1,4 +1,4 @@
-
+﻿
 namespace Jde::DB
 {
 	struct WhereClause final

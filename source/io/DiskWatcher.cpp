@@ -14,7 +14,7 @@
 
 namespace Jde::IO
 {
-	static const LogTag& _logLevel = Logging::TagLevel( "io" );
+	static sp<LogTag> _logLevel = Logging::TagLevel( "io" );
 #ifndef _MSC_VER
 	NotifyEvent::NotifyEvent( const inotify_event& sys ):
 		WatchDescriptor{ sys.wd },

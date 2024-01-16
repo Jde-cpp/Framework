@@ -3,7 +3,7 @@
 #define var const auto
 namespace Jde
 {
-	static const LogTag& _logLevel = Logging::TagLevel( "locks" );
+	static const sp<LogTag> _logLevel = Logging::TagLevel( "locks" );
 
 	CoGuard::CoGuard( CoLock& lock )ι:
 		_lock{lock}
@@ -48,7 +48,7 @@ namespace Jde
 		{
 			auto h = _queue.front();
 			_queue.pop();
-			h.promise().get_return_object().SetResult( up<CoGuard>{ new CoGuard(*this) } );
+			h.promise().SetResult( up<CoGuard>{ new CoGuard(*this) } );
 			if( _resumeOnPool )
 				CoroutinePool::Resume( move(h) );
 			else

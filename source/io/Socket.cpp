@@ -9,7 +9,7 @@
 namespace Jde::IO::Sockets
 {
 	static var _logLevel{ Logging::TagLevel("sockets") };
-	α LogLevel()noexcept->const LogTag&{ return _logLevel; }
+	α LogLevel()noexcept->sp<LogTag>{ return _logLevel; }
 
 	using std::system_error;
 	PortType CheckPort( PortType v )noexcept(false)

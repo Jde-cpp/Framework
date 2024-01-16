@@ -4,7 +4,7 @@
 
 namespace Jde::Threading
 {
-	const LogTag& Alarm::_logLevel{ Logging::TagLevel("alarm") };
+	sp<LogTag> Alarm::_logLevel{ Logging::TagLevel("alarm") };
 	Alarm _instance;
 	flat_multimap<TimePoint,tuple<Handle,HCoroutine>> _coroutines; mutex _coroutineMutex;
 	std::condition_variable _cv; mutex _mtx;

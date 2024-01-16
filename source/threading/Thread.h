@@ -9,7 +9,7 @@ namespace Jde::Threading
 	using namespace std::literals;
 	typedef uint HThread;
 	struct ThreadParam{ string Name; HThread AppHandle; };
-	extern thread_local uint ThreadId;
+//	extern thread_local uint ThreadId;
 
 	enum class EThread : int
 	{

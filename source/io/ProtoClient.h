@@ -13,16 +13,15 @@ ENABLE_WARNINGS
 
 namespace Jde::IO::Sockets
 {
-	static const LogTag& _logLevel = Logging::TagLevel( "net" );
 	namespace net = boost::asio;
 	using tcp = net::ip::tcp;
 
-	struct ProtoClientSession : std::enable_shared_from_this<ProtoClientSession>{
+	struct Γ ProtoClientSession : std::enable_shared_from_this<ProtoClientSession>{
 		ProtoClientSession();
 		virtual ~ProtoClientSession(){ DBG( "~ProtoClientSession -start" ); _socket.close(); DBG( "~ProtoClientSession-end" ); };
 		α Close( std::condition_variable* pCvClient=nullptr )ι->void;
 		β OnConnected()ι->void{};
-		Ω MessageLength( char* readMessageSize )ι->uint32;
+		Ω MessageLength( const char* readMessageSize )ι->uint32;
 	protected:
 		β OnDisconnect()ι->void=0;
 		α ReadHeader()ι->void;

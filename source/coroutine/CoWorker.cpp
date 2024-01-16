@@ -3,7 +3,7 @@
 
 namespace Jde::Coroutine
 {
-	static const LogTag& _logLevel{ Logging::TagLevel("threads") };
+	static const sp<LogTag> _logLevel{ Logging::TagLevel("threads") };
 	sp<CoWorker> CoWorker::_pInstance;
 	std::once_flag CoWorker::_singleThread;
 

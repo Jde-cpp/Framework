@@ -33,8 +33,8 @@ if windows; then
 fi;
 fetchDefault Public; if [ $? -ne 0 ]; then echo fetchDefault Public failed;  exit 1; fi;
 
-cd $scriptDir/../Public;
-if [[ -z $JDE_BASH ]]; then JDE_BASH=$scriptDir/..; fi;
+cd $scriptDir/../../Public;
+if [[ -z $JDE_BASH ]]; then JDE_BASH=$scriptDir/../..; fi;
 stageDir=$JDE_BASH/Public/stage
 
 function winBoostConfig
@@ -44,6 +44,7 @@ function winBoostConfig
 	if [ ! -L $stageDir/$config/$file.lib ]; then
 		echo NOT exists - $stageDir/$config/$file.lib
 		cd $BOOST_BASH;
+		echo BOOST_BASH2=$BOOST_BASH;
 		if [ ! -f b2.exe ]; then echo boost bootstrap; cmd <<< bootstrap.bat; echo boost bootstrap finished; fi;
 		local command="b2 variant=$config link=shared threading=multi runtime-link=shared address-model=64 --with-$lib"
 		cmd <<< "$command";#  > /dev/null;
@@ -61,9 +62,9 @@ function winBoostConfig
 function winBoost
 {
 	lib=$1;
-	echo winBoost - $lib
-	winBoostConfig boost_$lib-vc143-mt-x64-1_79 release;
-	winBoostConfig boost_$lib-vc143-mt-gd-x64-1_79 debug;
+#	echo winBoost - $lib
+	winBoostConfig boost_$lib-vc143-mt-x64-1_84 release;
+	winBoostConfig boost_$lib-vc143-mt-gd-x64-1_84 debug;
 }
 if windows; then
 	pushd `pwd` > /dev/null;
@@ -72,15 +73,16 @@ if windows; then
 	moveToDir release; popd  > /dev/null;
 	if [ $shouldFetch -eq 1 ]; then
 		if [ ! -d $REPO_BASH/vcpkg/installed/x64-windows/include/nlohmann ]; then vcpkg.exe install nlohmann-json --triplet x64-windows; fi;
-		if [ ! -d $REPO_BASH/vcpkg/installed/x64-windows/lib/zlib.lib ];
+		if [ ! -f $REPO_BASH/vcpkg/installed/x64-windows/lib/zlib.lib ];
 		then
 			vcpkg.exe install zlib --triplet x64-windows;
 			pushd `pwd` > /dev/null;
 			cd $stageDir/debug; mklink zlibd1.dll $REPO_BASH/vcpkg/installed/x64-windows/debug/bin;
 			cd $stageDir/release; mklink zlib1.dll $REPO_BASH/vcpkg/installed/x64-windows/bin;
 		fi;
-		if [ -z $BOOST_DIR ]; then echo \$BOOST_DIR not set; exit 1; fi;
-		toBashDir $BOOST_DIR BOOST_BASH;
+		if [ -z $Boost_DIR ]; then echo \$Boost_DIR not set; exit 1; fi;
+		toBashDir $Boost_DIR BOOST_BASH;
+		echo BOOST_BASH=$BOOST_BASH;
 		if [ ! -d $BOOST_BASH ]; then
 			echo ERROR - $BOOST_BASH not found;
 			exit 1;
@@ -94,7 +96,7 @@ if windows; then
 		fi;
 	fi;
 fi;
-echo -------------Placeholder-------------
+echo -------------Protobuf-------------
 buildProto=$shouldFetch
 cd $REPO_BASH;
 if [ ! -d protobuf ]; then  git clone https://github.com/Jde-cpp/protobuf.git; buildProto=1; fi;
@@ -121,7 +123,6 @@ if windows; then
 	if [ ! -f $stageDir/debug/fmtd.lib ]; then echo build fmtd.lib; buildWindows2 "$baseCmd" fmtd.lib debug; fi;
 	cd ../..;
 fi;
-echo -------------Placeholder2-------------
 function protocBuildWin
 {
 	type=sln;#lib;
@@ -174,11 +175,11 @@ if windows; then
 else
 	if [ ! -d Linux ]; then git clone https://github.com/Jde-cpp/Linux.git -q; fi;
 fi;
-
+echo -------------Framework-------------
 function frameworkProtoc
 {
 	cleanProtoc=$clean
-	cd log/server/proto;
+	cd io/proto;
 	if [ ! -f messages.pb.cc ]; then
 		cleanProtoc=1;
 	fi;
@@ -196,7 +197,7 @@ function frameworkProtoc
 			sed -i 's/PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT GenericFromServerDefaultTypeInternal _GenericFromServer_default_instance_;/PROTOBUF_ATTRIBUTE_NO_DESTROY GenericFromServerDefaultTypeInternal _GenericFromServer_default_instance_;/' messages.pb.cc;
 		fi;
 	fi;
-	cd ../../..;
+	cd ../..;
 }
 
 fetchDefault Framework;

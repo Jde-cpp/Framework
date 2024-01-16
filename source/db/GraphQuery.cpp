@@ -7,7 +7,7 @@
 namespace Jde::DB
 {
 	using std::endl;
-	static const LogTag& _logLevel = Logging::TagLevel( "ql" );
+	static sp<LogTag> _logLevel = Logging::TagLevel( "ql" );
 	#define  _schema DB::DefaultSchema()
 	α Where( const DB::TableQL& table, const Table& schemaTable, vector<object>& parameters )noexcept(false)->string
 	{
@@ -207,7 +207,7 @@ namespace Jde::DB
 							remainingFlags -= iFlag;
 						}
 					}
-					else if( pAuthorizer && memberName=="id" && !pAuthorizer->CanRead(userId, ToUInt(value)) )//TODO move to sql
+					else if( pAuthorizer && memberName=="id" && !pAuthorizer->CanRead(userId, (UserPK)ToUInt(value)) )//TODO move to sql
 						return false;//TODO uncomment
 /*					else if( pMember && pMember->SchemaColumnPtr && pMember->SchemaColumnPtr->IsEnum )
 					{

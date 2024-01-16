@@ -1,11 +1,11 @@
 #!/bin/bash
 sourceBuildDir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 if [[ -z $commonBuild ]]; then source $sourceBuildDir/common.sh; fi;
-baseDir=$sourceBuildDir/../..;
+baseDir="$( cd "$( dirname "$sourceBuildDir/../../../.." )" &> /dev/null && pwd )";
+
 jdeRoot=jde;
 if [ -z $JDE_DIR ]; then JDE_DIR=$baseDir/$jdeRoot; fi;
 if [ -z $JDE_BASH ]; then toBashDir $JDE_DIR JDE_BASH; fi;
-
 t=$(readlink -f "${BASH_SOURCE[0]}"); sourceBuild=$(basename "$t"); unset t;
 
 if [[ -z "$REPO_DIR" ]]; then export REPO_DIR=$baseDir; fi;
@@ -16,8 +16,8 @@ if windows; then
 	findExecutable MSBuild.exe '/c/Program\ Files/Microsoft\ Visual\ Studio/2022/BuildTools/MSBuild/Current/Bin' 0
 	findExecutable MSBuild.exe '/c/Program\ Files/Microsoft\ Visual\ Studio/2022/Enterprise/MSBuild/Current/Bin'
 	findExecutable cmake.exe '/c/Program\ Files/CMake/bin'
-	findExecutable cl.exe '/c/Program\ Files/Microsoft\ Visual\ Studio/2022/BuildTools/VC/Tools/MSVC/14.34.31933/bin/Hostx64/x64' 0  #TODO go to any directory
-	findExecutable cl.exe '/c/Program\ Files/Microsoft\ Visual\ Studio/2022/Enterprise/VC/Tools/MSVC/14.34.31933/bin/Hostx64/x64' 1
+	findExecutable cl.exe '/c/Program\ Files/Microsoft\ Visual\ Studio/2022/BuildTools/VC/Tools/MSVC/14.38.33130/bin/Hostx64/x64' 0  #TODO go to any directory
+	findExecutable cl.exe '/c/Program\ Files/Microsoft\ Visual\ Studio/2022/Enterprise/VC/Tools/MSVC/14.38.33130/bin/Hostx64/x64' 1
 	findExecutable vswhere.exe '/c/Program\ Files\ \(X86\)/Microsoft\ Visual\ Studio/installer' 0
 fi;
 
@@ -90,7 +90,7 @@ function buildWindows
 		rm -r -f .bin;
 	fi;
 	file=$2;
-	echo file=$file dir=$dir;
+	echo file=$file dir=$dir pwd=`pwd`;
 	if [[ -z $file ]]; then
 		echo file empty;
 		if [[ $dir = "Framework" ]]; then
@@ -102,14 +102,12 @@ function buildWindows
 	fi;
 	projFile=$([ "${PWD##*/}" = "tests" ] && echo "Tests.$dir" || echo "$dir");
 	baseCmd="msbuild.exe $projFile.vcxproj -p:Platform=x64 -maxCpuCount -nologo -v:q /clp:ErrorsOnly -p:Configuration"
-	echo buildWindows $baseCmd $file release
 	buildWindows2 "$baseCmd" $file release;
 	buildWindows2 "$baseCmd" $file debug;
 	echo build $projFile complete.
 }
 
-function createProto
-{
+function createProto {
 	dir=$1;
 	file=$2;
 	export=$3;
@@ -126,22 +124,20 @@ function createProto
 	popd > /dev/null;
 }
 
-function fetchDefault
-{
+function fetchDefault {
 	cd $baseDir/$jdeRoot;
 	fetch $1;
 	return $?;
 }
-function build
-{
+#$1 - directory, $2 - whether to use local build file, $3 - resulting dll/exe.
+function build {
 	if windows; then
 		buildWindows $1 $3
 	else
 		buildLinux $2
 	fi;
 }
-function buildTest
-{
+function buildTest {
 	if windows; then
 		MSBuild.exe -t:restore -p:RestorePackagesConfig=true
 		if [[ ! -f "Tests.$dir.vcxproj.user" && -f "Tests.$dir.vcxproj._user" ]]; then
@@ -153,14 +149,15 @@ function buildTest
 		buildLinux 1
 	fi;
 }
-function fetchBuild
-{
+function fetchBuild {
 	fetchDefault $1;
 	#echo fetchDefault $1 finished;
 	build $1 $2 $3;
 }
-function findProtoc
-{
+function findProtoc {
+	if [ -z $PROTOBUF_INCLUDE ]; then
+		PROTOBUF_INCLUDE=$REPO_BASH/protobuf/src/google/protobuf;
+	fi;
 	if windows; then
 		findExecutable protoc.exe $JDE_BASH/Public/stage/release;
 	fi;

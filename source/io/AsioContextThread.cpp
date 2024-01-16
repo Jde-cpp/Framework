@@ -1,12 +1,14 @@
-#include "AsioContextThread.h"
+﻿#include "AsioContextThread.h"
 #include <jde/App.h>
 #include "../threading/Thread.h"
+#include <jde/TypeDefs.h>
 
 #define var const auto
+#define α auto
 namespace Jde::IO
 {
 	static var _logLevel{ Logging::TagLevel("sockets") };
-	α LogLevel()noexcept->const LogTag&{ return _logLevel; }
+	auto LogLevel()noexcept->sp<LogTag>{ return _logLevel; }
 
 	sp<AsioContextThread> _pInstance;
 	sp<AsioContextThread> AsioContextThread::Instance()noexcept

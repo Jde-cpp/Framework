@@ -72,7 +72,7 @@ namespace Jde::IO
 		β OnQOverflow( path path, const NotifyEvent& event )noexcept->void;
 		β OnIgnored( path path, const NotifyEvent& event )noexcept->void;
 	private:
-		const LogTag& _logLevel{ Logging::TagLevel("driveWatcher") };
+		sp<LogTag> _logLevel{ Logging::TagLevel("driveWatcher") };
 	};
 //#endif
 #pragma endregion

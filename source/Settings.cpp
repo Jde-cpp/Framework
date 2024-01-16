@@ -7,7 +7,7 @@
 
 namespace Jde::Settings
 {
-	static const LogTag& _logLevel = Logging::TagLevel( "settings" );
+	static sp<LogTag> _logLevel = Logging::TagLevel( "settings" );
 	up<Settings::Container> _pGlobal;
 
 	Container::Container( path jsonFile, SL sl )ε:

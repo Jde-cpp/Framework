@@ -43,18 +43,4 @@ namespace Jde
 		var p = NextWordLocation( x );
 		return p ? get<0>( *p ) : sv{};
 	}
-
-	α Str::TryToUInt( const string& s, std::size_t* pos, int base )ι->optional<uint>
-	{
-		optional<uint> y;
-		try
-		{
-			y = std::stoull( s, pos, base );
-		}
-		catch( const std::invalid_argument& )
-		{}
-		catch( const std::out_of_range& )
-		{}
-		return y;
-	}
 }

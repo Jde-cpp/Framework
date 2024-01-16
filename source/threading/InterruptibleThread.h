@@ -7,7 +7,7 @@
 
 namespace Jde::Threading  //TODO Reflection remove Threading from public items.
 {
-	static const LogTag& _logLevel = Logging::TagLevel( "threads" );
+	static sp<LogTag> _logLevel = Logging::TagLevel( "threads" );
 
 	void InterruptionPoint()noexcept(false);
 	struct Γ InterruptFlag

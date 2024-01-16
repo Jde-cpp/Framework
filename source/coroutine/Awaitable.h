@@ -75,20 +75,20 @@ namespace Jde::Coroutine
 		{
 			Base::AwaitSuspend();
 			_pPromise = &h.promise();
-			_pPromise->SetUnhandledResume( h );
-			if( auto& ro = _pPromise->get_return_object(); ro.HasResult() )
-				ro.Clear();
+			//_pPromise->SetUnhandledResume( h );
+			//if( _pPromise->HasResult() )
+			//	ro.Clear();
 		}
 		α await_resume()ι->AwaitResult override
 		{
 			ASSERT( _pPromise );
 			AwaitResume();
-			auto& y = _pPromise->get_return_object();
-			y.Push( _sl );
-			return move(y.Result());
+			//auto& y = _pPromise->get_return_object();
+			_pPromise->Push( _sl );
+			return _pPromise->MoveResult();
 		}
-		Ŧ Set( up<T>&& p )->void{ ASSERT( _pPromise ); _pPromise->get_return_object().SetResult<T>( move(p) ); }
-		α SetException( up<IException> p )->void{ ASSERT( _pPromise ); _pPromise->get_return_object().SetResult( move(*p) ); }
+		Ŧ Set( up<T>&& p )->void{ ASSERT( _pPromise ); _pPromise->SetResult<T>( move(p) ); }
+		α SetException( up<IException> p )->void{ ASSERT( _pPromise ); _pPromise->SetResult( move(*p) ); }
 
 		const source_location _sl;
 	protected:
@@ -259,7 +259,7 @@ namespace Jde::Coroutine
 		AsyncReadyAwait( function<optional<AwaitResult>()> ready, function<Task(HCoroutine)> fnctn, SRCE, str name={} )ι:base{fnctn, sl, name}, _ready{ready}{};
 
 		α await_ready()ι->bool override{  _result=_ready(); return _result.has_value(); }
-		α await_resume()ι->AwaitResult override{ AwaitResume(); ASSERT(_result.has_value() || _pPromise); return _result ? move(*_result) : move(_pPromise->get_return_object().Result()); }
+		α await_resume()ι->AwaitResult override{ AwaitResume(); ASSERT(_result.has_value() || _pPromise); return _result ? move(*_result) : _pPromise->MoveResult(); }
 	protected:
 		function<optional<AwaitResult>()> _ready;
 		optional<AwaitResult> _result;

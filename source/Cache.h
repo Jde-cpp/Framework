@@ -24,7 +24,7 @@ namespace Jde
 		template<class K,class V> static α GetValue( str n, K id )ι->sp<V>;
 	private:
 		static std::map<string,sp<void>> _cache; static  shared_mutex _cacheLock;
-		Φ LogLevel()ι->const LogTag&;
+		Φ LogLevel()ι->sp<LogTag>;
 	};
 
 	Ŧ Cache2::Emplace( str id )ι->sp<T>
@@ -92,7 +92,7 @@ namespace Jde
 		Ŧ InstanceSet( str name, sp<T> pValue )ι->sp<T>;
 		Φ Instance()ι->Cache&;
 		std::map<string,sp<void>,std::less<>> _cache; mutable shared_mutex _cacheLock;
-		Φ LogLevel()ι->const LogTag&;
+		Φ LogLevel()ι->sp<LogTag>;
 	};
 
 	Ŧ Cache::InstanceGet( str name )ι->sp<T>
