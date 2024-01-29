@@ -202,9 +202,11 @@
     <ClInclude Include="db\Syntax.h" />
     <ClInclude Include="db\types\Schema.h" />
     <ClInclude Include="db\types\Table.h" />
+    <ClInclude Include="io\AsioContextThread.h" />
     <ClInclude Include="io\DiskWatcher.h" />
     <ClInclude Include="io\FileCo.h" />
     <ClInclude Include="io\ProtoUtilities.h" />
+    <ClInclude Include="io\Socket.h" />
     <ClInclude Include="io\sockets\Client.h" />
     <ClInclude Include="io\sockets\ProtoClient.h" />
     <ClInclude Include="io\sockets\ProtoServer.h" />
@@ -218,7 +220,6 @@
     <ClInclude Include="io\Buffer.h" />
     <ClInclude Include="io\Parser.h" />
     <ClInclude Include="io\sockets\SessionCallbacks.h" />
-    <ClInclude Include="io\sockets\Socket.h" />
     <ClInclude Include="io\tinyxml2.h" />
     <ClInclude Include="log\server\EtwSink.h" />
     <ClInclude Include="log\server\proto\messages.pb.h" />

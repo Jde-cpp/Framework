@@ -7,11 +7,11 @@
 namespace Jde::DB
 {
 	using std::endl;
-	static sp<LogTag> _logLevel = Logging::TagLevel( "ql" );
+	static sp<LogTag> _logTag = Logging::Tag( "ql" );
 	#define  _schema DB::DefaultSchema()
-	α Where( const DB::TableQL& table, const Table& schemaTable, vector<object>& parameters )noexcept(false)->string
+	α Where( const DB::TableQL& table, const Table& schemaTable, vector<object>& parameters )ε->string
 	{
-		LOG( "Where({})", table.Args.dump() );
+		TRACE( "Where({})", table.Args.dump() );
 		var pWhere = table.Args.find( "filter" );
 		var j = pWhere==table.Args.end() ? table.Args : *pWhere;
 		ostringstream where;
@@ -151,7 +151,7 @@ namespace Jde::DB
 		return Str::AddCommas( columns );
 	}
 
-	α GraphQL::Query( const DB::TableQL& table, json& jData, UserPK userId )noexcept(false)->void
+	α GraphQL::Query( const DB::TableQL& table, json& jData, UserPK userId )ε->void
 	{
 		ASSERT(_db);
 		var isPlural = table.JsonName.ends_with( "s" );

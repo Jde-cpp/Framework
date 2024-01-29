@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <condition_variable>
 #include <deque>
 #include <shared_mutex>
@@ -16,7 +16,7 @@ namespace Jde::Threading
 		void Join();
 
 	private:
-		void AddQueue( sp<TArgs>& pArgs )noexcept;
+		void AddQueue( sp<TArgs>& pArgs )ι;
 		void Execute();
 		bool _stop{false};
 		std::function<void( sp<TArgs> )> _method;
@@ -35,7 +35,7 @@ namespace Jde::Threading
 	{}
 
 	template<class TArgs>
-	void ReusableThread<TArgs>::AddQueue( sp<TArgs>& pArgs )noexcept
+	void ReusableThread<TArgs>::AddQueue( sp<TArgs>& pArgs )ι
 	{
 		std::unique_lock l( _argumentStackMutex );
 		_argumentStack.push_back( pArgs );

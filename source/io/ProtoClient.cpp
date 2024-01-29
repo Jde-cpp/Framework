@@ -5,9 +5,9 @@
 
 namespace Jde::IO::Sockets{
 
-//#define _logLevel Sockets::LogLevel()
-	sp<LogTag> _logLevel{ Logging::TagLevel( "net" ) };
-
+//#define _logTag Sockets::LogLevel()
+	sp<Jde::LogTag> _logTag{ Logging::Tag( "net" ) };
+	α ProtoClientSession::LogTag()ι->sp<Jde::LogTag>{ return _logTag; }
 	ProtoClientSession::ProtoClientSession( /*boost::asio::io_context& context*/ ):
 		_pIOContext{ AsioContextThread::Instance() },
 		_socket{ _pIOContext->Context() }
@@ -64,7 +64,8 @@ namespace Jde::IO::Sockets{
 		boost::system::error_code ec;
 		std::size_t length = net::read( _socket, net::buffer(reinterpret_cast<void*>(pBuffer), messageLength), ec );
 		if( ec || length!=messageLength ){
-			ERR_IF( length!=messageLength, "'{}' read!='{}' expected", length, messageLength );
+			if(length!=messageLength )
+				ERR( "'{}' read!='{}' expected", length, messageLength );
 			else
 				ERR( "Read Body Failed - {}"sv, ec.value() );
 			Close();
@@ -81,7 +82,7 @@ namespace Jde::IO::Sockets{
 		net::async_write( _socket, b, [this, thisKeepAlive=move(pKeepAlive), _=move(p), c, b2=move(b)]( std::error_code ec, uint length ){
 			if( ec ){
 //				auto keepAlive = _pIOContext;
-				LOGX( "Write message returned '({:x}){}'.", ec.value(), ec.message() );
+				DBGX( "Write message returned '({:x}){}'.", ec.value(), ec.message() );
 				Close();
 				//if( _pIOContext ){
 				//	if(  _socket.is_open() )
@@ -106,6 +107,7 @@ namespace Jde::IO::Sockets{
 		auto endpoints = resolver.resolve( Host, std::to_string(Port).c_str() );
 		try{
 			net::connect( _socket, endpoints );
+			INFO( "Connected to '{}:{}'", Host, Port );
 			ReadHeader();
 		}
 		catch( const boost::system::system_error& e ){

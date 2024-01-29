@@ -19,10 +19,10 @@ namespace Jde::Coroutine
 	};
 	struct Γ ResumeThread final
 	{
-		ResumeThread( str Name, Duration idleLimit, CoroutineParam&& param )noexcept;
+		ResumeThread( str Name, Duration idleLimit, CoroutineParam&& param )ι;
 		~ResumeThread();
-		α Resume( CoroutineParam&& param )noexcept->optional<CoroutineParam>;
-		α Done()const noexcept{ return _thread.get_stop_token().stop_requested(); }
+		α Resume( CoroutineParam&& param )ι->optional<CoroutineParam>;
+		α Done()Ι{ return _thread.get_stop_token().stop_requested(); }
 	private:
 		const Duration IdleLimit;
 		const Threading::ThreadParam ThreadParam;
@@ -32,13 +32,13 @@ namespace Jde::Coroutine
 
 	struct Γ CoroutinePool final: IShutdown
 	{
-		Ω Resume( coroutine_handle<>&& h )noexcept->void;
-		α Shutdown()noexcept->void;
+		Ω Resume( coroutine_handle<>&& h )ι->void;
+		α Shutdown()ι->void;
 #define SETTINGS(T,n,dflt) optional<T> v; if( _pSettings ) v=_pSettings->TryGet<T>(n); return v.value_or(dflt)
 	private:
-		α InnerResume( CoroutineParam&& param )noexcept->void;
-		optional<CoroutineParam> StartThread( CoroutineParam&& param )noexcept;
-		α Run()noexcept->void;
+		α InnerResume( CoroutineParam&& param )ι->void;
+		optional<CoroutineParam> StartThread( CoroutineParam&& param )ι;
+		α Run()ι->void;
 
 		static std::shared_mutex _mtx;
 		std::list<ResumeThread> _threads;
@@ -50,10 +50,10 @@ namespace Jde::Coroutine
 		static Settings::Item<Duration> WakeDuration;
 		static Settings::Item<Duration> ThreadDuration;
 		static Settings::Item<Duration> PoolIdleThreshold;
-		//Ω MaxThreadCount()noexcept->uint16{ SETTINGS(uint16, "maxThreadCount", 100); }//max number of threads pool can hold
-		//Ω WakeDuration()noexcept->Duration{ return Settings::Global().TryGet<Duration>("wakeDuration").value_or(5s); };//wake up to check for shutdown
-		//Ω ThreadDuration()noexcept->Duration{ SETTINGS(Duration, "threadDuration", 1s); }//keep alive after buffer queue empties.
-		//Ω PoolIdleThreshold()noexcept->Duration{ SETTINGS(Duration, "poolIdleThreshold", 1s); }//keep alive for idle pool members.
+		//Ω MaxThreadCount()ι->uint16{ SETTINGS(uint16, "maxThreadCount", 100); }//max number of threads pool can hold
+		//Ω WakeDuration()ι->Duration{ return Settings::Global().TryGet<Duration>("wakeDuration").value_or(5s); };//wake up to check for shutdown
+		//Ω ThreadDuration()ι->Duration{ SETTINGS(Duration, "threadDuration", 1s); }//keep alive after buffer queue empties.
+		//Ω PoolIdleThreshold()ι->Duration{ SETTINGS(Duration, "poolIdleThreshold", 1s); }//keep alive for idle pool members.
 
 		static constexpr sv Name{ "CoroutinePool"sv };
 		static sp<Settings::Container> _pSettings;

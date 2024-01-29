@@ -10,9 +10,10 @@
 #include <jde/Str.h>
 #define var const auto
 
-namespace Jde
-{
-	static var& _logLevel{ Logging::TagLevel("io") };
+namespace Jde{
+	static var& _logTag{ Logging::Tag("io") };
+	α IO::LogTag()ι->sp<Jde::LogTag>{ return _logTag; }
+
 	α IO::FileSize( path path )ε->uint
 	{
 		try
@@ -29,7 +30,7 @@ namespace Jde
 		std::error_code e;
 		fs::remove( p, e );
 		THROW_IFX( e, IOException(fs::filesystem_error("remove file failed", p, e), sl) );
-		LOGSL( "Removed {}", p );
+		TRACESL( "Removed {}", p );
 	}
 	α IO::Copy( fs::path from, fs::path to, SL sl_ )->PoolAwait
 	{
@@ -171,7 +172,7 @@ namespace Jde::IO
 {
 	uint File::Merge( path file, const vector<char>& original, const vector<char>& newData )ε
 	{
-		//DBG( file.string() );
+		//TRACE( file.string() );
 		std::fstream os{ file, std::ios::binary }; //CHECK( os );
 		uint size = 0;
 		for( uint i=0; i<std::min(original.size(), newData.size()); ++i )
@@ -202,7 +203,7 @@ namespace Jde::IO
 		for( uint i=0; i<p->size(); ++i )
 		{
 			if( p->at(i)!=newData[i] )
-				DBG( "{}"sv, i );
+				TRACE( "{}"sv, i );
 		}
 		return size;
 	}
@@ -217,7 +218,7 @@ namespace Jde::IO
 		return str;
 	}
 
-	std::string FileUtilities::DateFileName( uint16 year, uint8 month, uint8 day )noexcept
+	std::string FileUtilities::DateFileName( uint16 year, uint8 month, uint8 day )ι
 	{
 		auto path = std::to_string(year);
 		if( month>0 )
@@ -229,7 +230,7 @@ namespace Jde::IO
 		return path;
 	}
 
-	tuple<uint16,uint8,uint8> FileUtilities::ExtractDate( path path )noexcept
+	tuple<uint16,uint8,uint8> FileUtilities::ExtractDate( path path )ι
 	{
 		uint16 year=0;
 		uint8 month=0, day=0;
@@ -250,9 +251,8 @@ namespace Jde::IO
 				}
 			}
 		}
-		catch( const std::invalid_argument& )
-		{
-			DBG( "Could not convert '{}' to date."sv, path.string() );
+		catch( const std::invalid_argument& ){
+			WARN( "Could not convert '{}' to date."sv, path.string() );
 		}
 		return make_tuple( year, month, day );
 	}

@@ -12,9 +12,10 @@
 #include <jde/App.h>
 #define var const auto
 
-namespace Jde::IO
-{
-	static sp<LogTag> _logLevel = Logging::TagLevel( "io" );
+namespace Jde::IO{
+
+	static sp<Jde::LogTag> _logTag = Logging::Tag( "diskWatcher" );
+	α DiskWatcher::LogTag()ι->sp<Jde::LogTag>{ return _logTag; }
 #ifndef _MSC_VER
 	NotifyEvent::NotifyEvent( const inotify_event& sys ):
 		WatchDescriptor{ sys.wd },
@@ -23,7 +24,7 @@ namespace Jde::IO
 		Name{ string(sys.len ? (char*)&sys.name : "") }
 	{}
 #endif
-	std::ostream& operator<<( std::ostream& os, const NotifyEvent& event )
+	std::ostream& operator<<( std::ostream& os, const NotifyEvent& event )ι
 	{
 		std::ios_base::fmtflags f( os.flags() );
 		os << "wd=" << event.WatchDescriptor
@@ -35,7 +36,7 @@ namespace Jde::IO
 		return os;
 	}
 #ifndef _MSC_VER
-	DiskWatcher::DiskWatcher( path path, EDiskWatcherEvents events )noexcept(false):
+	DiskWatcher::DiskWatcher( path path, EDiskWatcherEvents events )ε:
 		_events{events},
 		_path(path),
 		_fd{ ::inotify_init1(IN_NONBLOCK) }
@@ -63,19 +64,19 @@ namespace Jde::IO
 			close(_fd);
 			throw move(e);
 		}
-		DBG( "DiskWatcher::DiskWatcher on {}"sv, path.c_str() );
+		TRACE( "DiskWatcher::DiskWatcher on {}"sv, path.c_str() );
 		_pThread = make_shared<Jde::Threading::InterruptibleThread>( "Diskwatcher", [&](){ Run();} );
 		IApplication::AddThread( _pThread );
 	}
 	DiskWatcher::~DiskWatcher()
 	{
-		DBG( "DiskWatcher::~DiskWatcher on  {}"sv, _path );
+		TRACE( "DiskWatcher::~DiskWatcher on  {}"sv, _path );
 		close( _fd );
 	}
 
-	α DiskWatcher::Run()noexcept->void
+	α DiskWatcher::Run()ι->void
 	{
-		DBG( "DiskWatcher::Run  {}"sv, _path );
+		TRACE( "DiskWatcher::Run  {}"sv, _path );
 		struct pollfd fds;
 		fds.fd = _fd;
 		fds.events = POLLIN;
@@ -108,7 +109,7 @@ namespace Jde::IO
 		IApplication::Remove( pThis );
 	}
 
-	α DiskWatcher::ReadEvent( const pollfd& fd, bool isRetry )noexcept(false)->void
+	α DiskWatcher::ReadEvent( const pollfd& fd, bool isRetry )ε->void
 	{
 		for( ;; )
 		{
@@ -135,7 +136,7 @@ namespace Jde::IO
 				struct inotify_event *pEvent = (struct inotify_event *) &buffer[i];
 				string name( pEvent->len ? (char*)&pEvent->name : "" );
 				//DBG0( name );
-				DBG( "DiskWatcher::read=>wd={}, mask={}, len={}, cookie={}, name={}"sv, pEvent->wd, pEvent->mask, pEvent->len, pEvent->cookie, name );
+				TRACE( "DiskWatcher::read=>wd={}, mask={}, len={}, cookie={}, name={}"sv, pEvent->wd, pEvent->mask, pEvent->len, pEvent->cookie, name );
 				auto pDescriptorChange = _descriptors.find( pEvent->wd );
 				if( pDescriptorChange==_descriptors.end() )
 				{
@@ -159,7 +160,7 @@ namespace Jde::IO
 		}
 	}
 #else
-	DiskWatcher::DiskWatcher( path /*path*/, EDiskWatcherEvents /*events=DefaultEvents*/ )noexcept(false)
+	DiskWatcher::DiskWatcher( path /*path*/, EDiskWatcherEvents /*events=DefaultEvents*/ )ε
 	{
 		THROW( "new NotImplemented" );
 	}
@@ -168,7 +169,7 @@ namespace Jde::IO
 #endif
 
 
-/*	DiskWatcher::DiskWatcher()noexcept(false):
+/*	DiskWatcher::DiskWatcher()ε:
 		Interrupt( "DiskWatcher", 1ns )
 	{
 		if( !_fd )
@@ -199,7 +200,7 @@ namespace Jde::IO
 	}
 
 	//https://www.linuxjournal.com/article/8478
-	α DiskWatcher::ReadEvent( bool isRetry )noexcept(false)
+	α DiskWatcher::ReadEvent( bool isRetry )ε
 	{
 		constexpr uint EventSize = sizeof( struct inotify_event );
 		constexpr uint BufferLength = (EventSize+16)*1024;
@@ -224,7 +225,7 @@ namespace Jde::IO
 			struct inotify_event *pEvent = (struct inotify_event *) &buffer[i];
 			string name( pEvent->len ? (char*)&pEvent->name : "" );
 			DBG0( name );
-			DBG( "DiskWatcher::read=>wd={}, mask={}, len={}, cookie={}, name={}", pEvent->wd, pEvent->mask, pEvent->len, pEvent->cookie, pEvent->len ? (char*)&pEvent->name : "" );
+			TRACE( "DiskWatcher::read=>wd={}, mask={}, len={}, cookie={}, name={}", pEvent->wd, pEvent->mask, pEvent->len, pEvent->cookie, pEvent->len ? (char*)&pEvent->name : "" );
 			var event = NotifyEvent( *pEvent );
 			pNotifyEvents->push_front( event );
 			i += EventSize + pEvent->len;
@@ -281,11 +282,11 @@ namespace Jde::IO
 		std::thread thd( [pNotifyEvents,&sendEvents](){sendEvents( pNotifyEvents );} );
 		thd.detach();
 	}
-	α DiskWatcher::OnTimeout()noexcept
+	α DiskWatcher::OnTimeout()ι->void
 	{
 		OnAwake();
 	}
-	α DiskWatcher::OnAwake()noexcept
+	α DiskWatcher::OnAwake()ι
 	{
 		fd_set rfds; FD_ZERO( &rfds );
 		FD_SET( _fd, &rfds );
@@ -310,23 +311,23 @@ namespace Jde::IO
 		}
 	}
 */
-	α IDriveChange::OnAccess( path path, const NotifyEvent& event )noexcept->void
+	α IDriveChange::OnAccess( path path, const NotifyEvent& event )ι->void
 	{
-		LOG( "IDriveChange::OnAccess( {}, {} )", path.string(), event );
-		//Logging::Log( Logging::MessageBase(_logLevel, "IDriveChange::OnAccess( {}, {} )", "__FILE__", "__func__", 201), path.string(), event );
+		TRACE( "IDriveChange::OnAccess( {}, {} )", path.string(), event );
+		//Logging::Log( Logging::MessageBase(_logTag, "IDriveChange::OnAccess( {}, {} )", "__FILE__", "__func__", 201), path.string(), event );
 	}
-	α IDriveChange::OnModify( path path, const NotifyEvent& event )noexcept->void{ LOG( "IDriveChange::OnModify( {}, {} )", path.string(), event ); }
-	α IDriveChange::OnAttribute( path path, const NotifyEvent& event )noexcept->void{ LOG( "IDriveChange::OnAttribute( {}, {} )", path.string(), event ); }
-	α IDriveChange::OnCloseWrite( path path, const NotifyEvent& event )noexcept->void{ LOG( "IDriveChange::OnCloseWrite( {}, {} )", path.string(), event ); }
-	α IDriveChange::OnCloseNoWrite( path path, const NotifyEvent& event )noexcept->void{ LOG( "IDriveChange::OnCloseNoWrite( {}, {} )", path.string(), event ); }
-	α IDriveChange::OnOpen( path path, const NotifyEvent& event )noexcept->void{ LOG( "IDriveChange::OnOpen( {}, {} )", path.string(), event ); }
-	α IDriveChange::OnMovedFrom( path path, const NotifyEvent& event )noexcept->void{ LOG( "IDriveChange::OnMovedFrom( {}, {} )", path.string(), event ); }
-	α IDriveChange::OnMovedTo( path path, const NotifyEvent& event )noexcept->void{ LOG( "IDriveChange::OnMovedTo( {}, {} )", path.string(), event ); }
-	α IDriveChange::OnCreate( path path, const NotifyEvent& event )noexcept->void{ LOG( "IDriveChange::OnCreate( {}, {} )", path.string(), event ); }
-	α IDriveChange::OnDelete( path path, const NotifyEvent& event )noexcept->void{ LOG( "IDriveChange::OnDelete( {}, {} )", path.string(), event ); }
-	α IDriveChange::OnDeleteSelf( path path, const NotifyEvent& event )noexcept->void{ LOG( "IDriveChange::OnDeleteSelf( {}, {} )", path.string(), event ); }
-	α IDriveChange::OnMoveSelf( path path, const NotifyEvent& event )noexcept->void{ LOG( "IDriveChange::OnMoveSelf( {}, {} )", path.string(), event ); }
-	α IDriveChange::OnUnmount( path path, const NotifyEvent& event )noexcept->void{ LOG( "IDriveChange::OnUnmount( {}, {} )", path.string(), event ); }
-	α IDriveChange::OnQOverflow( path path, const NotifyEvent& event )noexcept->void{ LOG( "IDriveChange::OnQOverflow( {}, {} )", path.string(), event ); }
-	α IDriveChange::OnIgnored( path path, const NotifyEvent& event )noexcept->void{ LOG( "IDriveChange::OnIgnored( {}, {} )", path.string(), event ); }
+	α IDriveChange::OnModify( path path, const NotifyEvent& event )ι->void{ TRACE( "IDriveChange::OnModify( {}, {} )", path.string(), event ); }
+	α IDriveChange::OnAttribute( path path, const NotifyEvent& event )ι->void{ TRACE( "IDriveChange::OnAttribute( {}, {} )", path.string(), event ); }
+	α IDriveChange::OnCloseWrite( path path, const NotifyEvent& event )ι->void{ TRACE( "IDriveChange::OnCloseWrite( {}, {} )", path.string(), event ); }
+	α IDriveChange::OnCloseNoWrite( path path, const NotifyEvent& event )ι->void{ TRACE( "IDriveChange::OnCloseNoWrite( {}, {} )", path.string(), event ); }
+	α IDriveChange::OnOpen( path path, const NotifyEvent& event )ι->void{ TRACE( "IDriveChange::OnOpen( {}, {} )", path.string(), event ); }
+	α IDriveChange::OnMovedFrom( path path, const NotifyEvent& event )ι->void{ TRACE( "IDriveChange::OnMovedFrom( {}, {} )", path.string(), event ); }
+	α IDriveChange::OnMovedTo( path path, const NotifyEvent& event )ι->void{ TRACE( "IDriveChange::OnMovedTo( {}, {} )", path.string(), event ); }
+	α IDriveChange::OnCreate( path path, const NotifyEvent& event )ι->void{ TRACE( "IDriveChange::OnCreate( {}, {} )", path.string(), event ); }
+	α IDriveChange::OnDelete( path path, const NotifyEvent& event )ι->void{ TRACE( "IDriveChange::OnDelete( {}, {} )", path.string(), event ); }
+	α IDriveChange::OnDeleteSelf( path path, const NotifyEvent& event )ι->void{ TRACE( "IDriveChange::OnDeleteSelf( {}, {} )", path.string(), event ); }
+	α IDriveChange::OnMoveSelf( path path, const NotifyEvent& event )ι->void{ TRACE( "IDriveChange::OnMoveSelf( {}, {} )", path.string(), event ); }
+	α IDriveChange::OnUnmount( path path, const NotifyEvent& event )ι->void{ TRACE( "IDriveChange::OnUnmount( {}, {} )", path.string(), event ); }
+	α IDriveChange::OnQOverflow( path path, const NotifyEvent& event )ι->void{ TRACE( "IDriveChange::OnQOverflow( {}, {} )", path.string(), event ); }
+	α IDriveChange::OnIgnored( path path, const NotifyEvent& event )ι->void{ TRACE( "IDriveChange::OnIgnored( {}, {} )", path.string(), event ); }
 }

@@ -15,7 +15,10 @@ namespace Jde::DB
 	using nlohmann::json;
 	using nlohmann::ordered_json;
 	struct IDataSource;
-	α UniqueIndexName( const Index& index, ISchemaProc& dbSchema, bool uniqueName, const vector<Index>& indexes )noexcept(false)->string;
+
+	static sp<LogTag> _logTag{ Logging::Tag("sql") };
+
+	α UniqueIndexName( const Index& index, ISchemaProc& dbSchema, bool uniqueName, const vector<Index>& indexes )ε->string;
 
 	string AbbrevName( sv schemaName )
 	{
@@ -40,7 +43,7 @@ namespace Jde::DB
 		return name.str();
 	}
 #define _syntax DB::DefaultSyntax()
-	Schema ISchemaProc::CreateSchema( const ordered_json& j, path relativePath )noexcept(false)
+	α ISchemaProc::CreateSchema( const ordered_json& j, path relativePath )ε->Schema
 	{
 		var dbTables = LoadTables();
 
@@ -88,7 +91,7 @@ namespace Jde::DB
 			{
 				var v = pTable->Create( _syntax );
 				_pDataSource->Execute( v );
-				DBG( "Created table '{}'."sv, tableName );
+				INFO( "Created table '{}'."sv, tableName );
 				if( pTable->HaveSequence() )
 				{
 					for( auto pTableIndex : LoadIndexes({}, pTable->Name) )
@@ -104,12 +107,12 @@ namespace Jde::DB
 				var indexCreate = index.Create( name, tableName, _syntax );
 				_pDataSource->Execute( indexCreate );
 				dbIndexes.push_back( Index{name, tableName, index} );
-				DBG( "Created index '{}.{}'."sv, tableName, name );
+				INFO( "Created index '{}.{}'."sv, tableName, name );
 			}
 			if( var procName = pTable->InsertProcName(); procName.size() && procedures.find(procName)==procedures.end() )
 			{
 				_pDataSource->Execute( pTable->InsertProcText(_syntax) );
-				DBG( "Created proc '{}'."sv, pTable->InsertProcName() );
+				INFO( "Created proc '{}'."sv, pTable->InsertProcName() );
 			}
 		}
 		if( j.contains("$scripts") )
@@ -124,7 +127,7 @@ namespace Jde::DB
 					name = name.parent_path()/( name.stem().string()+string{_syntax.ProcFileSuffix()}+name.extension().string() );
 				var path = relativePath/name; CHECK_PATH( path, SRCE_CUR );
 				var text = IO::FileUtilities::Load( path );
-				DBG( "Executing '{}'"sv, path.string() );
+				TRACE( "Executing '{}'"sv, path.string() );
 				var queries = Str::Split<sv,iv>( text, "\ngo"_iv );
 				for( var& query : queries )
 				{
@@ -137,7 +140,7 @@ namespace Jde::DB
 					}
 					_pDataSource->Execute( os.str(), nullptr, nullptr, false );
 				}
-				DBG( "Finished '{}'"sv, path.string() );
+				INFO( "Finished '{}'"sv, path.string() );
 			}
 		}
 		for( var& [tableName, pTable] : schema.Tables )
@@ -249,7 +252,7 @@ namespace Jde::DB
 
 					var createStatement = ForeignKey::Create( name, column.Name, *pPKTable->second, tableName );
 					_pDataSource->Execute( createStatement );
-					DBG( "Created fk '{}'."sv, name );
+					INFO( "Created fk '{}'."sv, name );
 				}
 			}
 		}

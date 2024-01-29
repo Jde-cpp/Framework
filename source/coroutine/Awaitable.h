@@ -35,7 +35,7 @@ namespace Jde::Coroutine
 		α AwaitResume()ι->void
 		{
 			if( _name.size() )
-				DBG("({}){}::await_resume"sv, std::this_thread::get_id(), _name);
+				TRACE("({}){}::await_resume"sv, std::this_thread::get_id(), _name);
 			if( OriginalThreadParamPtr )
 				Threading::SetThreadInfo( *OriginalThreadParamPtr );
 		}

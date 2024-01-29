@@ -6,11 +6,11 @@ using namespace std::chrono;
 namespace Jde::Coroutine
 {
 	std::shared_mutex CoroutinePool::_mtx;
-	static var& _logLevel{ Logging::TagLevel("threads") };
+	static var& _logTag{ Logging::Tag("threads") };
 
 	sp<CoroutinePool> CoroutinePool::_pInstance;
 	std::atomic<uint> INDEX=0;
-	ResumeThread::ResumeThread( str name, Duration idleLimit, CoroutineParam&& param )noexcept:
+	ResumeThread::ResumeThread( str name, Duration idleLimit, CoroutineParam&& param )ι:
 		IdleLimit{idleLimit},
 		ThreadParam{ name, Threading::BumpThreadHandle() },
 		_param{ move(param) },
@@ -30,39 +30,39 @@ namespace Jde::Coroutine
 							std::this_thread::yield();
 						else
 						{
-							LOG( "({})CoroutineThread Stopping", index );
+							TRACE( "({})CoroutineThread Stopping", index );
 							_thread.request_stop();
 						}
 						continue;
 					}
 				}
-				LOG( "({}:{})CoroutineThread call resume", index, _param->CoHandle.address() );
+				TRACE( "({}:{})CoroutineThread call resume", index, _param->CoHandle.address() );
 				_param->CoHandle.resume();
-				LOG( "({})CoroutineThread finish resume", index );
+				TRACE( "({})CoroutineThread finish resume", index );
 				SetThreadInfo( ThreadParam );
 				timeout = Clock::now()+IdleLimit;
-				LOG( "({})CoroutineThread timeout={}", index, ToIsoString(timeout) );
+				TRACE( "({})CoroutineThread timeout={}", index, ToIsoString(timeout) );
 				unique_lock l{ _paramMutex };
 				_param = {};
 			}
-			LOG( "({})CoroutineThread::Done", index );
+			TRACE( "({})CoroutineThread::Done", index );
 		}
 	}
 	{}
 	ResumeThread::~ResumeThread()
 	{
 		if( !IApplication::ShuttingDown() )
-			LOG( "({})ResumeThread::~ResumeThread", std::this_thread::get_id() );
+			TRACE( "({})ResumeThread::~ResumeThread", std::this_thread::get_id() );
 		if( _thread.joinable() )
 		{
 			_thread.request_stop();
 			_thread.join();
 		}
 	}
-	optional<CoroutineParam> ResumeThread::Resume( CoroutineParam&& param )noexcept
+	optional<CoroutineParam> ResumeThread::Resume( CoroutineParam&& param )ι
 	{
 		ASSERT( param.CoHandle.address() );
-		LOG( "({})ResumeThread::Resume", param.CoHandle.address() );
+		TRACE( "({})ResumeThread::Resume", param.CoHandle.address() );
 		unique_lock l{ _paramMutex };
 		bool haveParam = _param.has_value();
 		bool done = Done();
@@ -78,7 +78,7 @@ namespace Jde::Coroutine
 	Settings::Item<Duration> CoroutinePool::PoolIdleThreshold{ "coroutinePool/poolIdleThreshold", 1s };
 
 
-	void CoroutinePool::Shutdown()noexcept
+	void CoroutinePool::Shutdown()ι
 	{
 		if( _pThread )
 		{
@@ -87,7 +87,7 @@ namespace Jde::Coroutine
 		}
 	}
 
-	void CoroutinePool::Resume( coroutine_handle<>&& h/*, Threading::ThreadParam&& param*/ )noexcept
+	void CoroutinePool::Resume( coroutine_handle<>&& h/*, Threading::ThreadParam&& param*/ )ι
 	{
 		if( IApplication::ShuttingDown() )
 		{
@@ -98,7 +98,7 @@ namespace Jde::Coroutine
 			unique_lock l{ _mtx };
 			if( !_pInstance )
 			{
-				LOG( "MaxThreadCount={}, WakeDuration={} ThreadDuration={}, PoolIdleThreshold={}", (uint16)MaxThreadCount, Chrono::ToString(WakeDuration), Chrono::ToString(ThreadDuration), Chrono::ToString(PoolIdleThreshold) );
+				INFO( "MaxThreadCount={}, WakeDuration={} ThreadDuration={}, PoolIdleThreshold={}", (uint16)MaxThreadCount, Chrono::ToString(WakeDuration), Chrono::ToString(ThreadDuration), Chrono::ToString(PoolIdleThreshold) );
 				_pInstance = make_shared<CoroutinePool>();
 				IApplication::AddShutdown( _pInstance );
 			}
@@ -106,7 +106,7 @@ namespace Jde::Coroutine
 		_pInstance->InnerResume( CoroutineParam{move(h)} );
 	}
 
-	void CoroutinePool::InnerResume( CoroutineParam&& param )noexcept
+	void CoroutinePool::InnerResume( CoroutineParam&& param )ι
 	{
 		unique_lock l{ _mtx };
 		if( _pQueue!=nullptr )
@@ -117,7 +117,7 @@ namespace Jde::Coroutine
 			StartThread( move(param) );
 		}
 	}
-	optional<CoroutineParam> CoroutinePool::StartThread( CoroutineParam&& param )noexcept
+	optional<CoroutineParam> CoroutinePool::StartThread( CoroutineParam&& param )ι
 	{
 		unique_lock _{ _mtx };
 		optional<CoroutineParam> pResult{ move(param) };
@@ -145,10 +145,10 @@ namespace Jde::Coroutine
 		return pResult;
 	}
 
-	void CoroutinePool::Run()noexcept
+	void CoroutinePool::Run()ι
 	{
 		Threading::SetThreadInfo( Threading::ThreadParam{ string{Name}, (uint)Threading::EThread::CoroutinePool} );
-		LOG( "{} - Starting", Name );
+		TRACE( "{} - Starting", Name );
 		TimePoint quitTime = Clock::now()+(Duration)ThreadDuration;
 		while( !Threading::GetThreadInterruptFlag().IsSet() ||  !_pQueue->empty() )
 		{
@@ -164,6 +164,6 @@ namespace Jde::Coroutine
 				break;
 			}
 		}
-		LOG( "{} - Ending", Name );
+		TRACE( "{} - Ending", Name );
 	}
 }

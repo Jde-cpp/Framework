@@ -5,19 +5,17 @@
 #include "Thread.h"
 #include <jde/App.h>
 
-namespace Jde::Threading  //TODO Reflection remove Threading from public items.
-{
-	static sp<LogTag> _logLevel = Logging::TagLevel( "threads" );
-
-	void InterruptionPoint()noexcept(false);
+namespace Jde::Threading{  //TODO Reflection remove Threading from public items. move to jthread
+#define ω Γ static auto
+	void InterruptionPoint()ε;
 	struct Γ InterruptFlag
 	{
-		InterruptFlag()noexcept;
-		void Set()noexcept;
+		InterruptFlag()ι;
+		void Set()ι;
 		template<typename Lockable>
-		void Wait( std::condition_variable_any& cv, Lockable& lk );
-		bool IsSet()const noexcept;
-		bool IsDone()const noexcept{return _done;} void SetIsDone(){_done=true;}
+		void Wait( std::condition_variable_any& cv, Lockable& lk )ι;
+		bool IsSet()Ι;
+		bool IsDone()Ι{return _done;} void SetIsDone(){_done=true;}
 	private:
 		bool _done{false};
 		std::atomic_flag _flag;
@@ -26,44 +24,44 @@ namespace Jde::Threading  //TODO Reflection remove Threading from public items.
 		std::mutex _setClearMutex;
 	};
 	extern thread_local InterruptFlag ThreadInterruptFlag;
-	Γ InterruptFlag& GetThreadInterruptFlag()noexcept;
+	Γ InterruptFlag& GetThreadInterruptFlag()ι;
 
 	struct InterruptibleThread : public IShutdown
 	{
 		template<typename FunctionType>
-		InterruptibleThread( string name, FunctionType f )noexcept;
+		InterruptibleThread( string name, FunctionType f )ι;
 		virtual Γ ~InterruptibleThread();
-		Γ void Interrupt()noexcept;
+		Γ void Interrupt()ι;
 		Γ void Join();
-		bool IsDone()const noexcept{ return _pFlag && _pFlag->IsDone(); }
+		bool IsDone()Ι{ return _pFlag && _pFlag->IsDone(); }
 		const string Name;
-		Γ void Shutdown()noexcept override;
-		void Detach()noexcept{ _internalThread.detach(); ShouldJoin = false; }//destructor on same thread.
+		Γ void Shutdown()ι override;
+		void Detach()ι{ _internalThread.detach(); ShouldJoin = false; }//destructor on same thread.
 	private:
 		std::thread _internalThread;
 		InterruptFlag* _pFlag{nullptr};
 		bool ShouldJoin{true};
 	};
-
+#define _logTag LogTag()
 	template<typename FunctionType>
-	InterruptibleThread::InterruptibleThread( string name_, FunctionType f )noexcept:
+	InterruptibleThread::InterruptibleThread( string name_, FunctionType f )ι:
 		Name{ name_}
 	{
 		std::promise<InterruptFlag*> promise;
 		_internalThread = std::thread( [f,&promise, name=move(name_)]
 		{
-			LOG( "~InterruptibleThread::f({})", name );
+			TRACE( "~InterruptibleThread::f({})", name );
 			promise.set_value( &GetThreadInterruptFlag() );
 			SetThreadDscrptn( name );
 			f();
-			LOG( "~InterruptibleThread::f({})", name );
+			TRACE( "~InterruptibleThread::f({})", name );
 			GetThreadInterruptFlag().SetIsDone();
 		});
 		_pFlag = promise.get_future().get();
 	}
 
 	template<typename Lockable>
-	void InterruptFlag::Wait( std::condition_variable_any& cv, Lockable& lk )
+	void InterruptFlag::Wait( std::condition_variable_any& cv, Lockable& lk )ι
 	{
 		struct CustomLock
 		{
@@ -96,5 +94,7 @@ namespace Jde::Threading  //TODO Reflection remove Threading from public items.
 		cv.wait( cl );
 		InterruptionPoint();
 	}
-	struct ThreadInterrupted : public Exception{ ThreadInterrupted()noexcept:Exception{"interupted", ELogLevel::Trace}{} };
+	struct ThreadInterrupted : public Exception{ ThreadInterrupted()ι:Exception{"interupted", ELogLevel::Trace}{} };
 }
+#undef _logTag 
+#undef ω

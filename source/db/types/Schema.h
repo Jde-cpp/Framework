@@ -9,20 +9,20 @@ namespace Jde::DB
 {
 	struct Schema
 	{
-		α FindTableSuffix( sv suffix, SRCE )const noexcept(false)->const Table&;
-		α TryFindTableSuffix( sv suffix )const noexcept->sp<const Table>;
-		α FindDefTable( const Table& t1, const Table& t2 )const noexcept->sp<const Table>;
+		α FindTableSuffix( sv suffix, SRCE )Ε->const Table&;
+		α TryFindTableSuffix( sv suffix )Ι->sp<const Table>;
+		α FindDefTable( const Table& t1, const Table& t2 )Ι->sp<const Table>;
 
-		template<class X=string,class Y=string> Ω FromJson( Str::bsv<typename X::traits_type> jsonName )noexcept->YRESULT;
-		template<class X=string,class Y=string> Ω ToJson(   Str::bsv<typename X::traits_type> schemaName )noexcept->YRESULT;
-		Ω ToSingular( sv plural )noexcept->sv;
-		TMPL Ω ToPlural( BSV singular )noexcept->RESULT;
+		template<class X=string,class Y=string> Ω FromJson( Str::bsv<typename X::traits_type> jsonName )ι->YRESULT;
+		template<class X=string,class Y=string> Ω ToJson(   Str::bsv<typename X::traits_type> schemaName )ι->YRESULT;
+		Ω ToSingular( sv plural )ι->sv;
+		TMPL Ω ToPlural( BSV singular )ι->RESULT;
 
 		flat_map<string, Column> Types;
 		flat_map<SchemaName, sp<const Table>> Tables;
 	};
 #define var const auto
-	template<class X,class Y> α Schema::FromJson( Str::bsv<typename X::traits_type> jsonName )noexcept->YRESULT
+	template<class X,class Y> α Schema::FromJson( Str::bsv<typename X::traits_type> jsonName )ι->YRESULT
 	{
 		YRESULT sqlName; sqlName.reserve( jsonName.size() );
 		for( var ch : jsonName )
@@ -37,7 +37,7 @@ namespace Jde::DB
 		}
 		return sqlName;
 	}
-	template<class X,class Y> α Schema::ToJson( Str::bsv<typename X::traits_type> schemaName )noexcept->YRESULT
+	template<class X,class Y> α Schema::ToJson( Str::bsv<typename X::traits_type> schemaName )ι->YRESULT
 	{
 		ostringstream j;
 		bool upper = false;
@@ -57,15 +57,15 @@ namespace Jde::DB
 		}
 		return j.str();
 	}
-	Ξ Schema::ToSingular( sv plural )noexcept->sv
+	Ξ Schema::ToSingular( sv plural )ι->sv
 	{
 		return plural.ends_with('s') ? plural.substr( 0, plural.size()-1 ) : plural;
 	}
-	Ŧ Schema::ToPlural( BSV singular )noexcept->RESULT
+	Ŧ Schema::ToPlural( BSV singular )ι->RESULT
 	{
 		return singular.ends_with( 's' ) ? RESULT{ singular } : RESULT{ singular }+"s";
 	}
-	Ξ Schema::TryFindTableSuffix( sv suffix )const noexcept->sp<const Table>
+	Ξ Schema::TryFindTableSuffix( sv suffix )Ι->sp<const Table>
 	{
 		sp<const Table> y;
 		for( var& [name,pTable] : Tables )
@@ -78,13 +78,13 @@ namespace Jde::DB
 		}
 		return y;
 	}
-	Ξ Schema::FindTableSuffix( sv suffix, SL sl )const noexcept(false)->const Table&
+	Ξ Schema::FindTableSuffix( sv suffix, SL sl )Ε->const Table&
 	{
 		var y = TryFindTableSuffix( suffix );
 		if( !y ) throw Exception{ sl, ELogLevel::Debug, "Could not find table '{}' in schema", suffix };//mysql can't use THROW_IF
 		return *y;
 	}
-	Ξ Schema::FindDefTable( const Table& t1, const Table& t2 )const noexcept->sp<const Table>
+	Ξ Schema::FindDefTable( const Table& t1, const Table& t2 )Ι->sp<const Table>
 	{
 		sp<const Table> result;
 		var singularT1 = t1.FKName();

@@ -10,11 +10,11 @@ namespace Jde
 
 	static TimePoint _epoch{ DateTime(1970,1,1).GetTimePoint() };
 
-	α Chrono::Min( TimePoint a, TimePoint b )noexcept->TimePoint{ return a.time_since_epoch()<b.time_since_epoch() ? a : b; }
+	α Chrono::Min( TimePoint a, TimePoint b )ι->TimePoint{ return a.time_since_epoch()<b.time_since_epoch() ? a : b; }
 
-	α Chrono::Epoch()noexcept->TimePoint{ return _epoch; };
+	α Chrono::Epoch()ι->TimePoint{ return _epoch; };
 
-	α Chrono::ToDuration( sv iso )noexcept(false)->Duration //P3Y6M4DT12H30M5S
+	α Chrono::ToDuration( sv iso )ε->Duration //P3Y6M4DT12H30M5S
 	{
 		std::istringstream is{ string{iso} };
 		if( is.get()!='P' )
@@ -47,7 +47,7 @@ namespace Jde
 		return duration;
 	}
 
-	α Chrono::ToString( Duration d )noexcept->string
+	α Chrono::ToString( Duration d )ι->string
 	{
 		ostringstream os;
 		os << 'P';
@@ -88,28 +88,28 @@ namespace Jde
 		return os.str();
 	}
 
-	DateTime::DateTime()noexcept:
+	DateTime::DateTime()ι:
 		_time_point( system_clock::now() )
 	{}
 
-	DateTime::DateTime( const DateTime& other )noexcept
+	DateTime::DateTime( const DateTime& other )ι
 	{
 		*this = other;
 	}
 
-	DateTime::DateTime( time_t time )noexcept:
+	DateTime::DateTime( time_t time )ι:
 		_time_point( system_clock::from_time_t(time) )
 	{}
 
-	DateTime::DateTime( TimePoint tp )noexcept:
+	DateTime::DateTime( TimePoint tp )ι:
 		_time_point( tp )
 	{}
 
-	DateTime::DateTime( fs::file_time_type t )noexcept:
+	DateTime::DateTime( fs::file_time_type t )ι:
 		_time_point( Chrono::ToClock<Clock,fs::file_time_type::clock>(t) )
 	{}
 
-	DateTime::DateTime( uint16 year, uint8 month, uint8 day, uint8 hour, uint8 minute, uint8 second, Duration nanoFraction )noexcept
+	DateTime::DateTime( uint16 year, uint8 month, uint8 day, uint8 hour, uint8 minute, uint8 second, Duration nanoFraction )ι
 	{
 		std::tm tm;
 		tm.tm_year = year-1900;
@@ -126,7 +126,7 @@ namespace Jde
 		_time_point = Clock::from_time_t( time )+nanoFraction;
 	}
 
-	DateTime::DateTime( sv iso  )noexcept(false)
+	DateTime::DateTime( sv iso  )ε
 	{
 		THROW_IF( iso.size()<19, "ISO Date '{}' expected at least 19 characters vs '{}'", iso, iso.size() );
 		std::tm tm;
@@ -144,7 +144,7 @@ namespace Jde
 		_time_point = Clock::from_time_t( time );
 	}
 
-	α DateTime::DateDisplay()const noexcept->string
+	α DateTime::DateDisplay()Ι->string
 	{
 		return format( "{:0>2}/{:0>2}/{:0>2}", Month(), Day(), Year()-2000 );
 	}
@@ -157,7 +157,7 @@ namespace Jde
 		return DateTime( beginingOfWeek );
 	}
 
-	α DateTime::operator=(const DateTime& other)noexcept->DateTime&
+	α DateTime::operator=(const DateTime& other)ι->DateTime&
 	{
 		_time_point = other._time_point;
 		_pTime = nullptr;
@@ -179,19 +179,19 @@ namespace Jde
 		return result;
 	}
 
-	α DateTime::Nanos()const noexcept->uint32
+	α DateTime::Nanos()Ι->uint32
 	{
 		return _time_point.time_since_epoch().count()%TimeSpan::NanosPerSecond;
 	}
 
-	α DateTime::TimeT()const noexcept->time_t
+	α DateTime::TimeT()Ι->time_t
 	{
 		if( !_pTime )
 			_pTime = mu<time_t>( system_clock::to_time_t(_time_point) );
 		return *_pTime;
 	}
 
-	α DateTime::Tm()const noexcept->sp<std::tm>
+	α DateTime::Tm()Ι->sp<std::tm>
 	{
 		if( !_pTm )
 		{
@@ -206,7 +206,7 @@ namespace Jde
 		return _pTm;
 	}
 
-	α DateTime::LocalTm()const noexcept->up<std::tm>
+	α DateTime::LocalTm()Ι->up<std::tm>
 	{
 		time_t time = TimeT();
 		auto pLocal = mu<std::tm>();
@@ -218,11 +218,11 @@ namespace Jde
 		return pLocal;
 	}
 
-	α DateTime::TimeDisplay()const noexcept->string
+	α DateTime::TimeDisplay()Ι->string
 	{
 		return fmt::format( "{:0>2}:{:0>2}", Hour(), Minute() );
 	}
-	α DateTime::LocalTimeDisplay( bool seconds, bool milli )const noexcept->string
+	α DateTime::LocalTimeDisplay( bool seconds, bool milli )Ι->string
 	{
 		string y{ "null" };
 		if( _time_point!=TP{} )
@@ -235,39 +235,39 @@ namespace Jde
 		}
 		return y;
 	}
-	α DateTime::LocalDateDisplay()const noexcept->string
+	α DateTime::LocalDateDisplay()Ι->string
 	{
 		auto pLocal = LocalTm();
 		return fmt::format( "{:0>2}/{:0>2}/{:0>2}", pLocal->tm_mon+1, pLocal->tm_mday, pLocal->tm_year-100 );
 	}
-	α DateTime::LocalDisplay( bool seconds, bool milli )const noexcept->string
+	α DateTime::LocalDisplay( bool seconds, bool milli )Ι->string
 	{
 		return fmt::format( "{} {}", LocalDateDisplay(), LocalTimeDisplay(seconds, milli) );
 	}
-	α DateTime::ToDate( TimePoint time )noexcept->TimePoint
+	α DateTime::ToDate( TimePoint time )ι->TimePoint
 	{
 		var secondsSinceEpoch = duration_cast<seconds>( time.time_since_epoch() ).count();
 		constexpr uint secondsPerDay = duration_cast<seconds>( 24h ).count();
 		var day = time - seconds( secondsSinceEpoch%secondsPerDay );
 		return day;
 	}
-	α DateTime::ToIsoString()const noexcept->string
+	α DateTime::ToIsoString()Ι->string
 	{
 		return ToIsoString( *Tm() );
 	}
-	α DateTime::ToIsoString(const tm& t)noexcept->string
+	α DateTime::ToIsoString(const tm& t)ι->string
 	{
 		return fmt::format( "{}-{:0>2}-{:0>2}T{:0>2}:{:0>2}:{:0>2}Z", t.tm_year+1900, t.tm_mon+1, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec ).c_str();
 	}
 
 	constexpr std::array<sv,12> months{ "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec" };
-	uint8 DateTime::ParseMonth( sv month )noexcept(false)
+	uint8 DateTime::ParseMonth( sv month )ε
 	{
 		var index = find( months.begin(), months.end(), Str::ToLower(string(month)) )-months.begin();
 		THROW_IF( index>=(int)months.size(), "Could not parse month '{}'", month );
 		return (uint8)index+1;
 	}
-	α DateTime::MonthAbbrev()const noexcept->string
+	α DateTime::MonthAbbrev()Ι->string
 	{
 		var month = months[Month()-1];
 		return string{ (char)std::toupper(month[0]),month[1],month[2] };
@@ -275,7 +275,7 @@ namespace Jde
 }
 namespace Jde
 {
-	α Timezone::TryGetGmtOffset( sv name, TimePoint utc, SL sl )noexcept->Duration
+	α Timezone::TryGetGmtOffset( sv name, TimePoint utc, SL sl )ι->Duration
 	{
 		try
 		{
@@ -286,7 +286,7 @@ namespace Jde
 		return Duration{};
 	}
 #ifdef _MSC_VER
-	α Timezone::GetGmtOffset( sv inputName, TimePoint utc, SL sl )noexcept(false)->Duration
+	α Timezone::GetGmtOffset( sv inputName, TimePoint utc, SL sl )ε->Duration
 	{
 /*		CIString ciName{ inputName };
 		if( ciName=="EST (Eastern Standard Time)"sv || ciName=="US/Eastern"sv )
@@ -302,7 +302,7 @@ namespace Jde
 			throw Exception( sl, move(e), "Could not find time zone '{}'", inputName );
 		}
 	}
-	α Timezone::EasternTimezoneDifference( TimePoint time, SL sl )noexcept(false)->Duration
+	α Timezone::EasternTimezoneDifference( TimePoint time, SL sl )ε->Duration
 	{
 		return GetGmtOffset( "America/New_York", time, sl );
 	}

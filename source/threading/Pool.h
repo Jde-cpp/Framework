@@ -8,10 +8,9 @@
 #include <jde/App.h>
 #include "InterruptibleThread.h"
 
-namespace Jde::Threading
-{
-	struct Γ Pool
-	{
+namespace Jde::Threading{
+#define _logTag Threading::LogTag()
+	struct Γ Pool	{
 		Pool( uint threadCount=0, sv name="Pool" );
 		~Pool();
 
@@ -36,16 +35,16 @@ namespace Jde::Threading
 	template<typename T>
 	struct TypePool : IShutdown
 	{
-		TypePool( uint8 threadCount, sv name )noexcept;
-		virtual ~TypePool(){ DBG("~TypePool"sv); }
+		TypePool( uint8 threadCount, sv name )ι;
+		virtual ~TypePool(){ TRACE("~TypePool"sv); }
 
-		virtual void Execute( sp<T> pValue )noexcept=0;
-		void Push( const sp<T> pValue )noexcept;
-		void Shutdown()noexcept override;
+		virtual void Execute( sp<T> pValue )ι=0;
+		void Push( const sp<T> pValue )ι;
+		void Shutdown()ι override;
 
 	private:
-		void Run( string name )noexcept;
-		void AddThread()noexcept;
+		void Run( string name )ι;
+		void AddThread()ι;
 
 		const uint8 MaxThreads;
 		const string Name;
@@ -55,7 +54,7 @@ namespace Jde::Threading
 	};
 #define var const auto
 	template<typename T>
-	TypePool<T>::TypePool( uint8 threadCount, sv name )noexcept:
+	TypePool<T>::TypePool( uint8 threadCount, sv name )ι:
 		MaxThreads{ threadCount },
 		Name{name}
 	{
@@ -63,7 +62,7 @@ namespace Jde::Threading
 	}
 
 	template<typename T>
-	void TypePool<T>::AddThread()noexcept
+	void TypePool<T>::AddThread()ι
 	{
 		unique_lock l{_mtx};
 		if( RunningCount<MaxThreads )
@@ -75,9 +74,9 @@ namespace Jde::Threading
 	}
 
 	template<typename T>
-	void TypePool<T>::Run( string name )noexcept
+	void TypePool<T>::Run( string name )ι
 	{
-		DBG( "({}) Starting"sv, name  );
+		TRACE( "({}) Starting"sv, name  );
 		while( !GetThreadInterruptFlag().IsSet() )//fyi existing _queue is thrown out.
 		{
 			unique_lock l{ _mtx };
@@ -96,19 +95,19 @@ namespace Jde::Threading
 				break;
 			}
 		}
-		DBG( "({}) Leaving"sv, name  );
+		TRACE( "({}) Leaving"sv, name  );
 	}
 
 	template<typename T>
-	void TypePool<T>::Push( const sp<T> pValue )noexcept
+	void TypePool<T>::Push( const sp<T> pValue )ι
 	{
 		_queue.Push( pValue );
 		AddThread();
 	}
 	template<typename T>
-	void TypePool<T>::Shutdown()noexcept
+	void TypePool<T>::Shutdown()ι
 	{
-		DBG( "TypePool<T>::Shutdown"sv );
+		TRACE( "TypePool<T>::Shutdown"sv );
 		unique_lock l{_mtx};
 		while( _threads.size() )
 		{
@@ -120,5 +119,6 @@ namespace Jde::Threading
 			_threads.pop_back();
 		}
 	}
-#undef var
 }
+#undef var
+#undef _logTag

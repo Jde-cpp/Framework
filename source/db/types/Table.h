@@ -12,12 +12,12 @@ namespace Jde::DB
 	struct Γ Column
 	{
 		Column()=default;
-		Column( sv name, uint ordinalPosition, sv dflt, bool isNullable, EType type, optional<uint> maxLength, bool isIdentity, bool isId, optional<uint> numericPrecision, optional<uint> numericScale )noexcept;
-		Column( sv name )noexcept;
-		Column( sv name, const nlohmann::json& j, const flat_map<SchemaName,Column>& commonColumns, const flat_map<SchemaName,Table>& parents, const nlohmann::ordered_json& schema )noexcept(false);
+		Column( sv name, uint ordinalPosition, sv dflt, bool isNullable, EType type, optional<uint> maxLength, bool isIdentity, bool isId, optional<uint> numericPrecision, optional<uint> numericScale )ι;
+		Column( sv name )ι;
+		Column( sv name, const nlohmann::json& j, const flat_map<SchemaName,Column>& commonColumns, const flat_map<SchemaName,Table>& parents, const nlohmann::ordered_json& schema )ε;
 
-		α Create( const Syntax& syntax )const noexcept->string;
-		α DataTypeString( const Syntax& syntax )const noexcept->SchemaName;
+		α Create( const Syntax& syntax )Ι->string;
+		α DataTypeString( const Syntax& syntax )Ι->SchemaName;
 		SchemaName Name;
 		uint OrdinalPosition;
 		string Default;
@@ -39,10 +39,10 @@ namespace Jde::DB
 
 	struct  Γ Index
 	{
-		Index( sv indexName, sv tableName, bool primaryKey, vector<SchemaName>* pColumns=nullptr, bool unique=true, optional<bool> clustered=optional<bool>{} )noexcept;//, bool clustered=false
-		Index( sv indexName, sv tableName, const Index& other )noexcept;
+		Index( sv indexName, sv tableName, bool primaryKey, vector<SchemaName>* pColumns=nullptr, bool unique=true, optional<bool> clustered=optional<bool>{} )ι;//, bool clustered=false
+		Index( sv indexName, sv tableName, const Index& other )ι;
 
-		α Create( sv name, sv tableName, const Syntax& syntax )const noexcept->string;
+		α Create( sv name, sv tableName, const Syntax& syntax )Ι->string;
 		SchemaName Name;
 		SchemaName TableName;
 		vector<SchemaName> Columns;
@@ -52,28 +52,28 @@ namespace Jde::DB
 	};
 	struct Γ Table
 	{
-		Table( sv schema, sv name )noexcept:Schema{schema}, Name{name}{}
-		Table( sv name, const nlohmann::json& j, const flat_map<SchemaName,Table>& parents, const flat_map<SchemaName,Column>& commonColumns, const nlohmann::ordered_json& schema )noexcept(false);
+		Table( sv schema, sv name )ι:Schema{schema}, Name{name}{}
+		Table( sv name, const nlohmann::json& j, const flat_map<SchemaName,Table>& parents, const flat_map<SchemaName,Column>& commonColumns, const nlohmann::ordered_json& schema )ε;
 
-		α Create( const Syntax& syntax )const noexcept->string;
-		α InsertProcName()const noexcept->SchemaName;
-		α InsertProcText( const Syntax& syntax )const noexcept->string;
-		α FindColumn( sv name )const noexcept->const Column*;
+		α Create( const Syntax& syntax )Ι->string;
+		α InsertProcName()Ι->SchemaName;
+		α InsertProcText( const Syntax& syntax )Ι->string;
+		α FindColumn( sv name )Ι->const Column*;
 
-		α IsFlags()const noexcept->bool{ return FlagsData.size(); }
-		α IsEnum()const noexcept->bool{ return Data.size(); }//GraphQL attribute
-		α NameWithoutType()const noexcept->sv;//users in um_users.
-		α Prefix()const noexcept->sv;//um in um_users.
-		α JsonTypeName()const noexcept->string;
+		α IsFlags()Ι->bool{ return FlagsData.size(); }
+		α IsEnum()Ι->bool{ return Data.size(); }//GraphQL attribute
+		α NameWithoutType()Ι->sv;//users in um_users.
+		α Prefix()Ι->sv;//um in um_users.
+		α JsonTypeName()Ι->string;
 
-		α FKName()const noexcept->SchemaName;
-		bool IsMap()const noexcept{ return ChildId().size() && ParentId().size(); }
-		α ChildId()const noexcept(false)->SchemaName;
-		α ParentId()const noexcept(false)->SchemaName;
-		sp<const Table> ChildTable( const DB::Schema& schema )const noexcept(false);
-		sp<const Table> ParentTable( const DB::Schema& schema )const noexcept(false);
+		α FKName()Ι->SchemaName;
+		bool IsMap()Ι{ return ChildId().size() && ParentId().size(); }
+		α ChildId()Ε->SchemaName;
+		α ParentId()Ε->SchemaName;
+		sp<const Table> ChildTable( const DB::Schema& schema )Ε;
+		sp<const Table> ParentTable( const DB::Schema& schema )Ε;
 
-		bool HaveSequence()const noexcept{ return std::find_if( Columns.begin(), Columns.end(), [](const auto& c){return c.IsIdentity;} )!=Columns.end(); }
+		bool HaveSequence()Ι{ return std::find_if( Columns.begin(), Columns.end(), [](const auto& c){return c.IsIdentity;} )!=Columns.end(); }
 		SchemaName Schema;
 		SchemaName Name;
 		vector<Column> Columns;
@@ -86,7 +86,7 @@ namespace Jde::DB
 	};
 	struct ForeignKey
 	{
-		Ω Create( sv name, sv columnName, const DB::Table& pkTable, sv foreignTable )noexcept(false)->string;
+		Ω Create( sv name, sv columnName, const DB::Table& pkTable, sv foreignTable )ε->string;
 
 		SchemaName Name;
 		SchemaName Table;

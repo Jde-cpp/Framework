@@ -22,11 +22,11 @@ namespace Jde::DB
 
 	struct Γ DBQueue final : IShutdown//, std::enable_shared_from_this<DBQueue>
 	{
-		DBQueue( sp<IDataSource> spDataSource )noexcept;
-		α Push( string sql, const VectorPtr<object>& parameters, bool isStoredProc=true, SRCE )noexcept->void;
-		α Shutdown()noexcept->void override;
+		DBQueue( sp<IDataSource> spDataSource )ι;
+		α Push( string sql, const VectorPtr<object>& parameters, bool isStoredProc=true, SRCE )ι->void;
+		α Shutdown()ι->void override;
 	private:
-		α Run()noexcept->void;
+		α Run()ι->void;
 		sp<Threading::InterruptibleThread> _pThread;
 		Queue<Statement> _queue;
 		sp<IDataSource> _spDataSource;

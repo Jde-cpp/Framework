@@ -52,7 +52,7 @@ namespace Jde::IO
 		const char* pLength = reinterpret_cast<const char*>( &length )+3;
 		for( auto i=0; i<4; ++i )
 			*pDestination++ = *pLength--;
-		var result = m.SerializeToArray( pDestination, (int)length ); if( !result )CRITICAL("Could not serialize to an array:{:x}", result );
+		var result = m.SerializeToArray( pDestination, (int)length ); LOG_IFT( !result, ELogLevel::Critical, IO::LogTag(), "Could not serialize to an array:{:x}", result );
 		return make_tuple( move(pData), size );
 	}
 	Ξ Proto::Save( const google::protobuf::MessageLite& msg, fs::path path, SRCE )ε->void

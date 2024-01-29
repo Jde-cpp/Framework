@@ -6,32 +6,32 @@
 //#include "../../../Linux/source/LinuxDrive.h"
 
 #define var const auto
-namespace Jde::Threading
-{
+#define _logTag LogTag()
+namespace Jde::Threading{
 	sp<IWorker> IWorker::_pInstance;
 	std::atomic_flag IWorker::_mutex;
-	IWorker::IWorker( sv name )noexcept:
+	IWorker::IWorker( sv name )ι:
 		NameInstance{ name },
 		ThreadCount{ Settings::Get<uint8>(format("workers/{}/threads", name)).value_or(0) }
 	{}
 
 	IWorker::~IWorker(){}//abstract
 
-	α IWorker::Initialize()noexcept->void
+	α IWorker::Initialize()ι->void
 	{
 	}
 
 
-	α IWorker::StartThread()noexcept->void
+	α IWorker::StartThread()ι->void
 	{
 		_pThread = mu<jthread>( [&]( stop_token st ){ Run( st );} );
 	}
 
-	α IWorker::Run( stop_token /*st*/ )noexcept->void
+	α IWorker::Run( stop_token /*st*/ )ι->void
 	{
 	}
 
-	α IWorker::Shutdown()noexcept->void
+	α IWorker::Shutdown()ι->void
 	{
 		AtomicGuard l{ _mutex };
 		if( _pThread )
@@ -41,7 +41,7 @@ namespace Jde::Threading
 			_pThread = nullptr;
 		}
 	}
-	α IPollWorker::WakeUp()noexcept->void
+	α IPollWorker::WakeUp()ι->void
 	{
 		AtomicGuard l{ _mutex };
 		++_calls;
@@ -50,7 +50,7 @@ namespace Jde::Threading
 		else if( !ThreadCount && _calls==1 )
 			IApplication::AddActiveWorker( this );
 	}
-	α IPollWorker::Sleep()noexcept->void
+	α IPollWorker::Sleep()ι->void
 	{
 		AtomicGuard l{ _mutex };
 		--_calls;
@@ -59,12 +59,12 @@ namespace Jde::Threading
 			IApplication::RemoveActiveWorker( this );
 	}
 
-	α IPollWorker::Run( stop_token st )noexcept->void
+	α IPollWorker::Run( stop_token st )ι->void
 	{
 		Threading::SetThreadDscrptn( NameInstance );
 		sp<IWorker> pKeepAlive;
 		var keepAlive = Settings::Get<Duration>( "WorkerkeepAlive" ).value_or( 5s );
-		LOG( "({})Starting Thread", NameInstance );
+		TRACE( "({})Starting Thread", NameInstance );
 		_lastRequest = Clock::now();
 		while( !st.stop_requested() )
 		{
@@ -81,6 +81,6 @@ namespace Jde::Threading
 			else
 				std::this_thread::yield();
 		}
-		LOG( "({})Ending Thread", NameInstance );
+		TRACE( "({})Ending Thread", NameInstance );
 	}
 }

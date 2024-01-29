@@ -44,7 +44,7 @@ namespace Jde::Math
 	};
 
 #define var const auto
-	Ŧ Statistics( const T& values, bool calcVariance=true )noexcept->StatResult<typename T::value_type>
+	Ŧ Statistics( const T& values, bool calcVariance=true )ι->StatResult<typename T::value_type>
 	{
 		typedef typename T::value_type TValue;
 		var size = values.size();

@@ -15,12 +15,12 @@ namespace Jde
 	public:
 		Queue()=default;
 		Queue( const Queue& other );
-		void Push(sp<T> new_value)noexcept;
+		void Push(sp<T> new_value)ι;
 		sp<T> WaitAndPop();
 		sp<T> WaitAndPop( Duration duration );
 		sp<T> TryPop();
-		bool Empty()const noexcept;
-		bool ForEach( std::function<void(T&)> func )noexcept;
+		bool Empty()Ι;
+		bool ForEach( std::function<void(T&)> func )ι;
 		uint size()const{ std::lock_guard<std::mutex> lk(_mtx); return _queue.size(); }
 	private:
 		mutable std::mutex _mtx;
@@ -34,7 +34,7 @@ namespace Jde
 		_queue=other._queue;
 	}
 	template<typename T>
-	void Queue<T>::Push( sp<T> new_value )noexcept
+	void Queue<T>::Push( sp<T> new_value )ι
 	{
 		std::lock_guard<std::mutex> lk(_mtx);
 		_queue.push(new_value);
@@ -73,14 +73,14 @@ namespace Jde
 		return pItem;
 	}
 	template<typename T>
-	bool Queue<T>::Empty()const noexcept
+	bool Queue<T>::Empty()Ι
 	{
 		std::lock_guard<std::mutex> lk(_mtx);
 		return _queue.empty();
 	}
 
 	template<typename T>
-	bool Queue<T>::ForEach( std::function<void(T&)> func )noexcept
+	bool Queue<T>::ForEach( std::function<void(T&)> func )ι
 	{
 		bool result = false;
 		{
@@ -101,42 +101,42 @@ namespace Jde
 	class QueueValue
 	{
 	public:
-		QueueValue()noexcept;
-		QueueValue( const QueueValue& other )noexcept;
-		void Push( const T& new_value )noexcept;
-		void Push( const vector<T>& new_value )noexcept;
+		QueueValue()ι;
+		QueueValue( const QueueValue& other )ι;
+		void Push( const T& new_value )ι;
+		void Push( const vector<T>& new_value )ι;
 		void WaitAndPop( T& value );
-		T WaitAndPop()noexcept;
-		optional<T> WaitAndPop( Duration duration )noexcept;
-		bool TryPop( T& value )noexcept;
-		optional<T> TryPop()noexcept;
-		bool Empty()const noexcept;
-		bool ForEach( std::function<void(T&)>& func )noexcept;
-		uint size()const noexcept{ std::lock_guard<std::mutex> lk(_mtx); return _queue.size(); }
+		T WaitAndPop()ι;
+		optional<T> WaitAndPop( Duration duration )ι;
+		bool TryPop( T& value )ι;
+		optional<T> TryPop()ι;
+		bool Empty()Ι;
+		bool ForEach( std::function<void(T&)>& func )ι;
+		uint size()Ι{ std::lock_guard<std::mutex> lk(_mtx); return _queue.size(); }
 	private:
 		mutable std::mutex _mtx;
 		std::queue<T> _queue;
 		std::condition_variable _cv;
 	};
 	template<typename T>
-	QueueValue<T>::QueueValue()noexcept
+	QueueValue<T>::QueueValue()ι
 	{}
 
 	template<typename T>
-	QueueValue<T>::QueueValue( const QueueValue<T>& other )noexcept
+	QueueValue<T>::QueueValue( const QueueValue<T>& other )ι
 	{
 		std::lock_guard<std::mutex> lk(other._mtx);
 		_queue=other._queue;
 	}
 	template<typename T>
-	void QueueValue<T>::Push( const T& new_value )noexcept
+	void QueueValue<T>::Push( const T& new_value )ι
 	{
 		std::lock_guard<std::mutex> lk(_mtx);
 		_queue.push(new_value);
 		_cv.notify_one();
 	}
 	template<typename T>
-	void QueueValue<T>::Push( const vector<T>& values )noexcept
+	void QueueValue<T>::Push( const vector<T>& values )ι
 	{
 		std::lock_guard<std::mutex> lk(_mtx);
 		for_each( values.begin(), values.end(), [this](auto x){ _queue.push(x);} );
@@ -151,7 +151,7 @@ namespace Jde
 		_queue.pop();
 	}
 	template<typename T>
-	T QueueValue<T>::WaitAndPop()noexcept
+	T QueueValue<T>::WaitAndPop()ι
 	{
 		std::unique_lock<std::mutex> lk(_mtx);
 		_cv.wait( lk, [this]{return !_queue.empty();} );
@@ -160,7 +160,7 @@ namespace Jde
 		return value;
 	}
 	template<typename T>
-	optional<T> QueueValue<T>::WaitAndPop( Duration duration )noexcept
+	optional<T> QueueValue<T>::WaitAndPop( Duration duration )ι
 	{
 		std::unique_lock<std::mutex> lk( _mtx );
 		bool hasValues = _cv.wait_for( lk, duration, [this]{return !_queue.empty();} );
@@ -171,7 +171,7 @@ namespace Jde
 	}
 
 	template<typename T>
-	bool QueueValue<T>::TryPop( T& value )noexcept
+	bool QueueValue<T>::TryPop( T& value )ι
 	{
 		std::lock_guard<std::mutex> lk(_mtx);
 		if(_queue.empty())
@@ -181,7 +181,7 @@ namespace Jde
 		return true;
 	}
 	template<typename T>
-	optional<T> QueueValue<T>::TryPop()noexcept
+	optional<T> QueueValue<T>::TryPop()ι
 	{
 		std::lock_guard<std::mutex> lk( _mtx );
 		var empty = _queue.empty();
@@ -191,14 +191,14 @@ namespace Jde
 		return value;
 	}
 	template<typename T>
-	bool QueueValue<T>::Empty()const noexcept
+	bool QueueValue<T>::Empty()Ι
 	{
 		std::lock_guard<std::mutex> lk(_mtx);
 		return _queue.empty();
 	}
 
 	template<typename T>
-	bool QueueValue<T>::ForEach( std::function<void(T&)>& func )noexcept
+	bool QueueValue<T>::ForEach( std::function<void(T&)>& func )ι
 	{
 		bool result = false;
 		{
@@ -220,27 +220,27 @@ namespace Jde
 	{
 	public:
 		QueueMove()=default;
-		QueueMove( T&& initial )noexcept{ _queue.push(move(initial)); }
-		void Push( T&& new_value )noexcept;
-		optional<T> TryPop( Duration duration )noexcept;
-		bool empty()const noexcept{ sl _(_mtx); return _queue.empty(); }
-		uint size()const noexcept{ sl _(_mtx); return _queue.size(); }
-		optional<T> Pop()noexcept;
-		α PopAll()noexcept->vector<T>;
+		QueueMove( T&& initial )ι{ _queue.push(move(initial)); }
+		void Push( T&& new_value )ι;
+		optional<T> TryPop( Duration duration )ι;
+		bool empty()Ι{ sl _(_mtx); return _queue.empty(); }
+		uint size()Ι{ sl _(_mtx); return _queue.size(); }
+		optional<T> Pop()ι;
+		α PopAll()ι->vector<T>;
 	private:
 		mutable std::shared_mutex _mtx;
 		std::queue<T> _queue;
 		std::condition_variable_any _cv;
 	};
 	template<typename T>
-	void QueueMove<T>::Push( T&& new_value )noexcept
+	void QueueMove<T>::Push( T&& new_value )ι
 	{
 		ul _(_mtx);
 		_queue.push( std::move(new_value) );
 		_cv.notify_one();
 	}
 	template<typename T>
-	optional<T> QueueMove<T>::Pop()noexcept
+	optional<T> QueueMove<T>::Pop()ι
 	{
 		ul _(_mtx);
 		var hasSize = !_queue.empty();
@@ -250,7 +250,7 @@ namespace Jde
 		return p;
 	}
 
-	Ŧ QueueMove<T>::PopAll()noexcept->vector<T>
+	Ŧ QueueMove<T>::PopAll()ι->vector<T>
 	{
 		ul _(_mtx);
 		vector<T> results; results.reserve( _queue.size() );
@@ -263,7 +263,7 @@ namespace Jde
 	}
 
 	template<typename T>
-	optional<T> QueueMove<T>::TryPop( Duration duration )noexcept
+	optional<T> QueueMove<T>::TryPop( Duration duration )ι
 	{
 		sl l(_mtx);
 		optional<T> result;

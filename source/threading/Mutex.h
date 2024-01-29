@@ -13,7 +13,7 @@ namespace Jde
 	enum class ELogLevel : int8;
 	struct AtomicGuard final : boost::noncopyable
 	{
-		AtomicGuard( std::atomic_flag& f )noexcept: _pValue{ &f }
+		AtomicGuard( std::atomic_flag& f )ι: _pValue{ &f }
 		{
 			while( f.test_and_set(std::memory_order_acquire) )
 			{
@@ -21,9 +21,9 @@ namespace Jde
 					std::this_thread::yield();
 			}
 		}
-		AtomicGuard( AtomicGuard&& x )noexcept: _pValue{ x._pValue }{ x._pValue = nullptr; }
+		AtomicGuard( AtomicGuard&& x )ι: _pValue{ x._pValue }{ x._pValue = nullptr; }
 		~AtomicGuard(){ if( _pValue ){ ASSERT(_pValue->test(std::memory_order_relaxed)) _pValue->clear(std::memory_order_release); } }
-		α unlock()noexcept->void{ ASSERT(_pValue) _pValue->clear( std::memory_order_release ); _pValue = nullptr; }
+		α unlock()ι->void{ ASSERT(_pValue) _pValue->clear( std::memory_order_release ); _pValue = nullptr; }
 	private:
 		atomic_flag* _pValue;
 	};
@@ -32,10 +32,10 @@ namespace Jde
 	{
 		using base=Coroutine::IAwait;
 	public:
-		LockAwait( CoLock& lock )noexcept:_lock{lock}{}
-		α await_ready()noexcept->bool override;
-		α await_suspend( HCoroutine h )noexcept->void override;
-		α await_resume()noexcept->AwaitResult override{ return _pGuard ? AwaitResult{move(_pGuard)} : base::await_resume(); }
+		LockAwait( CoLock& lock )ι:_lock{lock}{}
+		α await_ready()ι->bool override;
+		α await_suspend( HCoroutine h )ι->void override;
+		α await_resume()ι->AwaitResult override{ return _pGuard ? AwaitResult{move(_pGuard)} : base::await_resume(); }
 	private:
 		CoLock& _lock;
 		up<CoGuard> _pGuard;
@@ -58,14 +58,14 @@ namespace Jde
 	{
 		~CoGuard();
 	private:
-		CoGuard( CoLock& lock )noexcept;
+		CoGuard( CoLock& lock )ι;
 		CoLock& _lock;
 		friend CoLock;
 	};
 }
 namespace Jde::Threading
 {
-	Φ UniqueLock( str key )noexcept->std::unique_lock<std::shared_mutex>;
+	Φ UniqueLock( str key )ι->std::unique_lock<std::shared_mutex>;
 
 
 #ifndef NDEBUG //TODORefactor move somewhere else
@@ -77,7 +77,7 @@ namespace Jde::Threading
 			_pSharedLock{nullptr},
 			_description( format("{}.{} - line={}, thread={}", instance, name, lineNumber, Threading::GetThreadDescription()) )
 		{
-			LOG( "unique lock - {}", _description );
+			TRACE( "unique lock - {}", _description );
 			_pUniqueLock = make_unique<std::unique_lock<std::mutex>>( mutex );
 		}
 		MyLock( std::shared_mutex& mutex, sv instance, sv name, size_t lineNumber, bool shared = false ):
@@ -88,12 +88,12 @@ namespace Jde::Threading
 		{
 			if( shared )
 			{
-				LOG( "shared lock - {}", _description );
+				TRACE( "shared lock - {}", _description );
 				_pSharedLock = make_unique<std::shared_lock<std::shared_mutex>>( mutex );
 			}
 			else
 			{
-				LOG( "unique lock - {}", _description );
+				TRACE( "unique lock - {}", _description );
 				_pUniqueSharedLock = make_unique<std::unique_lock<std::shared_mutex>>( mutex );
 			}
 		}
@@ -105,15 +105,15 @@ namespace Jde::Threading
 				_pUniqueSharedLock->unlock();
 			else if( _pSharedLock )
 				_pSharedLock->unlock();
-			_unlocked=true; LOG( "release - {}", _description );
+			_unlocked=true; TRACE( "release - {}", _description );
 		}
 		~MyLock()
 		{
 			if( !_unlocked )
-				LOG( "release - {}", _description );
+				TRACE( "release - {}", _description );
 		}
-		Γ static void SetDefaultLogLevel( ELogLevel logLevel )noexcept;//{ _defaultLogLevel=logLevel; }
-		Γ static ELogLevel GetDefaultLogLevel()noexcept;
+		Γ static void SetDefaultLogLevel( ELogLevel logLevel )ι;//{ _defaultLogLevel=logLevel; }
+		Γ static ELogLevel GetDefaultLogLevel()ι;
 	private:
 		bool _unlocked{false};
 		up<std::unique_lock<std::mutex>> _pUniqueLock;
@@ -121,7 +121,7 @@ namespace Jde::Threading
 		up<std::shared_lock<std::shared_mutex>> _pSharedLock;
 		std::string _description;
 		static ELogLevel _defaultLogLevel;
-		sp<LogTag> _logLevel{ Logging::TagLevel("mutex") };
+		sp<Jde::LogTag> _logTag{ Logging::Tag("mutex") };
 	};
 #endif
 #undef Φ

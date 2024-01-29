@@ -243,7 +243,7 @@ namespace Jde::Collections
 		{
 			const uint index = find( population.begin(), population.end(), subsetItem ) - population.begin();
 			if( index==population.size() )
-				ERR( "Could not index {}"sv, subsetItem );
+				ERRT( AppTag(), "Could not index {}", subsetItem );
 			results.push_back( index );
 		}
 		return results;

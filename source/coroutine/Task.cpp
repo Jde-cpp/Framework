@@ -1,50 +1,48 @@
 ﻿#include <jde/coroutine/Task.h>
+#include "../threading/Thread.h"
 #include <nlohmann/json.hpp>
 
-namespace Jde::Coroutine
-{
+namespace Jde::Coroutine{
+	static sp<LogTag> _logTag{ Logging::Tag("coroutine") };
+
 	std::atomic<ClientHandle> _handleIndex{0};
-	α NextHandle()noexcept->Handle{return ++_handleIndex;}
+	α NextHandle()ι->Handle{return ++_handleIndex;}
 
 	std::atomic<ClientHandle> TaskHandle{0};
-	α NextTaskHandle()noexcept->Handle{ return ++TaskHandle; }
+	α NextTaskHandle()ι->Handle{ return ++TaskHandle; }
 
 	std::atomic<ClientHandle> TaskPromiseHandle{0};
-	α NextTaskPromiseHandle()noexcept->Handle{ return ++TaskPromiseHandle; }
+	α NextTaskPromiseHandle()ι->Handle{ return ++TaskPromiseHandle; }
 
-	α AwaitResult::CheckUninitialized()noexcept->void
-	{
+	α AwaitResult::CheckUninitialized()ι->void{
 		if( !Uninitialized() )
-		{
-			//auto p = get<sp<void>>( _result );
-			CRITICAL( "index={}", _result.index() );
-		}
+			CRITICAL( "Uninitialized - index={}", _result.index() );
 	}
 	atomic<uint> TaskIndex{ 0 };
-/*	Task::Task()noexcept:i{++TaskIndex}
+/*	Task::Task()ι:i{++TaskIndex}
 	{
-		DBG( "({:x}-{}) created", (uint)this, i );
+		TRACE( "({:x}-{}) created", (uint)this, i );
 		if( i==7 )
 			BREAK;
 	}
-	Task::Task( Task&& x )noexcept:
+	Task::Task( Task&& x )ι:
 		_result{ move(x._result) }
 	{
 		i = ++TaskIndex;
-		DBG( "({:x}-{}) moved ({:x})-{}", (uint)this, i, (uint)&x, x.i );
+		TRACE( "({:x}-{}) moved ({:x})-{}", (uint)this, i, (uint)&x, x.i );
 	}
-	Task::Task( const Task& x )noexcept:
+	Task::Task( const Task& x )ι:
 		i{++TaskIndex}
 	{
-		DBG( "({:x}-{}) copied ({:x})-{}", (uint)this, i, (uint)&x, x.i );
+		TRACE( "({:x}-{}) copied ({:x})-{}", (uint)this, i, (uint)&x, x.i );
 	}
 
-	Task::~Task()noexcept
+	Task::~Task()ι
 	{
-		DBG( "({:x}-{}) removed", (uint)this, i );
+		TRACE( "({:x}-{}) removed", (uint)this, i );
 	}
 	*/
-	α Task::promise_type::unhandled_exception()noexcept->void
+	α Task::promise_type::unhandled_exception()ι->void
 	{
 		try{
 			if( auto p = std::current_exception(); p )

@@ -65,8 +65,8 @@ namespace Jde::Logging
 		α ShouldSendFunction( ID messageId )ι->bool{ return _functionsSent.emplace(messageId); }
 		α ShouldSendUser( ID messageId )ι->bool{ return _usersSent.emplace(messageId); }
 		α ShouldSendThread( ID messageId )ι->bool{ return _threadsSent.emplace(messageId); }
-		β SendCustom( ID /*requestId*/, str /*bytes*/ )ι->void{ CRITICAL("SendCustom not implemented"); }
-		β WebSubscribe( ELogLevel /*level*/ )ι->void{ CRITICAL("WebSubscribe only for application server"); }
+		β SendCustom( ID /*requestId*/, str /*bytes*/ )ι->void{ CRITICALT( AppTag(), "SendCustom not implemented" ); }
+		β WebSubscribe( ELogLevel /*level*/ )ι->void{ CRITICALT( AppTag(), "WebSubscribe only for application server" ); }
 		β Write( Proto::ToServer&& m )ι->void=0;
 	protected:
 		ApplicationInstancePK _instanceId;

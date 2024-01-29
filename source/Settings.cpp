@@ -7,7 +7,8 @@
 
 namespace Jde::Settings
 {
-	static sp<LogTag> _logLevel = Logging::TagLevel( "settings" );
+	static sp<Jde::LogTag> _logTag = Logging::Tag( "settings" );
+	α LogTag()ι->sp<Jde::LogTag>&{ return _logTag; }
 	up<Settings::Container> _pGlobal;
 
 	Container::Container( path jsonFile, SL sl )ε:
@@ -18,7 +19,7 @@ namespace Jde::Settings
 		std::ifstream is( fileString.c_str() ); THROW_IF( is.bad(), "Could not open file:  {}", jsonFile.string() );
 		is >> *_pJson;
 	}
-	Container::Container( const nlohmann::json& json )noexcept:_pJson{ make_unique<nlohmann::json>(json) }{}
+	Container::Container( const nlohmann::json& json )ι:_pJson{ make_unique<nlohmann::json>(json) }{}
 
 	α Container::TrySubContainer( sv entry )Ι->optional<Container>
 	{
@@ -32,7 +33,7 @@ namespace Jde::Settings
 		return make_shared<Container>( *item );
 	}
 
-	α Container::Have( sv path )noexcept->bool{ return _pJson->find(path)!=_pJson->end(); }//TODO rename contains
+	α Container::Have( sv path )ι->bool{ return _pJson->find(path)!=_pJson->end(); }//TODO rename contains
 
 	α Container::FindPath( sv path )Ι->optional<json>
 	{
@@ -82,7 +83,7 @@ namespace Jde
 	{
 		var path = Path();
 		IO::FileUtilities::Save( path, j.dump(), std::ios_base::out, sl );
-		LOG( "({})Saved for '{}'", path, what );
+		DBG( "({})Saved for '{}'", path, what );
 	}
 	α Settings::Set( sv what, const Container::Variant& v, bool save, SL sl )ε->void
 	{
@@ -117,7 +118,7 @@ namespace Jde
 			Save( Global().Json(), what, sl );
 	}
 
-	α Settings::FileStem()noexcept->string
+	α Settings::FileStem()ι->string
 	{
 		var executable = OSApp::Executable().filename();
 #ifdef _MSC_VER
@@ -126,7 +127,7 @@ namespace Jde
 		return executable.string().starts_with( "Tests." ) ? executable.string() : OSApp::Executable().extension().string().substr( 1 );
 #endif
 	}
-	α Settings::Path()noexcept->fs::path
+	α Settings::Path()ι->fs::path
 	{
 		var fileName = fs::path{ format("{}.json", FileStem()) };
 		fs::path settingsPath{ fileName };
@@ -137,7 +138,7 @@ namespace Jde
 		}
 		return settingsPath;
 	}
-	α Settings::Global()noexcept->Settings::Container&
+	α Settings::Global()ι->Settings::Container&
 	{
 		if( !_pGlobal )
 		{

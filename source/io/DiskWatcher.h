@@ -8,8 +8,6 @@ struct pollfd;
 namespace Jde::IO
 {
 	using namespace Coroutine;
-#pragma region DiskWatcherEvents
-
 	enum class EDiskWatcherEvents : uint32_t
 	{
 		None         = 0x00000000,
@@ -40,42 +38,36 @@ namespace Jde::IO
 	constexpr inline EDiskWatcherEvents operator|(EDiskWatcherEvents a, EDiskWatcherEvents b){ return (EDiskWatcherEvents)( (uint32_t)a | (uint32_t)b ); }
 	inline EDiskWatcherEvents operator&(EDiskWatcherEvents a, EDiskWatcherEvents b){ return (EDiskWatcherEvents)( (uint32_t)a & (uint32_t)b ); }
 	inline bool Any(EDiskWatcherEvents a){ return a!=EDiskWatcherEvents::None; }
-#pragma endregion
-#pragma region NotifyEvent
-	struct NotifyEvent
-	{
-		NotifyEvent( const inotify_event& sys );
+	struct NotifyEvent{
+		NotifyEvent( const inotify_event& sys )ι;
 		const int WatchDescriptor;
 		const EDiskWatcherEvents Mask;
 		const uint32_t Cookie;
 		const string Name;
 	};
-	std::ostream& operator<<( std::ostream& os, const NotifyEvent& event );
-#pragma endregion
-#pragma region	IDriveChange
+	std::ostream& operator<<( std::ostream& os, const NotifyEvent& event )ι;
 //#ifndef _MSC_VER
 	struct Γ IDriveChange
 	{
-		β OnAccess( path path, const NotifyEvent& event )noexcept->void;
-		β OnModify( path path, const NotifyEvent& event )noexcept->void;
-		β OnAttribute( path path, const NotifyEvent& event )noexcept->void;
-		β OnCloseWrite( path path, const NotifyEvent& event )noexcept->void;
-		β OnCloseNoWrite( path path, const NotifyEvent& event )noexcept->void;
-		β OnOpen( path path, const NotifyEvent& event )noexcept->void;
-		β OnMovedFrom( path path, const NotifyEvent& event )noexcept->void;
-		β OnMovedTo( path path, const NotifyEvent& event )noexcept->void;
-		β OnCreate( path path, const NotifyEvent& event )noexcept->void;
-		β OnDelete( path path, const NotifyEvent& event )noexcept->void;
-		β OnDeleteSelf( path path, const NotifyEvent& event )noexcept->void;
-		β OnMoveSelf( path path, const NotifyEvent& event )noexcept->void;
-		β OnUnmount( path path, const NotifyEvent& event )noexcept->void;
-		β OnQOverflow( path path, const NotifyEvent& event )noexcept->void;
-		β OnIgnored( path path, const NotifyEvent& event )noexcept->void;
+		β OnAccess( path path, const NotifyEvent& event )ι->void;
+		β OnModify( path path, const NotifyEvent& event )ι->void;
+		β OnAttribute( path path, const NotifyEvent& event )ι->void;
+		β OnCloseWrite( path path, const NotifyEvent& event )ι->void;
+		β OnCloseNoWrite( path path, const NotifyEvent& event )ι->void;
+		β OnOpen( path path, const NotifyEvent& event )ι->void;
+		β OnMovedFrom( path path, const NotifyEvent& event )ι->void;
+		β OnMovedTo( path path, const NotifyEvent& event )ι->void;
+		β OnCreate( path path, const NotifyEvent& event )ι->void;
+		β OnDelete( path path, const NotifyEvent& event )ι->void;
+		β OnDeleteSelf( path path, const NotifyEvent& event )ι->void;
+		β OnMoveSelf( path path, const NotifyEvent& event )ι->void;
+		β OnUnmount( path path, const NotifyEvent& event )ι->void;
+		β OnQOverflow( path path, const NotifyEvent& event )ι->void;
+		β OnIgnored( path path, const NotifyEvent& event )ι->void;
 	private:
-		sp<LogTag> _logLevel{ Logging::TagLevel("driveWatcher") };
+		sp<LogTag> _logTag{ Logging::Tag("driveWatcher") };
 	};
 //#endif
-#pragma endregion
 	struct WatcherSettings
 	{
 		Duration Delay;//{ 1min }
@@ -103,7 +95,7 @@ namespace Jde::IO
 		virtual ~IDirEntry()
 		{}
 
-		bool IsDirectory()const noexcept{return Flags & EFileFlags::Directory;}
+		bool IsDirectory()Ι{return Flags & EFileFlags::Directory;}
 		EFileFlags Flags{EFileFlags::None};
 		fs::path Path;
 		uint Size{0};
@@ -115,38 +107,39 @@ namespace Jde::IO
 
 	struct IDrive : std::enable_shared_from_this<IDrive>
 	{
-		β Recursive( path path, SRCE )noexcept(false)->flat_map<string,IDirEntryPtr> =0;
-		β Get( path path )noexcept(false)->IDirEntryPtr=0;
-		β Save( path path, const vector<char>& bytes, const IDirEntry& dirEntry )noexcept(false)->IDirEntryPtr=0;
+		β Recursive( path path, SRCE )ε->flat_map<string,IDirEntryPtr> =0;
+		β Get( path path )ε->IDirEntryPtr=0;
+		β Save( path path, const vector<char>& bytes, const IDirEntry& dirEntry )ε->IDirEntryPtr=0;
 		β CreateFolder( path path, const IDirEntry& dirEntry )->IDirEntryPtr=0;
 		β Remove( path path )->void=0;
 		β Trash( path path )->void=0;
 		β TrashDisposal( TimePoint latestDate )->void=0;
 		β Load( const IDirEntry& dirEntry )->VectorPtr<char> =0;
-		β Restore( sv name )noexcept(false)->void=0;
-		β SoftLink( path existingFile, path newSymLink )noexcept(false)->void=0;
+		β Restore( sv name )ε->void=0;
+		β SoftLink( path existingFile, path newSymLink )ε->void=0;
 	};
 
-#pragma region DiskWatcher
 	struct Γ DiskWatcher : std::enable_shared_from_this<DiskWatcher>
 	{
-		DiskWatcher( path path, EDiskWatcherEvents events/*=DefaultEvents*/ )noexcept(false);
+		DiskWatcher( path path, EDiskWatcherEvents events/*=DefaultEvents*/ )ε;
 		virtual ~DiskWatcher();
 		constexpr static EDiskWatcherEvents DefaultEvents = {EDiskWatcherEvents::Modify | EDiskWatcherEvents::MovedFrom | EDiskWatcherEvents::MovedTo | EDiskWatcherEvents::Create | EDiskWatcherEvents::Delete};
 	protected:
-		β OnModify( path path, const NotifyEvent& /*event*/ )noexcept->void{WARN( "No listener for OnModify {}."sv, path.string() );};
-		β OnMovedFrom( path path, const NotifyEvent& /*event*/ )noexcept->void{WARN( "No listener for OnMovedFrom {}."sv, path.string() );};
-		β OnMovedTo( path path, const NotifyEvent& /*event*/ )noexcept->void{WARN( "No listener for OnMovedTo {}."sv, path.string() );};
-		β OnCreate( path path, const NotifyEvent& /*event*/ )noexcept->void=0;
-		β OnDelete( path path, const NotifyEvent& /*event*/ )noexcept->void{WARN( "No listener for OnDelete {}."sv, path.string() );};
+		Ω LogTag()ι->sp<LogTag>;
+#define _logTag LogTag()
+		β OnModify( path path, const NotifyEvent& /*event*/ )ι->void{ WARN( "No listener for OnModify {}.", path.string() );};
+		β OnMovedFrom( path path, const NotifyEvent& /*event*/ )ι->void{ WARN( "No listener for OnMovedFrom {}.", path.string() );};
+		β OnMovedTo( path path, const NotifyEvent& /*event*/ )ι->void{ WARN( "No listener for OnMovedTo {}.", path.string() );};
+		β OnCreate( path path, const NotifyEvent& /*event*/ )ι->void=0;
+		β OnDelete( path path, const NotifyEvent& /*event*/ )ι->void{ WARN( "No listener for OnDelete {}.", path.string() );};
+#undef _logTag
 	private:
-		α Run()noexcept->void;
-		α ReadEvent( const pollfd& fd, bool isRetry=false )noexcept(false)->void;
+		α Run()ι->void;
+		α ReadEvent( const pollfd& fd, bool isRetry=false )ε->void;
 		EDiskWatcherEvents _events{DefaultEvents};
 		flat_map<uint32_t, fs::path> _descriptors;
 		fs::path _path;
  		int _fd;
 		sp<Jde::Threading::InterruptibleThread> _pThread;
 	};
-#pragma endregion
 }

@@ -25,13 +25,13 @@ namespace Jde::Collections
 		UnorderedMap()=default;
 		UnorderedMap( const UnorderedMap& copy );
 		α operator=( UnorderedMap&& x )->UnorderedMap&;
-		bool erase( const TKey& item )noexcept;
-		bool eraseIf( const TKey& item, function<bool(const TValue&)> func )noexcept;
-		uint eraseIf( function<bool(const TValue&)> func )noexcept;
-		α clear()noexcept{ unique_lock<shared_mutex> l(_mutex); base::clear(); }
-		uint size()const noexcept;
+		bool erase( const TKey& item )ι;
+		bool eraseIf( const TKey& item, function<bool(const TValue&)> func )ι;
+		uint eraseIf( function<bool(const TValue&)> func )ι;
+		α clear()ι{ unique_lock<shared_mutex> l(_mutex); base::clear(); }
+		uint size()Ι;
 		bool IfNone( function<bool(const TKey&,const TValue&)> ifFunction, function<void()> function );
-		sp<TValue> Find( const TKey& key )const noexcept;
+		sp<TValue> Find( const TKey& key )Ι;
 		sp<TValue> FindFirst( function<bool(const TValue&)> where );
 		bool ForFirst( function<bool(const TKey&, TValue&)> func );
 		uint ForEach( function<void(const TKey&, const TValue&)> )const;
@@ -46,8 +46,8 @@ namespace Jde::Collections
 		template<class... Args >
 		α AddOrUpdate( TKey key, function<sp<TValue>()> add, function<void(TValue&)> update )->void;
 		sp<std::forward_list<sp<TValue>>> Values()const;
-		bool Set( const TKey& key, sp<TValue> pValue )noexcept;
-		std::unique_lock<shared_mutex> Lock()noexcept{ return std::unique_lock<shared_mutex>{_mutex}; }
+		bool Set( const TKey& key, sp<TValue> pValue )ι;
+		std::unique_lock<shared_mutex> Lock()ι{ return std::unique_lock<shared_mutex>{_mutex}; }
 	private:
 		mutable shared_mutex _mutex;
 	};
@@ -105,13 +105,13 @@ namespace Jde::Collections
 
 
 	template<typename TKey, typename TValue>
-	bool UnorderedMap<TKey,TValue>::erase( const TKey& item )noexcept
+	bool UnorderedMap<TKey,TValue>::erase( const TKey& item )ι
 	{
 		unique_lock<shared_mutex> l( _mutex );
 		return base::erase( item )>0;
 	}
 	template<typename TKey, typename TValue>
-	bool UnorderedMap<TKey,TValue>::eraseIf( const TKey& key, function<bool(const TValue&)> func )noexcept
+	bool UnorderedMap<TKey,TValue>::eraseIf( const TKey& key, function<bool(const TValue&)> func )ι
 	{
 		unique_lock<shared_mutex> l( _mutex );
 		auto pItem = base::find( key );
@@ -121,7 +121,7 @@ namespace Jde::Collections
 		return erase;
 	}
 	template<typename TKey, typename TValue>
-	uint UnorderedMap<TKey,TValue>::eraseIf( function<bool(const TValue&)> func )noexcept
+	uint UnorderedMap<TKey,TValue>::eraseIf( function<bool(const TValue&)> func )ι
 	{
 		unique_lock<shared_mutex> l( _mutex );
 		uint count = 0;
@@ -138,7 +138,7 @@ namespace Jde::Collections
 		return count;
 	}
 	template<typename TKey, typename TValue>
-	uint UnorderedMap<TKey,TValue>::size()const noexcept
+	uint UnorderedMap<TKey,TValue>::size()Ι
 	{
 		shared_lock<shared_mutex> l(_mutex);
 		return base::size();
@@ -181,7 +181,7 @@ namespace Jde::Collections
 		return isNone;
 	}
 	template<typename TKey, typename TValue>
-	sp<TValue> UnorderedMap<TKey,TValue>::Find( const TKey& key )const noexcept
+	sp<TValue> UnorderedMap<TKey,TValue>::Find( const TKey& key )Ι
 	{
  		shared_lock<shared_mutex> l(_mutex);
 		const auto pItem = base::find( key );
@@ -246,7 +246,7 @@ namespace Jde::Collections
 	}
 
 	template<typename TKey, typename TValue>
-	bool UnorderedMap<TKey,TValue>::Set( const TKey& key, sp<TValue> pValue )noexcept
+	bool UnorderedMap<TKey,TValue>::Set( const TKey& key, sp<TValue> pValue )ι
 	{
 		unique_lock<shared_mutex> l( _mutex );
 		auto result = base::emplace( key, pValue );

@@ -18,7 +18,7 @@ namespace Jde::IO::Sockets
 
 	struct Γ ProtoClientSession : std::enable_shared_from_this<ProtoClientSession>{
 		ProtoClientSession();
-		virtual ~ProtoClientSession(){ DBG( "~ProtoClientSession -start" ); _socket.close(); DBG( "~ProtoClientSession-end" ); };
+		virtual ~ProtoClientSession(){ TRACET( LogTag(), "~ProtoClientSession -start" ); _socket.close(); TRACET( LogTag(), "~ProtoClientSession-end" ); };
 		α Close( std::condition_variable* pCvClient=nullptr )ι->void;
 		β OnConnected()ι->void{};
 		Ω MessageLength( const char* readMessageSize )ι->uint32;
@@ -28,7 +28,7 @@ namespace Jde::IO::Sockets
 		α ReadBody( int messageLength )ι->void;
 		α Write( up<google::protobuf::uint8[]> p, uint c )ι->void;
 		β Process( google::protobuf::uint8* pData, int size )ι->void=0;
-
+		α LogTag()ι->sp<Jde::LogTag>;
 		sp<ProtoClientSession> _pReadKeepAlive; sp<ProtoClientSession> _pWriteKeepAlive;
 		sp<AsioContextThread> _pIOContext;
 		tcp::socket _socket;

@@ -17,15 +17,15 @@ namespace Jde
 	using DB::EType;
 	sp<DB::IDataSource> _pDataSource;
 #define  _schema DB::DefaultSchema()
-	static sp<LogTag> _logLevel = Logging::TagLevel( "ql" );
+	static sp<LogTag> _logTag = Logging::Tag( "ql" );
 
-	α DB::SetQLDataSource( sp<DB::IDataSource> p )noexcept->void{ _pDataSource = p; }
+	α DB::SetQLDataSource( sp<DB::IDataSource> p )ι->void{ _pDataSource = p; }
 
-	α DB::ClearQLDataSource()noexcept->void{ _pDataSource = nullptr; }
+	α DB::ClearQLDataSource()ι->void{ _pDataSource = nullptr; }
 	up<flat_map<string,vector<function<void(const DB::MutationQL& m, PK id)>>>> _applyMutationListeners;  shared_mutex _applyMutationListenerMutex;
-	α ApplyMutationListeners()noexcept->flat_map<string,vector<function<void(const DB::MutationQL& m, PK id)>>>&{ if( !_applyMutationListeners ) _applyMutationListeners = mu<flat_map<string,vector<function<void(const DB::MutationQL& m, PK id)>>>>(); return *_applyMutationListeners; }
+	α ApplyMutationListeners()ι->flat_map<string,vector<function<void(const DB::MutationQL& m, PK id)>>>&{ if( !_applyMutationListeners ) _applyMutationListeners = mu<flat_map<string,vector<function<void(const DB::MutationQL& m, PK id)>>>>(); return *_applyMutationListeners; }
 
-	α DB::AddMutationListener( string tablePrefix, function<void(const DB::MutationQL& m, PK id)> listener )noexcept->void
+	α DB::AddMutationListener( string tablePrefix, function<void(const DB::MutationQL& m, PK id)> listener )ι->void
 	{
 		unique_lock l{_applyMutationListenerMutex};
 		auto& listeners = ApplyMutationListeners().try_emplace( move(tablePrefix) ).first->second;
@@ -34,9 +34,9 @@ namespace Jde
 
 	namespace DB::GraphQL
 	{
-		α DataSource()noexcept->sp<IDataSource>{ return _pDataSource; }
+		α DataSource()ι->sp<IDataSource>{ return _pDataSource; }
 	}
-	α DB::AppendQLSchema( const DB::Schema& schema )noexcept->void
+	α DB::AppendQLSchema( const DB::Schema& schema )ι->void
 	{
 		for( var& [name,v] : schema.Types )
 			_schema.Types.emplace( name, v );
@@ -626,7 +626,7 @@ namespace DB
 	}
 	α DB::Query( sv query, UserPK userId )ε->json
 	{
-		LOGS( string{query} );
+		TRACE( "{}", query );
 		var qlType = ParseQL( query );
 		vector<DB::TableQL> tableQueries;
 		json j;
@@ -647,8 +647,8 @@ namespace DB
 	}
 	struct Parser2
 	{
-		Parser2( sv text, sv delimiters )noexcept: _text{text}, Delimiters{delimiters}{}
-		α Next()noexcept->sv
+		Parser2( sv text, sv delimiters )ι: _text{text}, Delimiters{delimiters}{}
+		α Next()ι->sv
 		{
 			sv result = _peekValue;
 			if( result.empty() )
@@ -658,7 +658,7 @@ namespace DB
 				if( i<_text.size() )
 				{
 					uint start=i;
-					i = start+std::distance( _text.begin()+i, std::find_if(_text.begin()+i, _text.end(), [this]( char ch )noexcept{ return isspace(ch) || Delimiters.find(ch)!=sv::npos;}) );
+					i = start+std::distance( _text.begin()+i, std::find_if(_text.begin()+i, _text.end(), [this]( char ch )ι{ return isspace(ch) || Delimiters.find(ch)!=sv::npos;}) );
 					result = i==start ? _text.substr( i++, 1 ) : _text.substr( start, i-start );
 				}
 			}
@@ -666,7 +666,7 @@ namespace DB
 				_peekValue = {};
 			return result;
 		};
-		sv Next( char end )noexcept
+		sv Next( char end )ι
 		{
 			sv result;
 			if( _peekValue.size() )
@@ -684,10 +684,10 @@ namespace DB
 			}
 			return result;
 		};
-		sv Peek()noexcept{ return _peekValue.empty() ? _peekValue = Next() : _peekValue; }
-		uint Index()noexcept{ return i;}
-		sv Text()noexcept{ return i<_text.size() ? _text.substr(i) : sv{}; }
-		sv AllText()noexcept{ return _text; }
+		sv Peek()ι{ return _peekValue.empty() ? _peekValue = Next() : _peekValue; }
+		uint Index()ι{ return i;}
+		sv Text()ι{ return i<_text.size() ? _text.substr(i) : sv{}; }
+		sv AllText()ι{ return _text; }
 	private:
 		uint i{0};
 		sv _text;

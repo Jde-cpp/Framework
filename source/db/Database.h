@@ -6,6 +6,8 @@
 namespace Jde::DB
 {
 	struct IDataSource; struct Syntax;
+
+	Φ SqlTag()ι->sp<LogTag>;
 	Φ DataSource()ι->IDataSource&;
 	Φ DataSource( path libraryName, string connectionString )ε->sp<IDataSource>;
 	Φ DataSourcePtr()ε->sp<IDataSource>;

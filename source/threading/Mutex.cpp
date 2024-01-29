@@ -3,17 +3,17 @@
 #define var const auto
 namespace Jde
 {
-	static const sp<LogTag> _logLevel = Logging::TagLevel( "locks" );
+	static const sp<LogTag> _logTag = Logging::Tag( "locks" );
 
 	CoGuard::CoGuard( CoLock& lock )ι:
 		_lock{lock}
 	{
-		LOG( "CoGuard" );
+		TRACE( "CoGuard" );
 	}
 
 	CoGuard::~CoGuard()
 	{
-		LOG( "~CoGuard" );
+		TRACE( "~CoGuard" );
 		_lock.Clear();
 	}
 
@@ -76,7 +76,7 @@ namespace Jde::Threading
 		for( auto pExisting = _mutexes.begin(); pExisting != _mutexes.end();  )
 			pExisting = pExisting->first!=key && pExisting->second.use_count()==1 && pExisting->second->try_lock() ? _mutexes.erase( pExisting ) : std::next( pExisting );
 		l.unlock();
-		LOG( "UniqueLock( '{}' )", key );
+		TRACE( "UniqueLock( '{}' )", key );
 		return unique_lock{ *pKeyMutex };
 	}
 }

@@ -41,8 +41,8 @@ namespace Jde::Xml
 	template<class T=sv> α XmlTrim( bsv<typename T::traits_type> txt )ι->T;
 }
 
-namespace Jde
-{
+namespace Jde{
+	static var _logTag{ Logging::Tag("xml") };
 	using namespace Jde::Xml::XMLUtil;
 	//const char* writeBoolTrue;
 	//const char* writeBoolFalse;
@@ -340,7 +340,7 @@ namespace Jde
 		return T{ Trim<T>(UnEscape<T>(txt)) }; static_assert( std::is_same<T, string>::value || std::is_same<T, String>::value, "can't be sv" );
 	}
 
-	ELogLevel level{ ELogLevel::Trace };
+	//ELogLevel level{ ELogLevel::Trace };
 	struct OpenTag{ uint Index; uint Line; String Tag; bool InnerText; };
 	using Parser=IO::TokenParser<sv>;
 	α Close( Parser parser, std::vector<OpenTag>& openTags )ε->string
@@ -395,12 +395,12 @@ namespace Jde
 				if( !haveOpenTag )//<html></div></html>
 				{
 					for( size_t i=0; !equal && i<openTags.size(); ++i )
-						LOGL( level, "[{}][{}]{}", openTags[i].Line, openTags[i].Index, openTags[i].Tag );
+						TRACE( "[{}][{}]{}", openTags[i].Line, openTags[i].Index, openTags[i].Tag );
 					var endIndex = parser.Index()-tag.size()-2;
 					var newXml = string{ parser.Text.substr(0, endIndex) }+format( "<{}>", ToSV(endTag) )+string{ parser.Text.substr(endIndex) };
 
-					LOGL( level, "[{}]({})noopentag = '{}|||{}", parser.Line(), ToSV(endTag), parser.Text.substr(parser.Index()-120, 120), parser.Text.substr(parser.Index(), 30) );
-					LOGL( level, "new = '{}", newXml.substr(parser.Index()-120, 150) );
+					TRACE( "[{}]({})noopentag = '{}|||{}", parser.Line(), ToSV(endTag), parser.Text.substr(parser.Index()-120, 120), parser.Text.substr(parser.Index(), 30) );
+					TRACE( "new = '{}", newXml.substr(parser.Index()-120, 150) );
 					result = Close( Parser{newXml, &parser, parser.Index()}, openTags );
 					break;
 				}
@@ -411,13 +411,13 @@ namespace Jde
 					if( !equal )
 					{
 						for( size_t i=0; !equal && i<openTags.size(); ++i )
-							LOGL( level, "[{}][{}]{}", openTags[i].Line, openTags[i].Index, openTags[i].Tag );
+							TRACE( "[{}][{}]{}", openTags[i].Line, openTags[i].Index, openTags[i].Tag );
 						var newXml = string{ parser.Text.substr(0, startTag.Index) }+string{"/"}+string{ parser.Text.substr(startTag.Index) };
 						if( Settings::Get<bool>("xml/closeLog").value_or(false) )
 						{
-							LOGL( level, "({})start = [{}]'{}', end= [{}]'{}'", parser.Line(), startTag.Index, ToStr(startTag.Tag), parser.Index(), ToSV(endTag) );
-							LOGL( level, "old = '{}'", parser.Text.substr(startTag.Index-70, 100) );
-							LOGL( level, "new = '{}'", newXml.substr(startTag.Index-70, 100) );
+							TRACE( "({})start = [{}]'{}', end= [{}]'{}'", parser.Line(), startTag.Index, ToStr(startTag.Tag), parser.Index(), ToSV(endTag) );
+							TRACE( "old = '{}'", parser.Text.substr(startTag.Index-70, 100) );
+							TRACE( "new = '{}'", newXml.substr(startTag.Index-70, 100) );
 						}
 						parser.SetText( newXml, startTag.Index+2, startTag.Line );
 					}
@@ -436,8 +436,8 @@ namespace Jde
 						var endIndex = parser.Index()-1;
 						var newXml = string{ parser.Text.substr(0, parser.Index()-1) }+"/>"+string{ parser.Text.substr(endIndex) };
 
-						LOGL( level, "[{}]({})noclosetag = '{}|||{}", parser.Line(), ToSV(tag), parser.Text.substr(parser.Index()-120, 120), parser.Text.substr(parser.Index(), 30) );
-						LOGL( level, "new = '{}", newXml.substr(parser.Index()-120, 150) );
+						TRACE( "[{}]({})noclosetag = '{}|||{}", parser.Line(), ToSV(tag), parser.Text.substr(parser.Index()-120, 120), parser.Text.substr(parser.Index(), 30) );
+						TRACE( "new = '{}", newXml.substr(parser.Index()-120, 150) );
 						result = Close( Parser{newXml, &parser, endIndex}, openTags );
 						break;
 					}
@@ -450,8 +450,8 @@ namespace Jde
 						if( tag=="hr" || tag=="br" ) //https://www.w3.org/TR/html401/index/elements.html
 						{
 							var newXml = string{ parser.Text.substr(0, i) }+string{"/"}+string{ parser.Text.substr(i) };
-							LOGL( level, "old = '{}'", parser.Text.substr(i-70, 100) );
-							LOGL( level, "new = '{}'", newXml.substr(i-70, 100) );
+							TRACE( "old = '{}'", parser.Text.substr(i-70, 100) );
+							TRACE( "new = '{}'", newXml.substr(i-70, 100) );
 							ASSERT( newXml[i+1]=='>' );
 							parser.SetText( newXml, i+1, parser.Line() );
 						}
@@ -459,8 +459,8 @@ namespace Jde
 						{
 							var start = i-next.size()-closing.size()+tag.size()+1;
 							var newXml = string{ parser.Text.substr(0, start) }+string{"/>"}+string{ parser.Text.substr(start) };
-							LOGL( level, "old = '{}'", parser.Text.substr(i-70, 100) );
-							LOGL( level, "new = '{}'", newXml.substr(i-70, 100) );
+							TRACE( "old = '{}'", parser.Text.substr(i-70, 100) );
+							TRACE( "new = '{}'", newXml.substr(i-70, 100) );
 							parser.SetText( newXml, i+1, parser.Line() );
 						}
 						else

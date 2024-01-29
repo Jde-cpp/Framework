@@ -3,20 +3,20 @@
 #define var const auto
 namespace Jde::DB
 {
-	α IDataSource::Select( string sql, RowΛ f, SL sl )noexcept(false)->void
+	α IDataSource::Select( string sql, RowΛ f, SL sl )ε->void
 	{
 		Select( move(sql), f, nullptr, sl );
 	}
-	α IDataSource::Select( string sql, RowΛ f, const vector<object>& values, SL sl )noexcept(false)->void
+	α IDataSource::Select( string sql, RowΛ f, const vector<object>& values, SL sl )ε->void
 	{
 		Select( move(sql), f, &values, sl );
 	}
-	α IDataSource::TrySelect( string sql, RowΛ f, SL sl )noexcept->bool
+	α IDataSource::TrySelect( string sql, RowΛ f, SL sl )ι->bool
 	{
 		return Try( [&]{Select( move(sql), f, sl);} );
 	}
 
-	α IDataSource::TryExecute( string sql, SL sl )noexcept->optional<uint>
+	α IDataSource::TryExecute( string sql, SL sl )ι->optional<uint>
 	{
 		optional<uint> result;
 		try
@@ -27,7 +27,7 @@ namespace Jde::DB
 
 		return result;
 	}
-	α IDataSource::TryExecute( string sql, const vector<object>& parameters, SL sl )noexcept->optional<uint>
+	α IDataSource::TryExecute( string sql, const vector<object>& parameters, SL sl )ι->optional<uint>
 	{
 		optional<uint> result;
 		try
@@ -39,7 +39,7 @@ namespace Jde::DB
 		return result;
 	}
 
-	α IDataSource::TryExecuteProc( string sql, const vector<object>& parameters, SL sl )noexcept->optional<uint>
+	α IDataSource::TryExecuteProc( string sql, const vector<object>& parameters, SL sl )ι->optional<uint>
 	{
 		optional<uint> result;
 		try
@@ -51,7 +51,7 @@ namespace Jde::DB
 		return result;
 	}
 
-	α IDataSource::Catalog( string sql, SL sl )noexcept(false)->string
+	α IDataSource::Catalog( string sql, SL sl )ε->string
 	{
 		string db;
 		auto fnctn = [&db]( auto& row ){ row >> db; };

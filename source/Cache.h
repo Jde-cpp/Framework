@@ -24,7 +24,7 @@ namespace Jde
 		template<class K,class V> static α GetValue( str n, K id )ι->sp<V>;
 	private:
 		static std::map<string,sp<void>> _cache; static  shared_mutex _cacheLock;
-		Φ LogLevel()ι->sp<LogTag>;
+		Φ LogTag()ι->sp<LogTag>;
 	};
 
 	Ŧ Cache2::Emplace( str id )ι->sp<T>
@@ -52,7 +52,7 @@ namespace Jde
 		return p==_cache.end() ? sp<T>{} : std::static_pointer_cast<T>( p->second );
 	}
 
-#define _logLevel LogLevel()
+#define _logTag LogTag()
 	Ŧ Cache2::Set( str id, sp<T> p )ι->sp<T>
 	{
 		ul l{_cacheLock};
@@ -72,7 +72,7 @@ namespace Jde
 
 	struct Cache final
 	{
-		~Cache(){ if( HaveLogger() ) DBG("~Cache"sv); }
+		~Cache(){ if( HaveLogger() ) TRACE("~Cache"sv); }
 		Ω Has( str name )ι{ return Instance().InstanceHas( name ); }
 		Ω Duration( str /*name*/ )ι{ return Settings::Get<Jde::Duration>( "cache/default/duration" ).value_or( Duration::max() ); }
 		Ṫ Emplace( str name )ι->sp<T>{ return Instance().InstanceEmplace<T>( name ); }
@@ -92,7 +92,7 @@ namespace Jde
 		Ŧ InstanceSet( str name, sp<T> pValue )ι->sp<T>;
 		Φ Instance()ι->Cache&;
 		std::map<string,sp<void>,std::less<>> _cache; mutable shared_mutex _cacheLock;
-		Φ LogLevel()ι->sp<LogTag>;
+		Φ LogTag()ι->sp<LogTag>;
 	};
 
 	Ŧ Cache::InstanceGet( str name )ι->sp<T>
@@ -157,5 +157,5 @@ namespace Jde
 	}
 #undef var
 #undef Φ
-#undef _logLevel
+#undef _logTag
 }

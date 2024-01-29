@@ -22,18 +22,18 @@ namespace Jde::Threading
 		Interrupt& operator=(const Interrupt &)=delete;
 
 		//Interrupt( sv threadName, bool paused=false );
-		Γ void Wake()noexcept;
-		Γ void Stop()noexcept;
+		Γ void Wake()ι;
+		Γ void Stop()ι;
 
-		bool IsPaused()const noexcept{ return _paused; }
-		Γ virtual void Pause()noexcept;
-		Γ virtual void UnPause()noexcept;
+		bool IsPaused()Ι{ return _paused; }
+		Γ virtual void Pause()ι;
+		Γ virtual void UnPause()ι;
 
-		virtual void OnTimeout()/*noexcept*/=0;
-		virtual void OnAwake()noexcept=0;
+		virtual void OnTimeout()/*ι*/=0;
+		virtual void OnAwake()ι=0;
 	private:
-		Γ void Start()noexcept;
-		void Start2()noexcept;
+		Γ void Start()ι;
+		void Start2()ι;
 		void Worker();
 		std::once_flag _singleThread;
 		std::condition_variable _cvWait;  std::mutex _cvMutex;

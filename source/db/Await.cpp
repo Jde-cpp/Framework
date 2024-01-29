@@ -3,13 +3,13 @@
 
 namespace Jde::DB
 {
-	α ICacheAwait::await_ready()noexcept->bool
+	α ICacheAwait::await_ready()ι->bool
 	{
 		_pValue = Cache::Get<void>( _name );
 		return !!_pValue;
 	}
 
-	α ICacheAwait::await_resume()noexcept->AwaitResult
+	α ICacheAwait::await_resume()ι->AwaitResult
 	{
 		auto y = _pValue ? AwaitResult{ move(_pValue) } : base::await_resume();
 		if( !_pValue && y.HasShared() )

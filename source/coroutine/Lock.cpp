@@ -4,9 +4,9 @@
 #define var const auto
 namespace Jde
 {
-	static var& _logLevel{ Logging::TagLevel("locks") };
+	static var& _logTag{ Logging::Tag("locks") };
 	flat_map<string,std::deque<std::variant<LockKeyAwait*,coroutine_handle<>>>> _coLocks; std::atomic_flag _coLocksLock;
-	α LockWrapperAwait::TryLock( string key, bool /*shared*/ )noexcept->up<CoLockGuard>
+	α LockWrapperAwait::TryLock( string key, bool /*shared*/ )ι->up<CoLockGuard>
 	{
 		AtomicGuard l( _coLocksLock );
 		auto& locks = _coLocks.try_emplace( key ).first->second;
@@ -19,16 +19,16 @@ namespace Jde
 		return y;
 	}
 
-	α LockKeyAwait::await_ready()noexcept->bool
+	α LockKeyAwait::await_ready()ι->bool
 	{
 		AtomicGuard l( _coLocksLock );
 		auto& locks = _coLocks.try_emplace( Key ).first->second;
 		locks.push_back( this );
 		var ready = locks.size()==1;
-		LOG( "({})LockKeyAwait::await_ready={} size={}", Key, ready, locks.size() );
+		TRACE( "({})LockKeyAwait::await_ready={} size={}", Key, ready, locks.size() );
 		return locks.size()==1;
 	}
-	α LockKeyAwait::await_suspend( HCoroutine h )noexcept->void
+	α LockKeyAwait::await_suspend( HCoroutine h )ι->void
 	{
 		Await::AwaitSuspend();
 		AtomicGuard l( _coLocksLock ); ASSERT( _coLocks.find(Key)!=_coLocks.end() );
@@ -46,19 +46,19 @@ namespace Jde
 					locks[i] = Handle = h;
 			}
 			ASSERT( Handle );
-			LOG( "({})LockKeyAwait::await_suspend size={}", Key, locks.size() );
+			TRACE( "({})LockKeyAwait::await_suspend size={}", Key, locks.size() );
 		}
 	}
-	α LockKeyAwait::await_resume()noexcept->AwaitResult
+	α LockKeyAwait::await_resume()ι->AwaitResult
 	{
 		return AwaitResult{ Handle ? mu<CoLockGuard>( Key, Handle ) : mu<CoLockGuard>( Key, this ) };
 	}
 
-	CoLockGuard::CoLockGuard( string key, std::variant<LockKeyAwait*,coroutine_handle<>> h )noexcept:
+	CoLockGuard::CoLockGuard( string key, std::variant<LockKeyAwait*,coroutine_handle<>> h )ι:
 		Handle{h},
 		Key{ move(key) }
 	{
-		LOG( "({})CoLockGuard() index={}", Key, h.index() );
+		TRACE( "({})CoLockGuard() index={}", Key, h.index() );
 	}
 	CoLockGuard::~CoLockGuard()
 	{
@@ -70,12 +70,12 @@ namespace Jde
 			if( locks.front().index()==1 )
 				CoroutinePool::Resume( move(get<1>(locks.front())) );
 			else
-				LOG( "({})CoLockGuard - size={}, next is awaitable, should continue.", Key, locks.size() );
+				TRACE( "({})CoLockGuard - size={}, next is awaitable, should continue.", Key, locks.size() );
 		}
-		LOG( "~CoLockGuard( {} )", Key );
+		TRACE( "~CoLockGuard( {} )", Key );
 	}
 
-	α LockWrapperAwait::await_ready()noexcept->bool
+	α LockWrapperAwait::await_ready()ι->bool
 	{
 		return (bool)(_pLock = TryLock(_key, _shared) );//TODO just hold _coLocksLock wait till key isn't a string.
 	}
@@ -84,11 +84,11 @@ namespace Jde
 		_pLock = ( co_await CoLockKey(_key, _shared) ).UP<CoLockGuard>();
 		h.resume();
 	}
-	α LockWrapperAwait::await_suspend( HCoroutine h )noexcept->void
+	α LockWrapperAwait::await_suspend( HCoroutine h )ι->void
 	{
 		AwaitSuspend( h );
 	}
-	α LockWrapperAwait::await_resume()noexcept->AwaitResult
+	α LockWrapperAwait::await_resume()ι->AwaitResult
 	{
 		auto p = _pPromise ? ms<AwaitResult>( move(_pPromise->MoveResult()) ) : ReadyResult();
 		if( _f.index()==0 )

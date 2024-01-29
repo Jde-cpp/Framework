@@ -18,15 +18,15 @@ namespace Jde::IO
 			_fileIOArg{arg}
 		{}
 		virtual ~IFileChunkArg()=default;
-		//virtual uint StartIndex()const noexcept=0; virtual void SetStartIndex( uint i )noexcept=0;
-		//virtual uint EndIndex()const noexcept=0; virtual void SetEndIndex( uint i )noexcept=0;
-		//β Bytes()const noexcept->uint=0; virtual void SetBytes( uint i )noexcept=0;
-		//virtual void SetFileIOArg( FileIOArg* p )noexcept=0;
-		β Handle()noexcept->HFile&;
-		β Process()noexcept->void{};
-		β FileArg()noexcept->FileIOArg&{ return _fileIOArg;}
-		β FileArg()const noexcept->const FileIOArg&{ return _fileIOArg;}
-		//β SetFileArg( const FileIOArg* )const noexcept->void=0;
+		//virtual uint StartIndex()Ι=0; virtual void SetStartIndex( uint i )ι=0;
+		//virtual uint EndIndex()Ι=0; virtual void SetEndIndex( uint i )ι=0;
+		//β Bytes()Ι->uint=0; virtual void SetBytes( uint i )ι=0;
+		//virtual void SetFileIOArg( FileIOArg* p )ι=0;
+		β Handle()ι->HFile&;
+		β Process()ι->void{};
+		β FileArg()ι->FileIOArg&{ return _fileIOArg;}
+		β FileArg()Ι->const FileIOArg&{ return _fileIOArg;}
+		//β SetFileArg( const FileIOArg* )Ι->void=0;
 
 		std::atomic<bool> Sent;
 		uint Index;
@@ -37,16 +37,16 @@ namespace Jde::IO
 
 	struct FileIOArg final//: boost::noncopyable
 	{
-		FileIOArg( fs::path path, bool vec, SRCE )noexcept;
-		FileIOArg( fs::path path, sp<vector<char>> pVec, SRCE )noexcept;
-		FileIOArg( fs::path path, sp<string> pData, SRCE )noexcept;
+		FileIOArg( fs::path path, bool vec, SRCE )ι;
+		FileIOArg( fs::path path, sp<vector<char>> pVec, SRCE )ι;
+		FileIOArg( fs::path path, sp<string> pData, SRCE )ι;
 		//~FileIOArg(){ DBG("FileIOArg::~FileIOArg"sv); }
-		α Open()noexcept(false)->void;
-		α HandleChunkComplete( IFileChunkArg* pChunkArg )noexcept->bool;
-		α Send( coroutine_handle<Task::promise_type>&& h )noexcept->void;
+		α Open()ε->void;
+		α HandleChunkComplete( IFileChunkArg* pChunkArg )ι->bool;
+		α Send( coroutine_handle<Task::promise_type>&& h )ι->void;
 		α SetWorker( sp<Threading::IWorker> p ){ _pWorkerKeepAlive=p; }
-		α Data()noexcept{ return std::visit( [](auto&& x){return x->data();}, Buffer ); }
-		α Size()const noexcept{ return std::visit( [](auto&& x){return x->size();}, Buffer ); }
+		α Data()ι{ return std::visit( [](auto&& x){return x->data();}, Buffer ); }
+		α Size()Ι{ return std::visit( [](auto&& x){return x->size();}, Buffer ); }
 
 		/*const*/ bool IsRead{ false };
 		fs::path Path;
@@ -62,12 +62,12 @@ namespace Jde::IO
 	struct Γ DriveAwaitable final : IAwait
 	{
 		using base=IAwait;
-		DriveAwaitable( fs::path path, bool vector, bool cache, SRCE )noexcept:base{ sl },_arg{ move(path), vector },_cache{cache}{}
-		DriveAwaitable( fs::path path, sp<vector<char>> data, SRCE )noexcept:base{ sl },_arg{ move(path), data },_cache{false}{}
-		DriveAwaitable( fs::path path, sp<string> data, SRCE )noexcept:base{ sl },_arg{ move(path), data },_cache{false}{}
-		α await_ready()noexcept->bool override;
-		α await_suspend( HCoroutine h )noexcept->void override;//{ base::await_suspend( h ); _pPromise = &h.promise(); }
-		α await_resume()noexcept->AwaitResult override;
+		DriveAwaitable( fs::path path, bool vector, bool cache, SRCE )ι:base{ sl },_arg{ move(path), vector },_cache{cache}{}
+		DriveAwaitable( fs::path path, sp<vector<char>> data, SRCE )ι:base{ sl },_arg{ move(path), data },_cache{false}{}
+		DriveAwaitable( fs::path path, sp<string> data, SRCE )ι:base{ sl },_arg{ move(path), data },_cache{false}{}
+		α await_ready()ι->bool override;
+		α await_suspend( HCoroutine h )ι->void override;//{ base::await_suspend( h ); _pPromise = &h.promise(); }
+		α await_resume()ι->AwaitResult override;
 	private:
 		sp<IException> ExceptionPtr;
 		FileIOArg _arg;
@@ -78,9 +78,9 @@ namespace Jde::IO
 	{
 		using base=Threading::IPollWorker;
 		DriveWorker():base{"drive"}{}
-		α Initialize()noexcept->void override;
-		Γ Ω ChunkSize()noexcept->uint32;
-		Γ Ω ThreadSize()noexcept->uint8;
-		Γ Ω Signal()noexcept->uint;
+		α Initialize()ι->void override;
+		Γ Ω ChunkSize()ι->uint32;
+		Γ Ω ThreadSize()ι->uint8;
+		Γ Ω Signal()ι->uint;
 	};
 }

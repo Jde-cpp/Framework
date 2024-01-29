@@ -4,30 +4,29 @@
 #include <jde/TypeDefs.h>
 
 #define var const auto
-#define α auto
 namespace Jde::IO
 {
-	static var _logLevel{ Logging::TagLevel("sockets") };
-	auto LogLevel()noexcept->sp<LogTag>{ return _logLevel; }
+	static var _logTag{ Logging::Tag("sockets") };
+	auto AsioContextThread::LogTag()ι->sp<Jde::LogTag>{ return _logTag; }
 
 	sp<AsioContextThread> _pInstance;
-	sp<AsioContextThread> AsioContextThread::Instance()noexcept
+	sp<AsioContextThread> AsioContextThread::Instance()ι
 	{
 		return _pInstance ?  _pInstance : _pInstance = sp<AsioContextThread>( new AsioContextThread() );
 	}
 
-	AsioContextThread::AsioContextThread()noexcept:
+	AsioContextThread::AsioContextThread()ι:
 		_ioc{1},
 		_keepAlive{ net::make_work_guard(_ioc) },
 		_thread{ [&](){Run();} }
 	{}
 
-	void AsioContextThread::Run()noexcept
+	void AsioContextThread::Run()ι
 	{
 		Threading::SetThreadDscrptn( ThreadName );
-		LOG( "({})Thread - Entering.", ThreadName );
+		TRACE( "({})Thread - Entering.", ThreadName );
 		boost::system::error_code ec;
 		_ioc.run( ec );
-		LOG( "({})Thread - Leaving - {} - {}.", ThreadName, ec.value(), ec.message() );
+		TRACE( "({})Thread - Leaving - {} - {}.", ThreadName, ec.value(), ec.message() );
 	}
 }

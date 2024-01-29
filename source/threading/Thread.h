@@ -10,7 +10,7 @@ namespace Jde::Threading
 	typedef uint HThread;
 	struct ThreadParam{ string Name; HThread AppHandle; };
 //	extern thread_local uint ThreadId;
-
+#define Φ Γ α
 	enum class EThread : int
 	{
 		Application = 0,
@@ -20,15 +20,16 @@ namespace Jde::Threading
 		AppSpecific = 1 << 10
 	};
 
-	Γ uint GetThreadId()noexcept;
-	Γ uint GetAppThreadHandle()noexcept;
-	Γ void SetThreadDscrptn( std::thread& thread, sv description )noexcept;//TODO move out of threading ns
-	Γ void SetThreadDscrptn( sv description )noexcept;//TODO move out of threading ns
-	Γ void SetThreadInfo( const ThreadParam& param )noexcept;
-	HThread BumpThreadHandle()noexcept;
-	Γ const char* GetThreadDescription()noexcept;//TODO move out of threading ns & remove Get & abr description
-
-	void Run( const size_t maxWorkerCount, size_t runCount, std::function<void(size_t)> func )noexcept;
+	Γ uint GetThreadId()ι;
+	Γ uint GetAppThreadHandle()ι;
+	Γ void SetThreadDscrptn( std::thread& thread, sv description )ι;//TODO move out of threading ns
+	Γ void SetThreadDscrptn( sv description )ι;//TODO move out of threading ns
+	Γ void SetThreadInfo( const ThreadParam& param )ι;
+	α BumpThreadHandle()ι->HThread;
+	Φ SetThreadHandle( HThread handle )ι->void;
+	Φ GetThreadDescription()ι->const char*;//TODO move out of threading ns & remove Get & abr description
+	Φ LogTag()ι->sp<LogTag>;
+	void Run( const size_t maxWorkerCount, size_t runCount, std::function<void(size_t)> func )ι;
 	//taken from https://livebook.manning.com/#!/book/c-plus-plus-concurrency-in-action-second-edition/chapter-8/v-7/1
 	class ThreadCollection //TODO refactor [re]move this
 	{
@@ -48,3 +49,4 @@ namespace Jde::Threading
 			std::vector<std::thread>& _threads;
 	};
 }
+#undef Φ

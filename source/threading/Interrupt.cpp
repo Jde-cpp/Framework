@@ -1,44 +1,44 @@
-#include "Interrupt.h"
+﻿#include "Interrupt.h"
 #include "Thread.h"
 #include "InterruptibleThread.h"
 #define var const auto
 
-namespace Jde::Threading
-{
+namespace Jde::Threading{
+	sp<Jde::LogTag> _logTag{ Logging::Tag("threads") };
 	Interrupt::Interrupt( sv threadName, Duration duration, bool paused ):
 		_threadName{ threadName },
 		_paused{ paused },
 		_refreshRate{ duration }
 	{
-		LOG( "{0}::{0}(paused:  {1})", _threadName, paused );
+		TRACE( "{0}::{0}(paused:  {1})", _threadName, paused );
 		Start();
 	}
 	Interrupt::~Interrupt()
 	{
 		Stop();
 	}
-	void Interrupt::Start2()noexcept
+	void Interrupt::Start2()ι
 	{
 		_pThread = make_unique<Threading::InterruptibleThread>( _threadName, [&](){Worker();} );
 	}
-	void Interrupt::Start()noexcept
+	void Interrupt::Start()ι
 	{
-		LOG( "{}::Start(paused:  {})", _threadName, (bool)_paused );
+		TRACE( "{}::Start(paused:  {})", _threadName, (bool)_paused );
 		std::call_once( _singleThread, &Interrupt::Start2, this );
 	}
-	void Interrupt::Wake()noexcept
+	void Interrupt::Wake()ι
 	{
-		LOG( "{}::Wake()", _threadName );
+		TRACE( "{}::Wake()", _threadName );
 		_cvWait.notify_one();
 	}
-	void Interrupt::Pause()noexcept
+	void Interrupt::Pause()ι
 	{
-		LOG( "{}::Pause()", _threadName );
+		TRACE( "{}::Pause()", _threadName );
 		_paused = true;
 	}
-	void Interrupt::UnPause()noexcept
+	void Interrupt::UnPause()ι
 	{
-		LOG( "{}::UnPause()", _threadName );
+		TRACE( "{}::UnPause()", _threadName );
 		if( _paused )
 		{
 			_paused = false;
@@ -46,9 +46,9 @@ namespace Jde::Threading
 		}
 	}
 
-	void Interrupt::Stop()noexcept
+	void Interrupt::Stop()ι
 	{
-		LOG( "{}::Stop()", _threadName );
+		TRACE( "{}::Stop()", _threadName );
 		_pThread->Interrupt();
 		Wake();
 		_pThread->Join();
@@ -56,7 +56,7 @@ namespace Jde::Threading
 	using namespace std::chrono_literals;
 	void Interrupt::Worker()
 	{
-		LOG( "{}::Worker(paused:  {})", _threadName, (bool)_paused );
+		TRACE( "{}::Worker(paused:  {})", _threadName, (bool)_paused );
 		SetThreadDscrptn( _threadName );
 		std::cv_status status = std::cv_status::timeout;
     	std::unique_lock<std::mutex> lk( _cvMutex );
@@ -79,6 +79,6 @@ namespace Jde::Threading
 				status = std::cv_status::no_timeout;
 			}
 		}
-		LOG( "{}::Worker() - exiting", _threadName );
+		TRACE( "{}::Worker() - exiting", _threadName );
 	}
 }

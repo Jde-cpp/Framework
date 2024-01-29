@@ -1,11 +1,11 @@
-#include "DBQueue.h"
+﻿#include "DBQueue.h"
 #include "DataSource.h"
 #include "Database.h"
 #include "../threading/InterruptibleThread.h"
 
 #define var const auto
-namespace Jde::DB
-{
+namespace Jde::DB{
+	static sp<LogTag> _logTag{ Logging::Tag("sql") };
 	Statement::Statement( string sql, const VectorPtr<object>& parameters, bool isStoredProc, SL sl ):
 		Sql{ move(sql) },
 		Parameters{ parameters },
@@ -13,14 +13,13 @@ namespace Jde::DB
 		SourceLocation{ sl }
 	{}
 
-	DBQueue::DBQueue( sp<IDataSource> spDataSource )noexcept:
-		_spDataSource{ spDataSource }
-	{
+	DBQueue::DBQueue( sp<IDataSource> spDataSource )ι:
+		_spDataSource{ spDataSource }{
 		_pThread = ms<Threading::InterruptibleThread>( "DBQueue", [&](){Run();} );
 		IApplication::AddThread( _pThread );
 	}
 
-	void DBQueue::Shutdown()noexcept
+	void DBQueue::Shutdown()ι
 	{
 		_pThread->Interrupt();
 		while( !_stopped )
@@ -28,14 +27,14 @@ namespace Jde::DB
 		//_queue.Push( sp<Statement>{} );
 	}
 
-	void DBQueue::Push( string sql, const VectorPtr<object>& parameters, bool isStoredProc, SL sl )noexcept
+	void DBQueue::Push( string sql, const VectorPtr<object>& parameters, bool isStoredProc, SL sl )ι
 	{
 		if( _stopped )
 			return;
 		// if( !_stopped )
 		// 	_queue.Push( ms<Statement>(sql, parameters, isStoredProc) );
 		// else
-		// 	DBG("pushing '{}' when stopped", sql);
+		// 	TRACE("pushing '{}' when stopped", sql);
 		auto pStatement = ms<Statement>( move(sql), parameters, isStoredProc, sl );
 		try
 		{
@@ -50,7 +49,7 @@ namespace Jde::DB
 		}
 	}
 
-	void DBQueue::Run()noexcept
+	void DBQueue::Run()ι
 	{
 	//	Threading::SetThreadDescription( "DBQueue" );
 		while( !Threading::GetThreadInterruptFlag().IsSet() || !_queue.Empty() )
@@ -72,6 +71,6 @@ namespace Jde::DB
 		}
 		_stopped = true;
 		_spDataSource = nullptr;
-		DBG( "DBQueue::Run - Ending"sv );
+		TRACE( "DBQueue::Run - Ending"sv );
 	}
 }

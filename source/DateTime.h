@@ -6,19 +6,19 @@
 namespace Jde::Chrono
 {
 	using namespace std::chrono;
-	Γ α Epoch()noexcept->TimePoint;
-	Ξ MillisecondsSinceEpoch( TimePoint time=Clock::now() )noexcept->uint{ return duration_cast<std::chrono::milliseconds>( time-Epoch() ).count(); }
-	Γ α Min( TimePoint a, TimePoint b )noexcept->TimePoint;
+	Γ α Epoch()ι->TimePoint;
+	Ξ MillisecondsSinceEpoch( TimePoint time=Clock::now() )ι->uint{ return duration_cast<std::chrono::milliseconds>( time-Epoch() ).count(); }
+	Γ α Min( TimePoint a, TimePoint b )ι->TimePoint;
 
-	Ξ Date( TimePoint time )noexcept->TimePoint{ return Clock::from_time_t( Clock::to_time_t(time)/(60*60*24)*(60*60*24) ); }
-	Ξ Time( TimePoint time )noexcept->Duration{ return time-Date(time); }
+	Ξ Date( TimePoint time )ι->TimePoint{ return Clock::from_time_t( Clock::to_time_t(time)/(60*60*24)*(60*60*24) ); }
+	Ξ Time( TimePoint time )ι->Duration{ return time-Date(time); }
 
-	Ξ FromDays( DayIndex days )noexcept->TimePoint{ return Epoch()+days*24h; }
-	Ξ ToDays( TimePoint time )noexcept->DayIndex{ return duration_cast<std::chrono::hours>( time-Epoch()).count()/24; }
-	Ξ ToDays( time_t time )noexcept->DayIndex{ return ToDays(Clock::from_time_t(time)); }
+	Ξ FromDays( DayIndex days )ι->TimePoint{ return Epoch()+days*24h; }
+	Ξ ToDays( TimePoint time )ι->DayIndex{ return duration_cast<std::chrono::hours>( time-Epoch()).count()/24; }
+	Ξ ToDays( time_t time )ι->DayIndex{ return ToDays(Clock::from_time_t(time)); }
 
-	Γ α ToDuration( sv iso )noexcept(false)->Duration;
-	Γ α ToString( Duration d )noexcept->string;
+	Γ α ToDuration( sv iso )ε->Duration;
+	Γ α ToString( Duration d )ι->string;
 }
 namespace Jde
 {
@@ -26,54 +26,54 @@ namespace Jde
 
 	struct Γ DateTime
 	{
-		DateTime()noexcept;
-		DateTime( const DateTime& other )noexcept;
-		DateTime( time_t time )noexcept;
-		DateTime( uint16 year, uint8 month, uint8 day, uint8 hour=0, uint8 minute=0, uint8 second=0, Duration nanoFraction=Duration{0} )noexcept;
-		DateTime( sv iso )noexcept(false);
-		DateTime( TimePoint tp )noexcept;
-		DateTime( fs::file_time_type time )noexcept;
+		DateTime()ι;
+		DateTime( const DateTime& other )ι;
+		DateTime( time_t time )ι;
+		DateTime( uint16 year, uint8 month, uint8 day, uint8 hour=0, uint8 minute=0, uint8 second=0, Duration nanoFraction=Duration{0} )ι;
+		DateTime( sv iso )ε;
+		DateTime( TimePoint tp )ι;
+		DateTime( fs::file_time_type time )ι;
 		Ω BeginingOfWeek()->DateTime;
-		DateTime& operator=(const DateTime& other)noexcept;
-		bool operator==(const DateTime& other)const noexcept{return _time_point==other._time_point; }
-		bool operator<(const DateTime& other)const noexcept{return _time_point<other._time_point;}
+		DateTime& operator=(const DateTime& other)ι;
+		bool operator==(const DateTime& other)Ι{return _time_point==other._time_point; }
+		bool operator<(const DateTime& other)Ι{return _time_point<other._time_point;}
 		DateTime operator+( const Duration& timeSpan )const;
 		DateTime& operator+=( const Duration& timeSpan );
 
-		Ω DayOfWk( TimePoint time )noexcept{ return DateTime{time}.DayOfWk();}
-		DayOfWeek DayOfWk()const noexcept{ return (DayOfWeek)(Tm()->tm_wday);}
-		uint32 Nanos()const noexcept;
-		uint_fast8_t Second()const noexcept{ return static_cast<uint_fast8_t>(Tm()->tm_sec); }
-		uint_fast8_t Minute()const noexcept{ return static_cast<uint_fast8_t>(Tm()->tm_min); }
-		uint_fast8_t Hour()const noexcept{ return static_cast<uint_fast8_t>(Tm()->tm_hour); }
-		uint_fast8_t Day()const noexcept{ return static_cast<uint_fast8_t>(Tm()->tm_mday); }
-		uint_fast8_t Month()const noexcept{ return static_cast<uint_fast8_t>(Tm()->tm_mon+1); }
-		string MonthAbbrev()const noexcept;
-		uint_fast16_t Year()const noexcept{ return static_cast<uint_fast16_t>(Tm()->tm_year+1900); }
+		Ω DayOfWk( TimePoint time )ι{ return DateTime{time}.DayOfWk();}
+		DayOfWeek DayOfWk()Ι{ return (DayOfWeek)(Tm()->tm_wday);}
+		uint32 Nanos()Ι;
+		uint_fast8_t Second()Ι{ return static_cast<uint_fast8_t>(Tm()->tm_sec); }
+		uint_fast8_t Minute()Ι{ return static_cast<uint_fast8_t>(Tm()->tm_min); }
+		uint_fast8_t Hour()Ι{ return static_cast<uint_fast8_t>(Tm()->tm_hour); }
+		uint_fast8_t Day()Ι{ return static_cast<uint_fast8_t>(Tm()->tm_mday); }
+		uint_fast8_t Month()Ι{ return static_cast<uint_fast8_t>(Tm()->tm_mon+1); }
+		string MonthAbbrev()Ι;
+		uint_fast16_t Year()Ι{ return static_cast<uint_fast16_t>(Tm()->tm_year+1900); }
 
-		TimePoint Date()const noexcept{ return Clock::from_time_t( TimeT()/(60*60*24)*(60*60*24) ); }
+		TimePoint Date()Ι{ return Clock::from_time_t( TimeT()/(60*60*24)*(60*60*24) ); }
 #ifdef _MSC_VER
-		Ω Today()noexcept->TimePoint{ return Clock::from_time_t( _time64(nullptr)/(60*60*24)*(60*60*24) ); }
+		Ω Today()ι->TimePoint{ return Clock::from_time_t( _time64(nullptr)/(60*60*24)*(60*60*24) ); }
 #else
-		Ω Today()noexcept->TimePoint{ return Clock::from_time_t(time(nullptr) / (60 * 60 * 24) * (60 * 60 * 24)); }
+		Ω Today()ι->TimePoint{ return Clock::from_time_t(time(nullptr) / (60 * 60 * 24) * (60 * 60 * 24)); }
 #endif
-		α DateDisplay()const noexcept->string;
-		α DateDisplay4()const noexcept->string;
-		α TimeDisplay()const noexcept->string;
-		α LocalTimeDisplay( bool seconds=false, bool milliseconds=false )const noexcept->string;
-		α LocalDateDisplay()const noexcept->string;
-		α LocalDisplay( bool seconds, bool milli )const noexcept->string;
-		α ToIsoString()const noexcept->string;
-		Ω ToIsoString(const tm& timeStruct)noexcept->string;
-		Ω ParseMonth( sv month )noexcept(false)->uint8;
-		time_t TimeT()const noexcept;
-		TimePoint GetTimePoint()const noexcept{return _time_point;}
-		operator TimePoint()const noexcept{ return _time_point; }
-		up<std::tm> LocalTm()const noexcept;
-		sp<std::tm> Tm()const  noexcept;
+		α DateDisplay()Ι->string;
+		α DateDisplay4()Ι->string;
+		α TimeDisplay()Ι->string;
+		α LocalTimeDisplay( bool seconds=false, bool milliseconds=false )Ι->string;
+		α LocalDateDisplay()Ι->string;
+		α LocalDisplay( bool seconds, bool milli )Ι->string;
+		α ToIsoString()Ι->string;
+		Ω ToIsoString(const tm& timeStruct)ι->string;
+		Ω ParseMonth( sv month )ε->uint8;
+		time_t TimeT()Ι;
+		TimePoint GetTimePoint()Ι{return _time_point;}
+		operator TimePoint()Ι{ return _time_point; }
+		up<std::tm> LocalTm()Ι;
+		sp<std::tm> Tm()const  ι;
 
-		Γ friend std::ostream& operator<<( std::ostream &os, const Jde::DateTime& obj )noexcept;
-		Ω ToDate( TimePoint time )noexcept->TimePoint;
+		Γ friend std::ostream& operator<<( std::ostream &os, const Jde::DateTime& obj )ι;
+		Ω ToDate( TimePoint time )ι->TimePoint;
 	private:
 		TimePoint _time_point;
 		mutable up<time_t> _pTime{nullptr};
@@ -89,10 +89,10 @@ namespace Jde
 #define var const auto
 namespace Jde::Timezone
 {
-	Γ Duration GetGmtOffset( sv name, TimePoint utc, SRCE )noexcept(false);
-	Γ Duration TryGetGmtOffset( sv name, TimePoint utc, SRCE )noexcept;
-	Γ Duration EasternTimezoneDifference( TimePoint time, SRCE )noexcept(false);
-	Ξ EasternTimeNow(SRCE)noexcept(false)->TimePoint{ var now=Clock::now(); return now+EasternTimezoneDifference(now, sl); };
+	Γ Duration GetGmtOffset( sv name, TimePoint utc, SRCE )ε;
+	Γ Duration TryGetGmtOffset( sv name, TimePoint utc, SRCE )ι;
+	Γ Duration EasternTimezoneDifference( TimePoint time, SRCE )ε;
+	Ξ EasternTimeNow(SRCE)ε->TimePoint{ var now=Clock::now(); return now+EasternTimezoneDifference(now, sl); };
 }
 
 namespace Jde::TimeSpan
@@ -111,16 +111,16 @@ namespace Jde::TimeSpan
 
 namespace Jde::Chrono
 {
-	Ξ ToTimePoint( uint16 year, uint8 month, uint8 day, uint8 hour=0, uint8 minute=0, uint8 second=0, Duration nanoFraction=Duration{0} )noexcept->TimePoint{ return DateTime(year,month, day, hour, minute,second, nanoFraction).GetTimePoint(); }
-	Ξ EndOfMonth( TimePoint time )noexcept->TimePoint{ DateTime date{time}; return DateTime(date.Year()+(date.Month()==12 ? 1 : 0), date.Month()%12+1, 1).GetTimePoint()-1s; }
-	Ξ to_timepoint( sv iso )noexcept->TimePoint{ return DateTime{iso}.GetTimePoint(); }
-	Ξ EndOfDay( TimePoint time)noexcept->TimePoint{ DateTime date{time}; return DateTime(date.Year(), date.Month(), date.Day(), 23, 59, 59).GetTimePoint(); }
-	Ξ BeginningOfDay( TimePoint time)noexcept->TimePoint{ DateTime date{time}; return DateTime(date.Year(), date.Month(), date.Day(), 0, 0, 0).GetTimePoint(); }
-	Ξ BeginningOfMonth( TimePoint time={} )noexcept->TimePoint{ DateTime date{time==TimePoint{} ? Clock::now() : time }; return DateTime{date.Year(), date.Month(), 1}.GetTimePoint(); }
-	//Ξ Display( time_t t, bool seconds=false, bool milli=false )noexcept->string{ return DateTime{t}.LocalDisplay(seconds, milli); }
-	Ξ Display( TP t, bool seconds=false, bool milli=false )noexcept->string{ return DateTime{t}.LocalDisplay(seconds, milli); }
-	Ξ TimeDisplay( time_t t ) noexcept->string{ return DateTime{t}.TimeDisplay(); }
-	ẗ ToClock( typename V::time_point from )noexcept->typename K::time_point
+	Ξ ToTimePoint( uint16 year, uint8 month, uint8 day, uint8 hour=0, uint8 minute=0, uint8 second=0, Duration nanoFraction=Duration{0} )ι->TimePoint{ return DateTime(year,month, day, hour, minute,second, nanoFraction).GetTimePoint(); }
+	Ξ EndOfMonth( TimePoint time )ι->TimePoint{ DateTime date{time}; return DateTime(date.Year()+(date.Month()==12 ? 1 : 0), date.Month()%12+1, 1).GetTimePoint()-1s; }
+	Ξ to_timepoint( sv iso )ι->TimePoint{ return DateTime{iso}.GetTimePoint(); }
+	Ξ EndOfDay( TimePoint time)ι->TimePoint{ DateTime date{time}; return DateTime(date.Year(), date.Month(), date.Day(), 23, 59, 59).GetTimePoint(); }
+	Ξ BeginningOfDay( TimePoint time)ι->TimePoint{ DateTime date{time}; return DateTime(date.Year(), date.Month(), date.Day(), 0, 0, 0).GetTimePoint(); }
+	Ξ BeginningOfMonth( TimePoint time={} )ι->TimePoint{ DateTime date{time==TimePoint{} ? Clock::now() : time }; return DateTime{date.Year(), date.Month(), 1}.GetTimePoint(); }
+	//Ξ Display( time_t t, bool seconds=false, bool milli=false )ι->string{ return DateTime{t}.LocalDisplay(seconds, milli); }
+	Ξ Display( TP t, bool seconds=false, bool milli=false )ι->string{ return DateTime{t}.LocalDisplay(seconds, milli); }
+	Ξ TimeDisplay( time_t t ) ι->string{ return DateTime{t}.TimeDisplay(); }
+	ẗ ToClock( typename V::time_point from )ι->typename K::time_point
 	{
 		return K::now()-milliseconds{ duration_cast<milliseconds>(V::time_point::clock::now()-from) };
 	}

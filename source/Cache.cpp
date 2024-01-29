@@ -34,10 +34,10 @@ namespace Jde
 		return r.second;
 	}
 
-	static sp<LogTag> _logLevel = Logging::TagLevel( "cache" );
-	α Cache::LogLevel()ι->sp<LogTag> { return _logLevel; }
+	static sp<LogTag> _logTag{ Logging::Tag("cache") };
+	α Cache::LogTag()ι->sp<Jde::LogTag>{ return _logTag; }
 	Cache _instance;
-	α Cache::Instance()ι->Cache& { return _instance; }
+	α Cache::Instance()ι->Cache&{ return _instance; }
 
 	α Cache::InstanceClear( sv name )ι->bool
 	{

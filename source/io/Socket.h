@@ -12,7 +12,7 @@ namespace Jde::Threading{ struct InterruptibleThread; }
 namespace Jde::IO::Sockets
 {
 	namespace net=boost::asio;
-	Γ α LogLevel()noexcept->sp<LogTag>;
+	Γ α LogTag()ι->sp<Jde::LogTag>;
 	using SessionPK=uint32;
 	struct ISession
 	{
@@ -26,8 +26,8 @@ namespace Jde::IO::Sockets
 	{
 		virtual ~ISocket()=0;
 	protected:
-		ISocket( str settingsPath, PortType defaultPort )noexcept(false);
-		ISocket( PortType port )noexcept:Port{port}{}
+		ISocket( str settingsPath, PortType defaultPort )ι(false);
+		ISocket( PortType port )ι:Port{port}{}
 		const PortType Port;
 	};
 	inline ISocket::~ISocket(){}
@@ -35,10 +35,10 @@ namespace Jde::IO::Sockets
 	struct Γ IServerSocket : ISocket
 	{
 		virtual ~IServerSocket()=0;
-		virtual void RemoveSession( SessionPK id )noexcept{ unique_lock l{_sessionMutex}; _sessions.erase( id ); }
-		uint SessionCount()const noexcept{ shared_lock l{_sessionMutex}; return _sessions.size(); }
+		virtual void RemoveSession( SessionPK id )ι{ unique_lock l{_sessionMutex}; _sessions.erase( id ); }
+		uint SessionCount()const ι{ shared_lock l{_sessionMutex}; return _sessions.size(); }
 	protected:
-		IServerSocket( PortType port )noexcept:ISocket{port}{}
+		IServerSocket( PortType port )ι:ISocket{port}{}
 		std::atomic<SessionPK> _id{0};
 		flat_map<SessionPK,sp<ISession>> _sessions; mutable shared_mutex _sessionMutex;
 	};
@@ -48,7 +48,7 @@ namespace Jde::IO::Sockets
 	{
 		virtual ~IClientSocket()=0;
 	protected:
-		IClientSocket( str settingsPath, PortType defaultPort )noexcept(false);
+		IClientSocket( str settingsPath, PortType defaultPort )ι(false);
 		const string Host;
 	};
 }

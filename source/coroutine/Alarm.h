@@ -9,13 +9,16 @@ namespace Jde::Threading
 {
 	using boost::container::flat_multimap;
 	using namespace Coroutine;
+	namespace detail{ α AlarmLogTag()ι->sp<Jde::LogTag>; }
+
+#define _logTag detail::AlarmLogTag()
 	struct Γ AlarmAwait final : CancelAwait
 	{
-		AlarmAwait( TimePoint when, Handle& handle )noexcept:CancelAwait{handle}, _alarm{when}{}
-		AlarmAwait( TimePoint when )noexcept:_alarm{when}{}
-		bool await_ready()noexcept override{ return _alarm<Clock::now(); }
-		void await_suspend( coroutine_handle<Task::promise_type> h )noexcept override;
-		α await_resume()noexcept->AwaitResult override{ TRACE("({})AlarmAwait::await_resume"sv, std::this_thread::get_id()); return {}; }//returns the result value for co_await expression.
+		AlarmAwait( TimePoint when, Handle& handle )ι:CancelAwait{handle}, _alarm{when}{}
+		AlarmAwait( TimePoint when )ι:_alarm{when}{}
+		bool await_ready()ι override{ return _alarm<Clock::now(); }
+		void await_suspend( coroutine_handle<Task::promise_type> h )ι override;
+		α await_resume()ι->AwaitResult override{ TRACE("({})AlarmAwait::await_resume", std::this_thread::get_id()); return {}; }//returns the result value for co_await expression.
 	private:
 		TimePoint _alarm;
 	};
@@ -24,17 +27,17 @@ namespace Jde::Threading
 	{
 		using base=Threading::TWorker<Alarm>;
 		Alarm():base{}{};
-		~Alarm(){  DBG("Alarm::~Alarm"sv); }
-		static auto Wait( TimePoint t, Handle& handle )noexcept{ return AlarmAwait{t, handle}; }
-		static auto Wait( Duration d )noexcept{ return AlarmAwait{Clock::now()+d}; }
-		static void Cancel( Handle handle )noexcept;
+		~Alarm(){  TRACE("Alarm::~Alarm"sv); }
+		Ω Wait( TimePoint t, Handle& handle )ι{ return AlarmAwait{t, handle}; }
+		Ω Wait( Duration d )ι{ return AlarmAwait{Clock::now()+d}; }
+		static void Cancel( Handle handle )ι;
 		static constexpr sv Name{ "Alarm" };
 	private:
-		void Shutdown()noexcept override;
-		optional<bool> Poll()noexcept override;
-		static void Add( TimePoint t, HCoroutine h, Handle myHandle )noexcept;
+		void Shutdown()ι override;
+		optional<bool> Poll()ι override;
+		static void Add( TimePoint t, HCoroutine h, Handle myHandle )ι;
 		static constexpr Duration WakeDuration{5s};
-		static sp<LogTag> _logLevel;
 		friend AlarmAwait;
 	};
 }
+#undef _logTag

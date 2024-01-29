@@ -12,9 +12,14 @@
 namespace Jde
 {
 	IException::IException( string value, ELogLevel level, uint code, SL sl )ι:
+		IException{ value, level, code, nullptr, sl }
+	{}
+
+	IException::IException( string value, ELogLevel level, uint code, sp<LogTag>&& tag, SL sl )ι:
 		_stack{ sl },
 		_what{ move(value) },
 		Code( code ? code : Calc32RunTime(value) ),
+		_pTag{ move(tag) },
 		_level{ level }
 	{
 		BreakLog();
@@ -51,7 +56,7 @@ namespace Jde
 	α IException::BreakLog()Ι->void
 	{
 #ifndef NDEBUG
-		if( Level()!=ELogLevel::None && Level()>Logging::BreakLevel() )
+		if( /*Level()!=ELogLevel::None &&*/ Level()>Logging::BreakLevel() )
 		{
 			Log();
 			SetLevel( ELogLevel::NoLog );
@@ -61,7 +66,7 @@ namespace Jde
 	}
 	α IException::Log()Ι->void
 	{
-		if( Level()==ELogLevel::NoLog )
+		if( Level()==ELogLevel::NoLog || _pTag && Level()<_pTag->Level )
 			return;
 		var& sl = _stack.front();
 		const string fileName{ strlen(sl.file_name()) ? FileName(sl.file_name()) : "{Unknown}\0"sv };
@@ -94,11 +99,15 @@ namespace Jde
 	CodeException::CodeException( string value, std::error_code&& code, ELogLevel level, SL sl )ι:
 		IException{ move(value), level, (uint)code.value(), sl },
 		_errorCode{ move(code) }
-	{
-	}
+	{}
 
 	CodeException::CodeException( std::error_code&& code, ELogLevel level, SL sl )ι:
 		CodeException( format("{}-{}", code.value(), code.message()), move(code), level, sl )
+	{}
+
+	CodeException::CodeException( std::error_code&& code, sp<LogTag> tag, ELogLevel level, SL sl )ι:
+		IException{ format("{}-{}", code.value(), code.message()), level, (uint)code.value(), move(tag), sl },
+		_errorCode{ move(code) }
 	{}
 
 	BoostCodeException::BoostCodeException( const boost::system::error_code& c, sv msg, SL sl )ι:
@@ -188,16 +197,14 @@ namespace Jde
 		//if( Logging::Server() )
 		//	Logging::LogServer( Logging::Messages::Message{Logging::Message2{_level, _what, _sl.file_name(), _sl.function_name(), _sl.line()}, vector<string>{_args}} );
 
-		try
-		{
+		try{
 			var path = fs::temp_directory_path()/"ssl_error_response.json";
 			auto l{ Threading::UniqueLock(path.string()) };
 			std::ofstream os{ path };
 			os << Result;
 		}
-		catch( std::exception& e )
-		{
-			ERR( "could not save error result:  {}", e.what() );
+		catch( std::exception& e ){
+			ERRT( IO::Sockets::LogTag(), "could not save error result:  {}", e.what() );
 		}
 	}
 }

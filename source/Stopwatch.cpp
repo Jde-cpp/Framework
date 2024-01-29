@@ -14,7 +14,7 @@
 namespace Jde
 {
 	using namespace std::chrono;
-
+	static var _logTag{ Logging::Tag("stopwatch") };
 	Stopwatch::SDuration Stopwatch::_minimumToLog = 1s;
 
 	Stopwatch::Stopwatch( sv what, bool started, SL sl )ι:
@@ -83,7 +83,7 @@ namespace Jde
 					var& childElapsed = child.second;
 					os << "(" << child.first << "=" << FormatSeconds(childElapsed/index) << ")";
 				}
-				DBG( "Progress={}"sv, os.str() );
+				TRACE( "Progress={}"sv, os.str() );
 			}
 		}
 		_previousProgressElapsed = elapsed;
@@ -92,9 +92,9 @@ namespace Jde
 	α Stopwatch::Output( sv what, const SDuration& elapsed, bool logMemory, SL sl )ι->void
 	{
 		if( logMemory )
-			Logging::Log( Logging::Message{ELogLevel::Debug, "{{}) time:  {} - {} Gigs", sl}, what, FormatSeconds(elapsed), IApplication::MemorySize()/std::pow(2,30) );
+			DBGSL( "{{}) time:  {} - {} Gigs", what, FormatSeconds(elapsed), IApplication::MemorySize()/std::pow(2,30) );
 		else
-			Logging::Log( Logging::Message{ELogLevel::Debug, "({}) time:  {}", sl}, what, FormatSeconds(elapsed) );
+			DBGSL( "({}) time:  {}", what, FormatSeconds(elapsed) );
 	}
 	α Stopwatch::Finish( bool /*remove=true*/ )ι->void
 	{

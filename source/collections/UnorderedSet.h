@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <unordered_set>
 #include <shared_mutex>
 
@@ -13,25 +13,25 @@ namespace Jde
 	{
 		typedef unordered_set<TKey> base;
 		UnorderedSet()=default;
-		UnorderedSet( const unordered_set<TKey>& values )noexcept:base( values ){};
-		UnorderedSet( const UnorderedSet<TKey>& values )noexcept;
+		UnorderedSet( const unordered_set<TKey>& values )ι:base( values ){};
+		UnorderedSet( const UnorderedSet<TKey>& values )ι;
 		UnorderedSet& operator=( base&& x ){ LOCK; base::clear(); for( var& i : x)base::emplace(i); x.clear(); return *this; }
-		unordered_set<TKey> ToSet()const noexcept;
-		uint erase(const TKey& item)noexcept;
-		size_t EraseIf( function<bool(const TKey&)> func )noexcept;
-		bool IfEmpty( function<void()> func )noexcept;
-		uint size()const noexcept;
-		bool contains( const TKey& x )const noexcept{ LOCK;  return base::contains( x ); }
-		void clear()noexcept{ LOCK;  return base::clear(); }
+		unordered_set<TKey> ToSet()Ι;
+		uint erase(const TKey& item)ι;
+		size_t EraseIf( function<bool(const TKey&)> func )ι;
+		bool IfEmpty( function<void()> func )ι;
+		uint size()Ι;
+		bool contains( const TKey& x )Ι{ LOCK;  return base::contains( x ); }
+		void clear()ι{ LOCK;  return base::clear(); }
 		template<class... Args >
-		bool emplace( Args&&... args )noexcept;
-		uint ForEach( std::function<void(const TKey& key)> func )const noexcept(false);
-		bool MoveIn( TKey&& id )noexcept{ LOCK; return base::emplace( move(id) ).second; }
+		bool emplace( Args&&... args )ι;
+		uint ForEach( std::function<void(const TKey& key)> func )Ε;
+		bool MoveIn( TKey&& id )ι{ LOCK; return base::emplace( move(id) ).second; }
 	private:
 		mutable shared_mutex _mutex;
 	};
 	template<typename TKey>
-	UnorderedSet<TKey>::UnorderedSet( const UnorderedSet<TKey>& values )noexcept
+	UnorderedSet<TKey>::UnorderedSet( const UnorderedSet<TKey>& values )ι
 	{
 		values.ForEach( [&](auto key)
 		{
@@ -39,7 +39,7 @@ namespace Jde
 		});
 	}
 	template<typename TKey>
-	unordered_set<TKey> UnorderedSet<TKey>::ToSet()const noexcept
+	unordered_set<TKey> UnorderedSet<TKey>::ToSet()Ι
 	{
 		unordered_set<TKey> copy;
 		LOCK;
@@ -48,13 +48,13 @@ namespace Jde
 		return copy;
 	}
 	template<typename TKey>
-	uint UnorderedSet<TKey>::erase(const TKey& item)noexcept
+	uint UnorderedSet<TKey>::erase(const TKey& item)ι
 	{
 		LOCK;
 		return base::erase( item );//assume compare doesn't throw
 	}
 	template<typename TKey>
-	size_t UnorderedSet<TKey>::EraseIf( function<bool(const TKey&)> func )noexcept
+	size_t UnorderedSet<TKey>::EraseIf( function<bool(const TKey&)> func )ι
 	{
 		LOCK;
 		size_t count = 0;
@@ -71,7 +71,7 @@ namespace Jde
 		return count;
 	}
 	template<typename TKey>
-	bool UnorderedSet<TKey>::IfEmpty( function<void()> func )noexcept
+	bool UnorderedSet<TKey>::IfEmpty( function<void()> func )ι
 	{
 		LOCK;
 		bool isEmpty = base::size()==0;
@@ -80,7 +80,7 @@ namespace Jde
 		return isEmpty;
 	}
 	template<typename TKey>
-	uint UnorderedSet<TKey>::size()const noexcept
+	uint UnorderedSet<TKey>::size()Ι
 	{
 		std::shared_lock<shared_mutex> l(_mutex);
 		return base::size();
@@ -88,15 +88,14 @@ namespace Jde
 
 	template<typename TKey>
 	template<class... Args >
-	bool UnorderedSet<TKey>::emplace( Args&&... args )noexcept
+	bool UnorderedSet<TKey>::emplace( Args&&... args )ι
 	{
 		LOCK;
 		const auto result = base::emplace( args... );
 		return result.second;
 	}
 	template<typename TKey>
-	uint UnorderedSet<TKey>::ForEach( std::function<void(const TKey& key)> func )const noexcept(false)
-	{
+	uint UnorderedSet<TKey>::ForEach( std::function<void(const TKey& key)> func )Ε{
 		std::shared_lock<shared_mutex> l(_mutex);
 		uint count = size();
 		for( const auto& value : *this )

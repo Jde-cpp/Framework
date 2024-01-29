@@ -153,12 +153,6 @@
     <ClInclude Include="io\Parser.h">
       <Filter>Headers\io</Filter>
     </ClInclude>
-    <ClInclude Include="io\sockets\SessionCallbacks.h">
-      <Filter>Headers\io\sockets</Filter>
-    </ClInclude>
-    <ClInclude Include="io\sockets\Socket.h">
-      <Filter>Headers\io\sockets</Filter>
-    </ClInclude>
     <ClInclude Include="math\EMatrix.h">
       <Filter>Headers\math</Filter>
     </ClInclude>
@@ -227,18 +221,6 @@
     </ClInclude>
     <ClInclude Include="log\server\EtwSink.h">
       <Filter>Headers\log\server</Filter>
-    </ClInclude>
-    <ClInclude Include="io\sockets\Server.h">
-      <Filter>Headers\io\sockets</Filter>
-    </ClInclude>
-    <ClInclude Include="io\sockets\Client.h">
-      <Filter>Headers\io\sockets</Filter>
-    </ClInclude>
-    <ClInclude Include="io\sockets\ProtoServer.h">
-      <Filter>Headers\io\sockets</Filter>
-    </ClInclude>
-    <ClInclude Include="io\sockets\ProtoClient.h">
-      <Filter>Headers\io\sockets</Filter>
     </ClInclude>
     <ClInclude Include="log\server\proto\messages.pb.h">
       <Filter>Headers\log\server\proto</Filter>
@@ -375,6 +357,27 @@
     <ClInclude Include="coroutine\Lock.h">
       <Filter>Headers\coroutine</Filter>
     </ClInclude>
+    <ClInclude Include="io\AsioContextThread.h">
+      <Filter>Headers\io</Filter>
+    </ClInclude>
+    <ClInclude Include="io\sockets\Client.h">
+      <Filter>Headers\io</Filter>
+    </ClInclude>
+    <ClInclude Include="io\sockets\ProtoClient.h">
+      <Filter>Headers\io</Filter>
+    </ClInclude>
+    <ClInclude Include="io\sockets\ProtoServer.h">
+      <Filter>Headers\io</Filter>
+    </ClInclude>
+    <ClInclude Include="io\sockets\Server.h">
+      <Filter>Headers\io</Filter>
+    </ClInclude>
+    <ClInclude Include="io\sockets\SessionCallbacks.h">
+      <Filter>Headers\io</Filter>
+    </ClInclude>
+    <ClInclude Include="io\Socket.h">
+      <Filter>Headers\io</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Headers">
@@ -389,9 +392,6 @@
     </Filter>
     <Filter Include="Headers\io">
       <UniqueIdentifier>{204da0f0-0b8c-4319-b48f-268339f1925e}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Headers\io\sockets">
-      <UniqueIdentifier>{f6d0f452-bf96-4861-b070-b8212b54fac1}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source\threading">
       <UniqueIdentifier>{ed864d81-96b0-457b-9981-da2f62661ff5}</UniqueIdentifier>

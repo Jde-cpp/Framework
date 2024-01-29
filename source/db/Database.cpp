@@ -15,7 +15,8 @@ namespace Jde
 	using boost::container::flat_map;
 	using nlohmann::json;
 	using nlohmann::ordered_json;
-	static var& _logLevel{ Logging::TagLevel("sql") };
+	static var _logTag{ Logging::Tag("sql") };
+	α DB::SqlTag()ι->sp<LogTag>{ return _logTag; }
 
 	α DB::ToParamString( uint c )->string
 	{
@@ -44,19 +45,16 @@ namespace Jde
 			os << sql.substr( prevIndex );
 		return os.str();
 	}
-	α DB::Log( sv sql, const vector<object>* pParameters, SL sl )ι->void
-	{
-		var l = _logLevel->Level;
-		Logging::Log( Logging::Message{l, LogDisplay(sql, pParameters, {}), sl} );
+	α DB::Log( sv sql, const vector<object>* pParameters, SL sl )ι->void{
+		Logging::Log( Logging::Message{ELogLevel::Trace, LogDisplay(sql, pParameters, {}), sl} );
 	}
 
 	α DB::Log( sv sql, const vector<object>* pParameters, ELogLevel level, string error, SL sl )ι->void
 	{
 		Logging::Log( Logging::Message{level, LogDisplay(sql, pParameters, move(error)), sl} );
 	}
-	α DB::LogNoServer( string sql, const vector<object>* pParameters, ELogLevel level, string error, SL sl )ι->void
-	{
-		Logging::LogNoServer( Logging::Message{level, LogDisplay(move(sql), pParameters, move(error)), sl} );
+	α DB::LogNoServer( string sql, const vector<object>* pParameters, ELogLevel level, string error, SL sl )ι->void{
+		Logging::LogNoServer( Logging::Message{level, LogDisplay(move(sql), pParameters, move(error)), sl}, _logTag );
 	}
 
 	class DataSourceApi
@@ -94,10 +92,10 @@ namespace Jde
 	}
 	α DB::CleanDataSources()ι->void
 	{
-		DBG( "CleanDataSources"sv );
+		TRACE( "CleanDataSources"sv );
 		DB::ClearQLDataSource();
 		_pDefault = nullptr;
-		DBG( "_pDefault=nullptr" );
+		TRACE( "_pDefault=nullptr" );
 		for( auto p=_pDBShutdowns->begin(); p!=_pDBShutdowns->end(); p=_pDBShutdowns->erase(p) )
 			(*p)();
 		_pDBShutdowns = nullptr;
@@ -110,7 +108,7 @@ namespace Jde
 			std::unique_lock l{_dataSourcesMutex};
 			_pDataSources = nullptr;
 		}
-		DBG( "~CleanDataSources"sv );
+		TRACE( "~CleanDataSources"sv );
 	}
 	#define db DataSource()
 	DB::Schema _schema;

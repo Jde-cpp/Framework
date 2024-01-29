@@ -8,9 +8,10 @@
 #include <jde/App.h>
 
 #define var const auto
-namespace Jde::Settings
-{
+#define Φ Γ auto
+namespace Jde::Settings{
 	α Path()ι->fs::path;
+	Φ LogTag()ι->sp<LogTag>&;
 	struct JsonNumber
 	{
 		using Variant=std::variant<double,_int,uint>;
@@ -45,7 +46,7 @@ namespace Jde::Settings
 		up<json> _pJson;
 	};
 
-	Γ α Global()ι->Container&;
+	Φ Global()ι->Container&;
 
 	α FileStem()ι->string;
 	#define $ template<> Ξ
@@ -104,16 +105,13 @@ namespace Jde::Settings
 		return p ? optional<fs::path>(*p) : nullopt;
 	}
 
-	Ŧ Container::Get( sv path )Ι->optional<T>
-	{
+	Ŧ Container::Get( sv path )Ι->optional<T>{
 		auto p = FindPath( path );
-		try
-		{
+		try{
 			return p ? optional<T>{ p->get<T>() } : nullopt;
 		}
-		catch( const nlohmann::detail::type_error& e )
-		{
-			DBG_ONCE( "({}) - {}", path, e.what() );
+		catch( const nlohmann::detail::type_error& e ){
+			LOG_ONCE( ELogLevel::Debug, LogTag(), "({}) - {}", path, e.what() );
 			return nullopt;
 		}
 	}
@@ -131,18 +129,16 @@ namespace Jde::Settings
 
 		return values;
 	}
-	//Γ α Set( sv path, path value )ι->void;
+	//Φ Set( sv path, path value )ι->void;
 
 	α Save( const json& j, sv what, SRCE )ε->void;
 	α Set( sv what, const Container::Variant& v, bool save=true, SRCE )ε->void;
 
 	Ŧ TryArray( sv path, vector<T> dflt={} )ι{ return Global().TryArray<T>(path, dflt); }
 
-	Ŧ Container::TryArray( sv path, vector<T> dflt )ι->vector<T>
-	{
+	Ŧ Container::TryArray( sv path, vector<T> dflt )ι->vector<T>{
 		vector<T> values;
-		if( auto p = FindPath(path); p && p->is_array() )
-		{
+		if( auto p = FindPath(path); p && p->is_array() ){
 			for( var& i : *p )
 				values.push_back( i.get<T>() );
 		}
@@ -229,3 +225,4 @@ namespace Jde::Settings
 }
 #undef var
 #undef $
+#undef Φ

@@ -1,8 +1,9 @@
 ﻿#include "Table.h"
 #include <jde/Str.h>
+#include "Schema.h"
 #include "../DataType.h"
 #include "../Syntax.h"
-#include "Schema.h"
+#include "../../Settings.h"
 
 #define var const auto
 
@@ -181,8 +182,10 @@ namespace Jde::DB
 			}
 			else if( attribute=="customInsertProc" )
 				CustomInsertProc = value.get<bool>();
-			else
+			else{
+				var _logTag = Settings::LogTag();
 				ASSERT_DESC( attribute=="usePrefix", format("Unknown table attribute:  '{}'", attribute) );
+			}
 		}
 	}
 

@@ -4,7 +4,8 @@
 
 namespace Jde::Threading
 {
-	sp<LogTag> Alarm::_logLevel{ Logging::TagLevel("alarm") };
+	static sp<Jde::LogTag> _logTag{ Logging::Tag("alarm") };
+	namespace detail{ α AlarmLogTag()ι->sp<Jde::LogTag>{return _logTag;} }
 	Alarm _instance;
 	flat_multimap<TimePoint,tuple<Handle,HCoroutine>> _coroutines; mutex _coroutineMutex;
 	std::condition_variable _cv; mutex _mtx;
@@ -21,7 +22,7 @@ namespace Jde::Threading
 			_coroutines.emplace( t, make_tuple(myHandle, h) );
 		}
 		_instance.WakeUp();
-		LOG( "({})Alarm::Add({})"sv, myHandle, Chrono::ToString(Clock::now()-t) );
+		TRACE( "({})Alarm::Add({})"sv, myHandle, Chrono::ToString(Clock::now()-t) );
 		if( t-Clock::now()<WakeDuration )
 		{
 			std::unique_lock<std::mutex> lk( _mtx );
@@ -34,12 +35,12 @@ namespace Jde::Threading
 		unique_lock l{ _coroutineMutex };
 		if( auto p = std::find_if(_coroutines.begin(), _coroutines.end(), [h](var x){ return get<0>(x.second)==h;}); p!=_coroutines.end() )
 		{
-			LOG( "({})Alarm::Cancel()"sv, get<0>(p->second) );
+			TRACE( "({})Alarm::Cancel()"sv, get<0>(p->second) );
 			get<1>( p->second ).destroy();
 			_coroutines.erase( p );
 		}
 		else
-			LOG( "Could not find handle {}."sv, h );
+			WARN( "Could not find handle {}."sv, h );
 	}
 
 	α Next()ι->optional<TimePoint>
@@ -57,7 +58,7 @@ namespace Jde::Threading
 			var next = Next().value_or(dflt);
 			var until = std::min( dflt, next );
 			if( ++i%10==0 )
-				LOG( "Alarm wait until:  {}, calls={}"sv, LocalTimeDisplay(until, true, true), Calls() );
+				TRACE( "Alarm wait until:  {}, calls={}"sv, LocalTimeDisplay(until, true, true), Calls() );
 			/*var status =*/ _cv.wait_for( lk, until-now );
 		}
 		unique_lock l{ _coroutineMutex };

@@ -8,21 +8,21 @@
 
 namespace Jde::IO::Sockets
 {
-	static var _logLevel{ Logging::TagLevel("sockets") };
-	α LogLevel()noexcept->sp<LogTag>{ return _logLevel; }
+	static var _logTag{ Logging::Tag("net") };
+	α LogTag()ι->sp<Jde::LogTag>{ return _logTag; }
 
 	using std::system_error;
-	PortType CheckPort( PortType v )noexcept(false)
+	PortType CheckPort( PortType v )ε
 	{
 		THROW_IF( !v, "port==0" );
 		return v;
 	}
 
-	ISocket::ISocket( str settingsPath, PortType defaultPort )noexcept(false):
+	ISocket::ISocket( str settingsPath, PortType defaultPort )ε:
 		Port{ CheckPort(Settings::Get<PortType>(settingsPath+"/port").value_or(defaultPort)) }
 	{}
 
-	IClientSocket::IClientSocket( str settingsPath, PortType defaultPort )noexcept(false):
+	IClientSocket::IClientSocket( str settingsPath, PortType defaultPort )ε:
 		ISocket{ settingsPath, defaultPort },
 		Host{ Settings::Get<string>(settingsPath+"/host").value_or("localhost") }
 	{
@@ -31,6 +31,6 @@ namespace Jde::IO::Sockets
 
 	IClientSocket::~IClientSocket()
 	{
-		LOG( "IClientSocket::~IClientSocket" );
+		TRACE( "IClientSocket::~IClientSocket" );
 	}
 }

@@ -10,9 +10,10 @@
 
 #define var const auto
 
-namespace Jde
-{
-	static sp<LogTag> _logLevel = Logging::TagLevel( "status" );
+namespace Jde{
+	static sp<LogTag> _logTag = Logging::Tag( "app" );
+	α AppTag()ι->sp<LogTag>{ return _logTag; }
+
 
 	sp<IApplication> IApplication::_pInstance;
 	up<string> IApplication::_pApplicationName;
@@ -28,9 +29,9 @@ namespace Jde
 	vector<sp<IShutdown>> IApplication::_shutdowns;
 
 	const TimePoint Start=Clock::now();
-	TimePoint IApplication::StartTime()noexcept{ return Start; }
+	TimePoint IApplication::StartTime()ι{ return Start; }
 
-	flat_set<string> IApplication::BaseStartup( int argc, char** argv, sv appName, string serviceDescription/*, sv companyName*/ )noexcept(false)//no config file
+	flat_set<string> IApplication::BaseStartup( int argc, char** argv, sv appName, string serviceDescription/*, sv companyName*/ )ε//no config file
 	{
 		{
 			ostringstream os;
@@ -80,10 +81,10 @@ namespace Jde
 
 	std::condition_variable _workerCondition; mutex _workerConditionMutex;
 	int _exitReason{0};
-	α IApplication::Exit( int reason )noexcept->void{ _exitReason = reason; }
-	α IApplication::ShuttingDown()noexcept->bool{ return _exitReason; }
+	α IApplication::Exit( int reason )ι->void{ _exitReason = reason; }
+	α IApplication::ShuttingDown()ι->bool{ return _exitReason; }
 
-	α IApplication::AddActiveWorker( Threading::IPollWorker* p )noexcept->void
+	α IApplication::AddActiveWorker( Threading::IPollWorker* p )ι->void
 	{
 #ifndef _MSC_VER
 		ASSERT( false );//need to implement signals in linux for _workerCondition.
@@ -101,14 +102,14 @@ namespace Jde
 			}
 		}
 	}
-	α IApplication::RemoveActiveWorker( Threading::IPollWorker* p )noexcept->void
+	α IApplication::RemoveActiveWorker( Threading::IPollWorker* p )ι->void
 	{
 		AtomicGuard l{ _activeWorkersMutex };
 		_activeWorkers.erase( remove(_activeWorkers.begin(), _activeWorkers.end(), p), _activeWorkers.end() );
 	}
-	α IApplication::Pause()noexcept->void
+	α IApplication::Pause()ι->void
 	{
-		LOG( "Pausing main thread." );
+		INFO( "Pausing main thread." );
 		while( !_exitReason )
 		{
 			AtomicGuard l{ _activeWorkersMutex };
@@ -146,7 +147,7 @@ namespace Jde
 		IApplication::Shutdown();
 	}
 
-	α IApplication::Shutdown()noexcept->void
+	α IApplication::Shutdown()ι->void
 	{
 		INFO( "Waiting for process to complete. {}"sv, OSApp::ProcessId() );
 		GarbageCollect();
@@ -178,16 +179,16 @@ namespace Jde
 			}
 			std::this_thread::yield(); //std::this_thread::sleep_for( 2s );
 		}
-		DBG( "Leaving Application::Wait"sv );
+		TRACE( "Leaving Application::Wait"sv );
 	}
-	α IApplication::AddThread( sp<Threading::InterruptibleThread> pThread )noexcept->void
+	α IApplication::AddThread( sp<Threading::InterruptibleThread> pThread )ι->void
 	{
 		TRACE( "Adding Backgound thread"sv );
 		lg _{_threadMutex};
 		_pBackgroundThreads->push_back( pThread );
 	}
 
-	α IApplication::RemoveThread( sv name )noexcept->sp<Threading::InterruptibleThread>
+	α IApplication::RemoveThread( sv name )ι->sp<Threading::InterruptibleThread>
 	{
 		lg _{_threadMutex};
 		auto ppThread = find_if( _pBackgroundThreads->begin(), _pBackgroundThreads->end(), [name](var& p){ return p->Name==name;} );
@@ -196,7 +197,7 @@ namespace Jde
 			_pBackgroundThreads->erase( ppThread );
 		return p;
 	}
-	α IApplication::RemoveThread( sp<Threading::InterruptibleThread> pThread )noexcept->void
+	α IApplication::RemoveThread( sp<Threading::InterruptibleThread> pThread )ι->void
 	{
 		lg _{_threadMutex};
 		_pDeletedThreads->push_back( pThread );
@@ -210,7 +211,7 @@ namespace Jde
 			++ppThread;
 		}
 	}
-	α IApplication::GarbageCollect()noexcept->void
+	α IApplication::GarbageCollect()ι->void
 	{
 		lg _{_threadMutex};
 		for( auto ppThread = _pDeletedThreads->begin(); ppThread!=_pDeletedThreads->end(); )
@@ -220,19 +221,19 @@ namespace Jde
 		}
 	}
 
-	α IApplication::Add( sp<void> pShared )noexcept->void
+	α IApplication::Add( sp<void> pShared )ι->void
 	{
 		lg _{ _objectMutex };
 		_objects.push_back( pShared );
 	}
 
-	α IApplication::AddShutdown( sp<IShutdown> pShared )noexcept->void
+	α IApplication::AddShutdown( sp<IShutdown> pShared )ι->void
 	{
 		lg _{ _objectMutex };
 		//_objects.push_back( pShared ); not sure why objects would be added also.
 		_shutdowns.push_back( move(pShared) );
 	}
-	α IApplication::RemoveShutdown( sp<IShutdown> pShutdown )noexcept->void
+	α IApplication::RemoveShutdown( sp<IShutdown> pShutdown )ι->void
 	{
 		Remove( pShutdown );
 		lg _{ _objectMutex };
@@ -242,7 +243,7 @@ namespace Jde
 			WARN( "Could not find shutdown"sv );
 	}
 
-	α IApplication::Remove( sp<void> pShared )noexcept->void
+	α IApplication::Remove( sp<void> pShared )ι->void
 	{
 		lg _{ _objectMutex };
 		for( auto ppObject = _objects.begin(); ppObject!=_objects.end(); ++ppObject )
@@ -255,11 +256,11 @@ namespace Jde
 		}
 	}
 	up<vector<function<void()>>> _pShutdownFunctions = mu<vector<function<void()>>>();
-	α IApplication::AddShutdownFunction( function<void()>&& shutdown )noexcept->void
+	α IApplication::AddShutdownFunction( function<void()>&& shutdown )ι->void
 	{
 		_pShutdownFunctions->push_back( shutdown );
 	}
-	α IApplication::Cleanup()noexcept->void
+	α IApplication::Cleanup()ι->void
 	{
 		_pBackgroundThreads = nullptr;
 		_pDeletedThreads = nullptr;
@@ -271,11 +272,11 @@ namespace Jde
 		_pInstance = nullptr;
 		_pShutdownFunctions = nullptr;
 	}
-	α IApplication::ApplicationDataFolder()noexcept->fs::path
+	α IApplication::ApplicationDataFolder()ι->fs::path
 	{
 		return ProgramDataFolder()/OSApp::CompanyRootDir()/OSApp::ProductName();
 	}
-	α IApplication::IsConsole()noexcept->bool
+	α IApplication::IsConsole()ι->bool
 	{
 		return OSApp::Args().find( "-c" )!=OSApp::Args().end();
 	}

@@ -7,19 +7,20 @@
 namespace Jde::Logging
 {
 	sp<Logging::IServerSink> _pServerSink;//IServerSink=ServerSink=TProtoClient=ProtoClient=ProtoClientSession
-	static var _logLevel{ Logging::TagLevel("logServer") };
+	static sp<LogTag> _logTag{ Tag("appServer") };
+
 	namespace Server
 	{
 		bool _enabled{ Settings::Get<PortType>("logging/server/port").value_or(0)>0 };
-		atomic<ELogLevel> _logLevel{ _enabled ? Settings::Get<ELogLevel>("logging/server/level").value_or(ELogLevel::Error) : ELogLevel::None };
+		atomic<ELogLevel> _level{ _enabled ? Settings::Get<ELogLevel>("logging/server/level").value_or(ELogLevel::Error) : ELogLevel::NoLog };
 
 #define OR(a,b) auto p=_pServerSink; return p ? p->a : b;
 		α ApplicationId()ι->ApplicationPK{OR(ApplicationId(),0);}
 		α InstanceId()ι->ApplicationInstancePK{OR(InstanceId(),0);}
 		α IsLocal()ι->bool{ OR(IsLocal(),false); }
 
-		α Level()ι->ELogLevel{ return _logLevel; }
-		α SetLevel( ELogLevel x )ι->void{ _logLevel = x; }
+		α Level()ι->ELogLevel{ return _level; }
+		α SetLevel( ELogLevel x )ι->void{ _level = x; }
 		α Set( sp<Logging::IServerSink>&& p )ι->void{ _pServerSink = move(p); }
 		α Destroy()ι->void{
 			if( !_pServerSink )
@@ -58,11 +59,11 @@ namespace Jde::Logging
 
 	IServerSink::~IServerSink()
 	{
-		LOGX( "~IServerSink" );
+		TRACEX( "~IServerSink" );
 		Server::Set( nullptr );
-		LOGX( "_pServerSink = nullptr" );
+		TRACEX( "_pServerSink = nullptr" );
 	}
-	ServerSink::~ServerSink(){ LOGX("~ServerSink - Application Socket"); }
+	ServerSink::~ServerSink(){ TRACEX("~ServerSink - Application Socket"); }
 	α ServerSink::Create(bool wait/*=false*/)ι->Task{
 		DBG( "ServerSink::Create" );
 		while( !_pServerSink ){
@@ -84,7 +85,7 @@ namespace Jde::Logging
 
 	ServerSink::ServerSink()ε:
 		ProtoBase{ "logging/server", 0 }{//don't wan't default port, no-port=don't use
-		LOG( "ServerSink::ServerSink( Host='{}', Port='{}' )", Host, Port );
+		TRACE( "ServerSink::ServerSink( Host='{}', Port='{}' )", Host, Port );
 	}
 
 	α ServerSink::OnConnected()ι->void{}
@@ -93,7 +94,7 @@ namespace Jde::Logging
 	α ServerSink::OnDisconnect()ι->void
 	{
 		Server::Set( nullptr );
-		LOG( "Disconnected from LogServer."sv );
+		TRACE( "Disconnected from LogServer."sv );
 /*		_messagesSent.clear();
 		_filesSent.clear();
 		_functionsSent.clear();
@@ -111,7 +112,7 @@ namespace Jde::Logging
 			if( item.has_strings() )
 			{
 				var& strings = item.strings();
-				LOG( "received '{}' strings", strings.messages_size()+strings.files_size()+strings.functions_size()+strings.threads_size() );
+				TRACE( "received '{}' strings", strings.messages_size()+strings.files_size()+strings.functions_size()+strings.threads_size() );
 				for( auto i=0; i<strings.messages_size(); ++i )
 					_messagesSent.emplace( strings.messages(i) );
 				for( auto i=0; i<strings.files_size(); ++i )
@@ -122,11 +123,9 @@ namespace Jde::Logging
 					_threadsSent.emplace( strings.threads(i) );
 				_stringsLoaded = true;
 			}
-			else if( item.has_acknowledgement() )
-			{
+			else if( item.has_acknowledgement() ){
 				var& ack = item.acknowledgement();
-				Logging::LogNoServer( Logging::MessageBase("ServerSink::ServerSink( Host='{}', Port='{}' InstanceId={} )", ELogLevel::Information, MY_FILE, __func__, __LINE__), Host, Port, ack.instanceid() );
-
+				LOGX( ELogLevel::Information, _logTag, "Connected to LogServer. Host='{}', Port='{}' InstanceId={} )", Host, Port, ack.instanceid() );
 				auto p = mu<Proto::Instance>();
 				p->set_application( _applicationName = IApplication::ApplicationName() );
 				p->set_host( IApplication::HostName() );
@@ -148,14 +147,14 @@ namespace Jde::Logging
 			{
 				var& levels = item.loglevels();
 				Logging::SetLogLevel( (ELogLevel)levels.client(), (ELogLevel)levels.server() );
-				INFO_ONCE( "'{}' started at '{}'"sv, _applicationName, ToIsoString(Logging::StartTime()) );
+				LOG_ONCE( ELogLevel::Information, _logTag, "'{}' started at '{}'"sv, _applicationName, ToIsoString(Logging::StartTime()) );
 			}
 			else if( item.has_custom() )
 			{
 				if( _customFunction )
 					_customFunction( item.mutable_custom()->requestid(), move(*item.mutable_custom()->mutable_message()) );
 				else
-					ERR_ONCE( "No custom function set" );
+					LOG_ONCE( ELogLevel::Error, _logTag, "No custom function set" );
 			}
 			else if( item.has_session_info() )
 			{

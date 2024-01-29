@@ -17,15 +17,15 @@ namespace Jde::Threading
 	/*handle signals, configuration*/
 	struct Γ IWorker : IShutdown, std::enable_shared_from_this<IWorker>
 	{
-		IWorker( sv name )noexcept;
+		IWorker( sv name )ι;
 		virtual ~IWorker()=0;
-		β Initialize()noexcept->void;
-		α Shutdown()noexcept->void override;
-		α HasThread()noexcept->bool{ return _pThread!=nullptr; }
-		β Run( stop_token st )noexcept->void;
+		β Initialize()ι->void;
+		α Shutdown()ι->void override;
+		α HasThread()ι->bool{ return _pThread!=nullptr; }
+		β Run( stop_token st )ι->void;
 		sv NameInstance;
 		const uint8 ThreadCount;
-		α StartThread()noexcept->void;
+		α StartThread()ι->void;
 	protected:
 		static sp<IWorker> _pInstance;
 		up<jthread> _pThread;
@@ -33,14 +33,14 @@ namespace Jde::Threading
 	};
 	struct Γ IPollWorker : IWorker, IPollster
 	{
-		IPollWorker( sv name )noexcept:IWorker{ name }{}
-		virtual optional<bool> Poll()noexcept=0;
-		void WakeUp()noexcept override;
-		void Sleep()noexcept override;
+		IPollWorker( sv name )ι:IWorker{ name }{}
+		virtual optional<bool> Poll()ι=0;
+		void WakeUp()ι override;
+		void Sleep()ι override;
 	protected:
-		void Run( stop_token st )noexcept override;
+		void Run( stop_token st )ι override;
 		atomic<TimePoint> _lastRequest;
-		α Calls()noexcept->uint{ return _calls; }
+		α Calls()ι->uint{ return _calls; }
 	private:
 		atomic<uint> _calls{0};
 	};
@@ -48,28 +48,28 @@ namespace Jde::Threading
 	template<class TDerived>
 	struct TWorker /*abstract*/: IPollWorker
 	{
-		TWorker()noexcept:IPollWorker{ TDerived::Name }{}
+		TWorker()ι:IPollWorker{ TDerived::Name }{}
 	protected:
-		Ω Start()noexcept->sp<IWorker>;
+		Ω Start()ι->sp<IWorker>;
 	};
 
 	template<class TArg, class TDerived>
 	struct IQueueWorker /*abstract*/: TWorker<TDerived>
 	{
 		using base=TWorker<TDerived>; using Class=IQueueWorker<TArg,TDerived>;
-		Ω Push( TArg&& x )noexcept->void;
-		β HandleRequest( TArg&& x )noexcept->void=0;
-		β SetWorker( TArg& x )noexcept->void=0;
+		Ω Push( TArg&& x )ι->void;
+		β HandleRequest( TArg&& x )ι->void=0;
+		β SetWorker( TArg& x )ι->void=0;
 	protected:
-		α Poll()noexcept->optional<bool>  override;
-		α Queue()noexcept->QueueMove<TArg>&{ return _queue;}
+		α Poll()ι->optional<bool>  override;
+		α Queue()ι->QueueMove<TArg>&{ return _queue;}
 	private:
-		static sp<TDerived> Start()noexcept{ return dynamic_pointer_cast<TDerived>(base::Start()); }
+		static sp<TDerived> Start()ι{ return dynamic_pointer_cast<TDerived>(base::Start()); }
 		QueueMove<TArg> _queue;
 	};
 
 
-	Ŧ TWorker<T>::Start()noexcept->sp<IWorker>
+	Ŧ TWorker<T>::Start()ι->sp<IWorker>
 	{
 		AtomicGuard l{ _mutex };
 		if( !_pInstance || !_pInstance->HasThread() )
@@ -89,7 +89,7 @@ namespace Jde::Threading
 	}
 
 #define $ template<class TArg, class TDerived> α IQueueWorker<TArg,TDerived>
-	$::Push( TArg&& x )noexcept->void
+	$::Push( TArg&& x )ι->void
 	{
 		if( auto p=Start(); p )
 		{
@@ -100,7 +100,7 @@ namespace Jde::Threading
 			p->Queue().Push( move(x) );
 		}
 	}
-	$::Poll()noexcept->optional<bool>
+	$::Poll()ι->optional<bool>
 	{
 		bool handled = false;
 		if( auto p = _queue.Pop(); p )

@@ -8,12 +8,13 @@ namespace Jde::IO
 
 	struct __declspec( dllexport ) AsioContextThread final //: IShutdown
 	{
-		static sp<AsioContextThread> Instance()noexcept;
-		net::io_context& Context()noexcept{ return _ioc; }
-		~AsioContextThread(){ DBG( "~AsioContextThread" ); _ioc.stop(); _thread.join(); }
+		static sp<AsioContextThread> Instance()ι;
+		net::io_context& Context()ι{ return _ioc; }
+		~AsioContextThread(){ TRACET( LogTag(), "~AsioContextThread" ); _ioc.stop(); _thread.join(); }
 	private:
-		AsioContextThread()noexcept;
-		void Run()noexcept;
+		auto LogTag()ι->sp<Jde::LogTag>;
+		AsioContextThread()ι;
+		void Run()ι;
 		net::io_context _ioc;
 		net::executor_work_guard<boost::asio::io_context::executor_type> _keepAlive;
 		std::thread _thread;
