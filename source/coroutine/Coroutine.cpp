@@ -98,7 +98,7 @@ namespace Jde::Coroutine
 			unique_lock l{ _mtx };
 			if( !_pInstance )
 			{
-				INFO( "MaxThreadCount={}, WakeDuration={} ThreadDuration={}, PoolIdleThreshold={}", (uint16)MaxThreadCount, Chrono::ToString(WakeDuration), Chrono::ToString(ThreadDuration), Chrono::ToString(PoolIdleThreshold) );
+				INFO( "MaxThreadCount={}, WakeDuration={} ThreadDuration={}, PoolIdleThreshold={}", (uint16)MaxThreadCount, Chrono::ToString<Duration>(WakeDuration), Chrono::ToString<Duration>(ThreadDuration), Chrono::ToString<Duration>(PoolIdleThreshold) );
 				_pInstance = make_shared<CoroutinePool>();
 				IApplication::AddShutdown( _pInstance );
 			}

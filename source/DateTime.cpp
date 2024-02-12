@@ -47,47 +47,6 @@ namespace Jde
 		return duration;
 	}
 
-	α Chrono::ToString( Duration d )ι->string
-	{
-		ostringstream os;
-		os << 'P';
-		#define output(period,suffix) if( d>=period{1} || d<=period{-1} ){ os << duration_cast<period>(d).count() << suffix; d%=period{1}; }
-#ifdef _MSC_VER
-		var year = hours(24 * 365);
-		if( d >= year || d <= -year )
-		{
-			os << duration_cast<hours>(d).count()/year.count() << "Y";
-			d %= year;
-		}
-		var month = hours(24 * 30);
-		if( d >= month || d <= -month )
-		{
-			os << duration_cast<hours>(d).count() / month.count() << "M";
-			d %= month;
-		}
-		var days = hours(24);
-		if( d >= days || d <= -days )
-		{
-			os << duration_cast<hours>(d).count() / days.count() << "M";
-			d %= days;
-		}
-#else
-		output( years, "Y" );
-		output( months, "M" );
-		output( days, "D" );
-#endif
-		if( d!=Duration::zero() )
-		{
-			os << "T";
-			output( hours, "H" );
-			output( minutes, "M" );
-			output( seconds, "S" );
-			if( d!=Duration::zero() )
-				os << duration_cast<milliseconds>(d).count();
-		}
-		return os.str();
-	}
-
 	DateTime::DateTime()ι:
 		_time_point( system_clock::now() )
 	{}

@@ -46,12 +46,12 @@ namespace Jde
 		return os.str();
 	}
 	α DB::Log( sv sql, const vector<object>* pParameters, SL sl )ι->void{
-		Logging::Log( Logging::Message{ELogLevel::Trace, LogDisplay(sql, pParameters, {}), sl} );
+		Logging::Log( Logging::Message{ELogLevel::Trace, LogDisplay(sql, pParameters, {}), sl}, _logTag );
 	}
 
 	α DB::Log( sv sql, const vector<object>* pParameters, ELogLevel level, string error, SL sl )ι->void
 	{
-		Logging::Log( Logging::Message{level, LogDisplay(sql, pParameters, move(error)), sl} );
+		Logging::Log( Logging::Message{level, LogDisplay(sql, pParameters, move(error)), sl}, _logTag );
 	}
 	α DB::LogNoServer( string sql, const vector<object>* pParameters, ELogLevel level, string error, SL sl )ι->void{
 		Logging::LogNoServer( Logging::Message{level, LogDisplay(move(sql), pParameters, move(error)), sl}, _logTag );
@@ -116,7 +116,7 @@ namespace Jde
 	α DB::CreateSchema()ε->void
 	{
 		var path = Settings::Global().Getɛ<fs::path>( "db/meta" );
-		INFO( "db meta='{}'"sv, path.string() );
+		INFO( "db meta='{}'", path.string() );
 		ordered_json j = json::parse( IO::FileUtilities::Load(path) );
 		_schema = db.SchemaProc()->CreateSchema( j, path.parent_path() );
 	}

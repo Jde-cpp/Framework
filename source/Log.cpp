@@ -21,7 +21,7 @@ namespace Jde::Logging
 	bool _logMemory{true};
 	up<vector<Logging::Messages::ServerMessage>> _pMemoryLog; shared_mutex MemoryLogMutex;
 	auto _pOnceMessages = mu<flat_map<uint,std::set<string>>>(); std::shared_mutex OnceMessageMutex;
-	sp<LogTag> _statusLevel = Logging::Tag( "status" );
+	sp<LogTag> _statusTag = Logging::Tag( "status" );
 	sp<LogTag> _logTag = Logging::Tag( "settings" );
 	const ELogLevel _breakLevel{ Settings::Get<ELogLevel>("logging/breakLevel").value_or(ELogLevel::Warning) };
 	ELogLevel BreakLevel()ι{ return _breakLevel; }
@@ -176,7 +176,7 @@ namespace Jde
 					continue;
 				}
 				if( pattern.empty() )
-					pattern = markdown ? "%^%3!l%$-%H:%M:%S.%e [%v](%@)\\" : "%^%3!l%$-%H:%M:%S.%e %-64@ %v";
+					pattern = markdown ? "%^%3!l%$-%H:%M:%S.%e [%v](%g#L%#)\\" : "%^%3!l%$-%H:%M:%S.%e %-64@ %v";
 			}
 			else
 				continue;
@@ -190,13 +190,13 @@ namespace Jde
 		return sinks;
 	}
 	vector<spdlog::sink_ptr> _sinks = LoadSinks();
-	spdlog::logger _logger{ "my_logger", _sinks.begin(), _sinks.end() };
+	up<spdlog::logger> _logger = mu<spdlog::logger>( "my_logger", _sinks.begin(), _sinks.end() );
 
 	α Logging::Initialize()ι->void{
 		_status.set_starttime( (google::protobuf::uint32)Clock::to_time_t(_startTime) );
 
 		var flushOn = Settings::Get<ELogLevel>( "logging/flushOn" ).value_or( _debug ? ELogLevel::Debug : ELogLevel::Information );
-		_logger.flush_on( (spdlog::level::level_enum)flushOn );
+		_logger->flush_on( (spdlog::level::level_enum)flushOn );
 		if( Server::Enabled() ){
 			AddTags( _serverTags, "logging/server/tags" );
 			ServerSink::Create();
@@ -206,7 +206,7 @@ namespace Jde
 		var minSinkLevel = std::accumulate( _sinks.begin(), _sinks.end(), ELogLevel::Critical, [](ELogLevel min, auto& p){ return std::min((ELogLevel)p->level(), min);} );
 		for( auto tag : *_availableTags )
 			tag->Level = tag->Level==ELogLevel::NoLog ? tag->Level : std::max( tag->Level, minSinkLevel );
-		_logger.set_level( (spdlog::level::level_enum)minSinkLevel );
+		_logger->set_level( (spdlog::level::level_enum)minSinkLevel );
 		if( _pMemoryLog ){
 			for( var& m : *_pMemoryLog ){
  				using ctx = fmt::format_context;
@@ -217,7 +217,7 @@ namespace Jde
 					if( m.Tag.size() && find_if(_fileTags.begin(), _fileTags.end(), [&](var& x){return x.Id==m.Tag;})==_fileTags.end() )
 						continue;
 					if( _sinks.size() )
-						_logger.log( spdlog::source_loc{m.File,(int)m.LineNumber,m.Function}, (spdlog::level::level_enum)m.Level, fmt::vformat(m.MessageView, fmt::basic_format_args<ctx>{args.data(), (int)args.size()}) );
+						_logger->log( spdlog::source_loc{m.File,(int)m.LineNumber,m.Function}, (spdlog::level::level_enum)m.Level, fmt::vformat(m.MessageView, fmt::basic_format_args<ctx>{args.data(), (int)args.size()}) );
 					else
 						std::cerr << fmt::vformat( m.MessageView, fmt::basic_format_args<ctx>{args.data(), (int)args.size()} ) << std::endl;
 				}
@@ -261,25 +261,25 @@ namespace Jde
 		for( int i=0; i<_status.details_size(); ++i )
 			os << ";  " << _status.details(i);
 
-		Logging::Log( Logging::Message(Logging::_statusLevel->Level, os.str()) );
+		TRACET( Logging::_statusTag, "{}", os.str() );
 		if( Logging::Server::Enabled() )
 			Logging::Server::SetSendStatus();
 		_lastStatusUpdate = Clock::now();
 	}
 	α Logging::SetLogLevel( ELogLevel client, ELogLevel server )ι->void
 	{
-		if( _logger.level()!=(spdlog::level::level_enum)client )
+		if( _logger->level()!=(spdlog::level::level_enum)client )
 		{
-			INFO( "Setting log level from '{}' to '{}'", Str::FromEnum(ELogLevelStrings, _logger.level()), Str::FromEnum(ELogLevelStrings, client) );
+			INFO( "Setting log level from '{}' to '{}'", Str::FromEnum(ELogLevelStrings, _logger->level()), Str::FromEnum(ELogLevelStrings, client) );
 			Settings::Set( "logging/console/level", string{ToString(client)}, false );
 			Settings::Set( "logging/file/level", string{ToString(client)} );
-			//TODO remvoe comment _logger.set_level( (spdlog::level::level_enum)client );
+			//TODO remvoe comment _logger->set_level( (spdlog::level::level_enum)client );
 		}
 		Logging::Server::SetLevel( server );
 		{
 			lg _{_statusMutex};
 			_status.set_serverloglevel( (Proto::ELogLevel)server );
-			_status.set_clientloglevel( (Proto::ELogLevel)_logger.level() );
+			_status.set_clientloglevel( (Proto::ELogLevel)_logger->level() );
 		}
 		SendStatus();
 	}
@@ -307,14 +307,13 @@ namespace Jde
 		auto& messages = _pOnceMessages->emplace( messageBase.FileId, set<string>{} ).first->second;
 		return messages.emplace(messageBase.MessageView).second;
 	}
-	α Logging::LogOnce( const Logging::MessageBase& m, sp<LogTag>& logTag )ι->void
-	{
-		if( m.Level!=ELogLevel::NoLog && m.Level>=logTag->Level && ShouldLogOnce(m) )
-			Log( move(m) );
+	α Logging::LogOnce( Logging::MessageBase&& m, const sp<LogTag>& tag )ι->void{
+		if( ShouldLogOnce(m) )
+			Log( move(m), tag, true );
 	}
 	bool HaveLogger()ι{ return true; }
 
-	spdlog::logger& Logging::Default()ι{ return _logger; }
+	spdlog::logger* Logging::Default()ι{ return _logger.get(); }
 
 	α ClearMemoryLog()ι->void
 	{

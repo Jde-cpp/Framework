@@ -2323,7 +2323,7 @@ XMLDocument::XMLDocument( std::string_view value, bool insensitive, bool fix, Jd
 		{
 			std::ofstream os{ *p, std::ios::binary };
 			os << value;
-			Logging::Log( Logging::MessageBase{ELogLevel::Error, ErrorStr(), p->string().c_str(), "XMLDocument::XMLDocument", (uint_least32_t)_errorLineNum} );
+			Logging::Log( Logging::MessageBase{ELogLevel::Error, ErrorStr(), p->string().c_str(), "XMLDocument::XMLDocument", (uint_least32_t)_errorLineNum}, _logTag );
 			BREAK;
 		}
 		throw Jde::Exception{ sl, Jde::ELogLevel::Debug, "Could not parse '{}' - '{}'", value.substr(0, 100), ErrorStr() };

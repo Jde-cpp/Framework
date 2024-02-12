@@ -71,7 +71,8 @@ namespace Jde
 		var& sl = _stack.front();
 		const string fileName{ strlen(sl.file_name()) ? FileName(sl.file_name()) : "{Unknown}\0"sv };
 		var functionName = strlen(sl.file_name()) ? sl.function_name() : "{Unknown}\0";
-		Logging::Default().log( spdlog::source_loc{fileName.c_str(), (int)sl.line(), functionName}, (spdlog::level::level_enum)Level(), what() );
+		if( auto p = Logging::Default(); p )
+			p->log( spdlog::source_loc{fileName.c_str(), (int)sl.line(), functionName}, (spdlog::level::level_enum)Level(), what() );
 		if( Logging::Server::Enabled() )
 			Logging::LogServer( Logging::Messages::ServerMessage{Logging::Message{Level(), what(), sl}, vector<string>{_args}} );
 	}
@@ -192,7 +193,8 @@ namespace Jde
 		if( string{sl.file_name()}.ends_with("construct_at") || Level()>=Logging::BreakLevel() )
 			BREAK;
 #endif
-		Logging::Default().log( spdlog::source_loc{FileName(sl.file_name()).c_str(), (int)sl.line(), sl.function_name()}, (spdlog::level::level_enum)Level(), extra.size() ? format("{}\n{}", extra, _what) : _what );
+		if( auto p = Logging::Default(); p )
+			p->log( spdlog::source_loc{FileName(sl.file_name()).c_str(), (int)sl.line(), sl.function_name()}, (spdlog::level::level_enum)Level(), extra.size() ? format("{}\n{}", extra, _what) : _what );
 		SetLevel( ELogLevel::NoLog );
 		//if( Logging::Server() )
 		//	Logging::LogServer( Logging::Messages::Message{Logging::Message2{_level, _what, _sl.file_name(), _sl.function_name(), _sl.line()}, vector<string>{_args}} );

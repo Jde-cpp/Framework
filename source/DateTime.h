@@ -18,7 +18,8 @@ namespace Jde::Chrono
 	Ξ ToDays( time_t time )ι->DayIndex{ return ToDays(Clock::from_time_t(time)); }
 
 	Γ α ToDuration( sv iso )ε->Duration;
-	Γ α ToString( Duration d )ι->string;
+	template<class T=Duration>
+	α ToString( T duration )ι->string;
 }
 namespace Jde
 {
@@ -120,9 +121,46 @@ namespace Jde::Chrono
 	//Ξ Display( time_t t, bool seconds=false, bool milli=false )ι->string{ return DateTime{t}.LocalDisplay(seconds, milli); }
 	Ξ Display( TP t, bool seconds=false, bool milli=false )ι->string{ return DateTime{t}.LocalDisplay(seconds, milli); }
 	Ξ TimeDisplay( time_t t ) ι->string{ return DateTime{t}.TimeDisplay(); }
-	ẗ ToClock( typename V::time_point from )ι->typename K::time_point
-	{
-		return K::now()-milliseconds{ duration_cast<milliseconds>(V::time_point::clock::now()-from) };
+	ẗ ToClock( typename V::time_point from )ι->typename K::time_point{ return K::now()-milliseconds{ duration_cast<milliseconds>(V::time_point::clock::now()-from) }; }
+}
+namespace Jde{
+	template<class T>
+	α Chrono::ToString( T d )ι->string{
+		ostringstream os;
+		os << 'P';
+		#define output(period,suffix) if( d>=period{1} || d<=period{-1} ){ os << duration_cast<period>(d).count() << suffix; d%=period{1}; }
+		if constexpr( _msvc ){
+			constexpr auto year = hours(24 * 365);
+			if( d >= year || d <= -year ){
+				os << duration_cast<hours>(d).count()/year.count() << "Y";
+				d %= year;
+			}
+			constexpr auto month = hours(24 * 30);
+			if( d >= month || d <= -month ){
+				os << duration_cast<hours>(d).count() / month.count() << "M";
+				d %= month;
+			}
+			constexpr auto days = hours(24);
+			if( d >= days || d <= -days ){
+				os << duration_cast<hours>(d).count() / days.count() << "M";
+				d %= days;
+			}
+		}
+		else{
+			output( years, "Y" )
+			output( months, "M" )
+			output( days, "D" )
+		}
+		if( d!=Duration::zero() ){
+			os << "T";
+			output( hours, "H" );
+			output( minutes, "M" );
+			output( seconds, "S" );
+			if( d!=Duration::zero() )
+				os << duration_cast<milliseconds>(d).count();
+		}
+		return os.str();
 	}
 }
 #undef var
+#undef output

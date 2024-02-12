@@ -38,7 +38,7 @@ namespace Jde{
 			os << "(" << OSApp::ProcessId() << ")";
 			for( uint i=0; i<argc; ++i )
 				os << argv[i] << " ";
-			Logging::Default().log( spdlog::source_loc{FileName(SRCE_CUR.file_name()).c_str(),SRCE_CUR.line(),SRCE_CUR.function_name()}, (spdlog::level::level_enum)ELogLevel::Information, os.str() ); //TODO add cwd.
+			Logging::Default()->log( spdlog::source_loc{FileName(SRCE_CUR.file_name()).c_str(),SRCE_CUR.line(),SRCE_CUR.function_name()}, (spdlog::level::level_enum)ELogLevel::Information, os.str() ); //TODO add cwd.
 		}
 		_pApplicationName = mu<string>( appName );
 
@@ -80,9 +80,9 @@ namespace Jde{
 	}
 
 	std::condition_variable _workerCondition; mutex _workerConditionMutex;
-	int _exitReason{0};
+	optional<int> _exitReason;
 	α IApplication::Exit( int reason )ι->void{ _exitReason = reason; }
-	α IApplication::ShuttingDown()ι->bool{ return _exitReason; }
+	α IApplication::ShuttingDown()ι->bool{ return (bool)_exitReason; }
 
 	α IApplication::AddActiveWorker( Threading::IPollWorker* p )ι->void
 	{
@@ -137,8 +137,7 @@ namespace Jde{
 				OSApp::Pause();
 			}
 		}
-		//TODO wait for signal
-		INFO( "Pause returned - {}.", _exitReason );
+		INFO( "Pause returned = {}.", _exitReason ? std::to_string(_exitReason.value()) : "null" );
 		{
 			lg _{_threadMutex};
 			for( auto& pThread : *_pBackgroundThreads )
