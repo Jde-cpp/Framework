@@ -94,22 +94,20 @@ namespace Jde
 		auto pDataSource = DB::DataSourcePtr(); CHECK( pDataSource );
 		auto path = Settings::Get<fs::path>( "db/meta" ).value_or( "meta.json" );
 		if( !fs::exists(path) )
-			path = IApplication::ApplicationDataFolder()/path;
-		//INFO( "db meta='{}'"sv, path.string() );
+			path = _msvc && _debug ? "../config/meta.json" : IApplication::ApplicationDataFolder()/path;
 		json j;
-		try
-		{
+		try{
 			j = json::parse( IO::FileUtilities::Load(path) );
 		}
 		catch( const IOException& e ){
 			THROW( "Could not load db meta at path='{}' - {}", path.string(), e.what() );
 		}
-		catch( const std::exception& e )//nlohmann::detail::parse_error
-		{
+		catch( const std::exception& e ){//nlohmann::detail::parse_error
 			throw IOException{ path, e.what() };
 		}
 		auto& db = *pDataSource;
-		var schema = db.SchemaProc()->CreateSchema( j, path.parent_path() );
+		var sqlPath = _msvc && _debug ? path.parent_path().parent_path() : path.parent_path();
+		var schema = db.SchemaProc()->CreateSchema( j, sqlPath );
 		AppendQLSchema( schema );
 		SetQLDataSource( pDataSource );
 

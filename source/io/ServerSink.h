@@ -48,8 +48,8 @@ namespace Jde::Logging
 #undef Φ
 	struct Γ IServerSink{ //: private boost::noncopyable debugging issues
 		using ID=uint32;
-		IServerSink()ι=default;
-		IServerSink( const unordered_set<ID>& msgs )ι:_messagesSent{msgs}{}
+		IServerSink()ι;
+		IServerSink( const unordered_set<ID>& msgs )ι;
 		virtual ~IServerSink();
 
 		β ApplicationId()ι->ApplicationPK{return 0;}
@@ -75,6 +75,7 @@ namespace Jde::Logging
 		UnorderedSet<ID> _functionsSent;
 		UnorderedSet<ID> _usersSent;
 		UnorderedSet<ID> _threadsSent;
+		sp<LogTag> _logTag;
 	};
 	namespace Messages
 	{

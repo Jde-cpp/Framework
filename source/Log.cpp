@@ -144,8 +144,7 @@ namespace Jde
 			spdlog::sink_ptr pSink;
 			string additional;
 			string pattern = sink.Get<string>( "pattern" ).value_or("");
-			if( name=="console" && IApplication::IsConsole() )
-			{
+			if( name=="console" && IApplication::IsConsole() ){
 				if( pattern.empty() ){
 					if constexpr( _debug ){
 #ifdef _MSC_VER
@@ -155,14 +154,13 @@ namespace Jde
 #endif
 					}
 					else
-						pattern = "%^%3!l%$-%H:%M:%S.%e %-64@  %v";
+						pattern = "%^%3!l%$-%H:%M:%S.%e %v";//%-64@  %v
 				}
 				pSink = ms<spdlog::sinks::stdout_color_sink_mt>();
 			}
-			else if( name=="file" )
-			{
+			else if( name=="file" ){
 				auto pPath = sink.Get<fs::path>( "path" );
-				var markdown = sink.Get<bool>( "md" );
+				var markdown = sink.Get<bool>( "md" ).value_or( false );
 				var fileNameWithExt = Settings::FileStem()+( markdown ? ".md" : ".log" );
 				var path = pPath && !pPath->empty() ? *pPath/fileNameWithExt : OSApp::ApplicationDataFolder()/"logs"/fileNameWithExt;
 				var truncate = sink.Get<bool>( "truncate" ).value_or( true );

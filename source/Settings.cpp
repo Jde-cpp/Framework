@@ -133,7 +133,7 @@ namespace Jde
 		fs::path settingsPath{ fileName };
 		if( !fs::exists(settingsPath) )
 		{
-			var settingsPathB = fs::path{".."}/fileName;
+			var settingsPathB = fs::path{"../config"}/fileName;
 			settingsPath = fs::exists( settingsPathB ) ? settingsPathB : OSApp::ApplicationDataFolder()/fileName;
 		}
 		return settingsPath;
