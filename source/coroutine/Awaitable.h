@@ -1,4 +1,6 @@
 ﻿#pragma once
+#ifndef AWAITABLE_H
+#define AWAITABLE_H
 #include <jde/coroutine/Task.h>
 #include "Coroutine.h"
 namespace Jde
@@ -71,6 +73,9 @@ namespace Jde::Coroutine
 		IAwait( SRCE )ι:_sl{sl}{};
 		IAwait( str name, SRCE )ι:Base{name},_sl{sl}{};
 		virtual ~IAwait()=0;
+
+	//	Ŧ await_transform(T&& awaitable)ι->T&&{ return static_cast<T&&>(awaitable); }
+
 		α await_suspend( HCoroutine h )ι->void override
 		{
 			Base::AwaitSuspend();
@@ -301,3 +306,4 @@ namespace Jde::Coroutine
 	}
 }
 #undef Base
+#endif

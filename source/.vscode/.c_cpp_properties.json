@@ -1,41 +1,40 @@
 {
-    "configurations": [
-        {
-            "name": "Linux",
-            "browse": { "path": [
+    "configurations": [{
+			"name": "Linux",
+			"browse": { 
+				"path": [
 					"${workspaceFolder}",
-					"${env:REPO_DIR}/spdlog/include/",
-					"${env:REPO_DIR}/llvm-project/libcxx/include",
+					"${env:REPO_DIR}/install/asan/fmt/include/",
+					"${env:REPO_DIR}/install/asan/GTest/include/",
+					"${env:REPO_DIR}/install/asan/protobuf/include/",
+					"${env:REPO_DIR}/install/asan/spdlog/include/",
 					"${env:REPO_DIR}/json/include",
-					"${env:REPO_DIR}/tws-api/source/cppclient/client",
-					"${env:REPO_DIR}/IntelRDFPMathLib20U2/LIBRARY/src",
+					"${env:REPO_DIR}/Public",
 					"${env:JDE_DIR}/Public",
 					"${env:JDE_DIR}/Framework/tests/.obj/asan/googletest-src/googletest/include",
 					".."
-					], "limitSymbolsToIncludedHeaders": true },
-            "includePath": [
-					"/usr/local/include/c++/v1",
-					".",
+				], 
+				"limitSymbolsToIncludedHeaders": true },
+				"includePath": [
+					"/usr/include/c++/13",
 					"${workspaceFolder}/**",
-					 "..",
-					 "${env:REPO_DIR}/llvm-project/libcxx/include",
-					 "${env:REPO_DIR}/spdlog/include/",
-					 "${env:REPO_DIR}/fmt/include/",
-					 "${env:REPO_DIR}/json/include",
-					 "${env:REPO_DIR}/tws-api/source/cppclient/client",
-					 "${env:REPO_DIR}/IntelRDFPMathLib20U2/LIBRARY/src",
-					 "${env:BOOST_ROOT}",
-					 "${env:JDE_DIR}/Public",
-					 "${env:JDE_DIR}/Framework/tests/.obj/asan/googletest-src/googletest/include"
-					],
+					"${env:REPO_DIR}/install/asan/fmt/include/",
+					"${env:REPO_DIR}/install/asan/GTest/include/",
+					"${env:REPO_DIR}/install/asan/protobuf/include/",
+					"${env:REPO_DIR}/install/asan/spdlog/include/",
+					"${env:REPO_DIR}/json/include",
+					"${env:REPO_DIR}/json/include",
+					"${env:BOOST_ROOT}",
+					"${env:JDE_DIR}/Public"
+				],
 				"defines": [],
 				"forcedInclude": ["pc.h"],
-            "compilerPath": "/usr/local/bin/clang++",
-            "cStandard": "c17",
-            "cppStandard": "c++20",
-            "intelliSenseMode": "clang-x64",
-            "compilerArgs": []
-        }
-    ],
-    "version": 4
+				"compilerPath": "/usr/bin/g++-13",
+				"cStandard": "c17",
+				"cppStandard": "c++23",
+				"intelliSenseMode": "linux-gcc-x64",
+				"compilerArgs": []
+			}
+	],
+	"version": 4
 }

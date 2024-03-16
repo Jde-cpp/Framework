@@ -9,8 +9,8 @@ namespace Jde::DB
 		α Move()->string
 		{
 			string result = _clauses.size() ? "where" : "";
-			for( int i=0; i<_clauses.size(); ++i )
-				result += format( " {} {}", i==0 ? "" : "and", move(_clauses[i]) );
+			for( uint i=0; i<_clauses.size(); ++i )
+				result += Jde::format( " {} {}", i==0 ? "" : "and", move(_clauses[i]) );
 			return result;
 		}
 

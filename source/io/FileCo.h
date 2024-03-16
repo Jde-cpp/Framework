@@ -1,4 +1,6 @@
 ﻿#pragma once
+#ifndef FILECO_H
+#define FILECO_H
 #include <jde/coroutine/Task.h>
 #include "../threading/Worker.h"
 #ifdef _MSC_VER
@@ -84,3 +86,4 @@ namespace Jde::IO
 		Γ Ω Signal()ι->uint;
 	};
 }
+#endif

@@ -1,4 +1,6 @@
 ﻿#pragma once
+#ifndef UNORDERED_SET_H
+#define UNORDERED_SET_H
 #include <unordered_set>
 #include <shared_mutex>
 
@@ -105,3 +107,4 @@ namespace Jde
 #undef var
 #undef LOCK
 }
+#endif

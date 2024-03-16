@@ -12,7 +12,7 @@ namespace Jde::Threading{
 	std::atomic_flag IWorker::_mutex;
 	IWorker::IWorker( sv name )ι:
 		NameInstance{ name },
-		ThreadCount{ Settings::Get<uint8>(format("workers/{}/threads", name)).value_or(0) }
+		ThreadCount{ Settings::Get<uint8>(Jde::format("workers/{}/threads", name)).value_or(0) }
 	{}
 
 	IWorker::~IWorker(){}//abstract

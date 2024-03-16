@@ -18,8 +18,8 @@ namespace Jde
 	IException::IException( string value, ELogLevel level, uint code, sp<LogTag>&& tag, SL sl )ι:
 		_stack{ sl },
 		_what{ move(value) },
-		Code( code ? code : Calc32RunTime(value) ),
 		_pTag{ move(tag) },
+		Code( code ? code : Calc32RunTime(value) ),
 		_level{ level }
 	{
 		BreakLog();
@@ -56,7 +56,7 @@ namespace Jde
 	α IException::BreakLog()Ι->void
 	{
 #ifndef NDEBUG
-		if( /*Level()!=ELogLevel::None &&*/ Level()>Logging::BreakLevel() )
+		if( /*Level()!=ELogLevel::None &&*/ Level()>=Logging::BreakLevel() )
 		{
 			Log();
 			SetLevel( ELogLevel::NoLog );
@@ -66,7 +66,7 @@ namespace Jde
 	}
 	α IException::Log()Ι->void
 	{
-		if( Level()==ELogLevel::NoLog || _pTag && Level()<_pTag->Level )
+		if( Level()==ELogLevel::NoLog || (_pTag && Level()<_pTag->Level) )
 			return;
 		var& sl = _stack.front();
 		const string fileName{ strlen(sl.file_name()) ? FileName(sl.file_name()) : "{Unknown}\0"sv };
@@ -77,21 +77,19 @@ namespace Jde
 			Logging::LogServer( Logging::Messages::ServerMessage{Logging::Message{Level(), what(), sl}, vector<string>{_args}} );
 	}
 
-	α IException::what()Ι->const char*
-	{
-		if( _what.empty() )
-		{
-			using ctx = fmt::format_context;
-			vector<fmt::basic_format_arg<ctx>> args2;
-			for( var& a : _args )
-				args2.push_back( fmt::detail::make_arg<ctx>(a) );
-			try
-			{
-				_what = fmt::vformat( _format, fmt::basic_format_args<ctx>(args2.data(), (int)args2.size()) );
+	α IException::what()Ι->const char*{
+		if( _what.empty() ){
+			// using ctx = std::format_context;
+			// vector<std::basic_format_arg<ctx>> args2;
+			// for( var& a : _args )
+			// 	args2.push_back( std::detail::make_arg<ctx>(a) );
+			try{
+				_what = ToVec::FormatVectorArgs( _format, _args );
+				//std::vformat( _format, std::basic_format_args<ctx>(args2.data(), (int)args2.size()) );
+//				_what = std::vformat( _format, std::basic_format_args<ctx>(args2.data(), (int)args2.size()) );
 			}
-			catch( const fmt::format_error& e )
-			{
-				_what = format( "format error _format='{}' - {}", _format, e.what() );
+			catch( const fmt::format_error& e ){
+				_what = Jde::format( "format error _format='{}' - {}", _format, e.what() );
 			}
 		}
 		return _what.c_str();
@@ -103,11 +101,11 @@ namespace Jde
 	{}
 
 	CodeException::CodeException( std::error_code&& code, ELogLevel level, SL sl )ι:
-		CodeException( format("{}-{}", code.value(), code.message()), move(code), level, sl )
+		CodeException( Jde::format("{}-{}", code.value(), code.message()), move(code), level, sl )
 	{}
 
 	CodeException::CodeException( std::error_code&& code, sp<LogTag> tag, ELogLevel level, SL sl )ι:
-		IException{ format("{}-{}", code.value(), code.message()), level, (uint)code.value(), move(tag), sl },
+		IException{ Jde::format("{}-{}", code.value(), code.message()), level, (uint)code.value(), move(tag), sl },
 		_errorCode{ move(code) }
 	{}
 
@@ -127,7 +125,7 @@ namespace Jde
 		var value = errorCode.value();
 		var& category = errorCode.category();
 		var message = errorCode.message();
-		return format( "({}){} - {})", value, category.name(), message );
+		return Jde::format( "({}){} - {})", value, category.name(), message );
 	}
 
 	α CodeException::ToString( const std::error_category& errorCategory )ι->string{	return errorCategory.name(); }
@@ -137,7 +135,7 @@ namespace Jde
 		const int value = errorCondition.value();
 		const std::error_category& category = errorCondition.category();
 		const string message = errorCondition.message();
-		return format( "({}){} - {})", value, category.name(), message );
+		return Jde::format( "({}){} - {})", value, category.name(), message );
 	}
 
 	OSException::OSException( TErrorCode result, string&& msg, SL sl )ι:
@@ -152,15 +150,15 @@ namespace Jde
 		IException{ move(what), l, 0, sl }
 	{}
 
-	α IOException::Path()Ι->path
+	α IOException::Path()Ι->const fs::path&
 	{
 		return  _pUnderLying? _pUnderLying->path1() : _path;
 	}
 	α IOException::SetWhat()Ι->void
 	{
 		_what = _pUnderLying ? _pUnderLying->what() : Code
-			? format( "({}) {} - {} path='{}'", Code, std::strerror(errno), IException::what(), Path().string() )
-			: format( "({}){}", Path().string(), IException::what() );
+			? Jde::format( "({}) {} - {} path='{}'", Code, std::strerror(errno), IException::what(), Path().string() )
+			: Jde::format( "({}){}", Path().string(), IException::what() );
 	}
 	α IOException::what()Ι->const char*
 	{
@@ -175,7 +173,7 @@ namespace Jde
 		Result{ move(result) }
 	{
 		SetLevel( level );
-		_what = format( "{}{} ({}){}", Host, Target, code, Result );
+		_what = Jde::format( "{}{} ({}){}", Host, Target, code, Result );
 		if( var f = Settings::Get<fs::path>("net/errorFile"); f )
 		{
 			std::ofstream os{ *f };
@@ -194,7 +192,7 @@ namespace Jde
 			BREAK;
 #endif
 		if( auto p = Logging::Default(); p )
-			p->log( spdlog::source_loc{FileName(sl.file_name()).c_str(), (int)sl.line(), sl.function_name()}, (spdlog::level::level_enum)Level(), extra.size() ? format("{}\n{}", extra, _what) : _what );
+			p->log( spdlog::source_loc{FileName(sl.file_name()).c_str(), (int)sl.line(), sl.function_name()}, (spdlog::level::level_enum)Level(), extra.size() ? Jde::format("{}\n{}", extra, _what) : _what );
 		SetLevel( ELogLevel::NoLog );
 		//if( Logging::Server() )
 		//	Logging::LogServer( Logging::Messages::Message{Logging::Message2{_level, _what, _sl.file_name(), _sl.function_name(), _sl.line()}, vector<string>{_args}} );

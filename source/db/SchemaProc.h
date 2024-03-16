@@ -1,4 +1,6 @@
 ﻿#pragma once
+#ifndef SCHEMA_PROC_H
+#define SCHEMA_PROC_H
 #include "types/Schema.h"
 #include "types/Table.h"
 
@@ -8,7 +10,7 @@ namespace Jde::DB
 	struct ISchemaProc
 	{
 		ISchemaProc( sp<IDataSource> pDataSource ):_pDataSource{pDataSource}{}
-		Γ α CreateSchema( const nlohmann::ordered_json& json, path relativePath )ε->Schema;
+		Γ α CreateSchema( const nlohmann::ordered_json& json, const fs::path& relativePath )ε->Schema;
 		β LoadTables( sv catalog={} )ε->flat_map<string,Table> = 0;
 		β LoadProcs( sv catalog={} )ε->flat_map<string,Procedure> = 0;
 		β ToType( sv typeName )ι->EType=0;
@@ -18,3 +20,4 @@ namespace Jde::DB
 		sp<IDataSource> _pDataSource;
 	};
 }
+#endif

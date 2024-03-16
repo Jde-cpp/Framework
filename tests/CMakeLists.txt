@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 project( Tests.Framework VERSION 1.0.0.0 )
-set( CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../../Framework/cmake )
-include(SetUpConfigurations)
+set( CMAKE_MODULE_PATH ${JDE_DIR}/Public/build )
+include(common)
 
 configure_file(CMakeLists.txt.in googletest-download/CMakeLists.txt)
 execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .

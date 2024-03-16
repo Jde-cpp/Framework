@@ -1,4 +1,6 @@
 ﻿#pragma once
+#ifndef PROTO_UTILITIES_H
+#define PROTO_UTILITIES_H
 #pragma warning(push)
 #pragma warning( disable : 4127 )
 #pragma warning( disable : 5054 )
@@ -10,9 +12,9 @@
 #define var const auto
 namespace Jde::IO::Proto
 {
-	Ŧ Load( path path, SRCE )ε->up<T>;
-	Ŧ TryLoad( path path, SRCE )ι->up<T>;
-	Ŧ Load( path path, T& p, SRCE )ε->void;
+	Ŧ Load( const fs::path& path, SRCE )ε->up<T>;
+	Ŧ TryLoad( const fs::path& path, SRCE )ι->up<T>;
+	Ŧ Load( const fs::path& path, T& p, SRCE )ε->void;
 
 	Ŧ Deserialize( const vector<char>& data )ε->up<T>;
 	Ŧ Deserialize( const google::protobuf::uint8* p, int size )ε->T;
@@ -82,7 +84,7 @@ namespace Jde::IO
 		return y;
 	}
 
-	Ŧ Proto::Load( path path, T& proto, SL sl )ε->void
+	Ŧ Proto::Load( const fs::path& path, T& proto, SL sl )ε->void
 	{
 		up<vector<char>> pBytes;
 		try
@@ -101,14 +103,14 @@ namespace Jde::IO
 		Internal::Deserialize( (google::protobuf::uint8*)pBytes->data(), (uint32)pBytes->size(), proto );
 	}
 
-	Ŧ Proto::Load( path path, SL sl )ε->up<T>
+	Ŧ Proto::Load( const fs::path& path, SL sl )ε->up<T>
 	{
 		auto p = mu<T>();
 		Load( path, *p, sl );
 		return p;
 	}
 
-	Ŧ Proto::TryLoad( path path, SL sl )ι->up<T>
+	Ŧ Proto::TryLoad( const fs::path& path, SL sl )ι->up<T>
 	{
 		up<T> pValue{};
 		if( fs::exists(path) )
@@ -141,3 +143,4 @@ namespace Jde::IO
 	}
 }
 #undef var
+#endif

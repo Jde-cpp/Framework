@@ -1,4 +1,6 @@
 ﻿#pragma once
+#ifndef DATE_TIME_H //gcc precompiled headers
+#define DATE_TIME_H
 #include <chrono>
 #include <jde/TypeDefs.h>
 #include <jde/Exports.h>
@@ -164,3 +166,4 @@ namespace Jde{
 }
 #undef var
 #undef output
+#endif

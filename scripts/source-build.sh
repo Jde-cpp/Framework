@@ -21,6 +21,32 @@ if windows; then
 	findExecutable vswhere.exe '/c/Program\ Files\ \(X86\)/Microsoft\ Visual\ Studio/installer' 0
 fi;
 
+function buildLibrary {
+	LIB=$1;
+	CXX_FLAGS=$2;
+	ARGS=$3;
+	GIT_DIR=$4;
+	if [[ -z "$GIT_DIR" ]]; then GIT_DIR=$LIB; fi;
+	if [[ ! -z "$CXX_FLAGS" ]]; then export CMAKE_CXX_FLAGS=-DCMAKE_CXX_FLAGS="$CXX_FLAGS"; fi;
+	cls;
+	echo $REPO_DIR/$GIT_DIR;
+	cd $REPO_DIR/$GIT_DIR;
+	echo `pwd`;
+	moveToDir .build;
+	export CMAKE_BUILD_TYPE=RelWithDebInfo;
+	export CXX=g++-13;
+	export CC=gcc-13;
+	export CMAKE_CXX_STANDARD=23;
+	export CMAKE_POSITION_INDEPENDENT_CODE=ON;
+	export CMAKE_PREFIX_PATH=$REPO_DIR/install/$CXX/$CMAKE_BUILD_TYPE;
+
+	moveToDir $CXX;
+	moveToDir $CMAKE_BUILD_TYPE;
+	cmake -DCMAKE_INSTALL_PREFIX=$REPO_DIR/install/$CXX/$CMAKE_BUILD_TYPE/$LIB -DCMAKE_BUILD_TYPE=$CMAKE_BUILD_TYPE -DCMAKE_CXX_STANDARD=$CMAKE_CXX_STANDARD -DCMAKE_POSITION_INDEPENDENT_CODE=$CMAKE_POSITION_INDEPENDENT_CODE -DCMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH $CMAKE_CXX_FLAGS $ARGS ../../..;
+	#make -j;
+	#make install;
+}
+
 function buildConfig
 {
 	config=$1;

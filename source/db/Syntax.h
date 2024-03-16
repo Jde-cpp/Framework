@@ -4,7 +4,7 @@
 	{
 		virtual ~Syntax()=default;
 
-		β AddDefault( sv tableName, sv columnName, sv columnDefault )Ι->string{ return format("alter table {} add default {} for {}", tableName, columnDefault, columnName); }
+		β AddDefault( sv tableName, sv columnName, sv columnDefault )Ι->string{ return Jde::format("alter table {} add default {} for {}", tableName, columnDefault, columnName); }
 		β AltDelimiter()Ι->sv{ return {}; }
 		β CatalogSelect()Ι->sv{ return "select db_name();"; }
 		β DateTimeSelect( sv columnName )Ι->string{ return string{ columnName }; }
@@ -26,13 +26,13 @@
 
 	struct MySqlSyntax final: Syntax
 	{
-		α AddDefault( sv tableName, sv columnName, sv columnDefault )Ι->string override{ return format("ALTER TABLE {} ALTER COLUMN {} SET DEFAULT {}", tableName, columnName, columnDefault); }
+		α AddDefault( sv tableName, sv columnName, sv columnDefault )Ι->string override{ return Jde::format("ALTER TABLE {} ALTER COLUMN {} SET DEFAULT {}", tableName, columnName, columnDefault); }
 		α AltDelimiter()Ι->sv override{ return "$$"sv; }
-		α DateTimeSelect( sv columnName )Ι->string override{ return format( "UNIX_TIMESTAMP(CONVERT_TZ({}, '+00:00', @@session.time_zone))", columnName ); }
+		α DateTimeSelect( sv columnName )Ι->string override{ return Jde::format( "UNIX_TIMESTAMP(CONVERT_TZ({}, '+00:00', @@session.time_zone))", columnName ); }
 		α HasUnsigned()Ι->bool override{ return true; }
 		α IdentityColumnSyntax()Ι->sv override{ return "AUTO_INCREMENT"sv; }
 		α IdentitySelect()Ι->sv override{ return "LAST_INSERT_ID()"sv; }
-		α Limit( str sql, uint limit )Ι->string override{ return format("{} limit {}", sql, limit); }
+		α Limit( str sql, uint limit )Ι->string override{ return Jde::format("{} limit {}", sql, limit); }
 		α NeedsIdentityInsert()Ι->bool override{ return false; }
 		α ProcEnd()Ι->sv override{ return "end"sv; }
 		α ProcParameterPrefix()Ι->sv override{ return ""sv; }
@@ -49,6 +49,6 @@
 	{
 		if( sql.size()<7 )//mysql precludes using THROW, THROW_IF, CHECK
 			throw Exception{ SRCE_CUR, Jde::ELogLevel::Debug, "expecting sql length>7 - {}", sql };
-		return format("{} top {} {}", sql.substr(0,7), limit, sql.substr(7) );
+		return Jde::format("{} top {} {}", sql.substr(0,7), limit, sql.substr(7) );
 	};
 }

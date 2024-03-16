@@ -397,7 +397,7 @@ namespace Jde
 					for( size_t i=0; !equal && i<openTags.size(); ++i )
 						TRACE( "[{}][{}]{}", openTags[i].Line, openTags[i].Index, openTags[i].Tag );
 					var endIndex = parser.Index()-tag.size()-2;
-					var newXml = string{ parser.Text.substr(0, endIndex) }+format( "<{}>", ToSV(endTag) )+string{ parser.Text.substr(endIndex) };
+					var newXml = string{ parser.Text.substr(0, endIndex) }+Jde::format( "<{}>", ToSV(endTag) )+string{ parser.Text.substr(endIndex) };
 
 					TRACE( "[{}]({})noopentag = '{}|||{}", parser.Line(), ToSV(endTag), parser.Text.substr(parser.Index()-120, 120), parser.Text.substr(parser.Index(), 30) );
 					TRACE( "new = '{}", newXml.substr(parser.Index()-120, 150) );

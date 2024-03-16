@@ -10,28 +10,26 @@ namespace Jde
 	static var& _logTag{ Logging::Tag("sql") };
 	using nlohmann::json;
 
-	struct Visit
-	{
-		template<class T>
-		α operator()( T x )ι->string{ return std::to_string(x); }
-		template<>
-		α operator()(nullptr_t )ι->string{ return "null"; }
-		template<>
-		α operator()( string x )ι->string{ return x; }
-		template<>
-		α operator()( sv x )ι->string{ return string{x}; }
-		template<>
-		α operator()( sp<string> x )ι->string{ return *x; }
-		template<>
-		α operator()( DB::DBTimePoint x )ι->string{ return ToIsoString( x ); }
-	};
-	α DB::ToString( const object& p )ε->string
-	{
-		return std::visit( Visit{}, p );
+	α DB::ToString( const object& v )ι->string{
+		string y;
+		switch( (EObject)v.index() ){
+			case EObject::Null: y = "null"; break;
+			case EObject::String: y = get<string>( v ); break;
+			case EObject::StringView: y = string{ get<sv>( v ) }; break;
+			case EObject::StringPtr: y = *get<sp<string>>( v ); break;
+			case EObject::Bool: y = get<bool>( v ) ? "true" : "false"; break;
+			case EObject::Int8: y = std::to_string( get<int8_t>( v ) ); break;
+			case EObject::Int32: y = std::to_string( get<int>( v ) ); break;
+			case EObject::Int64: y = std::to_string( get<_int>( v ) ); break;
+			case EObject::UInt32: y = std::to_string( get<uint32_t>( v ) ); break;
+			case EObject::UInt64: y = std::to_string( get<uint>( v ) ); break;
+			case EObject::Double: y = std::to_string( get<double>( v ) ); break;
+			case EObject::Time: y = ToIsoString( get<DBTimePoint>( v ) ); break;
+		}
+		return y;
 	}
 
-	α  DB::ToType( iv typeName )ι->DB::EType
-	{
+	α  DB::ToType( iv typeName )ι->DB::EType{
 		//String typeName{ t };
 		EType type{ EType::None };
 		if( typeName=="dateTime" )
@@ -93,8 +91,7 @@ namespace Jde
 		return type;
 	}
 
-	α DB::ToString( EType type, const Syntax& syntax )ι->String
-	{
+	α DB::ToString( EType type, const Syntax& syntax )ι->String{
 		String typeName;
 		if( syntax.HasUnsigned() && type == EType::UInt ) typeName = "int unsigned";
 		else if( type == EType::Int || type == EType::UInt ) typeName = "int";
@@ -127,13 +124,10 @@ namespace Jde
 		return typeName;
 	}
 
-	α DB::ToObject( EType type, const json& j, sv memberName, SL sl )ε->DB::object
-	{
+	α DB::ToObject( EType type, const json& j, sv memberName, SL sl )ε->DB::object{
 		object value{ nullptr };
-		if( !j.is_null() )
-		{
-			switch( type )
-			{
+		if( !j.is_null() ){
+			switch( type ){
 			case EType::Bit:
 				THROW_IFX( !j.is_boolean(), Exception(sl, "{} could not conver to boolean {}", memberName, j.dump()) );
 				value = object{ j.get<bool>() };
@@ -173,8 +167,7 @@ namespace Jde
 		}
 		return value;
 	}
-	α DB::ToJson( const object& v, json& j )ι->void
-	{
+	α DB::ToJson( const object& v, json& j )ι->void{
 		var index = (EObject)v.index();
 		if( index==EObject::String )
 			j = get<string>( v );
@@ -194,8 +187,7 @@ namespace Jde
 			j = get<double>( v );
 		else if( index==EObject::Time )
 			j = ToIsoString( get<DB::DBTimePoint>(v) );
-		else if( index==EObject::StringPtr )
-		{
+		else if( index==EObject::StringPtr ){
 			if( var p=get<sp<string>>(v); p )
 				j = *p;
 		}

@@ -105,7 +105,7 @@ namespace Jde
 
 	α DateTime::DateDisplay()Ι->string
 	{
-		return format( "{:0>2}/{:0>2}/{:0>2}", Month(), Day(), Year()-2000 );
+		return Jde::format( "{:0>2}/{:0>2}/{:0>2}", Month(), Day(), Year()-2000 );
 	}
 	α DateTime::BeginingOfWeek()->DateTime
 	{
@@ -179,7 +179,7 @@ namespace Jde
 
 	α DateTime::TimeDisplay()Ι->string
 	{
-		return fmt::format( "{:0>2}:{:0>2}", Hour(), Minute() );
+		return Jde::format( "{:0>2}:{:0>2}", Hour(), Minute() );
 	}
 	α DateTime::LocalTimeDisplay( bool seconds, bool milli )Ι->string
 	{
@@ -187,21 +187,23 @@ namespace Jde
 		if( _time_point!=TP{} )
 		{
 			auto pLocal = LocalTm();
-			string suffix{ seconds ? format(":{:0>2}", pLocal->tm_sec) : string{} };
-			if( milli )
-				suffix = format( "{}.{:0>2}", suffix, _time_point.time_since_epoch().count()%1000 );
-			y = fmt::format( "{:0>2}:{:0>2}{}", pLocal->tm_hour, pLocal->tm_min, suffix );
+			string suffix{ seconds ? Jde::format(":{:0>2}", pLocal->tm_sec) : string{} };
+			if( milli ){
+				uint millisecs = _time_point.time_since_epoch().count()%1000;//gcc
+				suffix = Jde::format( "{}.{:0>2}", suffix, millisecs );
+			}
+			y = Jde::format( "{:0>2}:{:0>2}{}", pLocal->tm_hour, pLocal->tm_min, suffix );
 		}
 		return y;
 	}
 	α DateTime::LocalDateDisplay()Ι->string
 	{
 		auto pLocal = LocalTm();
-		return fmt::format( "{:0>2}/{:0>2}/{:0>2}", pLocal->tm_mon+1, pLocal->tm_mday, pLocal->tm_year-100 );
+		return Jde::format( "{:0>2}/{:0>2}/{:0>2}", pLocal->tm_mon+1, pLocal->tm_mday, pLocal->tm_year-100 );
 	}
 	α DateTime::LocalDisplay( bool seconds, bool milli )Ι->string
 	{
-		return fmt::format( "{} {}", LocalDateDisplay(), LocalTimeDisplay(seconds, milli) );
+		return Jde::format( "{} {}", LocalDateDisplay(), LocalTimeDisplay(seconds, milli) );
 	}
 	α DateTime::ToDate( TimePoint time )ι->TimePoint
 	{
@@ -216,7 +218,7 @@ namespace Jde
 	}
 	α DateTime::ToIsoString(const tm& t)ι->string
 	{
-		return fmt::format( "{}-{:0>2}-{:0>2}T{:0>2}:{:0>2}:{:0>2}Z", t.tm_year+1900, t.tm_mon+1, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec ).c_str();
+		return Jde::format( "{}-{:0>2}-{:0>2}T{:0>2}:{:0>2}:{:0>2}Z", t.tm_year+1900, t.tm_mon+1, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec ).c_str();
 	}
 
 	constexpr std::array<sv,12> months{ "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec" };

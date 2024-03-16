@@ -146,7 +146,7 @@ namespace DB
 
 	α Update( const DB::Table& table, const DB::MutationQL& m, const DB::Syntax& syntax )->uint
 	{
-		ostringstream sql{ format("update {} set ", table.Name), std::ios::ate };
+		ostringstream sql{ Jde::format("update {} set ", table.Name), std::ios::ate };
 		vector<DB::object> parameters; parameters.reserve( table.Columns.size() );
 		var pInput = m.Args.find( "input" ); THROW_IF( pInput==m.Args.end(), "Could not find input argument. {}", m.Args.dump() );
 		string sqlUpdate;
@@ -180,7 +180,7 @@ namespace DB
 					//	THROW( "Could not get criterial from {}", m.Args.dump() );
 				}
 				else if( c.Name=="updated" )
-					sqlUpdate = format( ",{}={}", c.Name, ToSV(syntax.UtcNow()) );
+					sqlUpdate = Jde::format( ",{}={}", c.Name, ToSV(syntax.UtcNow()) );
 			}
 			else
 			{
@@ -196,7 +196,7 @@ namespace DB
 					uint value = 0;
 					if( pValue->is_array() && pValue->size() )
 					{
-						auto a = _pDataSource->SelectMap<string,uint>( format("select name, id from {}", tableName) );
+						auto a = _pDataSource->SelectMap<string,uint>( Jde::format("select name, id from {}", tableName) );
 						var values = Future<flat_map<string,uint>>( move(a) ).get();
 						for( var& flag : *pValue )
 						{
@@ -246,7 +246,7 @@ namespace DB
 		parameters.push_back( ToObject(EType::ULong, *pId, "id") );
 		if( var p=UM::FindAuthorizer(tableName); p )
 			p->TestPurge( *pId, userId );
-		return _pDataSource->Execute( format("delete from {} where id=?", tableName), parameters, sl );
+		return _pDataSource->Execute( Jde::format("delete from {} where id=?", tableName), parameters, sl );
 	}
 
 	α ChildParentParams( sv childId, sv parentId, const json& input )->vector<DB::object>
@@ -560,7 +560,7 @@ namespace DB
 			var jsonType = pDBTable->JsonTypeName();
 
 			json field;
-			field["name"] = format( "create{}"sv, jsonType );
+			field["name"] = Jde::format( "create{}"sv, jsonType );
 			var addField = [&jsonType, pDBTable, &fields]( sv name, bool allColumns=false, bool idColumn=true )
 			{
 				json field;
@@ -577,7 +577,7 @@ namespace DB
 					args.push_back( arg );
 				}
 				field["args"] = args;
-				field["name"] = format( "{}{}", name, jsonType );
+				field["name"] = Jde::format( "{}{}", name, jsonType );
 				fields.push_back( field );
 			};
 			if( childId.empty() )
@@ -795,7 +795,8 @@ namespace DB
 		THROW_IF( q.Next()!="{", "mutation expected '{' as 1st character." );
 		var command = q.Next();
 		uint iType=0;
-		for( ;iType<DB::MutationQLStrings.size() && !command.starts_with(DB::MutationQLStrings[iType]); ++iType ); THROW_IF( iType==DB::MutationQLStrings.size(), "Could not find mutation {}", command );
+		for( ;iType<DB::MutationQLStrings.size() && !command.starts_with(DB::MutationQLStrings[iType]); ++iType ); 
+		THROW_IF( iType==DB::MutationQLStrings.size(), "Could not find mutation {}", command );
 
 		auto tableJsonName = string{ command.substr(DB::MutationQLStrings[iType].size()) };
 		tableJsonName[0] = (char)tolower( tableJsonName[0] );

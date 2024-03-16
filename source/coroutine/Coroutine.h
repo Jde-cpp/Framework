@@ -1,4 +1,6 @@
 ﻿#pragma once
+#ifndef COROUTINE_H
+#define COROUTINE_H
 #include <list>
 #include "../threading/Thread.h"
 #include "../Settings.h"
@@ -61,3 +63,4 @@ namespace Jde::Coroutine
 		friend CoroutineTests;
 	};
 }
+#endif

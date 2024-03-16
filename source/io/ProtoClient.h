@@ -1,4 +1,6 @@
 ﻿#pragma once
+#ifndef PROTO_CLIENT_H
+#define PROTO_CLIENT_H
 #include <boost/asio.hpp>
 #include <jde/Log.h>
 #include <jde/Exception.h>
@@ -25,7 +27,7 @@ namespace Jde::IO::Sockets
 	protected:
 		β OnDisconnect()ι->void=0;
 		α ReadHeader()ι->void;
-		α ReadBody( int messageLength )ι->void;
+		α ReadBody( uint32 messageLength )ι->void;
 		α Write( up<google::protobuf::uint8[]> p, uint c )ι->void;
 		β Process( google::protobuf::uint8* pData, int size )ι->void=0;
 		α LogTag()ι->sp<Jde::LogTag>;
@@ -72,3 +74,4 @@ namespace Jde::IO::Sockets
 }
 #undef var
 #undef $
+#endif

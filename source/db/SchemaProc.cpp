@@ -43,7 +43,7 @@ namespace Jde::DB
 		return name.str();
 	}
 #define _syntax DB::DefaultSyntax()
-	α ISchemaProc::CreateSchema( const ordered_json& j, path relativePath )ε->Schema
+	α ISchemaProc::CreateSchema( const ordered_json& j, const fs::path& relativePath )ε->Schema
 	{
 		var dbTables = LoadTables();
 
@@ -147,8 +147,8 @@ namespace Jde::DB
 		{
 			for( var& [id,value] : pTable->FlagsData )
 			{
-				if( _pDataSource->Scaler<uint>( format("select count(*) from {} where id=?"sv, pTable->Name), {id})==0 )
-					_pDataSource->Execute( format("insert into {}(id,name)values( ?, ? )"sv, pTable->Name), {id, value} );
+				if( _pDataSource->Scaler<uint>( Jde::format("select count(*) from {} where id=?"sv, pTable->Name), {id})==0 )
+					_pDataSource->Execute( Jde::format("insert into {}(id,name)values( ?, ? )"sv, pTable->Name), {id, value} );
 			}
 			for( var& jData : pTable->Data )
 			{
@@ -214,7 +214,7 @@ namespace Jde::DB
 					var identityInsert = pTable->HaveSequence() && _syntax.NeedsIdentityInsert();
 					if( identityInsert )
 						sql << "SET IDENTITY_INSERT " << tableName << " ON;" << std::endl;
-					sql << format( "insert into {}({})values({})", tableName, osInsertColumns.str(), osInsertValues.str() );
+					sql << Jde::format( "insert into {}({})values({})", tableName, osInsertColumns.str(), osInsertValues.str() );
 					if( identityInsert )
 						sql << std::endl << "SET IDENTITY_INSERT " << tableName << " OFF;";
 					_pDataSource->Execute( sql.str(), params );
@@ -245,7 +245,7 @@ namespace Jde::DB
 					auto i = 0;
 					auto getName = [&, &t=tableName](auto i)->string//&t for clang
 					{
-						return format( "{}_{}{}_fk", AbbrevName(t), AbbrevName(pPKTable->first), i==0 ? "" : ToString(i) );
+						return Jde::format( "{}_{}{}_fk", AbbrevName(t), AbbrevName(pPKTable->first), i==0 ? "" : ToString(i) );
 					};
 					auto name = getName( i++ );
 					for( ; fks.find(name)!=fks.end(); name = getName(i++) );
@@ -263,7 +263,7 @@ namespace Jde::DB
 	{
 		auto indexName=index.Name;
 		bool checkOnlyTable = !index.PrimaryKey && !uniqueName;
-		for( uint i=2; ; indexName = format( "{}{}", index.Name, i++ ) )
+		for( uint i=2; ; indexName = Jde::format( "{}{}", index.Name, i++ ) )
 		{
 			if( std::find_if(indexes.begin(), indexes.end(), [&](var& x){ return x.Name==CIString(indexName) && (!checkOnlyTable || index.TableName==x.TableName);})==indexes.end() )
 				break;

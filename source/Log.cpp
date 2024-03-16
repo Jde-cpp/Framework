@@ -3,7 +3,7 @@
 #ifdef _MSC_VER
 	#include <crtdbg.h>
 	#include <spdlog/spdlog.h>
-	#include <spdlog/fmt/ostr.h>
+//	#include <spdlog/fmt/ostr.h>
 	#include <spdlog/sinks/msvc_sink.h>
 #endif
 #include <boost/lexical_cast.hpp>
@@ -22,7 +22,7 @@ namespace Jde::Logging
 	up<vector<Logging::Messages::ServerMessage>> _pMemoryLog; shared_mutex MemoryLogMutex;
 	auto _pOnceMessages = mu<flat_map<uint,std::set<string>>>(); std::shared_mutex OnceMessageMutex;
 	sp<LogTag> _statusTag = Logging::Tag( "status" );
-	sp<LogTag> _logTag = Logging::Tag( "settings" );
+	static sp<LogTag> _logTag = Logging::Tag( "settings" );
 	const ELogLevel _breakLevel{ Settings::Get<ELogLevel>("logging/breakLevel").value_or(ELogLevel::Warning) };
 	ELogLevel BreakLevel()ι{ return _breakLevel; }
 	α ServerLevel()ι->ELogLevel{ return Server::Level(); }
@@ -71,7 +71,7 @@ namespace Jde::Logging
 		try{
 			uint i=0;
 			for( var& level : ELogLevelStrings ){
-				var levelTags = Settings::TryArray<json>( format("{}/{}", path, level) );
+				var levelTags = Settings::TryArray<json>( Jde::format("{}/{}", path, level) );
 				vector<sv> tagIds;
 				for( var& tag : levelTags )
 					tagIds.push_back( SetTag(tag.get<string>(), tags, (ELogLevel)i) );
@@ -150,7 +150,8 @@ namespace Jde
 #ifdef _MSC_VER
 							pattern = "\u001b]8;;file://%g\u001b\\%3!#-%3!l%$-%H:%M:%S.%e %v\u001b]8;;\u001b";
 #else
-							pattern = "%^%3!l%$-%H:%M:%S.%e \e]8;;file://%g#%#\a%v\e]8;;\a";
+						pattern = "%^%3!l%$-%H:%M:%S.%e \e]8;;file://%g#%#\a%v\e]8;;\a";
+						//pattern = "%^%3!l%$-%H:%M:%S.%e %v %g#%#";//%-64@  %v
 #endif
 					}
 					else
@@ -160,17 +161,19 @@ namespace Jde
 			}
 			else if( name=="file" ){
 				auto pPath = sink.Get<fs::path>( "path" );
+				if( !_msvc && pPath && pPath->string().starts_with("/Jde-cpp") )
+					pPath = fs::path{ "~/."+pPath->string().substr(1) };
 				var markdown = sink.Get<bool>( "md" ).value_or( false );
 				var fileNameWithExt = Settings::FileStem()+( markdown ? ".md" : ".log" );
 				var path = pPath && !pPath->empty() ? *pPath/fileNameWithExt : OSApp::ApplicationDataFolder()/"logs"/fileNameWithExt;
 				var truncate = sink.Get<bool>( "truncate" ).value_or( true );
-				additional = format( " truncate='{}' path='{}'", truncate, path.string() );
+				additional = Jde::format( " truncate='{}' path='{}'", truncate, path.string() );
 				try{
 					pSink = ms<spdlog::sinks::basic_file_sink_mt>( path.string(), truncate );
 				}
 				catch( const spdlog::spdlog_ex& e ){
 					LogMemoryDetail( Logging::Message{"settings", ELogLevel::Error, "Could not create log:  ({}) path='{}' - {}"}, name, path.string(), e.what() );
-					std::cerr << format( "Could not create log:  ({}) path='{}' - {}", name, path.string(), path.string(), e.what() ) << std::endl;
+					std::cerr << Jde::format( "Could not create log:  ({}) path='{}' - {}", name, path.string(), path.string(), e.what() ) << std::endl;
 					continue;
 				}
 				if( pattern.empty() )
@@ -181,6 +184,7 @@ namespace Jde
 			pSink->set_pattern( pattern );
 			var level = sink.Get<ELogLevel>( "level" ).value_or( ELogLevel::Trace );
 			pSink->set_level( (spdlog::level::level_enum)level );
+			std::cout << Jde::format( "({})level='{}' pattern='{}'{}", name, ToString(level), pattern, additional ) << std::endl;
 			LogMemoryDetail( Logging::Message{"settings", ELogLevel::Information, "({})level='{}' pattern='{}'{}"}, name, ToString(level), pattern, additional );
 			sinks.push_back( pSink );
 		}
@@ -188,7 +192,20 @@ namespace Jde
 		return sinks;
 	}
 	vector<spdlog::sink_ptr> _sinks = LoadSinks();
-	up<spdlog::logger> _logger = mu<spdlog::logger>( "my_logger", _sinks.begin(), _sinks.end() );
+
+	void OnCloseLogger( spdlog::logger* pLogger )ι;
+	using LoggerPtr = up<spdlog::logger, decltype(&Jde::OnCloseLogger)>;
+	auto _logger = LoggerPtr{ new spdlog::logger{"my_logger", _sinks.begin(), _sinks.end()}, Jde::OnCloseLogger };
+	void OnCloseLogger( spdlog::logger* pLogger )ι{
+		static bool firstPass{ true };
+		if( firstPass ){
+			firstPass = false;
+			INFOT( Logging::_logTag, "Closing logger '{}'", pLogger->name() );
+			_logger.reset();//zero out during destruction.
+		}
+		else
+			delete pLogger;
+	}
 
 	α Logging::Initialize()ι->void{
 		_status.set_starttime( (google::protobuf::uint32)Clock::to_time_t(_startTime) );
@@ -207,17 +224,19 @@ namespace Jde
 		_logger->set_level( (spdlog::level::level_enum)minSinkLevel );
 		if( _pMemoryLog ){
 			for( var& m : *_pMemoryLog ){
+				
  				using ctx = fmt::format_context;
-    			vector<fmt::basic_format_arg<ctx>> args;
+    		vector<fmt::basic_format_arg<ctx>> args;
 				for( var& a : m.Variables )
-					args.push_back( fmt::detail::make_arg<ctx>(a) );
+				 	args.push_back( fmt::detail::make_arg<ctx>(a) );
 				try{
 					if( m.Tag.size() && find_if(_fileTags.begin(), _fileTags.end(), [&](var& x){return x.Id==m.Tag;})==_fileTags.end() )
 						continue;
 					if( _sinks.size() )
 						_logger->log( spdlog::source_loc{m.File,(int)m.LineNumber,m.Function}, (spdlog::level::level_enum)m.Level, fmt::vformat(m.MessageView, fmt::basic_format_args<ctx>{args.data(), (int)args.size()}) );
+						//_logger->log( spdlog::source_loc{m.File,(int)m.LineNumber,m.Function}, (spdlog::level::level_enum)m.Level, ToVec::FormatVectorArgs(m.MessageView, m.Variables) );
 					else
-						std::cerr << fmt::vformat( m.MessageView, fmt::basic_format_args<ctx>{args.data(), (int)args.size()} ) << std::endl;
+						std::cerr << ToVec::FormatVectorArgs(m.MessageView, m.Variables) << std::endl;
 				}
 				catch( const fmt::format_error& e ){
 					ERR( "{} - {}", m.MessageView, e.what() );
@@ -228,7 +247,7 @@ namespace Jde
 			if( !_logMemory )
 				ClearMemoryLog();
 		}
-		INFO( "settings path={}", Settings::Path() );
+		INFO( "settings path={}", Settings::Path().string() );
 		INFO( "log minLevel='{}' flushOn='{}'", ELogLevelStrings[(int8)minSinkLevel], ELogLevelStrings[(uint8)flushOn] );//TODO add flushon to Server
 	}
 
@@ -309,7 +328,9 @@ namespace Jde
 		if( ShouldLogOnce(m) )
 			Log( move(m), tag, true );
 	}
-	bool HaveLogger()ι{ return true; }
+	α HaveLogger()ι->bool{
+		return _logger.get(); 
+	}
 
 	spdlog::logger* Logging::Default()ι{ return _logger.get(); }
 

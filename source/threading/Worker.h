@@ -6,17 +6,15 @@
 #include "../collections/Queue.h"
 #include "InterruptibleThread.h"
 
-namespace Jde::Threading
-{
+namespace Jde::Threading{
 	#define var const auto
-#ifdef _MSC_VER
-	using std::stop_token;
-#else
+#ifdef __clang__
 	using Jde::stop_token;
+#else
+	using std::stop_token;
 #endif
 	/*handle signals, configuration*/
-	struct Γ IWorker : IShutdown, std::enable_shared_from_this<IWorker>
-	{
+	struct Γ IWorker : IShutdown, std::enable_shared_from_this<IWorker>{
 		IWorker( sv name )ι;
 		virtual ~IWorker()=0;
 		β Initialize()ι->void;
@@ -31,8 +29,7 @@ namespace Jde::Threading
 		up<jthread> _pThread;
 		static std::atomic_flag _mutex;
 	};
-	struct Γ IPollWorker : IWorker, IPollster
-	{
+	struct Γ IPollWorker : IWorker, IPollster{
 		IPollWorker( sv name )ι:IWorker{ name }{}
 		virtual optional<bool> Poll()ι=0;
 		void WakeUp()ι override;
@@ -46,16 +43,14 @@ namespace Jde::Threading
 	};
 
 	template<class TDerived>
-	struct TWorker /*abstract*/: IPollWorker
-	{
+	struct TWorker /*abstract*/: IPollWorker{
 		TWorker()ι:IPollWorker{ TDerived::Name }{}
 	protected:
 		Ω Start()ι->sp<IWorker>;
 	};
 
 	template<class TArg, class TDerived>
-	struct IQueueWorker /*abstract*/: TWorker<TDerived>
-	{
+	struct IQueueWorker /*abstract*/: TWorker<TDerived>{
 		using base=TWorker<TDerived>; using Class=IQueueWorker<TArg,TDerived>;
 		Ω Push( TArg&& x )ι->void;
 		β HandleRequest( TArg&& x )ι->void=0;
@@ -69,13 +64,12 @@ namespace Jde::Threading
 	};
 
 
-	Ŧ TWorker<T>::Start()ι->sp<IWorker>
-	{
+	Ŧ TWorker<T>::Start()ι->sp<IWorker>{
 		AtomicGuard l{ _mutex };
 		if( !_pInstance || !_pInstance->HasThread() )
 		{
 			//pInstance = _pInstance = make_shared<T>();
-			//const bool addThreads = Settings::TryGet<uint8>( format("workers/{}/threads", T::Name) ).value_or( 0 );
+			//const bool addThreads = Settings::TryGet<uint8>( Jde::format("workers/{}/threads", T::Name) ).value_or( 0 );
 			_pInstance = IApplication::AddPollster<T>();
 			////var pSettings = Settings::TryGetSubcontainer<Settings::Container>(  );
 			//if( addThreads )

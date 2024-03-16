@@ -1,12 +1,14 @@
 ﻿#pragma once
+#ifndef CONTEXT_THREAD_H
+#define CONTEXT_THREAD_H
 #include <boost/asio.hpp>
-//#include <jde/Exports.h>
+
 
 namespace Jde::IO
 {
 	namespace net = boost::asio;
 
-	struct __declspec( dllexport ) AsioContextThread final //: IShutdown
+	struct Γ AsioContextThread final //: IShutdown
 	{
 		static sp<AsioContextThread> Instance()ι;
 		net::io_context& Context()ι{ return _ioc; }
@@ -21,3 +23,4 @@ namespace Jde::IO
 		static constexpr sv ThreadName{ "AsioContextThread" };
 	};
 }
+#endif

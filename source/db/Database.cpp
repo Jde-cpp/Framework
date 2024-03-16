@@ -61,7 +61,7 @@ namespace Jde
 	{
 		DllHelper _dll;
 	public:
-		DataSourceApi( path path ):
+		DataSourceApi( const fs::path& path ):
 			_dll{ path },
 			GetDataSourceFunction{ _dll["GetDataSource"] }
 		{}
@@ -117,8 +117,9 @@ namespace Jde
 	{
 		auto path = Settings::Global().Getɛ<fs::path>( "db/meta" );
 		INFO( "db meta='{}'", path.string() );
-		if( !fs::exists(path) )
+		if( !fs::exists(path) ){
 			path = IApplication::ApplicationDataFolder()/path.filename();
+		}
 		ordered_json j = json::parse( IO::FileUtilities::Load(path) );
 		_schema = db.SchemaProc()->CreateSchema( j, path.parent_path() );
 	}
@@ -130,7 +131,7 @@ namespace Jde
 	}
 
 	std::once_flag _singleShutdown;
-	α Initialize( path libraryName )ε->void
+	α Initialize( const fs::path& libraryName )ε->void
 	{
 		static DataSourceApi api{ libraryName };
 		_pDefault = sp<Jde::DB::IDataSource>{ api.GetDataSourceFunction(), [](auto) {
@@ -155,7 +156,7 @@ namespace Jde
 		return *p;
 	}
 
-	α DB::DataSource( path libraryName, string connectionString )->sp<DB::IDataSource>
+	α DB::DataSource( const fs::path& libraryName, string connectionString )->sp<DB::IDataSource>
 	{
 		sp<IDataSource> pDataSource;
 		std::unique_lock l{_dataSourcesMutex};
@@ -172,7 +173,7 @@ namespace Jde
 
 	α DB::IdFromName( sv tableName, string name, SL sl )ι->SelectAwait<uint>
 	{
-		return db.ScalerCo<uint>( format("select id from {} where name=?", tableName), {name}, sl );
+		return db.ScalerCo<uint>( Jde::format("select id from {} where name=?", tableName), {name}, sl );
 	}
 
 	α DB::Execute( string sql, vector<object>&& parameters, SL sl )ε->uint
@@ -201,6 +202,6 @@ namespace Jde
 			s+="?";
 			params.emplace_back( id );
 		}
-		Select( format("{}({})", move(sql), s), f, params, sl );
+		Select( Jde::format("{}({})", move(sql), s), f, params, sl );
 	}
 }

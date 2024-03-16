@@ -1,4 +1,6 @@
 ﻿#pragma once
+#ifndef DATA_SOURCE_H
+#define DATA_SOURCE_H
 #include <jde/Log.h>
 #include "Await.h"
 #include "Row.h"
@@ -12,7 +14,7 @@ namespace Jde::DB
 	struct Γ IDataSource : std::enable_shared_from_this<IDataSource>
 	{
 		virtual ~IDataSource(){}//warning
-		template<class K=uint,class V=string> α SelectEnum( sv tableName, SRCE )ι->SelectCacheAwait<flat_map<K,V>>{ return SelectMap<K,V>( format("select id, name from {}", tableName), string{tableName}, sl ); }
+		template<class K=uint,class V=string> α SelectEnum( sv tableName, SRCE )ι->SelectCacheAwait<flat_map<K,V>>{ return SelectMap<K,V>( Jde::format("select id, name from {}", tableName), string{tableName}, sl ); }
 		ẗ SelectEnumSync( sv tableName, SRCE )ε->sp<flat_map<K,V>>{ ASSERT(tableName.size()); return SFuture<flat_map<K,V>>( SelectEnum<K,V>( tableName, sl) ).get(); }
 		ẗ SelectMap( string sql, SRCE )ι->SelectAwait<flat_map<K,V>>;
 		ẗ SelectMap( string sql, string cacheName, SRCE )ι->SelectCacheAwait<flat_map<K,V>>;
@@ -117,3 +119,4 @@ namespace Jde::DB
 	}
 }
 #undef var
+#endif

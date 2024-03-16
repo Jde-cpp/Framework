@@ -1,17 +1,18 @@
 ﻿#pragma once
+#ifndef DATABASE_H
+#define DATABASE_H
 #include <jde/Exports.h>
 #include "DataSource.h"
 #include "../Cache.h"
 #define Φ Γ auto
-namespace Jde::DB
-{
+namespace Jde::DB{
 	struct IDataSource; struct Syntax;
 
 	Φ SqlTag()ι->sp<LogTag>;
 	Φ DataSource()ι->IDataSource&;
-	Φ DataSource( path libraryName, string connectionString )ε->sp<IDataSource>;
+	Φ DataSource( const fs::path& libraryName, string connectionString )ε->sp<IDataSource>;
 	Φ DataSourcePtr()ε->sp<IDataSource>;
-	Ξ Driver()ι->string{ return Settings::Env("db/driver").value_or( _msvc ? "Jde.DB.Odbc.dll" : "libJde.MySql.so" ); }
+	Ξ Driver()ι->string{ return Settings::Env("db/driver").value_or( _msvc ? "Jde.DB.Odbc.dll" : "./libJde.MySql.so" ); }
 	Ŧ SelectEnum( sv tableName, SRCE )ε->SelectCacheAwait<flat_map<T,string>>{ return DataSource().SelectEnum<T>(tableName, sl); }//sp<flat_map<T,string>>
 	template<class K=uint,class V=string> α SelectEnumSync( sv tableName, SRCE )ε->sp<flat_map<K,V>>{ return DataSource().SelectEnumSync<K,V>( tableName, sl ); }//sp<flat_map<T,string>>
 	Φ IdFromName( sv tableName, string name, SRCE )ι->SelectAwait<uint>;
@@ -50,20 +51,17 @@ namespace Jde::DB
 	Φ SelectName( string sql, uint id, sv cacheName, SRCE )ε->CIString;
 }
 
-namespace Jde
-{
+namespace Jde{
 	using boost::container::flat_set;
-	Ŧ DB::Scaler( string sql, vec<object>& parameters, SL sl )ε->optional<T>
-	{
+	Ŧ DB::Scaler( string sql, vec<object>& parameters, SL sl )ε->optional<T>{
 		return DataSource().Scaler<T>( move(sql), parameters, sl );
 	}
-	Ŧ DB::TryScaler( string sql, vec<object>& parameters, SL sl )ι->optional<T>
-	{
+	Ŧ DB::TryScaler( string sql, vec<object>& parameters, SL sl )ι->optional<T>{
 		return DataSource().TryScaler<T>( move(sql), parameters, sl );
 	}
-	Ŧ DB::ScalerCo( string sql, vec<object> parameters, SL sl )ε->SelectAwait<T>
-	{
+	Ŧ DB::ScalerCo( string sql, vec<object> parameters, SL sl )ε->SelectAwait<T>{
 		return DataSource().ScalerCo<T>( move(sql), parameters, sl );
 	}
 #undef  Φ
 }
+#endif

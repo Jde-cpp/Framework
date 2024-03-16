@@ -1,4 +1,6 @@
 ﻿#pragma once
+#ifndef SCHEMA_H
+#define SCHEMA_H
 #include "Table.h"
 
 #define TMPL template<class T=string>
@@ -108,3 +110,4 @@ namespace Jde::DB
 #undef RESULT
 #undef YRESULT
 }
+#endif

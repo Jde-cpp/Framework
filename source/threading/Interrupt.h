@@ -1,4 +1,6 @@
 ﻿#pragma once
+#ifndef INTERRUPT_H
+#define INTERRUPT_H
 #include <atomic>
 #include <condition_variable>
 #include <functional>
@@ -7,14 +9,11 @@
 #include <jde/TypeDefs.h>
 #include <jde/Exports.h>
 
-namespace Jde::Threading
-{
+namespace Jde::Threading{
 	struct InterruptibleThread;
 	//derive from, sleeps till interrupted
 
-	class Interrupt
-	{
-	public:
+	struct Interrupt{
 		Γ Interrupt( sv threadName, Duration duration, bool paused=false );
 		Γ virtual ~Interrupt();
 		Interrupt()=delete;
@@ -43,3 +42,4 @@ namespace Jde::Threading
 		std::chrono::nanoseconds _refreshRate;
 	};
 }
+#endif

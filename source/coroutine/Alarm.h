@@ -4,6 +4,7 @@
 #include "../threading/Worker.h"
 #include "Coroutine.h"
 #include "Awaitable.h"
+#include <version>
 
 namespace Jde::Threading
 {
@@ -18,7 +19,7 @@ namespace Jde::Threading
 		AlarmAwait( TimePoint when )ι:_alarm{when}{}
 		bool await_ready()ι override{ return _alarm<Clock::now(); }
 		void await_suspend( coroutine_handle<Task::promise_type> h )ι override;
-		α await_resume()ι->AwaitResult override{ TRACE("({})AlarmAwait::await_resume", std::this_thread::get_id()); return {}; }//returns the result value for co_await expression.
+		α await_resume()ι->AwaitResult override{ TRACE("({})AlarmAwait::await_resume", Threading::GetThreadId()); return {}; }//returns the result value for co_await expression.
 	private:
 		TimePoint _alarm;
 	};

@@ -95,14 +95,14 @@ namespace Jde::DB
 	}
 	α Column::DataTypeString( const Syntax& syntax )Ι->SchemaName
 	{
-		return MaxLength ? format("{}({})", ToStr(ToString(Type, syntax)), *MaxLength) : ToStr( ToString(Type, syntax) );
+		return MaxLength ? Jde::format("{}({})", ToStr(ToString(Type, syntax)), *MaxLength) : ToStr( ToString(Type, syntax) );
 	}
 	α Column::Create( const Syntax& syntax )Ι->string
 	{
 		var null = IsNullable ? "null"sv : "not null"sv;
 		const string sequence = IsIdentity ?  " "+string{syntax.IdentityColumnSyntax()} : string{};
-		string dflt = Default.size() ? format( " default {}", Default=="$now" ? ToStr(syntax.NowDefault()) : format("'{}'"sv, Default) ) : string{};
-		return format( "{} {} {}{}{}", Name, DataTypeString(syntax), null, sequence, dflt );
+		string dflt = Default.size() ? Jde::format( " default {}", Default=="$now" ? ToStr(syntax.NowDefault()) : Jde::format("'{}'"sv, Default) ) : string{};
+		return Jde::format( "{} {} {}{}{}", Name, DataTypeString(syntax), null, sequence, dflt );
 	}
 
 	Table::Table( sv name, const nlohmann::json& j, const flat_map<string,Table>& parents, const flat_map<string,Column>& commonColumns, const nlohmann::ordered_json& schema ):
@@ -155,7 +155,7 @@ namespace Jde::DB
 				for( var& it : value )
 					columns.push_back( DB::Schema::FromJson(it.get<string>()) );
 
-				var name2 = NaturalKeys.empty() ? "nk" : format( "nk{}", NaturalKeys.size() );
+				var name2 = NaturalKeys.empty() ? "nk" : Jde::format( "nk{}", NaturalKeys.size() );
 				Indexes.push_back( Index{name2, Name, false, &columns} );
 				NaturalKeys.push_back( columns );
 			}
@@ -184,7 +184,7 @@ namespace Jde::DB
 				CustomInsertProc = value.get<bool>();
 			else{
 				var _logTag = Settings::LogTag();
-				ASSERT_DESC( attribute=="usePrefix", format("Unknown table attribute:  '{}'", attribute) );
+				ASSERT_DESC( attribute=="usePrefix", Jde::format("Unknown table attribute:  '{}'", attribute) );
 			}
 		}
 	}
@@ -192,7 +192,7 @@ namespace Jde::DB
 	α Table::InsertProcName()Ι->SchemaName
 	{
 		var haveSequence = std::find_if( Columns.begin(), Columns.end(), [](var& c){return c.IsIdentity;} )!=Columns.end();
-		return !haveSequence || CustomInsertProc ? SchemaName{} : format( "{}_insert", DB::Schema::ToSingular(Name) );
+		return !haveSequence || CustomInsertProc ? SchemaName{} : Jde::format( "{}_insert", DB::Schema::ToSingular(Name) );
 	}
 
 	α Table::InsertProcText( const Syntax& syntax )Ι->string
@@ -205,7 +205,7 @@ namespace Jde::DB
 		char delimiter = ' ';
 		for( var& column : Columns )
 		{
-			auto value{ format("{}{}"sv, prefix, column.Name) };
+			auto value{ Jde::format("{}{}"sv, prefix, column.Name) };
 			if( column.Insertable )
 				osCreate << delimiter << prefix << column.Name << " " << column.DataTypeString( syntax );
 			else
@@ -236,7 +236,7 @@ namespace Jde::DB
 		for( var& column : Columns )
 		{
 			if( column.IsIdentity )
-				pk = format( "PRIMARY KEY({})"sv, column.Name );
+				pk = Jde::format( "PRIMARY KEY({})"sv, column.Name );
 			createStatement << suffix << endl << "\t" << column.Create( syntax );
 			suffix = ",";
 		}

@@ -36,7 +36,7 @@ namespace Jde{
 		{
 			ostringstream os;
 			os << "(" << OSApp::ProcessId() << ")";
-			for( uint i=0; i<argc; ++i )
+			for( auto i=0; i<argc; ++i )
 				os << argv[i] << " ";
 			Logging::Default()->log( spdlog::source_loc{FileName(SRCE_CUR.file_name()).c_str(),SRCE_CUR.line(),SRCE_CUR.function_name()}, (spdlog::level::level_enum)ELogLevel::Information, os.str() ); //TODO add cwd.
 		}

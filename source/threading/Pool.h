@@ -67,7 +67,7 @@ namespace Jde::Threading{
 		unique_lock l{_mtx};
 		if( RunningCount<MaxThreads )
 		{
-			var name = fmt::format( "{}-{}", Name, _threads.size() );
+			var name = Jde::format( "{}-{}", Name, _threads.size() );
 			auto pThread = make_shared<InterruptibleThread>( name, [&, name](){Run(name);} );
 			_threads.push_back( pThread );
 		}

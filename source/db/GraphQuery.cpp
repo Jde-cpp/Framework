@@ -64,8 +64,8 @@ namespace Jde::DB
 			var fkName = pSchemaColumn->Name;
 			var join = pSchemaColumn->IsNullable ? "left "sv : sv{};
 			auto pOther = findColumn( *pDefTable, DB::Schema::ToSingular("name") ); CHECK( pOther );
-			columnName = format( "{}.{} {}", pDefTable->Name, pOther->Name, columnName );
-			*pSubsequentJoin += format( "\t{0}join {1} on {1}.id={2}.{3}"sv, join, pDefTable->Name, defaultPrefix, fkName );
+			columnName = Jde::format( "{}.{} {}", pDefTable->Name, pOther->Name, columnName );
+			*pSubsequentJoin += Jde::format( "\t{0}join {1} on {1}.id={2}.{3}"sv, join, pDefTable->Name, defaultPrefix, fkName );
 		}
 		else if( pDefTable && !pSchemaColumn )
 		{
@@ -76,7 +76,7 @@ namespace Jde::DB
 				var p = _schema.Tables.find( pSchemaColumn->PKTable ); THROW_IF( p==_schema.Tables.end(), "Could not find flags pk table for {}.{}", pDefTable->Name, columnName );
 				flags.emplace( columns.size(), p->second );//*pIndex
 			}
-			columnName = format( "{}.{}", pDefTable->Name, pSchemaColumn->Name );
+			columnName = Jde::format( "{}.{}", pDefTable->Name, pSchemaColumn->Name );
 		}
 		else if( pSchemaColumn )
 		{
@@ -88,7 +88,7 @@ namespace Jde::DB
 			}
 			else if( pSchemaColumn->QLAppend.size() && !qlTable.FindColumn(pSchemaColumn->QLAppend) )
 			{
-				if( CIString name{ format("{}.{}", defaultPrefix, DB::Schema::FromJson(pSchemaColumn->QLAppend)) }; std::find(columns.begin(), columns.end(), name)==columns.end() )
+				if( CIString name{ Jde::format("{}.{}", defaultPrefix, DB::Schema::FromJson(pSchemaColumn->QLAppend)) }; std::find(columns.begin(), columns.end(), name)==columns.end() )
 				{
 					columns.push_back( name );//add db column, doesn't add qlColumn
 					c.SchemaColumnPtr = pSchemaColumn;
@@ -96,7 +96,7 @@ namespace Jde::DB
 				}
 			}
 
-			columnName = format( "{}.{}", defaultPrefix, pSchemaColumn->Name );
+			columnName = Jde::format( "{}.{}", defaultPrefix, pSchemaColumn->Name );
 		}
 		THROW_IF( !pSchemaColumn, "Could not find column '{}.{}'", pDefTable->Name, columnName );//Could not find column 'um_role_permissions.api'" thrown in the test body
 
@@ -144,7 +144,7 @@ namespace Jde::DB
 				if( pColumn )
 				{
 					columns.push_back( ColumnSql(*childTable, pkTable, nullptr, dates, flags, pkTable.Name, false, pIndex, nullptr, pJsonMembers) );
-					*pSubsequentJoin += format( "\tleft join {0} on {0}.id={1}.{2}", pkTable.Name, childPrefix, pColumn->Name );
+					*pSubsequentJoin += Jde::format( "\tleft join {0} on {0}.id={1}.{2}", pkTable.Name, childPrefix, pColumn->Name );
 				}
 			}
 		}
@@ -251,7 +251,7 @@ namespace Jde::DB
 					continue;  //'um_permissions<->'apis' //THROW_IF( !pDefTable, Exception("Could not find def table '{}<->'{}' in schema", parentTable.Name, pQLTable->DBName()) );
 				var subTable = *pSubTable;
 				var defTableName = pDefTable->Name;
-				ostringstream subSql{ format("select {0}.{1} primary_id, {0}.{2} sub_id", defTableName, parentTable.FKName(), subTable.FKName()), std::ios::ate };
+				ostringstream subSql{ Jde::format("select {0}.{1} primary_id, {0}.{2} sub_id", defTableName, parentTable.FKName(), subTable.FKName()), std::ios::ate };
 				var& subTableName = subTable.Name;
 				vector<uint> subDates; flat_map<uint,sp<const DB::Table>> subFlags;
 				string subsequentJoin;
@@ -292,7 +292,7 @@ namespace Jde::DB
 								var pEnum = SelectEnumSync( pColumn->PKTable ); CHECK( pEnum->find(pk)!=pEnum->end() );
 								colToJson( row, i, jRow, "", column.JsonName, subDates, subFlagValues, &column );
 								var name = jRow[column.JsonName].is_null() ? string{} : jRow[column.JsonName].get<string>();
-								jRow[column.JsonName] = name.empty() ? pEnum->find(pk)->second : format( "{}\\{}", pEnum->find(pk)->second, name );
+								jRow[column.JsonName] = name.empty() ? pEnum->find(pk)->second : Jde::format( "{}\\{}", pEnum->find(pk)->second, name );
 							}
 							else
 								colToJson( row, i, jRow, "", column.JsonName, subDates, subFlagValues, &column );
@@ -360,7 +360,7 @@ namespace Jde::DB
 						var pEnum = SelectEnumSync( pAppend->PKTable ); CHECK( pEnum->find(pk)!=pEnum->end() );
 						colToJson( row, i, jRow, {}, column, dates, {} );
 						var name = jRow[column].is_null() ? string{} : jRow[column].get<string>();
-						jRow[column] = name.empty() ? pEnum->find(pk)->second : format( "{}\\{}", pEnum->find(pk)->second, name );
+						jRow[column] = name.empty() ? pEnum->find(pk)->second : Jde::format( "{}\\{}", pEnum->find(pk)->second, name );
 
 					}
 					else

@@ -14,9 +14,9 @@ namespace Jde::Coroutine
 		IdleLimit{idleLimit},
 		ThreadParam{ name, Threading::BumpThreadHandle() },
 		_param{ move(param) },
-		_thread{ [this]( stop_token stoken )
+		_thread{ [this]( std::stop_token stoken )
 		{
-			Threading::SetThreadDscrptn( format("CoroutineThread - {}", ThreadParam.AppHandle) );
+			Threading::SetThreadDscrptn( Jde::format("CoroutineThread - {}", ThreadParam.AppHandle) );
 			var index = INDEX++;
 			auto timeout = Clock::now()+IdleLimit;
 			while( !stoken.stop_requested() )
@@ -52,7 +52,7 @@ namespace Jde::Coroutine
 	ResumeThread::~ResumeThread()
 	{
 		if( !IApplication::ShuttingDown() )
-			TRACE( "({})ResumeThread::~ResumeThread", std::this_thread::get_id() );
+			TRACE( "({})ResumeThread::~ResumeThread", Threading::GetThreadId() );
 		if( _thread.joinable() )
 		{
 			_thread.request_stop();
@@ -130,7 +130,7 @@ namespace Jde::Coroutine
 		{
 			if( _threads.size()<MaxThreadCount )
 			{
-				_threads.emplace_back( format("CoroutinePool[{}]", _threads.size()), PoolIdleThreshold, move(*pResult) );
+				_threads.emplace_back( Jde::format("CoroutinePool[{}]", _threads.size()), PoolIdleThreshold, move(*pResult) );
 				pResult = {};
 			}
 			else if( !_pQueue )

@@ -11,7 +11,7 @@ namespace Jde::Settings
 	α LogTag()ι->sp<Jde::LogTag>&{ return _logTag; }
 	up<Settings::Container> _pGlobal;
 
-	Container::Container( path jsonFile, SL sl )ε:
+	Container::Container( const fs::path& jsonFile, SL sl )ε:
 		_pJson{ mu<nlohmann::json>() }
 	{
 		CHECK_PATH( jsonFile, sl );
@@ -83,7 +83,7 @@ namespace Jde
 	{
 		var path = Path();
 		IO::FileUtilities::Save( path, j.dump(), std::ios_base::out, sl );
-		DBG( "({})Saved for '{}'", path, what );
+		DBG( "({})Saved for '{}'", path.string(), what );
 	}
 	α Settings::Set( sv what, const Container::Variant& v, bool save, SL sl )ε->void
 	{
@@ -129,7 +129,7 @@ namespace Jde
 	}
 	α Settings::Path()ι->fs::path
 	{
-		var fileName = fs::path{ format("{}.json", FileStem()) };
+		var fileName = fs::path{ Jde::format("{}.json", FileStem()) };
 		fs::path settingsPath{ fileName };
 		if( !fs::exists(settingsPath) )
 		{

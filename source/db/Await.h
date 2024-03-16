@@ -1,4 +1,6 @@
 ﻿#pragma once
+#ifndef JDE_DB_AWAIT_H
+#define JDE_DB_AWAIT_H
 #include "Row.h"
 #include "../Cache.h"
 #include "../coroutine/Awaitable.h"
@@ -43,11 +45,11 @@ namespace Jde::DB
 	};
 
 	Τ TSelect<T>::~TSelect(){};
-	Ŧ TSelect<T>::Select( HCoroutine h )->Task//called from await_suspend
-	{
-		try
-		{
-			( co_await *this->SelectCo( move(_sql), move(_params), _base._sl) ).CheckError();
+	Ŧ TSelect<T>::Select( HCoroutine h )->Task{//called from await_suspend
+		try{
+			auto pAwait = this->SelectCo( move(_sql), move(_params), _base._sl );
+			auto result = co_await *pAwait;
+			result.CheckError();
 			_base.Set<T>( move(_pResult) );
 		}
 		catch( IException& e )
@@ -93,3 +95,4 @@ namespace Jde::DB
 	}
 }
 #undef Φ
+#endif

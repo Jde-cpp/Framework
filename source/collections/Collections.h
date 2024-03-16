@@ -254,7 +254,7 @@ namespace Jde::Collections
 	{
 		auto p = map.find( key );//M<K,std::up<V>>::iterator
 		if( p == map.end() )
-			p = map.emplace( key, make_unique<V>() ).first;
+			p = map.emplace( key, mu<V>() ).first;
 		return p->second;
 	}
 }

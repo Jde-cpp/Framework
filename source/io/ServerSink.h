@@ -1,4 +1,6 @@
 ﻿#pragma once
+#ifndef SERVER_SINK_H
+#define SERVER_SINK_H
 #include <jde/coroutine/Task.h>
 #include "ProtoClient.h"
 //#include "typedefs.h"
@@ -10,25 +12,22 @@ DISABLE_WARNINGS
 #include "./proto/messages.pb.h"
 ENABLE_WARNINGS
 
-namespace Jde
-{
+namespace Jde{
 	using ApplicationInstancePK=uint32;
 	using ApplicationPK=uint32;
 }
-namespace Jde::Logging
-{
+namespace Jde::Logging{
 	namespace Messages{ struct ServerMessage; }
 	struct IServerSink;
-	struct Γ SessionInfoAwait final : IAwait
-	{
+	
+	struct Γ SessionInfoAwait final : IAwait{
 		SessionInfoAwait( SessionPK sessionId, SRCE )ι:IAwait{sl},_sessionId{sessionId}{}
 		α await_suspend( HCoroutine h )ι->void override;
 	private:
 		SessionPK _sessionId;
 	};
 #define Φ Γ auto
-	namespace Server
-	{
+	namespace Server{
 		Φ ApplicationId()ι->ApplicationPK;
 		α Destroy()ι->void;
 		extern bool _enabled;
@@ -77,10 +76,8 @@ namespace Jde::Logging
 		UnorderedSet<ID> _threadsSent;
 		sp<LogTag> _logTag;
 	};
-	namespace Messages
-	{
-		struct Γ ServerMessage final : Logging::Message
-		{
+	namespace Messages{
+		struct Γ ServerMessage final : Logging::Message{
 			ServerMessage( const MessageBase& base )ι:
 				Logging::Message{ base }
 			{}
@@ -98,8 +95,7 @@ namespace Jde::Logging
 	}
 
 	typedef IO::Sockets::TProtoClient<Proto::ToServer,Proto::FromServer> ProtoBase;
-	struct ServerSink final: IServerSink, ProtoBase
-	{
+	struct ServerSink final: IServerSink, ProtoBase{
 		using base=ProtoBase;
 		static α Create( bool wait = false )ι->Task;
 		ServerSink()ε;
@@ -124,3 +120,4 @@ namespace Jde::Logging
 		Proto::ToServer _buffer; std::atomic_flag _bufferMutex;
 	};
 }
+#endif

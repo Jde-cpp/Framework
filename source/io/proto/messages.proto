@@ -2,7 +2,6 @@
 //ln -s $REPO_DIR/protobuf/src/google/protobuf/timestamp.proto .
 //protoc --cpp_out dllexport_decl=Γ:. -I. messages.proto
 //%JDE_DIR%\Public\stage\release\protoc --cpp_out dllexport_decl=EXPORT_ME:. -I. messages.proto
-//npx pbjs -t static-module -w es6 -o src/app/proto/messages.js messages.proto & npx pbts -o src/app/proto/messages.d.ts src/app/proto/messages.js
 
 syntax = "proto3";
 

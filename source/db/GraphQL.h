@@ -1,4 +1,6 @@
 ﻿#pragma once
+#ifndef GRAPHQL_H
+#define GRAPHQL_H
 #include <variant>
 #include <nlohmann/json.hpp>
 #include <jde/Str.h>
@@ -59,3 +61,4 @@ namespace Jde::DB{
 }
 #undef var
 #undef Φ
+#endif

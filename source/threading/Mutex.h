@@ -1,4 +1,6 @@
 ﻿#pragma once
+#ifndef MUTEX_H
+#define MUTEX_H
 #include <shared_mutex>
 #include <boost/core/noncopyable.hpp>
 #include "Thread.h"
@@ -75,7 +77,7 @@ namespace Jde::Threading
 			_pUniqueLock{ nullptr },
 			_pUniqueSharedLock{nullptr},
 			_pSharedLock{nullptr},
-			_description( format("{}.{} - line={}, thread={}", instance, name, lineNumber, Threading::GetThreadDescription()) )
+			_description( Jde::format("{}.{} - line={}, thread={}", instance, name, lineNumber, Threading::GetThreadDescription()) )
 		{
 			TRACE( "unique lock - {}", _description );
 			_pUniqueLock = make_unique<std::unique_lock<std::mutex>>( mutex );
@@ -84,7 +86,7 @@ namespace Jde::Threading
 			_pUniqueLock{ nullptr },
 			_pUniqueSharedLock{ nullptr },
 			_pSharedLock{  nullptr },
-			_description( format("{} {}.{} - line={}, thread={}", (shared ? "Shared" : "Unique"), instance, name, lineNumber, Threading::GetThreadDescription()) )
+			_description( Jde::format("{} {}.{} - line={}, thread={}", (shared ? "Shared" : "Unique"), instance, name, lineNumber, Threading::GetThreadDescription()) )
 		{
 			if( shared )
 			{
@@ -126,3 +128,4 @@ namespace Jde::Threading
 #endif
 #undef Φ
 }
+#endif

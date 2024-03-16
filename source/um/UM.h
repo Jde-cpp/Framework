@@ -1,4 +1,6 @@
 ﻿#pragma once
+#ifndef UM_H
+#define UM_H
 #include <jde/Exports.h>
 #include <jde/TypeDefs.h>
 #include <jde/Exception.h>
@@ -42,3 +44,4 @@ namespace Jde::UM
 	};
 }
 #undef Φ
+#endif

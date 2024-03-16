@@ -126,16 +126,16 @@ namespace Jde
 		double seconds = duration_cast<milliseconds>(duration).count()/1000.0; //;
 		string fmt;
 		if( seconds < 60.0 )
-			fmt = format( "{:.1f}"sv, seconds );
+			fmt = Jde::format( "{:.1f}"sv, seconds );
 		else
 		{
 			var wholeSeconds = Round( seconds );
 			if( wholeSeconds < 60*60 )
-				fmt = format( "{:0>2}:{:0>2}", (wholeSeconds/60), (wholeSeconds%60) );
+				fmt = Jde::format( "{:0>2}:{:0>2}", (wholeSeconds/60), (wholeSeconds%60) );
 			else if( wholeSeconds < 60*60*24 )
-				fmt = format( "{:0>2}:{:0>2}:{:0>2}",  (wholeSeconds/(60*60)),  (wholeSeconds%(60*60)/60),  (wholeSeconds%60) );
+				fmt = Jde::format( "{:0>2}:{:0>2}:{:0>2}",  (wholeSeconds/(60*60)),  (wholeSeconds%(60*60)/60),  (wholeSeconds%60) );
 			else
-				fmt = format( "{}:{:0>2}:{:0>2}:{:0>2}", (wholeSeconds/(60*60*24)), (wholeSeconds%(60*60*24)/(60*60)), (wholeSeconds%(60*60)/60), (wholeSeconds%60) );
+				fmt = Jde::format( "{}:{:0>2}:{:0>2}:{:0>2}", (wholeSeconds/(60*60*24)), (wholeSeconds%(60*60*24)/(60*60)), (wholeSeconds%(60*60)/60), (wholeSeconds%60) );
 		}
 		return fmt;
 	}
@@ -144,11 +144,11 @@ namespace Jde
 	{
 		string fmt;
 		if( count > 100000.0 )
-			fmt = format( "{0}M"sv, count/=1000000.0 );
+			fmt = Jde::format( "{0}M"sv, count/=1000000.0 );
 		else if( count > 1000.0 )
-			fmt = format( "{0}k", count/=1000.0 );
+			fmt = Jde::format( "{0}k", count/=1000.0 );
 		else
-			fmt = format( "{0}", count );
+			fmt = Jde::format( "{0}", count );
 		return fmt;
 	}
 

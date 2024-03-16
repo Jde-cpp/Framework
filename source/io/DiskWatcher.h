@@ -1,4 +1,6 @@
 ﻿#pragma once
+#ifndef DISK_WATCHER_H
+#define DISK_WATCHER_H
 #include <jde/Exports.h>
 #include "../threading/InterruptibleThread.h"
 #include "../coroutine/Awaitable.h"
@@ -44,32 +46,30 @@ namespace Jde::IO
 		const EDiskWatcherEvents Mask;
 		const uint32_t Cookie;
 		const string Name;
+		α ToString()Ι->string;
 	};
-	std::ostream& operator<<( std::ostream& os, const NotifyEvent& event )ι;
-//#ifndef _MSC_VER
-	struct Γ IDriveChange
-	{
-		β OnAccess( path path, const NotifyEvent& event )ι->void;
-		β OnModify( path path, const NotifyEvent& event )ι->void;
-		β OnAttribute( path path, const NotifyEvent& event )ι->void;
-		β OnCloseWrite( path path, const NotifyEvent& event )ι->void;
-		β OnCloseNoWrite( path path, const NotifyEvent& event )ι->void;
-		β OnOpen( path path, const NotifyEvent& event )ι->void;
-		β OnMovedFrom( path path, const NotifyEvent& event )ι->void;
-		β OnMovedTo( path path, const NotifyEvent& event )ι->void;
-		β OnCreate( path path, const NotifyEvent& event )ι->void;
-		β OnDelete( path path, const NotifyEvent& event )ι->void;
-		β OnDeleteSelf( path path, const NotifyEvent& event )ι->void;
-		β OnMoveSelf( path path, const NotifyEvent& event )ι->void;
-		β OnUnmount( path path, const NotifyEvent& event )ι->void;
-		β OnQOverflow( path path, const NotifyEvent& event )ι->void;
-		β OnIgnored( path path, const NotifyEvent& event )ι->void;
+
+	struct Γ IDriveChange{
+		β OnAccess( const fs::path& path, const NotifyEvent& event )ι->void;
+		β OnModify( const fs::path& path, const NotifyEvent& event )ι->void;
+		β OnAttribute( const fs::path& path, const NotifyEvent& event )ι->void;
+		β OnCloseWrite( const fs::path& path, const NotifyEvent& event )ι->void;
+		β OnCloseNoWrite( const fs::path& path, const NotifyEvent& event )ι->void;
+		β OnOpen( const fs::path& path, const NotifyEvent& event )ι->void;
+		β OnMovedFrom( const fs::path& path, const NotifyEvent& event )ι->void;
+		β OnMovedTo( const fs::path& path, const NotifyEvent& event )ι->void;
+		β OnCreate( const fs::path& path, const NotifyEvent& event )ι->void;
+		β OnDelete( const fs::path& path, const NotifyEvent& event )ι->void;
+		β OnDeleteSelf( const fs::path& path, const NotifyEvent& event )ι->void;
+		β OnMoveSelf( const fs::path& path, const NotifyEvent& event )ι->void;
+		β OnUnmount( const fs::path& path, const NotifyEvent& event )ι->void;
+		β OnQOverflow( const fs::path& path, const NotifyEvent& event )ι->void;
+		β OnIgnored( const fs::path& path, const NotifyEvent& event )ι->void;
 	private:
 		sp<LogTag> _logTag{ Logging::Tag("driveWatcher") };
 	};
 //#endif
-	struct WatcherSettings
-	{
+	struct WatcherSettings{
 		Duration Delay;//{ 1min }
 		vector<string> ExcludedRegEx;
 	};
@@ -85,7 +85,7 @@ namespace Jde::IO
 	struct IDirEntry
 	{
 		IDirEntry()=default;
-		IDirEntry( EFileFlags flags, path path, uint size, const TimePoint& createTime=TimePoint(), const TimePoint& modifyTime=TimePoint() ):
+		IDirEntry( EFileFlags flags, const fs::path& path, uint size, const TimePoint& createTime=TimePoint(), const TimePoint& modifyTime=TimePoint() ):
 			Flags{ flags },
 			Path{ path },
 			Size{ size },
@@ -107,31 +107,31 @@ namespace Jde::IO
 
 	struct IDrive : std::enable_shared_from_this<IDrive>
 	{
-		β Recursive( path path, SRCE )ε->flat_map<string,IDirEntryPtr> =0;
-		β Get( path path )ε->IDirEntryPtr=0;
-		β Save( path path, const vector<char>& bytes, const IDirEntry& dirEntry )ε->IDirEntryPtr=0;
-		β CreateFolder( path path, const IDirEntry& dirEntry )->IDirEntryPtr=0;
-		β Remove( path path )->void=0;
-		β Trash( path path )->void=0;
+		β Recursive( const fs::path& path, SRCE )ε->flat_map<string,IDirEntryPtr> =0;
+		β Get( const fs::path& path )ε->IDirEntryPtr=0;
+		β Save( const fs::path& path, const vector<char>& bytes, const IDirEntry& dirEntry )ε->IDirEntryPtr=0;
+		β CreateFolder( const fs::path& path, const IDirEntry& dirEntry )->IDirEntryPtr=0;
+		β Remove( const fs::path& path )->void=0;
+		β Trash( const fs::path& path )->void=0;
 		β TrashDisposal( TimePoint latestDate )->void=0;
 		β Load( const IDirEntry& dirEntry )->VectorPtr<char> =0;
 		β Restore( sv name )ε->void=0;
-		β SoftLink( path existingFile, path newSymLink )ε->void=0;
+		β SoftLink( const fs::path& existingFile, const fs::path& newSymLink )ε->void=0;
 	};
 
 	struct Γ DiskWatcher : std::enable_shared_from_this<DiskWatcher>
 	{
-		DiskWatcher( path path, EDiskWatcherEvents events/*=DefaultEvents*/ )ε;
+		DiskWatcher( const fs::path& path, EDiskWatcherEvents events/*=DefaultEvents*/ )ε;
 		virtual ~DiskWatcher();
 		constexpr static EDiskWatcherEvents DefaultEvents = {EDiskWatcherEvents::Modify | EDiskWatcherEvents::MovedFrom | EDiskWatcherEvents::MovedTo | EDiskWatcherEvents::Create | EDiskWatcherEvents::Delete};
 	protected:
 		Ω LogTag()ι->sp<LogTag>;
 #define _logTag LogTag()
-		β OnModify( path path, const NotifyEvent& /*event*/ )ι->void{ WARN( "No listener for OnModify {}.", path.string() );};
-		β OnMovedFrom( path path, const NotifyEvent& /*event*/ )ι->void{ WARN( "No listener for OnMovedFrom {}.", path.string() );};
-		β OnMovedTo( path path, const NotifyEvent& /*event*/ )ι->void{ WARN( "No listener for OnMovedTo {}.", path.string() );};
-		β OnCreate( path path, const NotifyEvent& /*event*/ )ι->void=0;
-		β OnDelete( path path, const NotifyEvent& /*event*/ )ι->void{ WARN( "No listener for OnDelete {}.", path.string() );};
+		β OnModify( const fs::path& path, const NotifyEvent& /*event*/ )ι->void{ WARN( "No listener for OnModify {}.", path.string() );};
+		β OnMovedFrom( const fs::path& path, const NotifyEvent& /*event*/ )ι->void{ WARN( "No listener for OnMovedFrom {}.", path.string() );};
+		β OnMovedTo( const fs::path& path, const NotifyEvent& /*event*/ )ι->void{ WARN( "No listener for OnMovedTo {}.", path.string() );};
+		β OnCreate( const fs::path& path, const NotifyEvent& /*event*/ )ι->void=0;
+		β OnDelete( const fs::path& path, const NotifyEvent& /*event*/ )ι->void{ WARN( "No listener for OnDelete {}.", path.string() );};
 #undef _logTag
 	private:
 		α Run()ι->void;
@@ -143,3 +143,4 @@ namespace Jde::IO
 		sp<Jde::Threading::InterruptibleThread> _pThread;
 	};
 }
+#endif

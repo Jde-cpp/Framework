@@ -1,4 +1,7 @@
 ﻿#pragma once
+#ifndef JDE_SETTINGS_H //gcc precompiled headers
+#define JDE_SETTINGS_H
+
 #include <variant>
 #include "DateTime.h"
 #include <jde/Assert.h>
@@ -11,9 +14,8 @@
 #define Φ Γ auto
 namespace Jde::Settings{
 	α Path()ι->fs::path;
-	Φ LogTag()ι->sp<LogTag>&;
-	struct JsonNumber
-	{
+	Φ LogTag()ι->sp<Jde::LogTag>&;
+	struct JsonNumber final{
 		using Variant=std::variant<double,_int,uint>;
 		JsonNumber( json j )ε;
 		JsonNumber( double v )ι:Value{v}{};
@@ -22,11 +24,11 @@ namespace Jde::Settings{
 
 		Variant Value;
 	};
-	struct Γ Container
-	{
+
+	struct Γ Container final{
 		using Variant=std::variant<nullptr_t,string,JsonNumber>;
 		Container( const json& json )ι;
-		Container( path jsonFile, SRCE )ε;
+		Container( const fs::path& jsonFile, SRCE )ε;
 		α TryMembers( sv path )ι->flat_map<string,Container>;
 		α Have( sv path )ι->bool;
 		α FindPath( sv path )Ι->optional<json>;
@@ -53,25 +55,21 @@ namespace Jde::Settings{
 	$ Container::Getɛ<TimePoint>( sv path, const source_location& sl )Ε->TimePoint{ return DateTime{ Getɛ<string>(path, sl) }.GetTimePoint(); }
 	$ Container::Getɛ<fs::path>( sv path, const source_location& )Ε->fs::path{ var p = Get<string>(path); return p.has_value() ? fs::path{*p} : fs::path{}; }
 
-	Ŧ Container::Getɛ( sv path, const source_location& sl )Ε->T
-	{
+	Ŧ Container::Getɛ( sv path, const source_location& sl )Ε->T{
 		auto p = Get<T>( path ); if( !p ) throw Exception{ sl, ELogLevel::Debug, "'{}' was not found in settings.", path };//mysql precludes using THROW_IF
 		return *p;
 	}
 
-	$ Container::Get<Duration>( sv path )Ι->optional<Duration>
-	{
+	$ Container::Get<Duration>( sv path )Ι->optional<Duration>{
 		var strng = Get<string>( path );
 		optional<std::chrono::system_clock::duration> result;
 		if( strng.has_value() )
 			Try( [strng, &result](){ result = Chrono::ToDuration(*strng);} );
 		return  result;
 	}
-	$ Container::Get<ELogLevel>( sv path )Ι->optional<ELogLevel>
-	{
+	$ Container::Get<ELogLevel>( sv path )Ι->optional<ELogLevel>{
 		optional<ELogLevel> level;
-		if( auto p = FindPath(path); p )
-		{
+		if( auto p = FindPath(path); p ){
 			if( p->is_string() )
 				level = Str::ToEnum<ELogLevel,array<sv,7>>( ELogLevelStrings, p->get<string>() );
 			else if( p->is_number() && p->get<uint8>()<ELogLevelStrings.size() )
@@ -80,8 +78,7 @@ namespace Jde::Settings{
 		return level;
 	}
 
-	Ξ Container::TryMembers( sv path )ι->flat_map<string,Container>
-	{
+	Ξ Container::TryMembers( sv path )ι->flat_map<string,Container>{
 		flat_map<string,Container> members;
 		auto j = FindPath( path );
 		if( j && j->is_object() )
@@ -93,8 +90,7 @@ namespace Jde::Settings{
 		return members;
 	}
 
-	$ Container::Get<fs::path>( sv path )Ι->optional<fs::path>
-	{
+	$ Container::Get<fs::path>( sv path )Ι->optional<fs::path>{
 		auto p = Get<string>( path );
 		if( var i{p ? p->find("$(") : string::npos}; i!=string::npos && i<p->size()-3 )
 		{
@@ -116,8 +112,7 @@ namespace Jde::Settings{
 		}
 	}
 
-	$ Container::TryArray<Container>( sv path, vector<Container> dflt )ι->vector<Container>
-	{
+	$ Container::TryArray<Container>( sv path, vector<Container> dflt )ι->vector<Container>{
 		vector<Container> values;
 		if( auto p = FindPath(path); p )
 		{
@@ -147,8 +142,7 @@ namespace Jde::Settings{
 		return values;
 	}
 
-	Ŧ Container::Map( sv path )ι->flat_map<string,T>
-	{
+	Ŧ Container::Map( sv path )ι->flat_map<string,T>{
 		auto pItem = _pJson->find( path );
 		flat_map<string,T> values;
 		if( pItem!=_pJson->end() )
@@ -159,9 +153,7 @@ namespace Jde::Settings{
 		return values;
 	}
 
-	Ξ Container::ForEach( sv path, function<void(sv, const nlohmann::json&)> f )ι->void
-	{
-
+	Ξ Container::ForEach( sv path, function<void(sv, const nlohmann::json&)> f )ι->void{
 		if( auto p = FindPath( path ); p && p->is_object() )
 		{
 			for( auto&& i : p->items() )
@@ -177,8 +169,7 @@ namespace Jde::Settings{
 	$ Get<ELogLevel>( sv path )ι->optional<ELogLevel>{ return Global().Get<ELogLevel>( path ); }
 	Ξ ForEach( sv path, function<void(sv, const nlohmann::json& v)> f )ι->void{ return Global().ForEach(path, f); }
 
-	Ξ Env( sv path, SRCE )ι->optional<string>
-	{
+	Ξ Env( sv path, SRCE )ι->optional<string>{
 		auto p = Global().Get( path );
 		if( p && p->starts_with("$(") && p->size()>3 )
 		{
@@ -189,8 +180,7 @@ namespace Jde::Settings{
 		return p;
 	}
 
-	Ξ Envɛ( sv path )ε->string
-	{
+	Ξ Envɛ( sv path )ε->string{
 		auto p = Global().Get( path );
 		if( p && p->starts_with("$(") && p->size()>3 )
 			p = OSApp::EnvironmentVariable( p->substr(2, p->size()-3) );
@@ -198,8 +188,7 @@ namespace Jde::Settings{
 		return *p;
 	}
 
-	Τ struct Item
-	{
+	Τ struct Item{
 		Item( sv path, T dflt ):
 			Value{ Get<T>(path).value_or(dflt) }
 		{}
@@ -207,16 +196,14 @@ namespace Jde::Settings{
 		const T Value;
 	};
 
-	Ŧ TryGetSubcontainer( sv container, sv path )ι->optional<T>
-	{
+	Ŧ TryGetSubcontainer( sv container, sv path )ι->optional<T>{
 		optional<T> v;
 		if( auto pSub=Global().TrySubContainer( container ); pSub )
 			v = pSub->Get<T>( path );
 		return v;
 	}
 
-	$ TryGetSubcontainer<Container>( sv container, sv path )ι->optional<Container>
-	{
+	$ TryGetSubcontainer<Container>( sv container, sv path )ι->optional<Container>{
 		optional<Container> v;
 			if( auto pSub=Global().TrySubContainer( container ); pSub )
 				v = pSub->TrySubContainer( path );
@@ -226,3 +213,4 @@ namespace Jde::Settings{
 #undef var
 #undef $
 #undef Φ
+#endif

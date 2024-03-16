@@ -6,7 +6,7 @@
 namespace Jde::IO::Sockets{
 
 //#define _logTag Sockets::LogLevel()
-	sp<Jde::LogTag> _logTag{ Logging::Tag( "net" ) };
+	static sp<Jde::LogTag> _logTag{ Logging::Tag("net") };
 	α ProtoClientSession::LogTag()ι->sp<Jde::LogTag>{ return _logTag; }
 	ProtoClientSession::ProtoClientSession( /*boost::asio::io_context& context*/ ):
 		_pIOContext{ AsioContextThread::Instance() },
@@ -15,9 +15,10 @@ namespace Jde::IO::Sockets{
 
 	α ProtoClientSession::Close( std::condition_variable* pCvClient )ι->void{
 		DBG( "ProtoClientSession::Close is_open={}"sv, _socket.is_open() );
-		if( _pIOContext && _socket.is_open() )
+		if( _pIOContext && _socket.is_open() ){
 			DBG( "ProtoClientSession::Close IOContext use_count={}"sv, _pIOContext.use_count() );
 			_socket.close();
+		}
 		//_pIOContext = nullptr;
 		if( pCvClient )
 			pCvClient->notify_one();
@@ -54,10 +55,11 @@ namespace Jde::IO::Sockets{
 		});
 	}
 
-	α ProtoClientSession::ReadBody( int messageLength )ι->void{
-		google::protobuf::uint8 buffer[4096];
+	α ProtoClientSession::ReadBody( uint32 messageLength )ι->void{
+		uint32 bufferSize = 4096;
+		google::protobuf::uint8 buffer[bufferSize];
 		up<google::protobuf::uint8[]> pData;
-		var useHeap = messageLength>sizeof(buffer);
+		var useHeap = messageLength>bufferSize;
 		if( useHeap )
 			pData = std::make_unique<google::protobuf::uint8[]>( messageLength );
 		auto pBuffer = useHeap ? pData.get() : buffer;
@@ -111,7 +113,7 @@ namespace Jde::IO::Sockets{
 			ReadHeader();
 		}
 		catch( const boost::system::system_error& e ){
-			throw NetException{ format("{}:{}", Host, Port), {}, (uint)e.code().value(), string{e.what()}, Jde::ELogLevel::Debug };
+			throw NetException{ Jde::format("{}:{}", Host, Port), {}, (uint)e.code().value(), string{e.what()}, Jde::ELogLevel::Debug };
 		}
 	}
 }

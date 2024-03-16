@@ -1,11 +1,11 @@
 ﻿#pragma once
+#ifndef ROW_H
+#define ROW_H
 #include "DataType.h"
 #include <jde/Str.h>
 
-namespace Jde::DB
-{
-	struct IRow
-	{
+namespace Jde::DB{
+	struct IRow{
 		β operator[]( uint value )Ε->object=0;
 		β GetBit( uint position, SRCE )Ε->bool=0;
 		β GetString( uint position, SRCE )Ε->string=0;
@@ -57,3 +57,4 @@ namespace Jde::DB
 	template<> Ξ IRow::Get<long>( uint position, SL sl )Ε->long{ return (long)GetInt32(position,sl); }
 	template<> Ξ IRow::Get<optional<TimePoint>>( uint position, SL sl )Ε->optional<TimePoint>{ return GetTimePointOpt(position, sl); }
 }
+#endif
