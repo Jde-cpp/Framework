@@ -127,16 +127,18 @@ namespace Jde
 		return executable.string().starts_with( "Tests." ) ? executable.string() : OSApp::Executable().extension().string().substr( 1 );
 #endif
 	}
-	α Settings::Path()ι->fs::path
-	{
-		var fileName = fs::path{ Jde::format("{}.json", FileStem()) };
-		fs::path settingsPath{ fileName };
-		if( !fs::exists(settingsPath) )
-		{
-			var settingsPathB = fs::path{"../config"}/fileName;
-			settingsPath = fs::exists( settingsPathB ) ? settingsPathB : OSApp::ApplicationDataFolder()/fileName;
+	fs::path _path;
+	α Settings::Path()ι->fs::path{
+		if( _path.empty() ){
+			var fileName = fs::path{ Jde::format("{}.json", FileStem()) };
+			fs::path settingsPath{ fileName };
+			if( !fs::exists(settingsPath) ){
+				var settingsPathB = fs::path{"../config"}/fileName;
+				settingsPath = fs::exists( settingsPathB ) ? settingsPathB : OSApp::ApplicationDataFolder()/fileName;
+			}
+			_path = settingsPath;
 		}
-		return settingsPath;
+		return _path;
 	}
 	α Settings::Global()ι->Settings::Container&
 	{
@@ -150,7 +152,6 @@ namespace Jde
 					throw std::runtime_error{ "file does not exist" };
 				_pGlobal = mu<Jde::Settings::Container>( settingsPath );
 				LOG_MEMORY( {}, ELogLevel::Information, "Settings path={}", settingsPath.string() );
-
 			}
 			catch( const std::exception& e )
 			{
