@@ -34,7 +34,17 @@ namespace Jde
 	{
 		BreakLog();
 	}
-
+	IException::IException( const IException& from )ι:
+		_stack{ from._stack },
+		_what{ from._what },
+		_pInner{ from._pInner },
+		_format{ from._format },
+		_args{ from._args },
+		Code{ from.Code },
+		_level{ from.Level() }{
+		BREAK;//should only be called by rethrow_exception
+//		from._level = ELogLevel::NoLog;
+	};
 	IException::IException( IException&& from )ι:
 		_stack{ move(from._stack) },
 		_what{ move(from._what) },
@@ -79,13 +89,13 @@ namespace Jde
 
 	α IException::what()Ι->const char*{
 		if( _what.empty() ){
-			// using ctx = std::format_context;
-			// vector<std::basic_format_arg<ctx>> args2;
-			// for( var& a : _args )
-			// 	args2.push_back( std::detail::make_arg<ctx>(a) );
+			using ctx = fmt::format_context;
+			vector<fmt::basic_format_arg<ctx>> args2;
+			for( var& a : _args )
+			 	args2.push_back( fmt::detail::make_arg<ctx>(a) );
 			try{
-				_what = ToVec::FormatVectorArgs( _format, _args );
-				//std::vformat( _format, std::basic_format_args<ctx>(args2.data(), (int)args2.size()) );
+				//_what = ToVec::FormatVectorArgs( _format, _args );
+				_what = fmt::vformat( _format, fmt::basic_format_args<ctx>(args2.data(), (int)args2.size()) );
 //				_what = std::vformat( _format, std::basic_format_args<ctx>(args2.data(), (int)args2.size()) );
 			}
 			catch( const fmt::format_error& e ){

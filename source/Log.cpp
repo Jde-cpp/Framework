@@ -161,7 +161,7 @@ namespace Jde
 			}
 			else if( name=="file" ){
 				auto pPath = sink.Get<fs::path>( "path" );
-				if( !_msvc && pPath && pPath->string().starts_with("/Jde-cpp") )
+				if constexpr( !_msvc && pPath && pPath->string().starts_with("/Jde-cpp") )
 					pPath = fs::path{ "~/."+pPath->string().substr(1) };
 				var markdown = sink.Get<bool>( "md" ).value_or( false );
 				var fileNameWithExt = Settings::FileStem()+( markdown ? ".md" : ".log" );
@@ -236,7 +236,7 @@ namespace Jde
 						_logger->log( spdlog::source_loc{m.File,(int)m.LineNumber,m.Function}, (spdlog::level::level_enum)m.Level, fmt::vformat(m.MessageView, fmt::basic_format_args<ctx>{args.data(), (int)args.size()}) );
 						//_logger->log( spdlog::source_loc{m.File,(int)m.LineNumber,m.Function}, (spdlog::level::level_enum)m.Level, ToVec::FormatVectorArgs(m.MessageView, m.Variables) );
 					else
-						std::cerr << ToVec::FormatVectorArgs(m.MessageView, m.Variables) << std::endl;
+						std::cerr << fmt::vformat( m.MessageView, fmt::basic_format_args<ctx>{args.data(), (int)args.size()} ) << std::endl;
 				}
 				catch( const fmt::format_error& e ){
 					ERR( "{} - {}", m.MessageView, e.what() );

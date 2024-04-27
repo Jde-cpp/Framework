@@ -16,8 +16,17 @@ if windows; then
 	findExecutable MSBuild.exe '/c/Program\ Files/Microsoft\ Visual\ Studio/2022/BuildTools/MSBuild/Current/Bin' 0
 	findExecutable MSBuild.exe '/c/Program\ Files/Microsoft\ Visual\ Studio/2022/Enterprise/MSBuild/Current/Bin'
 	findExecutable cmake.exe '/c/Program\ Files/CMake/bin'
-	findExecutable cl.exe '/c/Program\ Files/Microsoft\ Visual\ Studio/2022/BuildTools/VC/Tools/MSVC/14.38.33130/bin/Hostx64/x64' 0  #TODO go to any directory
-	findExecutable cl.exe '/c/Program\ Files/Microsoft\ Visual\ Studio/2022/Enterprise/VC/Tools/MSVC/14.38.33130/bin/Hostx64/x64' 1
+	BASE_DIR='/c/Program\ Files/Microsoft\ Visual\ Studio/2022/BuildTools/VC/Tools/MSVC/';
+	if [ -d "$BASE_DIR" ]; then
+		MS_VERSION=`ls "$BASE_DIR" | tail -n 1`
+		findExecutable cl.exe "$BASE_DIR/$MS_VERSIONbin/Hostx64/x64" 1
+	else
+		BASE_DIR='/c/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Tools/MSVC';
+		if [ ! -d "$BASE_DIR" ]; then echo build tools not found:  $BASE_DIR; exit 1; fi;
+		MS_VERSION=`ls "$BASE_DIR" | tail -n 1`
+	  findExecutable cl.exe "$BASE_DIR/$MS_VERSION/bin/Hostx64/x64" 1
+		#cl.exe '/c/Program\ Files/Microsoft\ Visual\ Studio/2022/BuildTools/VC/Tools/MSVC/$MS_VERSION/bin/Hostx64/x64' 0
+	fi;
 	findExecutable vswhere.exe '/c/Program\ Files\ \(X86\)/Microsoft\ Visual\ Studio/installer' 0
 fi;
 

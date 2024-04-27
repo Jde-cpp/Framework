@@ -31,8 +31,7 @@ namespace Jde{
 	const TimePoint Start=Clock::now();
 	TimePoint IApplication::StartTime()ι{ return Start; }
 
-	flat_set<string> IApplication::BaseStartup( int argc, char** argv, sv appName, string serviceDescription/*, sv companyName*/ )ε//no config file
-	{
+	flat_set<string> IApplication::BaseStartup( int argc, char** argv, sv appName, string serviceDescription/*, sv companyName*/ )ε{//no config file
 		{
 			ostringstream os;
 			os << "(" << OSApp::ProcessId() << ")";
@@ -46,19 +45,16 @@ namespace Jde{
 		const string arg0{ argv[0] };
 		bool terminate = !_debug;
 		flat_set<string> values;
-		for( int i=1; i<argc; ++i )
-		{
+		for( int i=1; i<argc; ++i ){
 			if( string(argv[i])=="-c" )
 				console = true;
 			else if( string(argv[i])=="-t" )
 				terminate = !terminate;
-			else if( string(argv[i])=="-install" )
-			{
+			else if( string(argv[i])=="-install" ){
 				Install( serviceDescription );
 				throw Exception{ "successfully installed.", ELogLevel::Trace };
 			}
-			else if( string(argv[i])=="-uninstall" )
-			{
+			else if( string(argv[i])=="-uninstall" ){
 				Uninstall();
 				throw Exception{ "successfully uninstalled.", ELogLevel::Trace };
 			}
@@ -84,17 +80,14 @@ namespace Jde{
 	α IApplication::Exit( int reason )ι->void{ _exitReason = reason; }
 	α IApplication::ShuttingDown()ι->bool{ return (bool)_exitReason; }
 
-	α IApplication::AddActiveWorker( Threading::IPollWorker* p )ι->void
-	{
+	α IApplication::AddActiveWorker( Threading::IPollWorker* p )ι->void{
 #ifndef _MSC_VER
 		ASSERT( false );//need to implement signals in linux for _workerCondition.
 #endif
 		AtomicGuard l{ _activeWorkersMutex };
-		if( find(_activeWorkers.begin(), _activeWorkers.end(), p)==_activeWorkers.end() )
-		{
+		if( find(_activeWorkers.begin(), _activeWorkers.end(), p)==_activeWorkers.end() ){
 			_activeWorkers.push_back( p );
-			if( _activeWorkers.size()==1 )
-			{
+			if( _activeWorkers.size()==1 ){
 				unique_lock<mutex> lk( _workerConditionMutex );
 				l.unlock();
 				OSApp::UnPause();
@@ -102,16 +95,13 @@ namespace Jde{
 			}
 		}
 	}
-	α IApplication::RemoveActiveWorker( Threading::IPollWorker* p )ι->void
-	{
+	α IApplication::RemoveActiveWorker( Threading::IPollWorker* p )ι->void{
 		AtomicGuard l{ _activeWorkersMutex };
 		_activeWorkers.erase( remove(_activeWorkers.begin(), _activeWorkers.end(), p), _activeWorkers.end() );
 	}
-	α IApplication::Pause()ι->void
-	{
+	α IApplication::Pause()ι->void{
 		INFO( "Pausing main thread." );
-		while( !_exitReason )
-		{
+		while( !_exitReason ){
 			AtomicGuard l{ _activeWorkersMutex };
 			uint size = _activeWorkers.size();
 			if( size )
@@ -146,8 +136,7 @@ namespace Jde{
 		IApplication::Shutdown();
 	}
 
-	α IApplication::Shutdown()ι->void
-	{
+	α IApplication::Shutdown()ι->void{
 		INFO( "Waiting for process to complete. {}"sv, OSApp::ProcessId() );
 		GarbageCollect();
 		{
@@ -159,8 +148,7 @@ namespace Jde{
 			}
 			_shutdowns.clear();
 		}
-		for(;;)
-		{
+		for(;;){
 			{
 				unique_lock l{_threadMutex};
 				for( auto ppThread = _pBackgroundThreads->begin(); ppThread!=_pBackgroundThreads->end();  )
@@ -180,15 +168,13 @@ namespace Jde{
 		}
 		TRACE( "Leaving Application::Wait"sv );
 	}
-	α IApplication::AddThread( sp<Threading::InterruptibleThread> pThread )ι->void
-	{
+	α IApplication::AddThread( sp<Threading::InterruptibleThread> pThread )ι->void{
 		TRACE( "Adding Backgound thread"sv );
 		lg _{_threadMutex};
 		_pBackgroundThreads->push_back( pThread );
 	}
 
-	α IApplication::RemoveThread( sv name )ι->sp<Threading::InterruptibleThread>
-	{
+	α IApplication::RemoveThread( sv name )ι->sp<Threading::InterruptibleThread>{
 		lg _{_threadMutex};
 		auto ppThread = find_if( _pBackgroundThreads->begin(), _pBackgroundThreads->end(), [name](var& p){ return p->Name==name;} );
 		auto p = ppThread==_pBackgroundThreads->end() ? sp<Threading::InterruptibleThread>{} : *ppThread;
@@ -196,25 +182,20 @@ namespace Jde{
 			_pBackgroundThreads->erase( ppThread );
 		return p;
 	}
-	α IApplication::RemoveThread( sp<Threading::InterruptibleThread> pThread )ι->void
-	{
+	α IApplication::RemoveThread( sp<Threading::InterruptibleThread> pThread )ι->void{
 		lg _{_threadMutex};
 		_pDeletedThreads->push_back( pThread );
-		for( auto ppThread = _pBackgroundThreads->begin(); ppThread!=_pBackgroundThreads->end();  )
-		{
-			if( *ppThread==pThread )
-			{
+		for( auto ppThread = _pBackgroundThreads->begin(); ppThread!=_pBackgroundThreads->end(); ){
+			if( *ppThread==pThread ){
 				_pBackgroundThreads->erase( ppThread );
 				break;
 			}
 			++ppThread;
 		}
 	}
-	α IApplication::GarbageCollect()ι->void
-	{
+	α IApplication::GarbageCollect()ι->void{
 		lg _{_threadMutex};
-		for( auto ppThread = _pDeletedThreads->begin(); ppThread!=_pDeletedThreads->end(); )
-		{
+		for( auto ppThread = _pDeletedThreads->begin(); ppThread!=_pDeletedThreads->end(); ){
 			(*ppThread)->Join();
 			ppThread = _pDeletedThreads->erase( ppThread );
 		}
@@ -245,22 +226,18 @@ namespace Jde{
 	α IApplication::Remove( sp<void> pShared )ι->void
 	{
 		lg _{ _objectMutex };
-		for( auto ppObject = _objects.begin(); ppObject!=_objects.end(); ++ppObject )
-		{
-			if( *ppObject==pShared )
-			{
+		for( auto ppObject = _objects.begin(); ppObject!=_objects.end(); ++ppObject ){
+			if( *ppObject==pShared ){
 				_objects.erase( ppObject );
 				break;
 			}
 		}
 	}
 	up<vector<function<void()>>> _pShutdownFunctions = mu<vector<function<void()>>>();
-	α IApplication::AddShutdownFunction( function<void()>&& shutdown )ι->void
-	{
+	α IApplication::AddShutdownFunction( function<void()>&& shutdown )ι->void{
 		_pShutdownFunctions->push_back( shutdown );
 	}
-	α IApplication::Cleanup()ι->void
-	{
+	α IApplication::Cleanup()ι->void{
 		_pBackgroundThreads = nullptr;
 		_pDeletedThreads = nullptr;
 		for( var& shutdown : *_pShutdownFunctions )
@@ -271,12 +248,10 @@ namespace Jde{
 		_pInstance = nullptr;
 		_pShutdownFunctions = nullptr;
 	}
-	α IApplication::ApplicationDataFolder()ι->fs::path
-	{
+	α IApplication::ApplicationDataFolder()ι->fs::path{
 		return ProgramDataFolder()/OSApp::CompanyRootDir()/OSApp::ProductName();
 	}
-	α IApplication::IsConsole()ι->bool
-	{
+	α IApplication::IsConsole()ι->bool{
 		return OSApp::Args().find( "-c" )!=OSApp::Args().end();
 	}
 }

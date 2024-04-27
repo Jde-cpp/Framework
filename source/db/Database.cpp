@@ -116,10 +116,10 @@ namespace Jde
 	α DB::CreateSchema()ε->void
 	{
 		auto path = Settings::Global().Getɛ<fs::path>( "db/meta" );
-		INFO( "db meta='{}'", path.string() );
 		if( !fs::exists(path) ){
 			path = IApplication::ApplicationDataFolder()/path.filename();
 		}
+		INFO( "db meta='{}'", path.string() );
 		ordered_json j = json::parse( IO::FileUtilities::Load(path) );
 		_schema = db.SchemaProc()->CreateSchema( j, path.parent_path() );
 	}

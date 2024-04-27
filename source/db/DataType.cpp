@@ -129,35 +129,35 @@ namespace Jde
 		if( !j.is_null() ){
 			switch( type ){
 			case EType::Bit:
-				THROW_IFX( !j.is_boolean(), Exception(sl, "{} could not conver to boolean {}", memberName, j.dump()) );
+				THROW_IFX( !j.is_boolean(), Exception(sl, "'{}' could not convert to boolean '{}'", memberName, j.dump()) );
 				value = object{ j.get<bool>() };
 				break;
 			case EType::Int8:
-				THROW_IFX( !j.is_number(), Exception(sl, "{} could not conver to int {}", memberName, j.dump()) );
+				THROW_IFX( !j.is_number(), Exception(sl, "'{}' could not convert to int '{}'", memberName, j.dump()) );
 				value = object{ j.get<int8_t>() };
 				break;
 			case EType::Int16: case EType::Int: case EType::Long:
-				THROW_IFX( !j.is_number(), Exception(sl, "{} could not conver to int {}", memberName, j.dump()) );
+				THROW_IFX( !j.is_number(), Exception(sl, "'{}' could not convert to int '{}'", memberName, j.dump()) );
 				value = object{ j.get<_int>() };
 				break;
 			case EType::UInt16: case EType::UInt: case EType::ULong:
-				THROW_IFX( !j.is_number(), Exception(sl, "{} could not conver to uint {}", memberName, j.dump()) );
+				THROW_IFX( !j.is_number(), Exception(sl, "'{}' could not convert to uint '{}'", memberName, j.dump()) );
 				value = object{ j.get<uint>() };
 				break;
 			case EType::SmallFloat: case EType::Float: case EType::Decimal: case EType::Numeric: case EType::Money:
-				THROW_IFX( !j.is_number(), Exception(sl, "{} could not conver to numeric {}", memberName, j.dump()) );
+				THROW_IFX( !j.is_number(), Exception(sl, "'{}' could not convert to numeric '{}'", memberName, j.dump()) );
 				value = object{ j.get<double>() };
 				break;
 			case EType::None: case EType::Binary: case EType::VarBinary: case EType::Guid: case EType::Cursor: case EType::RefCursor: case EType::Image: case EType::Blob: case EType::TimeSpan:
 				throw Exception{ sl, "EObject {} is not implemented.", (uint)type };
 			case EType::VarTChar: case EType::VarWChar: case EType::VarChar: case EType::NText: case EType::Text: case EType::Uri:
-				THROW_IFX( !j.is_string(), Exception(sl, "{} could not conver to string", memberName) );
+				THROW_IFX( !j.is_string(), Exception(sl, "'{}' could not convert to string", memberName) );
 				value = object{ j.get<string>() };
 				break;
 			case EType::TChar: case EType::WChar: case EType::UInt8: case EType::Char:
 				throw Exception{ sl, "char EObject {} is not implemented.", (uint)type };
 			case EType::DateTime: case EType::SmallDateTime:
-				THROW_IFX( !j.is_string(), Exception(sl, "{} could not convert to string for datetime", memberName) );
+				THROW_IFX( !j.is_string(), Exception(sl, "'{}' could not convert to string for datetime", memberName) );
 				const string time{ j.get<string>() };
 				const Jde::DateTime dateTime{ time };
 				const TimePoint t = dateTime.GetTimePoint();

@@ -82,7 +82,8 @@ namespace Jde::DB
 				for( auto& column : pTable->Columns )
 				{
 					var& dbTable = pNameDBTable->second;
-					var pDBColumn = dbTable.FindColumn( column.Name ); if( !pDBColumn ){ ERR("Could not find db column {}", column.Name); continue; }
+					var pDBColumn = dbTable.FindColumn( column.Name ); 
+					if( !pDBColumn ){ ERR("Could not find db column {}", column.Name); continue; }
 					if( pDBColumn->Default.empty() && column.Default.size() && column.Default!="$now" )
 						_pDataSource->TryExecute( _syntax.AddDefault(tableName, column.Name, column.Default) );
 				}

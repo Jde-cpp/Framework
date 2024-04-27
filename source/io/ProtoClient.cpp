@@ -56,7 +56,7 @@ namespace Jde::IO::Sockets{
 	}
 
 	α ProtoClientSession::ReadBody( uint32 messageLength )ι->void{
-		uint32 bufferSize = 4096;
+		constexpr uint32 bufferSize = 4096;
 		google::protobuf::uint8 buffer[bufferSize];
 		up<google::protobuf::uint8[]> pData;
 		var useHeap = messageLength>bufferSize;

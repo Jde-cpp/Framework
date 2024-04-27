@@ -127,16 +127,13 @@ namespace Jde
 		return executable.string().starts_with( "Tests." ) ? executable.string() : OSApp::Executable().extension().string().substr( 1 );
 #endif
 	}
-	fs::path _path;
 	α Settings::Path()ι->fs::path{
+		static fs::path _path;
 		if( _path.empty() ){
 			var fileName = fs::path{ Jde::format("{}.json", FileStem()) };
-			fs::path settingsPath{ fileName };
-			if( !fs::exists(settingsPath) ){
-				var settingsPathB = fs::path{"../config"}/fileName;
-				settingsPath = fs::exists( settingsPathB ) ? settingsPathB : OSApp::ApplicationDataFolder()/fileName;
-			}
-			_path = settingsPath;
+			vector<fs::path> paths{ fileName, fs::path{"../config"}/fileName, fs::path{"config"}/fileName };
+			auto p = find_if( paths, []( var& path ){return fs::exists(path);} );
+			_path = p!=paths.end() ? *p : OSApp::ApplicationDataFolder()/fileName;
 		}
 		return _path;
 	}
