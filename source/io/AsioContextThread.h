@@ -12,7 +12,7 @@ namespace Jde::IO
 	{
 		static sp<AsioContextThread> Instance()ι;
 		net::io_context& Context()ι{ return _ioc; }
-		~AsioContextThread(){ TRACET( LogTag(), "~AsioContextThread" ); _ioc.stop(); _thread.join(); }
+		~AsioContextThread();
 	private:
 		auto LogTag()ι->sp<Jde::LogTag>;
 		AsioContextThread()ι;

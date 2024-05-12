@@ -42,9 +42,9 @@ namespace Jde::Coroutine{
 		TRACE( "({:x}-{}) removed", (uint)this, i );
 	}
 	*/
-	α Task::promise_type::unhandled_exception()ι->void
-	{
+	α Task::promise_type::unhandled_exception()ι->void{
 		try{
+			BREAK;
 			if( auto p = std::current_exception(); p )
 				std::rethrow_exception( p );
 			else
@@ -61,16 +61,16 @@ namespace Jde::Coroutine{
 			// 	_unhandledResume.resume();
 			// }
 			// else
-				CRITICAL( "unhandled - {}", e.what() );
+				CRITICAL( "Jde::Task::promise_type::unhandled_exception - {}", e.what() );
 		}
 		catch( const nlohmann::json::exception& e ){
-			CRITICAL( "json exception - {}"sv, e.what() );
+			CRITICAL( "Jde::Task::promise_type::unhandled_exception - json exception - {}"sv, e.what() );
 		}
 		catch( const std::exception& e ){
-			CRITICAL( "unhandled_exception ->{}"sv, e.what() );
+			CRITICAL( "Jde::Task::promise_type::unhandled_exception ->{}"sv, e.what() );
 		}
 		catch( ... ){
-			CRITICAL( "unhandled_exception"sv );
+			CRITICAL( "Jde::Task::promise_type::unhandled_exception"sv );
 		}
 	}
 }

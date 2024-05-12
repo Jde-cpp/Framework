@@ -31,7 +31,17 @@ namespace Jde{
 		_level{ level }{
 		BreakLog();
 	}
-
+	IException::IException( const IException& from )ι:
+		_stack{ from._stack },
+		_what{ from._what },
+		_pInner{ from._pInner },
+		_format{ from._format },
+		_args{ from._args },
+		Code{ from.Code },
+		_level{ from.Level() }{
+		BREAK;//should only be called by rethrow_exception
+//		from._level = ELogLevel::NoLog;
+	};
 	IException::IException( IException&& from )ι:
 		_stack{ move(from._stack) },
 		_what{ move(from._what) },

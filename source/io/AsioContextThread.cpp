@@ -10,8 +10,7 @@ namespace Jde::IO
 	auto AsioContextThread::LogTag()ι->sp<Jde::LogTag>{ return _logTag; }
 
 	sp<AsioContextThread> _pInstance;
-	sp<AsioContextThread> AsioContextThread::Instance()ι
-	{
+	sp<AsioContextThread> AsioContextThread::Instance()ι{
 		return _pInstance ?  _pInstance : _pInstance = sp<AsioContextThread>( new AsioContextThread() );
 	}
 
@@ -20,6 +19,12 @@ namespace Jde::IO
 		_keepAlive{ net::make_work_guard(_ioc) },
 		_thread{ [&](){Run();} }
 	{}
+	
+	AsioContextThread::~AsioContextThread(){
+		TRACET( LogTag(), "~AsioContextThread" );
+		_ioc.stop();
+		_thread.join();
+	}
 
 	void AsioContextThread::Run()ι
 	{

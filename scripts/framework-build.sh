@@ -73,12 +73,14 @@ if windows; then
 	moveToDir release; popd  > /dev/null;
 	if [ $shouldFetch -eq 1 ]; then
 		if [ ! -d $REPO_BASH/vcpkg/installed/x64-windows/include/nlohmann ]; then vcpkg.exe install nlohmann-json --triplet x64-windows; fi;
-		if [ ! -f $REPO_BASH/vcpkg/installed/x64-windows/lib/zlib.lib ];
-		then
+		if [ ! -f $REPO_BASH/vcpkg/installed/x64-windows/lib/zlib.lib ]; then
 			vcpkg.exe install zlib --triplet x64-windows;
 			pushd `pwd` > /dev/null;
 			cd $stageDir/debug; mklink zlibd1.dll $REPO_BASH/vcpkg/installed/x64-windows/debug/bin;
 			cd $stageDir/release; mklink zlib1.dll $REPO_BASH/vcpkg/installed/x64-windows/bin;
+		fi;
+		if [ ! -d $REPO_BASH/vcpkg/installed/x64-windows/fmt ]; then
+			vcpkg.exe install fmt --triplet x64-windows;
 		fi;
 		if [ -z $Boost_DIR ]; then echo \$Boost_DIR not set; exit 1; fi;
 		toBashDir $Boost_DIR BOOST_BASH;
@@ -86,7 +88,6 @@ if windows; then
 		if [ ! -d $BOOST_BASH ]; then
 			echo ERROR - $BOOST_BASH not found;
 			exit 1;
-			vcpkg.exe install boost --triplet x64-windows; if [ $? -ne 0 ]; then echo "vcpkg install boost failed"; exit 1; fi;
 		else
 			winBoost date_time;
 			winBoost iostreams;  #b2 variant=debug link=shared threading=multi runtime-link=shared address-model=64  -sZLIB_BINARY=zlib -sZLIB_LIBPATH=C:\Users\duffyj\source\repos\vcpkg\installed\x64-windows\lib -sZLIB_INCLUDE=C:\Users\duffyj\source\repos\vcpkg\installed\x64-windows\include -sNO_ZLIB=0 -sNO_COMPRESSION=0 -sBOOST_IOSTREAMS_USE_DEPRECATED  --with-iostreams
@@ -106,23 +107,23 @@ elif [ $shouldFetch -eq 1 ]; then
 	cd spdlog; echo pulling spdlog; git pull > /dev/null; cd ..;
 fi;
 
-if windows; then
-	CMAKE_VS_PLATFORM_NAME_DEFAULT="Visual Studio 17 2022"
-	if [ ! -d fmt ]; then
-		git clone https://github.com/fmtlib/fmt.git; cd fmt;
-	elif [ $shouldFetch -eq 1 ]; then
-		cd fmt; echo pulling fmt; git pull;
-	fi;
-	if [ ! -d build ]; then
-		moveToDir buil;cmake -DCMAKE_CXX_STANDARD=20 ..;
-	else
-		cd build;
-	fi;
-	baseCmd="msbuild.exe fmt.vcxproj -p:Platform=x64 -maxCpuCount -nologo -v:q /clp:ErrorsOnly -p:Configuration"
-	if [ ! -f $stageDir/release/fmt.lib ]; then echo build fmt.lib; buildWindows2 "$baseCmd" fmt.lib release; fi;
-	if [ ! -f $stageDir/debug/fmtd.lib ]; then echo build fmtd.lib; buildWindows2 "$baseCmd" fmtd.lib debug; fi;
-	cd ../..;
-fi;
+# if windows; then
+# 	CMAKE_VS_PLATFORM_NAME_DEFAULT="Visual Studio 17 2022"
+# 	if [ ! -d fmt ]; then
+# 		git clone https://github.com/fmtlib/fmt.git; cd fmt;
+# 	elif [ $shouldFetch -eq 1 ]; then
+# 		cd fmt; echo pulling fmt; git pull;
+# 	fi;
+# 	if [ ! -d build ]; then
+# 		moveToDir build;cmake -DCMAKE_CXX_STANDARD=20 ..;
+# 	else
+# 		cd build;
+# 	fi;
+# 	baseCmd="msbuild.exe fmt.vcxproj -p:Platform=x64 -maxCpuCount -nologo -v:q /clp:ErrorsOnly -p:Configuration"
+# 	if [ ! -f $stageDir/release/fmt.lib ]; then echo build fmt.lib; buildWindows2 "$baseCmd" fmt.lib release; fi;
+# 	if [ ! -f $stageDir/debug/fmtd.lib ]; then echo build fmtd.lib; buildWindows2 "$baseCmd" fmtd.lib debug; fi;
+# 	cd ../..;
+# fi;
 function protocBuildWin
 {
 	type=sln;#lib;
