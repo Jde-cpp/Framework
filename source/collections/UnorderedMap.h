@@ -1,4 +1,6 @@
 ﻿#pragma once
+#ifndef UnorderedMap_H
+#define UnorderedMap_H
 #include <set>
 #include <unordered_map>
 #include <forward_list>
@@ -257,3 +259,4 @@ namespace Jde::Collections
 }
 #undef LOCK
 #undef var
+#endif

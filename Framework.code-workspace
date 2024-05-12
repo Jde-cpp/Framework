@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "source"
+		},
+		{
+			"path": "tests"
+		}
+	],
+	"settings": {
+		"window.title": "Framework"
+	}
+	
+}

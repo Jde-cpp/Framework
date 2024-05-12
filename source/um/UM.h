@@ -23,8 +23,7 @@ namespace Jde::UM
 	struct IAuthorize;
 	Φ AddAuthorizer( UM::IAuthorize* p )ι->void;
 	Φ FindAuthorizer( sv table )ι->IAuthorize*;
-	struct IAuthorize
-	{
+	struct IAuthorize{
 		IAuthorize( sv table ):TableName{table}{ UM::AddAuthorizer( this ); }
 		virtual ~IAuthorize()=0;
 		β CanRead( uint /*pk*/, UserPK /*userId*/ )ι->bool { return true; }
@@ -35,8 +34,7 @@ namespace Jde::UM
 		sv TableName;
 	};
 	inline IAuthorize::~IAuthorize(){};
-	struct GroupAuthorize : IAuthorize
-	{
+	struct GroupAuthorize : IAuthorize{
 		GroupAuthorize():IAuthorize{"um_groups"}{}
 		β CanPurge( uint pk, UserPK )ι->bool override{ return pk!=1 && pk!=2; };
 		β Test( DB::EMutationQL, UserPK, SL )ε->void override{};//TODO Remove

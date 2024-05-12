@@ -59,17 +59,14 @@ namespace Jde
 			}
 		}
 	}
-	α AssignUserGroups( UserPK userId=0 )ε->void
-	{
-		ostringstream sql{ "select user_id, group_id from um_user_groups g join um_users u on g.user_id=u.id and u.deleted is null", std::ios::ate };
+	α AssignUserGroups( UserPK userId=0 )ε->void{
+		ostringstream sql{ "select member_id, entity_id from um_groups g join um_entities e on g.member_id=e.id and e.deleted is null", std::ios::ate };
 		vector<DB::object> params;
-		if( userId )
-		{
+		if( userId ){
 			sql << " where user_id=?";
 			params.push_back( DB::object{userId} );
 		}
-		DB::DataSource().Select( sql.str(), [&](var& r)
-		{
+		DB::DataSource().Select( sql.str(), [&](var& r){
 			unique_lock l{_userGroupMutex};
 			_userGroups.try_emplace(r.GetUInt32(0)).first->second.emplace( r.GetUInt(1) );
 		}, params );
@@ -92,15 +89,15 @@ namespace Jde
 			_pSettings->ConnectionString = Settings::Get<string>( "db/connectionString" ).value_or( "" );
 		THROW_IF( _pSettings->ConnectionString.empty(), "no user management connection string." );
 		auto pDataSource = DB::DataSourcePtr(); CHECK( pDataSource );
-		auto path = Settings::Get<fs::path>( "db/meta" ).value_or( "meta.json" );
+		fs::path path{ Settings::Env("db/meta").value_or("meta.json") };
 		if( !fs::exists(path) )
-			path = _msvc && _debug ? "../config/meta.json" : IApplication::ApplicationDataFolder()/path;
+			path = _msvc && _debug ? "../config/meta.json" : IApplication::ApplicationDataFolder()/path.stem();
 		json j;
 		try{
 			j = json::parse( IO::FileUtilities::Load(path) );
 		}
 		catch( const IOException& e ){
-			THROW( "Could not load db meta at path='{}' - {}", path.string(), e.what() );
+			THROW( "Could not load db meta - {}", e.what() );
 		}
 		catch( const std::exception& e ){//nlohmann::detail::parse_error
 			throw IOException{ path, e.what() };
@@ -108,8 +105,22 @@ namespace Jde
 		auto& db = *pDataSource;
 		var sqlPath = _msvc && _debug ? path.parent_path().parent_path() : path.parent_path();
 		var schema = db.SchemaProc()->CreateSchema( j, sqlPath );
-		AppendQLSchema( schema );
+		AppendQLDBSchema( schema );
 		SetQLDataSource( pDataSource );
+
+		fs::path qlSchema{ Settings::Env("db/ql_schema").value_or("ql.json") };
+		if( !fs::exists(qlSchema) )
+			qlSchema = _msvc && _debug ? "../config/meta.json" : IApplication::ApplicationDataFolder()/path.stem();
+		try{
+			DB::SetQLIntrospection( json::parse(IO::FileUtilities::Load(qlSchema)) );
+		}
+		catch( const IOException& e ){
+			THROW( "Could not load ql meta - {}", e.what() );
+		}
+		catch( const std::exception& e ){//nlohmann::detail::parse_error
+			throw IOException{ path, e.what() };
+		}
+
 
 		var pApis = db.SelectEnumSync<uint,string>( "um_apis" );
 		auto pId = FindKey( *pApis, "UM" ); THROW_IF( !pId, "no user management in api table." );
@@ -119,7 +130,7 @@ namespace Jde
 
 		AssignUserGroups();
 		SetRolePermissions();
-		db.Select( "select group_id, role_id from um_group_roles gr join um_groups g on gr.group_id=g.id and g.deleted is null join um_roles r on gr.role_id=r.id and r.deleted is null", [&](var& r){_groupRoles.try_emplace(r.GetUInt(0)).first->second.emplace( r.GetUInt(1) );} );
+		db.Select( "select entity_id, role_id from um_entity_roles er join um_entities e on er.entity_id=e.id and e.deleted is null join um_roles r on er.role_id=r.id and r.deleted is null", [&](var& r){_groupRoles.try_emplace(r.GetUInt(0)).first->second.emplace( r.GetUInt(1) );} );
 		for( var& [userId,groupIds] : _userGroups )
 			AssignUser( userId, groupIds );
 	}

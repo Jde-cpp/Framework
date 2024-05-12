@@ -3,14 +3,12 @@
 #include <jde/Exports.h>
 #include <jde/Str.h>
 
-namespace Jde::DB
-{
+namespace Jde::DB{
 	using SchemaName=string;
 	struct Syntax;
 	struct Schema;
 	struct Table;
-	struct Γ Column
-	{
+	struct Γ Column{
 		Column()=default;
 		Column( sv name, uint ordinalPosition, sv dflt, bool isNullable, EType type, optional<uint> maxLength, bool isIdentity, bool isId, optional<uint> numericPrecision, optional<uint> numericScale )ι;
 		Column( sv name )ι;
@@ -18,27 +16,29 @@ namespace Jde::DB
 
 		α Create( const Syntax& syntax )Ι->string;
 		α DataTypeString( const Syntax& syntax )Ι->SchemaName;
+		α DefaultObject()Ι->DB::object;
+
 		SchemaName Name;
 		uint OrdinalPosition;
 		string Default;
-		bool IsNullable{ false };
-		mutable bool IsFlags{ false };
-		mutable bool IsEnum{ false };
-		mutable const Table* TablePtr{ nullptr };
+		bool IsNullable{};
+		mutable bool IsFlags{};
+		mutable bool IsEnum{};
+		mutable const Table* TablePtr{};
 		EType Type{ EType::UInt };
 		optional<uint> MaxLength;
-		bool IsIdentity{ false };
-		bool IsId{ false };
+		bool IsIdentity{};
+		bool IsId{};
 		optional<uint> NumericPrecision;
 		optional<uint> NumericScale;
 		bool Insertable{ true };
 		bool Updateable{ true };
 		SchemaName PKTable;
 		string QLAppend;//also select this column in ql query
+		string Criteria;//unUsers=not is_group
 	};
 
-	struct  Γ Index
-	{
+	struct  Γ Index{
 		Index( sv indexName, sv tableName, bool primaryKey, vector<SchemaName>* pColumns=nullptr, bool unique=true, optional<bool> clustered=optional<bool>{} )ι;//, bool clustered=false
 		Index( sv indexName, sv tableName, const Index& other )ι;
 
@@ -50,8 +50,7 @@ namespace Jde::DB
 		bool Unique;
 		bool PrimaryKey;
 	};
-	struct Γ Table
-	{
+	struct Γ Table{
 		Table( sv schema, sv name )ι:Schema{schema}, Name{name}{}
 		Table( sv name, const nlohmann::json& j, const flat_map<SchemaName,Table>& parents, const flat_map<SchemaName,Column>& commonColumns, const nlohmann::ordered_json& schema )ε;
 
@@ -61,31 +60,35 @@ namespace Jde::DB
 		α FindColumn( sv name )Ι->const Column*;
 
 		α IsFlags()Ι->bool{ return FlagsData.size(); }
-		α IsEnum()Ι->bool{ return Data.size(); }//GraphQL attribute
+		α IsEnum()Ι->bool;//GraphQL attribute
+		α GetExtendedFromTable( const DB::Schema& schema )Ι->sp<const Table>;//um_users return um_entities
 		α NameWithoutType()Ι->sv;//users in um_users.
 		α Prefix()Ι->sv;//um in um_users.
 		α JsonTypeName()Ι->string;
 
 		α FKName()Ι->SchemaName;
-		bool IsMap()Ι{ return ChildId().size() && ParentId().size(); }
-		α ChildId()Ε->SchemaName;
-		α ParentId()Ε->SchemaName;
-		sp<const Table> ChildTable( const DB::Schema& schema )Ε;
-		sp<const Table> ParentTable( const DB::Schema& schema )Ε;
+		bool IsMap( const DB::Schema& schema )Ι{ return ChildTable(schema) && ParentTable(schema); }
+		α ChildColumn()Ι->sp<Column>{ return get<1>(ParentChildMap); }
+		α ParentColumn()Ι->sp<Column>{ return get<0>(ParentChildMap); }
+		α SurrogateKey()Ε->const Column&;
+		α ChildTable( const DB::Schema& schema )Ι->sp<const Table>;
+		α ParentTable( const DB::Schema& schema )Ι->sp<const Table>;
 
 		bool HaveSequence()Ι{ return std::find_if( Columns.begin(), Columns.end(), [](const auto& c){return c.IsIdentity;} )!=Columns.end(); }
 		SchemaName Schema;
 		SchemaName Name;
 		vector<Column> Columns;
 		vector<Index> Indexes;
-		vector<SchemaName> SurrogateKey;
+		vector<SchemaName> SurrogateKeys;
 		vector<vector<SchemaName>> NaturalKeys;
 		flat_map<uint,string> FlagsData;
 		vector<nlohmann::json> Data;
-		bool CustomInsertProc{false};
+		bool CustomInsertProc{};
+		bool IsView{};
+		tuple<sp<Column>,sp<Column>> ParentChildMap;//groups entity_id, member_id
+		SchemaName QLView;
 	};
-	struct ForeignKey
-	{
+	struct ForeignKey{
 		Ω Create( sv name, sv columnName, const DB::Table& pkTable, sv foreignTable )ε->string;
 
 		SchemaName Name;
@@ -94,8 +97,7 @@ namespace Jde::DB
 		SchemaName pkTable;
 	};
 
-	struct Procedure
-	{
+	struct Procedure{
 		SchemaName Name;
 	};
 }

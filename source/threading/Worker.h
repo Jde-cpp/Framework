@@ -1,4 +1,6 @@
 ﻿#pragma once
+#ifndef WORKER_H
+#define WORKER_H
 #include <jde/TypeDefs.h>
 #include <jde/App.h>
 #include "./jthread.h"
@@ -108,3 +110,4 @@ namespace Jde::Threading{
 #undef TARG
 #undef var
 #undef $
+#endif

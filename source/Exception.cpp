@@ -9,8 +9,7 @@
 #include <jde/TypeDefs.h>
 #define var const auto
 
-namespace Jde
-{
+namespace Jde{
 	IException::IException( string value, ELogLevel level, uint code, SL sl )ι:
 		IException{ value, level, code, nullptr, sl }
 	{}
@@ -20,8 +19,7 @@ namespace Jde
 		_what{ move(value) },
 		_pTag{ move(tag) },
 		Code( code ? code : Calc32RunTime(value) ),
-		_level{ level }
-	{
+		_level{ level }{
 		BreakLog();
 	}
 
@@ -30,8 +28,7 @@ namespace Jde
 		_format{ move(format) },
 		_args{ move(args) },
 		Code( c ? c : Calc32RunTime(format) ),
-		_level{ level }
-	{
+		_level{ level }{
 		BreakLog();
 	}
 
@@ -42,30 +39,25 @@ namespace Jde
 		_format{ move(from._format) },
 		_args{ move(from._args) },
 		Code{ from.Code },
-		_level{ from.Level() }
-	{
+		_level{ from.Level() }{
 		BreakLog();
 		ASSERT( _stack.stack.size() );
 		from.SetLevel( ELogLevel::NoLog );
 	}
-	IException::~IException()
-	{
+	IException::~IException(){
 		Log();
 	}
 
-	α IException::BreakLog()Ι->void
-	{
+	α IException::BreakLog()Ι->void{
 #ifndef NDEBUG
-		if( /*Level()!=ELogLevel::None &&*/ Level()>=Logging::BreakLevel() )
-		{
+		if( /*Level()!=ELogLevel::None &&*/ Level()>=Logging::BreakLevel() ){
 			Log();
 			SetLevel( ELogLevel::NoLog );
 			BREAK;
 		}
 #endif
 	}
-	α IException::Log()Ι->void
-	{
+	α IException::Log()Ι->void{
 		if( Level()==ELogLevel::NoLog || (_pTag && Level()<_pTag->Level) )
 			return;
 		var& sl = _stack.front();
@@ -79,12 +71,13 @@ namespace Jde
 
 	α IException::what()Ι->const char*{
 		if( _what.empty() ){
-			// using ctx = std::format_context;
-			// vector<std::basic_format_arg<ctx>> args2;
-			// for( var& a : _args )
-			// 	args2.push_back( std::detail::make_arg<ctx>(a) );
+			using ctx = fmt::format_context;
+			vector<fmt::basic_format_arg<ctx>> args;
+			for( var& a : _args )
+				args.push_back( fmt::detail::make_arg<ctx>(a) );
 			try{
-				_what = ToVec::FormatVectorArgs( _format, _args );
+				_what = fmt::vformat( _format, fmt::basic_format_args<ctx>{args.data(), (int)args.size()} );
+				//_what = ToVec::FormatVectorArgs( _format, _args );
 				//std::vformat( _format, std::basic_format_args<ctx>(args2.data(), (int)args2.size()) );
 //				_what = std::vformat( _format, std::basic_format_args<ctx>(args2.data(), (int)args2.size()) );
 			}
@@ -120,8 +113,7 @@ namespace Jde
 	BoostCodeException::~BoostCodeException()
 	{}
 
-	α CodeException::ToString( const std::error_code& errorCode )ι->string
-	{
+	α CodeException::ToString( const std::error_code& errorCode )ι->string{
 		var value = errorCode.value();
 		var& category = errorCode.category();
 		var message = errorCode.message();
@@ -130,8 +122,7 @@ namespace Jde
 
 	α CodeException::ToString( const std::error_category& errorCategory )ι->string{	return errorCategory.name(); }
 
-	α CodeException::ToString( const std::error_condition& errorCondition )ι->string
-	{
+	α CodeException::ToString( const std::error_condition& errorCondition )ι->string{
 		const int value = errorCondition.value();
 		const std::error_category& category = errorCondition.category();
 		const string message = errorCondition.message();
@@ -150,18 +141,15 @@ namespace Jde
 		IException{ move(what), l, 0, sl }
 	{}
 
-	α IOException::Path()Ι->const fs::path&
-	{
+	α IOException::Path()Ι->const fs::path&{
 		return  _pUnderLying? _pUnderLying->path1() : _path;
 	}
-	α IOException::SetWhat()Ι->void
-	{
+	α IOException::SetWhat()Ι->void{
 		_what = _pUnderLying ? _pUnderLying->what() : Code
 			? Jde::format( "({}) {} - {} path='{}'", Code, std::strerror(errno), IException::what(), Path().string() )
 			: Jde::format( "({}){}", Path().string(), IException::what() );
 	}
-	α IOException::what()Ι->const char*
-	{
+	α IOException::what()Ι->const char*{
 		return _what.c_str();
 	}
 
@@ -170,20 +158,17 @@ namespace Jde
 		Host{ host },
 		Target{ target },
 		//Code{ code },
-		Result{ move(result) }
-	{
+		Result{ move(result) }{
 		SetLevel( level );
 		_what = Jde::format( "{}{} ({}){}", Host, Target, code, Result );
-		if( var f = Settings::Get<fs::path>("net/errorFile"); f )
-		{
+		if( var f = Settings::Get<fs::path>("net/errorFile"); f ){
 			std::ofstream os{ *f };
 			os << Result;
 		}
 		//Log();
 	}
 
-	α NetException::Log( string extra )Ι->void
-	{
+	α NetException::Log( string extra )Ι->void{
 		if( Level()==ELogLevel::NoLog )
 			return;
 		var sl = _stack.front();
