@@ -547,7 +547,7 @@ namespace DB{
 		auto p = find_if( _schema.Tables, [&](var& t){ return t.second->JsonTypeName()==typeName;} ); THROW_IF( p==_schema.Tables.end(), "Could not find table '{}' in schema", typeName );
 		for( var& qlTable : typeTable.Tables ){
 			if( qlTable.JsonName=="fields" ){
-				if( var pObject = _introspection->Find(typeName); pObject )
+				if( var pObject = _introspection ? _introspection->Find(typeName) : nullptr; pObject )
 					jData["__type"] = pObject->ToJson( qlTable );
 				else
 					IntrospectFields( typeName,  *p->second, qlTable, jData );
@@ -623,28 +623,35 @@ namespace DB{
 	}
 
 	α DB::CoQuery( string&& q_, UserPK u_, str threadName, SL sl )ι->TPoolAwait<json>{
-		return Coroutine::TPoolAwait<json>( [q=move(q_), u=u_](){ return mu<json>(Query(q,u)); }, threadName, sl );
+		return Coroutine::TPoolAwait<json>( [q=move(q_), u=u_](){ 
+			return mu<json>(Query(q,u)); 
+		}, threadName, sl );
 	}
 	
 	α DB::Query( sv query, UserPK userId )ε->json{
+		ASSERT( _pDataSource );
 		TRACE( "{}", query );
-		var qlType = ParseQL( query );
-		vector<DB::TableQL> tableQueries;
-		json j;
-		if( qlType.index()==1 )
-		{
-			var& mutation = get<MutationQL>( qlType );
-			uint id = Mutation( mutation, userId );
-			if( mutation.ResultPtr && mutation.ResultPtr->Columns.size()==1 && mutation.ResultPtr->Columns.front().JsonName=="id" )
-				j["data"][mutation.JsonName]["id"] = id;
-			else if( mutation.ResultPtr )
-				tableQueries.push_back( *mutation.ResultPtr );
+		try{
+			var qlType = ParseQL( query );
+			vector<DB::TableQL> tableQueries;
+			json j;
+			if( qlType.index()==1 ){
+				var& mutation = get<MutationQL>( qlType );
+				uint id = Mutation( mutation, userId );
+				if( mutation.ResultPtr && mutation.ResultPtr->Columns.size()==1 && mutation.ResultPtr->Columns.front().JsonName=="id" )
+					j["data"][mutation.JsonName]["id"] = id;
+				else if( mutation.ResultPtr )
+					tableQueries.push_back( *mutation.ResultPtr );
+			}
+			else
+				tableQueries = get<vector<DB::TableQL>>( qlType );
+			json y = tableQueries.size() ? QueryTables( tableQueries, userId ) : j;
+			//Dbg( y.dump() );
+			return y;
 		}
-		else
-			tableQueries = get<vector<DB::TableQL>>( qlType );
-		json y = tableQueries.size() ? QueryTables( tableQueries, userId ) : j;
-		//Dbg( y.dump() );
-		return y;
+		catch( const nlohmann::json::exception& e ){
+			THROW( "Error parsing query '{}'.  '{}'", query, e.what() );
+		}
 	}
 	struct Parser2{
 		Parser2( sv text, sv delimiters )ι: _text{text}, Delimiters{delimiters}{}
@@ -688,7 +695,7 @@ namespace DB{
 		sv Delimiters;
 		sv _peekValue;
 	};
-	α StringifyKeys( sv json )->string{
+	α StringifyKeys( sv json )ι->string{
 		ostringstream os;
 		bool inValue = false;
 		for( uint i=0; i<json.size(); ++i ){
@@ -737,7 +744,7 @@ namespace DB{
 		}
 		return os.str();
 	}
-	α ParseJson( Parser2& q )->json{
+	α ParseJson( Parser2& q )ε->json{
 		string params{ q.Next(')') }; THROW_IF( params.front()!='(', "Expected '(' vs {} @ '{}' to start function - '{}'.",  params.front(), q.Index()-1, q.Text() );
 		params.front()='{'; params.back() = '}';
 		params = StringifyKeys( params );

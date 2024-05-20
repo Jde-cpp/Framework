@@ -28,6 +28,7 @@ namespace Jde::DB{
 	Φ CleanDataSources()ι->void;
 	Φ ShutdownClean( function<void()>& shutdown )ι->void;
 
+	Ξ ExecuteProc( string sql, vec<object> parameters, RowΛ f, SRCE )ε->uint{ return DataSource().ExecuteProc( move(sql), parameters, f, sl ); }
 	Ξ ExecuteProc( string sql, vector<object>&& parameters, SRCE )ε->uint{ return DataSource().ExecuteProc( move(sql), parameters, sl ); }
 	Ξ ExecuteProcCo( string&& sql, vector<object>&& parameters, SRCE )ι{ return DataSource().ExecuteProcCo( move(sql), move(parameters), sl ); }
 	Φ Execute( string sql, vector<object>&& parameters, SRCE )ε->uint;

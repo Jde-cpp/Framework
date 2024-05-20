@@ -1,4 +1,6 @@
 ﻿#pragma once
+#ifndef INTERRUPTIBLE_THREAD
+#define INTERRUPTIBLE_THREAD
 //adapted from https://livebook.manning.com/#!/book/c-plus-plus-concurrency-in-action-second-edition/chapter-9/v-7/1
 #include <future>
 #include <jde/Exception.h>
@@ -98,3 +100,4 @@ namespace Jde::Threading{  //TODO Reflection remove Threading from public items.
 }
 #undef _logTag 
 #undef ω
+#endif

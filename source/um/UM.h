@@ -4,19 +4,31 @@
 #include <jde/Exports.h>
 #include <jde/TypeDefs.h>
 #include <jde/Exception.h>
+#include <jde/coroutine/Task.h>
+#include "../coroutine/Awaitable.h"
 
 namespace Jde::DB{ struct MutationQL; enum class EMutationQL : uint8; }
 
 #define Φ Γ auto
-namespace Jde::UM
-{
+namespace Jde::UM{
 	using ApiPK=uint;
+	enum class EProviderType : uint8{
+		None = 0,
+		Google=1,
+		Facebook=2,
+		Amazon=3,
+		Microsoft=4,
+		VK=5,
+		OpcServer=6
+	};
+	constexpr array<sv,3> ProviderTypeStrings = { "None", "Google", "OpcServer" };
 
 	enum class EAccess : uint8{ None=0, Administer=1, Write=2, Read=4 };
-	Ξ operator &( EAccess a, EAccess b ){ return static_cast<EAccess>( static_cast<uint8>(a) & static_cast<uint8>(b) ); }
+	Ξ operator &( EAccess a, EAccess b )ι{ return static_cast<EAccess>( static_cast<uint8>(a) & static_cast<uint8>(b) ); }
 
 	Φ Configure()ε->void;
 	α IsTarget( sv url )ι->bool;
+	α Login( string loginName, uint providerId, string opcServer={}, SRCE )ι->AsyncAwait;
 	α TestRead( str tableName, UserPK userId )ε->void;
 	α TestAccess( EAccess access, UserPK userId, ApiPK apiId )ε->void;
 	α ApplyMutation( const DB::MutationQL& m, UserPK id )ε->void;

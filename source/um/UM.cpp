@@ -113,7 +113,6 @@ namespace Jde
 			throw IOException{ path, e.what() };
 		}
 
-
 		var pApis = db.SelectEnumSync<uint,string>( "um_apis" );
 		auto pId = FindKey( *pApis, "UM" ); THROW_IF( !pId, "no user management in api table." );
 		var umPermissionId = db.Scaler<uint>( "select id from um_permissions where api_id=? and name is null", {*pId} ).value_or(0); THROW_IF( umPermissionId==0, "no user management permission." );
@@ -225,6 +224,32 @@ namespace Jde
 			j.at("metaDataPath").get_to( path );
 			settings.MetaDataPath = fs::path{ path };
 		}
+	}
+	α LoginTask( string&& loginName, uint providerId, string&& opcServer, HCoroutine h )ε->Task{
+		var opcServerParam = opcServer.size() ? DB::object{opcServer} : DB::object{nullptr};
+		vector<DB::object> parameters = { move(loginName), providerId };
+		if( opcServer.size() )
+			parameters.push_back( opcServer );
+		var sql = format( "select e.id from um_entities e join um_users u on e.id=u.entity_id and login_name=? join um_providers p on p.id=? and p.target{}", opcServer.size() ? "=?" : " is null" );
+		auto task = DB::ScalerCo<UserPK>( string{sql}, parameters );
+		try{
+			auto p = (co_await task).UP<UserPK>(); //gcc compile issue
+			auto userId = p ? *p : 0;
+			if( !userId ){
+				if( !opcServer.size() )
+					parameters.push_back( move(opcServer) );
+				DB::ExecuteProc( "um_user_insert_login(?,?,?)", move(parameters), [&userId](var& row){userId=row.GetUInt32(0);} );
+			}
+			h.promise().SetResult( mu<UserPK>(userId) );
+		}
+		catch( Exception& e ){
+			h.promise().SetResult( move(e) );
+		}
+		h.resume();
+	}
+	α UM::Login( string loginName, uint providerId, string opcServer, SL sl )ι->AsyncAwait{
+		//auto f = [l=move(loginName), type, o=move(opcServer)](HCoroutine h)mutable{ LoginTask(move(l), type, move(o), move(h)); };
+		return AsyncAwait{ [l=move(loginName), providerId, o=move(opcServer)](HCoroutine h)mutable{ return LoginTask(move(l), providerId, move(o), move(h)); }, sl, "UM::Login" };
 	}
 }
 namespace Jde::UM

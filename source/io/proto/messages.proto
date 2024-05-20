@@ -95,8 +95,19 @@ message CustomComplete{
 	uint32 RequestId=1;
 }
 
+message AddSession{
+	string domain=1;
+	string login_name=2;
+	uint32 provider_id=3;
+}
+
 message RequestSessionInfo{
 	uint32 session_id=1;
+}
+
+message GraphQL{
+	uint32 request_id=1;
+	string query=2;
 }
 
 message ToServerUnion{
@@ -108,6 +119,8 @@ message ToServerUnion{
 		CustomMessage Custom=5;
 		CustomComplete Complete=6;
 		RequestSessionInfo session_info=7;
+		AddSession add_session=8;
+		GraphQL graph_ql=9;
 	}
 }
 
@@ -123,8 +136,7 @@ enum EFromServer{
 	ReadError=2;
 }
 
-message Acknowledgement
-{
+message Acknowledgement{
 	uint32 InstanceId=1;
 }
 
@@ -149,6 +161,22 @@ message LogLevels{
 	ELogLevel Client=2;
 }
 
+message AddSessionResult{
+	string domain=1;
+	string user_id=2;
+	uint32 provider_id=3;
+	uint32 session_id=4;
+}
+
+message Exception{
+	uint32 request_id=1;
+	string what=2;
+}
+message GraphQLResult{
+	uint32 request_id=1;
+	string result=2;
+}
+
 message FromServerUnion{
 	oneof Value{
 		Acknowledgement Acknowledgement = 1;
@@ -158,6 +186,9 @@ message FromServerUnion{
 		CustomMessage Custom = 5;
 		Progress Progress = 6;
 		SessionInfo session_info = 7;
+		AddSessionResult add_session_result = 8;
+		GraphQLResult graph_ql = 9;
+		Exception exception = 10;
 	}
 }
 

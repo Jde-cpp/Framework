@@ -1,16 +1,19 @@
 ﻿#include "ServerSink.h"
+#include <boost/unordered/concurrent_flat_map.hpp>
 #include "../threading/Thread.h"
 #include "../coroutine/Alarm.h"
 #include "../DateTime.h"
+#include "proto/ToServerMsg.h"
 #define var const auto
 
-namespace Jde::Logging
-{
+namespace Jde::Logging{
 	sp<Logging::IServerSink> _pServerSink;//IServerSink=ServerSink=TProtoClient=ProtoClient=ProtoClientSession
 	static sp<LogTag> _logTag{ Tag("appServer") };
+	//TODO when socket terminates, error these out.
+	boost::concurrent_flat_map<tuple<string,string,uint32>,HCoroutine> _addLoginCalls; //domain, loginName, providerId
+	boost::concurrent_flat_map<uint,HCoroutine> _returnCalls;  //request_id
 
-	namespace Server
-	{
+	namespace Server{
 		bool _enabled{ Settings::Get<PortType>("logging/server/port").value_or(0)>0 };
 		atomic<ELogLevel> _level{ _enabled ? Settings::Get<ELogLevel>("logging/server/level").value_or(ELogLevel::Error) : ELogLevel::NoLog };
 
@@ -45,23 +48,16 @@ namespace Jde::Logging
 		α WebSubscribe( ELogLevel level )ι->void{ if( auto p=_pServerSink; p )p->WebSubscribe( level ); }
  	}
 	α ClientLevel()ι->ELogLevel{ return Settings::Get<ELogLevel>("logging/file/level").value_or(ELogLevel::Debug); }
-/*	α Write( Logging::Proto::ToServer&& message )ι->void
-	{
-		if( auto p = _pServerSink; p )
-			p->Write( t );
-	}*/
 }
 
 
-namespace Jde::Logging
-{
+namespace Jde::Logging{
 	flat_map<SessionPK, vector<HCoroutine>> _sessionInfoHandles; mutex _sessionInfoHandleMutex;
 
 	IServerSink::IServerSink()ι:IServerSink{ {} }{}
 	IServerSink::IServerSink( const unordered_set<ID>& msgs )ι:_messagesSent{msgs},_logTag{Logging::_logTag}{}
 
-	IServerSink::~IServerSink()
-	{
+	IServerSink::~IServerSink(){
 		TRACEX( "~IServerSink" );
 		Server::Set( nullptr );
 		TRACEX( "_pServerSink = nullptr" );
@@ -94,8 +90,7 @@ namespace Jde::Logging
 	α ServerSink::OnConnected()ι->void{}
 
 
-	α ServerSink::OnDisconnect()ι->void
-	{
+	α ServerSink::OnDisconnect()ι->void{
 		Server::Set( nullptr );
 		TRACE( "Disconnected from LogServer."sv );
 /*		_messagesSent.clear();
@@ -107,13 +102,10 @@ namespace Jde::Logging
 		Create( true );
 	}
 
-	α ServerSink::OnReceive( Proto::FromServer& transmission )ι->void
-	{
-		for( auto i2=0; i2<transmission.messages_size(); ++i2 )
-		{
+	α ServerSink::OnReceive( Proto::FromServer& transmission )ι->void{
+		for( auto i2=0; i2<transmission.messages_size(); ++i2 ){
 			auto& item = *transmission.mutable_messages( i2 );
-			if( item.has_strings() )
-			{
+			if( item.has_strings() ){
 				var& strings = item.strings();
 				TRACE( "received '{}' strings", strings.messages_size()+strings.files_size()+strings.functions_size()+strings.threads_size() );
 				for( auto i=0; i<strings.messages_size(); ++i )
@@ -146,35 +138,64 @@ namespace Jde::Logging
 				base::Write( move(t) );
 				_instanceId = ack.instanceid();
 			}
-			else if( item.has_loglevels() )
-			{
+			else if( item.has_loglevels() ){
 				var& levels = item.loglevels();
 				Logging::SetLogLevel( (ELogLevel)levels.client(), (ELogLevel)levels.server() );
 				LOG_ONCE( ELogLevel::Information, _logTag, "'{}' started at '{}'"sv, _applicationName, ToIsoString(Logging::StartTime()) );
 			}
-			else if( item.has_custom() )
-			{
+			else if( item.has_custom() ){
 				if( _customFunction )
 					_customFunction( item.mutable_custom()->requestid(), move(*item.mutable_custom()->mutable_message()) );
 				else
 					LOG_ONCE( ELogLevel::Error, _logTag, "No custom function set" );
 			}
-			else if( item.has_session_info() )
-			{
+/*			else if( auto p = item.has_authenticate() ? item.mutable_authenticate() : nullptr; p ){
+				if( _authenticateFunction )
+					_authenticateFunction( p->session_id(), move(*p->mutable_user()), move(*p->mutable_password()), move(*p->mutable_opc_server()) );
+				else
+					LOG_ONCE( ELogLevel::Error, _logTag, "No authenticate function set." );
+			}*/
+			else if( item.has_session_info() ){
 				var& info = item.session_info();
 				lg _{_sessionInfoHandleMutex};
-				if( auto p = _sessionInfoHandles.find(info.session_id()); p!=_sessionInfoHandles.end() )
-				{
+				if( auto p = _sessionInfoHandles.find(info.session_id()); p!=_sessionInfoHandles.end() ){
 					for( auto h : p->second )
 						h.promise().SetResult( mu<Proto::SessionInfo>(info) );
 					_sessionInfoHandles.erase( info.session_id() );
 				}
 			}
+			else if( auto p = item.has_add_session_result() ? item.mutable_add_session_result() : nullptr; p ){
+				var key = make_tuple( p->domain(), p->user_id(), p->provider_id() );
+				HCoroutine h{};
+				if( _addLoginCalls.erase_if(key, [sessionId=p->session_id(), &h]( auto& kv ){
+					h = move( kv.second );
+					h.promise().SetResult( mu<SessionPK>(sessionId) );
+					return true;
+				} )){
+					h.resume();
+				}
+				else
+					ERR( "No AddLoginAwait found for domain='{}', userId='{}', providerType='{}'", p->domain(), p->user_id(), p->provider_id() );
+			}
+			else if( auto p = item.has_graph_ql() ? item.mutable_graph_ql() : nullptr; p ){
+				HCoroutine h{};
+				if( _returnCalls.erase_if(p->request_id(), [&h,p]( auto& kv ){
+					h = move( kv.second );
+					h.promise().SetResult( mu<json>(move(*p->mutable_result())) );
+					h.resume();
+					return true;
+				} )){
+					h.resume();
+				}
+				else
+					ERR( "No GraphQLAwait found for request_id='{}'", p->request_id() );
+			}
+			else
+				ERR( "Unknown message type." );
 		}
 	}
 
-	up<Proto::RequestString> ToRequestString( Proto::EFields field, uint32 id, sv text )
-	{
+	up<Proto::RequestString> ToRequestString( Proto::EFields field, uint32 id, sv text ){
 		auto pResult = mu<Proto::RequestString>();
 		pResult->set_field( field );
 		pResult->set_id( id );
@@ -182,8 +203,7 @@ namespace Jde::Logging
 
 		return pResult;
 	}
-	α ServerSink::SendCustom( uint32 requestId, const std::string& bytes )ι->void
-	{
+	α ServerSink::SendCustom( uint32 requestId, const std::string& bytes )ι->void{
 		auto pCustom = mu<Proto::CustomMessage>();
 		pCustom->set_requestid( requestId );
 		pCustom->set_message( bytes );
@@ -192,9 +212,18 @@ namespace Jde::Logging
 		t.add_messages()->set_allocated_custom( pCustom.release() );
 		base::Write( move(t) );
 	}
-
-	α ServerSink::Write( const MessageBase& m, TimePoint time, vector<string>* pValues )ι->void
-	{
+/*	α ServerSink::SendAuthenticateComplete( Proto::AuthenticateComplete&& m )ι->void{
+		Proto::ToServer t;
+		t.add_messages()->set_allocated_authenticate_complete( new Proto::AuthenticateComplete{move(m)} );
+		if( _pServerSink )
+			_pServerSink->Write( move(t) );
+		else{
+			auto _logTag = Logging::_logTag;
+			WARN( "SendAuthenticateComplete - _pServerSink is null" );
+		}
+	}
+*/
+	α ServerSink::Write( const MessageBase& m, TimePoint time, vector<string>* pValues )ι->void{
 		auto pProto = mu<Proto::Message>();
 		pProto->set_allocated_time( new Proto::Timestamp{IO::Proto::ToTimestamp(time)} );
 		pProto->set_level( (Proto::ELogLevel)m.Level );
@@ -204,13 +233,11 @@ namespace Jde::Logging
 		pProto->set_linenumber( (uint32)m.LineNumber );
 		pProto->set_userid( (uint32)m.UserId );
 		pProto->set_threadid( m.ThreadId );
-		if( pValues )
-		{
+		if( pValues ){
 			for( auto& value : *pValues )
 				pProto->add_variables( move(value) );
 		}
-		auto processMessage = [&m, this]( Proto::ToServer& t )
-		{
+		auto processMessage = [&m, this]( Proto::ToServer& t ){
 			if( _messagesSent.emplace(m.MessageId) )
 				t.add_messages()->set_allocated_string( ToRequestString(Proto::EFields::MessageId, (uint32)m.MessageId, m.MessageView).release() );
 			if( _filesSent.emplace(m.FileId) ){
@@ -222,20 +249,16 @@ namespace Jde::Logging
 				t.add_messages()->set_allocated_string( ToRequestString(Proto::EFields::FunctionId, (uint32)m.FunctionId, m.Function).release() );
 		};
 
-		if( _stringsLoaded )
-		{
+		if( _stringsLoaded ){
 			Proto::ToServer t;
 			{
 				AtomicGuard l{ _bufferMutex };
-				if( _buffer.messages_size() )
-				{
-					for( auto i=0; i<_buffer.messages_size(); ++i )
-					{
+				if( _buffer.messages_size() ){
+					for( auto i=0; i<_buffer.messages_size(); ++i ){
 						auto pMessage = _buffer.mutable_messages( i );
 						if( pMessage->has_message() )
 							t.add_messages()->set_allocated_message( pMessage->release_message() );
-						else if( pMessage->has_string() )
-						{
+						else if( pMessage->has_string() ){
 							auto pString = up<Logging::Proto::RequestString>( pMessage->release_string() );
 							UnorderedSet<ID>& set = pString->field()==Proto::EFields::MessageId ? _messagesSent : pString->field()==Proto::EFields::FileId ? _filesSent : _functionsSent;
 							if( !set.contains(pString->id()) )
@@ -247,40 +270,64 @@ namespace Jde::Logging
 			}
 			processMessage( t );
 			t.add_messages()->set_allocated_message( pProto.release() );
-			if( Server::_sendStatus.test() )
-			{
+			if( Server::_sendStatus.test() ){
 				Server::_sendStatus.clear();
 				t.add_messages()->set_allocated_status( GetStatus().release() );
 			}
 			base::Write( move(t) );
 		}
-		else
-		{
+		else{
 			AtomicGuard l{ _bufferMutex };
 			_buffer.add_messages()->set_allocated_message( pProto.release() );;
 			processMessage( _buffer );
 		}
 	}
-
-	α SessionInfoAwait::await_suspend( HCoroutine h )ι->void
-	{
+	
+	α AddLoginAwait::await_suspend( HCoroutine h )ι->void{
 		IAwait::await_suspend( h );
-		{
-			lg _{ _sessionInfoHandleMutex };
-			_sessionInfoHandles[_sessionId].push_back( h );
-		}
-		auto m=mu<Proto::RequestSessionInfo>(); m->set_session_id(_sessionId);
+		if( auto p=_pServerSink; p && _addLoginCalls.try_emplace(make_tuple(_domain,_loginName, _providerId), move(h)) )
+			p->Write( ToServerMsg::AddLogin(_domain,_loginName, _providerId) );
+	}
+	α AddLoginAwait::await_resume()ι->AwaitResult{
+		return _pPromise
+			? _pPromise->MoveResult()
+			: AwaitResult{ Exception{"No connection to Server"} };
+	}
+	
+	atomic<uint> _requestId = 0;
+	α GraphQL( str query, HCoroutine&& h )ι{
+		var requestId = ++_requestId;
+		_returnCalls.emplace( requestId, move(h) );
+		if( auto p=_pServerSink; p )
+			p->Write( ToServerMsg::GraphQL(query, requestId) );
+		else
+			Resume( Exception{"No connection to Server"}, move(h) );
+	}
+
+	GraphQLAwait::GraphQLAwait( str query, SL sl )ι:
+		AsyncAwait{ [&](auto h){ GraphQL(query, move(h) ); }, sl, "GraphQL" }{}
+
+	α SessionInfoAwait::await_suspend( HCoroutine h )ι->void{
+		IAwait::await_suspend( h );
 		Proto::ToServer t;
-		auto u = t.add_messages(); u->set_allocated_session_info( m.release() );
-		Logging::Server::Write( move(t) );
+		auto p = t.add_messages()->mutable_session_info(); p->set_session_id( _sessionId );
+		if( auto p=_pServerSink; p ){
+			{
+				lg _{ _sessionInfoHandleMutex };
+				_sessionInfoHandles[_sessionId].push_back( move(h) );
+			}
+			p->Write( move(t) );
+		}
+		else
+			Resume( Exception{"No connection to Server"}, move(h) );
 	};
-	namespace Messages
-	{
+
+
+	namespace Messages{
 		ServerMessage::ServerMessage( const MessageBase& base, vector<string> values )ι:
 			Message{ base },
 			Timestamp{ Clock::now() },
-			Variables{ move(values) }
-		{
+			Variables{ move(values) }{
 			ThreadId = Threading::GetThreadId();
 			Fields |= EFields::Timestamp | EFields::ThreadId | EFields::Thread;
 		}
@@ -289,8 +336,7 @@ namespace Jde::Logging
 			Message{ rhs },
 			Timestamp{ rhs.Timestamp },
 			Variables{ rhs.Variables },
-			_pFunction{ rhs._pFunction ? mu<string>(*rhs._pFunction) : nullptr }
-		{
+			_pFunction{ rhs._pFunction ? mu<string>(*rhs._pFunction) : nullptr }{
 			if( _pFunction )
 				Function = _pFunction->c_str();
 		}

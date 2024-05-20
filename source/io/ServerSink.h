@@ -19,7 +19,21 @@ namespace Jde{
 namespace Jde::Logging{
 	namespace Messages{ struct ServerMessage; }
 	struct IServerSink;
-	
+
+	//Add opc user to logins
+	struct Γ AddLoginAwait final : IAwait{
+		AddLoginAwait( str domain, str loginName, uint32 providerId, SRCE )ι:IAwait{sl},_domain{domain}, _loginName{loginName}, _providerId{providerId}{}
+		α await_suspend( HCoroutine h )ι->void override;
+		α await_resume()ι->AwaitResult override;
+	private:
+		string _domain;
+		string _loginName;
+		uint32 _providerId;
+	};
+	struct Γ GraphQLAwait final : AsyncAwait{
+		GraphQLAwait( str query, SRCE )ι;
+	};	
+
 	struct Γ SessionInfoAwait final : IAwait{
 		SessionInfoAwait( SessionPK sessionId, SRCE )ι:IAwait{sl},_sessionId{sessionId}{}
 		α await_suspend( HCoroutine h )ι->void override;
@@ -33,6 +47,9 @@ namespace Jde::Logging{
 		extern bool _enabled;
 		Ξ Enabled()ι->bool{ return _enabled; }
 		Φ FetchSessionInfo( SessionPK sessionId )ε->SessionInfoAwait;
+		Ξ AddLogin( str domain, str loginName, uint32 providerId, SRCE )ι{ return AddLoginAwait{domain, loginName, providerId, sl}; }
+		Ξ GraphQL( str query, SRCE )ι{ return GraphQLAwait{query, sl}; }
+		
 		Φ InstanceId()ι->ApplicationInstancePK;
 		Φ IsLocal()ι->bool;
 		Φ Level()ι->ELogLevel; Φ SetLevel( ELogLevel x )ι->void;
@@ -109,7 +126,9 @@ namespace Jde::Logging{
 		α OnDisconnect()ι->void override;
 		α OnConnected()ι->void override;
 		α SendCustom( uint32 requestId, str bytes )ι->void override;
+		//Ω SendAuthenticateComplete( Proto::AuthenticateComplete&& m )ι->void;
 		α SetCustomFunction( function<Coroutine::Task(uint32,string&&)>&& fnctn )ι{_customFunction=fnctn;}
+		//α SetAuthenticateFunction( function<Coroutine::Task(uint32,string&&,string&&,string&&)>&& fnctn )ι{_authenticateFunction=fnctn;}
 		α Write( Proto::ToServer&& m )ι->void override{ ProtoBase::Write(move(m)); };
 	private:
 		α Write( const MessageBase& message, TimePoint time, vector<string>* pValues=nullptr )ι->void;
@@ -117,6 +136,7 @@ namespace Jde::Logging{
 		atomic<bool> _stringsLoaded{false};
 		string _applicationName;
 		function<Coroutine::Task(uint32,string&&)> _customFunction;
+		function<Coroutine::Task(uint32,string&&,string&&,string&&)> _authenticateFunction;
 		Proto::ToServer _buffer; std::atomic_flag _bufferMutex;
 	};
 }

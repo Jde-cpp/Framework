@@ -244,20 +244,18 @@ namespace Jde::Coroutine
 		return f;
 	}
 
-	//assynchronous function continues at end
-	class AsyncAwait /*final*/ : public IAwait
-	{
+	//await_suspend is async.
+	class AsyncAwait /*final*/ : public IAwait{
 		using base=IAwait;
 	public:
-		AsyncAwait( function<Task(HCoroutine)> fnctn, SRCE, str name={} )ι:base{name, sl}, _fnctn{fnctn}{};
+		AsyncAwait( function<void(HCoroutine)> fnctn, SRCE, str name={} )ι:base{name, sl}, _fnctn{fnctn}{};
 
 		α await_suspend( HCoroutine h )ι->void override{ base::await_suspend(h); _fnctn( move(h) ); }
 	protected:
-		function<Task(HCoroutine)> _fnctn;
+		function<void(HCoroutine)> _fnctn;
 	};
 
-	class AsyncReadyAwait final : public AsyncAwait
-	{
+	class AsyncReadyAwait final : public AsyncAwait{
 		using base=AsyncAwait;
 	public:
 		AsyncReadyAwait()ι:base{ [](HCoroutine){return Task{};} },_ready{ [](){return AwaitResult{};} }{}
@@ -270,8 +268,7 @@ namespace Jde::Coroutine
 		optional<AwaitResult> _result;
 	};
 
-	class CacheAwait final : public AsyncAwait
-	{
+	class CacheAwait final : public AsyncAwait{
 		using base=AsyncAwait;
 	public:
 		CacheAwait( sp<void*> pCache, function<Task(HCoroutine)> fnctn, SRCE, str name={} )ι:base{fnctn, sl, name}, _pCache{pCache}{}
