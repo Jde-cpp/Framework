@@ -35,12 +35,13 @@ namespace Jde::DB
 
 		β Execute( string sql, SRCE )ε->uint=0;
 		β Execute( string sql, vec<object> parameters, SRCE )ε->uint=0;
-		β Execute( string sql, const vector<object>* pParameters, RowΛ* f, bool isStoredProc=false, SRCE )ε->uint=0;
+		β Execute( string sql, const vector<object>* pParameters, const RowΛ* f, bool isStoredProc=false, SRCE )ε->uint=0;
 		β ExecuteCo( string sql, vector<object> p, SRCE )ι->up<IAwait> =0;
 		β ExecuteNoLog( string sql, const vector<object>* pParameters, RowΛ* f=nullptr, bool isStoredProc=false, SRCE )ε->uint=0;
 		β ExecuteProc( string sql, vec<object> parameters, SRCE )ε->uint=0;
 		β ExecuteProc( string sql, vec<object> parameters, RowΛ f, SRCE )ε->uint=0;
 		β ExecuteProcCo( string sql, vector<object> p, SRCE )ι->up<IAwait> =0;
+		β ExecuteProcCo( string sql, vector<object> parameters, RowΛ f, SRCE )ε->up<IAwait> =0;
 		β ExecuteProcNoLog( string sql, vec<object> parameters, SRCE )ε->uint=0;
 
 		α Select( string sql, RowΛ f, vec<object> parameters, SRCE )ε->void;

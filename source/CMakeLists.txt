@@ -7,12 +7,13 @@ link_directories( ${Protobuf_DIR}/../.. )
 #######################################################
 
 set( sources )
-list( APPEND sources DateTime.cpp Exception.cpp Stopwatch.cpp Str.cpp Cache.cpp Settings.cpp App.cpp Log.cpp
+list( APPEND sources db/graphQL/Purge.cpp
+	DateTime.cpp Exception.cpp Stopwatch.cpp Str.cpp Cache.cpp Settings.cpp App.cpp Log.cpp
 	io/AsioContextThread.cpp io/DiskWatcher.cpp io/File.cpp io/FileCo.cpp io/ProtoClient.cpp io/ServerSink.cpp io/Socket.cpp io/tinyxml2.cpp io/proto/messages.pb.cc
 	threading/Interrupt.cpp threading/InterruptibleThread.cpp threading/Pool.cpp threading/Worker.cpp threading/Mutex.cpp
 	coroutine/Alarm.cpp coroutine/Coroutine.cpp coroutine/CoWorker.cpp coroutine/Lock.cpp coroutine/Task.cpp
 	db/Await.cpp db/Database.cpp db/DataSource.cpp db/DataType.cpp db/DBException.cpp db/DBQueue.cpp db/SchemaProc.cpp db/GraphQL.cpp db/GraphQuery.cpp db/types/Table.cpp
-	db/graphQL/Introspection.cpp
+	db/graphQL/GraphQLHook.cpp db/graphQL/Insert.cpp db/graphQL/Introspection.cpp
 	um/UM.cpp)
 if(NOT MSVC)
     list(APPEND sources ../../Linux/source/LinuxApp.cpp ../../Linux/source/LinuxDrive.cpp ../../Linux/source/LinuxTimezone.cpp  ../../Linux/source/LinuxThread.cpp)

@@ -5,6 +5,7 @@
 #include <jde/TypeDefs.h>
 #include <jde/Exception.h>
 #include <jde/coroutine/Task.h>
+#include <jde/db/usings.h>
 #include "../coroutine/Awaitable.h"
 
 namespace Jde::DB{ struct MutationQL; enum class EMutationQL : uint8; }

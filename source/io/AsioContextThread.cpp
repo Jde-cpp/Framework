@@ -23,11 +23,11 @@ namespace Jde::IO
 	AsioContextThread::~AsioContextThread(){
 		TRACET( LogTag(), "~AsioContextThread" );
 		_ioc.stop();
-		_thread.join();
+		if( _thread.joinable() )//check if same thread?  if( _thread.get_id()==std::this_thread::get_id() ) Resource deadlock avoided
+			_thread.join();
 	}
 
-	void AsioContextThread::Run()ι
-	{
+	void AsioContextThread::Run()ι{
 		Threading::SetThreadDscrptn( ThreadName );
 		TRACE( "({})Thread - Entering.", ThreadName );
 		boost::system::error_code ec;

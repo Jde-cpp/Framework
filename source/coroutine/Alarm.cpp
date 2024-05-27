@@ -7,35 +7,31 @@ namespace Jde::Threading
 	static sp<Jde::LogTag> _logTag{ Logging::Tag("alarm") };
 	namespace detail{ α AlarmLogTag()ι->sp<Jde::LogTag>{return _logTag;} }
 	Alarm _instance;
-	flat_multimap<TimePoint,tuple<Handle,HCoroutine>> _coroutines; mutex _coroutineMutex;
+	flat_multimap<TimePoint,tuple<Handle,HCoroutine,std::source_location>> _coroutines; mutex _coroutineMutex;
 	std::condition_variable _cv; mutex _mtx;
 
-	α AlarmAwait::await_suspend( HCoroutine h )ι->void
-	{
-		Alarm::Add( _alarm, h, _hClient );
+	α AlarmAwait::await_suspend( HCoroutine h )ι->void{
+		Alarm::Add( _alarm, h, _hClient, _sl );
 	}
 
-	α Alarm::Add( TimePoint t, HCoroutine h, Coroutine::Handle myHandle )ι->void
-	{
+	α Alarm::Add( TimePoint t, HCoroutine h, Coroutine::Handle myHandle, SL sl )ι->void{
 		{
-			unique_lock l{_coroutineMutex};
-			_coroutines.emplace( t, make_tuple(myHandle, h) );
+			lg _{_coroutineMutex};
+			_coroutines.emplace( t, make_tuple(myHandle, h, sl) );
 		}
 		_instance.WakeUp();
-		TRACE( "({})Alarm::Add({})"sv, myHandle, Chrono::ToString(Clock::now()-t) );
-		if( t-Clock::now()<WakeDuration )
-		{
-			std::unique_lock<std::mutex> lk( _mtx );
+		TRACESL( "({})Alarm::Add({})", myHandle, Chrono::ToString(Clock::now()-t) );
+		if( t-Clock::now()<WakeDuration ){
+			lg lk( _mtx );
 			_cv.notify_one();
 		}
 	}
 
-	α Alarm::Cancel( Coroutine::Handle h )ι->void
-	{
-		unique_lock l{ _coroutineMutex };
-		if( auto p = std::find_if(_coroutines.begin(), _coroutines.end(), [h](var x){ return get<0>(x.second)==h;}); p!=_coroutines.end() )
-		{
-			TRACE( "({})Alarm::Cancel()"sv, get<0>(p->second) );
+	α Alarm::Cancel( Coroutine::Handle h )ι->void{
+		lg _{ _coroutineMutex };
+		if( auto p = find_if(_coroutines, [h](var x){ return get<0>(x.second)==h;}); p!=_coroutines.end() ){
+			SL sl{ get<2>(p->second) };
+			TRACESL( "({})Alarm::Cancel()", get<0>(p->second) );
 			get<1>( p->second ).destroy();
 			_coroutines.erase( p );
 		}
@@ -43,13 +39,11 @@ namespace Jde::Threading
 			WARN( "Could not find handle {}."sv, h );
 	}
 
-	α Next()ι->optional<TimePoint>
-	{
-		unique_lock l{ _coroutineMutex };//only shared
+	α Next()ι->optional<TimePoint>{
+		lg _{ _coroutineMutex };//only shared
 		return _coroutines.size() ? optional<TimePoint>{ _coroutines.begin()->first }: nullopt;
 	}
-	α Alarm::Poll()ι->optional<bool>
-	{
+	α Alarm::Poll()ι->optional<bool>{
 		static uint i=0;
 		{
 			std::unique_lock<std::mutex> lk( _mtx );
@@ -61,21 +55,28 @@ namespace Jde::Threading
 				TRACE( "Alarm wait until:  {}, calls={}"sv, LocalTimeDisplay(until, true, true), Calls() );
 			/*var status =*/ _cv.wait_for( lk, until-now );
 		}
-		unique_lock l{ _coroutineMutex };
+		lg _{ _coroutineMutex };
 		bool processed = false;
-		for( auto p=_coroutines.begin(); p!=_coroutines.end() && p->first<Clock::now(); p = _coroutines.erase(p) )
-		{
+		for( auto p=_coroutines.begin(); p!=_coroutines.end() && p->first<Clock::now(); p = _coroutines.erase(p) ){
 			processed = true;
-			TRACE( "({})Alarm::Resume()"sv, get<0>(p->second) );
+			SL sl{ get<2>(p->second) };
+			TRACESL( "({})Alarm::Resume()", get<0>(p->second) );
 			Coroutine::CoroutinePool::Resume( move(get<1>(p->second)) );
 		}
 		return _coroutines.empty() ? std::nullopt : optional<bool>{ processed };
 	}
-	α Alarm::Shutdown()ι->void
-	{
+	α Alarm::Shutdown()ι->void{
+		DBG("Alarm::Shutdown()");
 		_pThread->request_stop();
-		std::unique_lock<std::mutex> lk( _mtx );
+		lg _( _mtx );
 		_cv.notify_one();
 		IWorker::Shutdown();
+		lg _2{ _coroutineMutex };
+		for( auto p = _coroutines.begin(); p!=_coroutines.end(); p=_coroutines.erase(p) ){
+			SL sl{ get<2>(p->second) };
+			TRACESL( "({})Alarm::Removing Coroutine", get<0>(p->second) );
+			_coroutines.clear();
+		}
+		DBG("~Alarm::Shutdown()");
 	}
 }

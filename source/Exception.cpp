@@ -58,6 +58,26 @@ namespace Jde{
 		Log();
 	}
 
+	α IException::FromExceptionPtr( const std::exception_ptr& from, SL sl )ι->up<IException>{
+		up<IException> y;
+		try{
+			std::rethrow_exception( from );
+		}
+		catch( IException& e ){
+			y = e.Move();
+		}
+		catch( const nlohmann::json::exception& e ){
+			y = mu<Exception>( Jde::format("nlohmann::json::exception - {}", e.what()), ELogLevel::Error, sl );
+		}
+		catch( const std::exception& e ){
+			y = mu<Exception>( Jde::format("std::exception - {}", e.what()), ELogLevel::Critical, sl );
+		}
+		catch( ... ){
+			y = mu<Exception>( "unknown exception", ELogLevel::Critical, sl );
+		}
+		return y;
+	}
+
 	α IException::BreakLog()Ι->void{
 #ifndef NDEBUG
 		if( /*Level()!=ELogLevel::None &&*/ Level()>=Logging::BreakLevel() ){

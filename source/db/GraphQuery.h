@@ -1,8 +1,7 @@
 ﻿#pragma once
-#include <nlohmann/json.hpp>
+#include <jde/db/usings.h>
 
-namespace Jde::DB{ using nlohmann::json; struct TableQL; }
-namespace Jde::DB::GraphQL
-{
-	α Query( const DB::TableQL& table, json& jData, UserPK userId )noexcept(false)->void;
+namespace Jde::DB{ struct TableQL; }
+namespace Jde::DB::GraphQL{
+	α Query( const DB::TableQL& table, json& jData, UserPK userId )ε->void;
 }

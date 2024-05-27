@@ -9,7 +9,10 @@
 #include "../DateTime.h"
 #include "GraphQuery.h"
 #include <jde/Str.h>
+#include <jde/io/Json.h>
 #include "types/WhereClause.h"
+#include "graphQL/Insert.h"
+#include "graphQL/Purge.h"
 
 #define var const auto
 namespace Jde{
@@ -25,6 +28,7 @@ namespace Jde{
 	α DB::SetQLDataSource( sp<DB::IDataSource> p )ι->void{ _pDataSource = p; }
 
 	α DB::ClearQLDataSource()ι->void{ _pDataSource = nullptr; }
+	//MutationListeners - deprecated, use hooks.
 	up<flat_map<string,vector<function<void(const DB::MutationQL& m, PK id)>>>> _applyMutationListeners;  shared_mutex _applyMutationListenerMutex;
 	α ApplyMutationListeners()ι->flat_map<string,vector<function<void(const DB::MutationQL& m, PK id)>>>&{ if( !_applyMutationListeners ) _applyMutationListeners = mu<flat_map<string,vector<function<void(const DB::MutationQL& m, PK id)>>>>(); return *_applyMutationListeners; }
 
@@ -34,8 +38,8 @@ namespace Jde{
 		listeners.push_back( listener );
 	}
 
-	namespace DB::GraphQL{
-		α DataSource()ι->sp<IDataSource>{ return _pDataSource; }
+	namespace DB{
+		α GraphQL::DataSource()ι->sp<IDataSource>{ return _pDataSource; }
 	}
 	α DB::AppendQLDBSchema( const DB::Schema& schema )ι->void{
 		for( var& [name,v] : schema.Types )
@@ -60,73 +64,29 @@ namespace DB{
 		var p = input.find( name ); THROW_IF( p==input.end(), "Could not find '{}' argument. {}", name, input.dump() );
 		return *p;
 	}
-	α MutationQL::Input()Ε->json{
-		var pInput = Args.find("input"); THROW_IF( pInput==Args.end(), "Could not find input argument. {}", Args.dump() );
+	α MutationQL::Input(SL sl)Ε->json{
+		var pInput = Args.find("input"); THROW_IFSL( pInput==Args.end(), "Could not find input argument. {}", Args.dump() );
 		return *pInput;
 	}
 
 	α TableQL::DBName()Ι->string{
 		return DB::Schema::ToPlural( DB::Schema::FromJson(JsonName) );
 	}
-}
-#define TEST_ACCESS(a,b,c) TRACE( "TEST_ACCESS({},{},{})"sv, a, b, c )
-	α ToJsonName( DB::Column c )ε{
+	α GraphQL::ToJsonName( DB::Column c )ε->tuple<string,string>{
 		string tableName;
 		auto memberName{ DB::Schema::ToJson(c.Name) };
 		if( c.IsFlags || c.IsEnum ){
-			var pPKTable = _schema.Tables.find( c.PKTable ); THROW_IF( pPKTable==_schema.Tables.end(), "can not find column {}'s pk table {}.", c.Name, c.PKTable );
-			tableName = pPKTable->second->Name;
-			memberName = DB::Schema::ToJson( pPKTable->second->NameWithoutType() );
+			var pkTable = _schema.FindTable( c.PKTable );
+			tableName = pkTable.Name;
+			memberName = DB::Schema::ToJson( pkTable.NameWithoutType() );
 			if( c.IsEnum )
 				memberName = DB::Schema::ToSingular( memberName );
 		}
 		return make_tuple( memberName, tableName );
 	}
-	
-	α Insert( const DB::Table& table, const DB::MutationQL& m )ε->uint{
-		var pExtendedFrom = table.GetExtendedFromTable( _schema );
-		uint extendedFromId = pExtendedFrom ? Insert( *pExtendedFrom, m ) : 0;
-			
-		ostringstream sql{ string{DB::Schema::ToSingular(table.Name)}, std::ios::ate }; sql << "_insert(";
-		vector<DB::object> parameters; parameters.reserve( table.Columns.size() );
-		var pInput = m.Args.find( "input" ); THROW_IF( pInput == m.Args.end(), "Could not find 'input' arg." );
-		uint cNonDefaultArgs{};
-		for( var& c : table.Columns ){
-			if( !c.Insertable )
-				continue;
-			var [memberName, tableName] = ToJsonName( c );
-			
-			if( parameters.size() )
-				sql << ", ";
-			sql << "?";
-			DB::object value;
-			if( var pValue = pInput->find( memberName ); pValue!=pInput->end() ){// calling a stored proc, so need all variables.
-				++cNonDefaultArgs;
-				if( c.IsEnum && pValue->is_string() ){
-					var pValues = SFuture<flat_map<uint,string>>( _pDataSource->SelectEnum<uint>(tableName) ).get();
-					optional<uint> pEnum = FindKey( *pValues, pValue->get<string>() ); THROW_IF( !pEnum, "Could not find '{}' for {}", pValue->get<string>(), memberName );
-					value = *pEnum;
-				}
-				else
-					value = ToObject( c.Type, *pValue, memberName );
-			}
-			else{
-				if( pExtendedFrom && table.SurrogateKey().Name==c.Name )
-					value = extendedFromId;
-				else if( !c.IsNullable && c.Default.empty() && c.Insertable )
-					THROW( "No value specified for {}.{}.", table.Name, memberName );
-				else
-					value = c.DefaultObject();
-			}
-
-			parameters.push_back( value );
-		}
-		sql << ")";
-		uint id{ extendedFromId };
-		if( !pExtendedFrom || cNonDefaultArgs )//if extended table doesn't have values, don't want it.
-			_pDataSource->ExecuteProc( sql.str(), parameters, [&id](const DB::IRow& row){id = (int32)row.GetInt(0);} );
-		return id;
-	}
+}
+	using DB::GraphQL::ToJsonName;
+	using DB::GraphQL::InsertAwait;
 	//um_permissions
 	α SubWhere( const DB::Table& table, const DB::Column& c, vector<DB::object>& params, uint paramIndex )ε->string{
 		ostringstream sql{ "=( select id from ", std::ios::ate }; sql << table.Name << " where " << c.Name;
@@ -151,7 +111,7 @@ namespace DB{
 		auto [count,rowId] = pExtendedFromTable ? Update(*pExtendedFromTable, m, syntax) : make_tuple( 0, 0 );
 		ostringstream sql{ Jde::format("update {} set ", table.Name), std::ios::ate };
 		vector<DB::object> parameters; parameters.reserve( table.Columns.size() );
-		var pInput = m.Args.find( "input" ); THROW_IF( pInput==m.Args.end(), "Could not find input argument. {}", m.Args.dump() );
+		var input = m.Input();
 		string sqlUpdate;
 		DB::WhereClause where;
 		for( var& c : table.Columns ){
@@ -182,8 +142,8 @@ namespace DB{
 			}
 			else{
 				var [memberName, tableName] = ToJsonName( c );
-				var pValue = pInput->find( memberName );
-				if( pValue==pInput->end() )
+				var pValue = input.find( memberName );
+				if( pValue==input.end() )
 					continue;
 				if( parameters.size() )
 					sql << ", ";
@@ -237,37 +197,6 @@ namespace DB{
 		parameters.push_back( ToObject(EType::ULong, *pId, "id") );
 		ostringstream sql{ "update ", std::ios::ate }; sql << table.Name << " set deleted=null where id=?";
 		return _pDataSource->Execute( sql.str(), parameters );
-	}
-	α PurgeStatements( const DB::Table& table, const DB::MutationQL& m, UserPK userId, vector<DB::object>& parameters, SRCE )ε->vector<string>{
-		var pId = m.Args.find( "id" ); THROW_IF( pId==m.Args.end(), "Could not find id argument. {}", m.Args.dump() );
-		parameters.push_back( ToObject(EType::ULong, *pId, "id") );
-		if( var p=UM::FindAuthorizer(table.Name); p )
-			p->TestPurge( *pId, userId );
-		
-		sp<const DB::Table> pExtendedFromTable;
-		auto pColumn = table.FindColumn( "id" );
-		if( !pColumn ){
-			if( pExtendedFromTable = table.GetExtendedFromTable(_schema); pExtendedFromTable )
-				pColumn = &table.SurrogateKey();
-			else
-				THROW( "Could not find 'id' column" );
-		}
-		vector<string> statements{ Jde::format("delete from {} where {}=?", table.Name, pColumn->Name) };
-		if( pExtendedFromTable ){
-			var extendedPurge = PurgeStatements( *pExtendedFromTable, m, userId, parameters, sl );
-			statements.insert( end(statements), begin(extendedPurge), end(extendedPurge) );
-		}
-		return statements;
-	}
-
-	α Purge( const DB::Table& table, const DB::MutationQL& m, UserPK userId, SRCE )ε->uint{
-		vector<DB::object> parameters;
-		auto statements = PurgeStatements( table, m, userId, parameters, sl );
-		//TODO for mysql allow CLIENT_MULTI_STATEMENTS return _pDataSource->Execute( Str::AddSeparators(statements, ";"), parameters, sl );
-		uint result = 0;
-		for( var& statement : statements )
-			result += _pDataSource->Execute( statement, vector<DB::object>{parameters.front()}, sl );//right now, parameters should singular and the same.
-		return result;
 	}
 
 	α ChildParentParams( sv childId, sv parentId, const json& input )->vector<DB::object>{
@@ -354,8 +283,18 @@ namespace DB{
 		if( var pAuthorizer = UM::FindAuthorizer(t.Name); pAuthorizer )
 			pAuthorizer->Test( m.Type, userId );
 		uint result;
-		if( m.Type==DB::EMutationQL::Create )
-			result = Insert( t, m );
+		if( m.Type==DB::EMutationQL::Create ){
+			uint extendedFromId{};
+			if( var pExtendedFrom = t.GetExtendedFromTable(_schema); pExtendedFrom ){
+				auto a = InsertAwait( *pExtendedFrom, m, 0 );
+				extendedFromId = *Future<uint>( move(a) ).get();
+			}
+			auto _logTag = ms<LogTag>( "InsertAwait", ELogLevel::Debug );
+			DBG( "calling InsertAwait" );
+			auto a = InsertAwait( t, m, extendedFromId );
+			result = *Future<uint>( move(a) ).get();
+			DBG( "~calling InsertAwait" );
+		}
 		else if( m.Type==DB::EMutationQL::Update )
 			result = get<0>( Update(t, m, DB::DefaultSyntax()) );
 		else if( m.Type==DB::EMutationQL::Delete )
@@ -363,7 +302,7 @@ namespace DB{
 		else if( m.Type==DB::EMutationQL::Restore )
 			result = Restore( t, m );
 		else if( m.Type==DB::EMutationQL::Purge )
-			result = Purge( t, m, userId );
+			result = *Future<uint>( DB::GraphQL::PurgeAwait{t, m, userId} ).get();
 		else{
 			if( m.Type==DB::EMutationQL::Add )
 				result = Add( t, m.Input() );
@@ -375,6 +314,7 @@ namespace DB{
 		if( t.Name.starts_with("um_") )
 			Try( [&]{UM::ApplyMutation( m, (UserPK)result );} );
 		sl _{ _applyMutationListenerMutex };
+		//deprecated, use hooks
 		if( var p = ApplyMutationListeners().find(string{t.Prefix()}); p!=ApplyMutationListeners().end() )
 			std::for_each( p->second.begin(), p->second.end(), [&](var& f){f(m, result);} );
 
@@ -605,6 +545,7 @@ namespace DB{
 		json jSchema; jSchema["mutationType"] = jmutationType;
 		jData["__schema"] = jmutationType;
 	}
+#define TEST_ACCESS(a,b,c) TRACE( "TEST_ACCESS({},{},{})"sv, a, b, c )
 	α QueryTable( const DB::TableQL& table, UserPK userId, json& jData )ε->void{
 		TEST_ACCESS( "Read", table.DBName(), userId ); //TODO implement.
 		if( table.JsonName=="__type" )
@@ -637,9 +578,11 @@ namespace DB{
 			json j;
 			if( qlType.index()==1 ){
 				var& mutation = get<MutationQL>( qlType );
-				uint id = Mutation( mutation, userId );
-				if( mutation.ResultPtr && mutation.ResultPtr->Columns.size()==1 && mutation.ResultPtr->Columns.front().JsonName=="id" )
-					j["data"][mutation.JsonName]["id"] = id;
+				uint result = Mutation( mutation, userId );
+				str resultMemberName = mutation.Type==EMutationQL::Create ? "id" : "rowCount";
+				var wantResults = mutation.ResultPtr && mutation.ResultPtr->Columns.size()>0;
+				if( wantResults && mutation.ResultPtr->Columns.front().JsonName==resultMemberName )
+					j["data"][mutation.JsonName][resultMemberName] = result;
 				else if( mutation.ResultPtr )
 					tableQueries.push_back( *mutation.ResultPtr );
 			}
@@ -695,15 +638,17 @@ namespace DB{
 		sv Delimiters;
 		sv _peekValue;
 	};
+	//{s=0x6060000c3020 "{filter:{target:{ eq:\"OpcServerTests\"}, providerTypeId:{ eq:6}}"}
+	//{s=0x60d000023b70 "{\"filter\":{\"target\":{ \"eq\":\"OpcServerTests\"}, \"providerTypeId\":{ \"eq\":6}}}"}
 	α StringifyKeys( sv json )ι->string{
-		ostringstream os;
+		string y{}; y.reserve( json.size()*2 );
 		bool inValue = false;
 		for( uint i=0; i<json.size(); ++i ){
 			char ch = json[i];
-			if( std::isspace(ch) )
-				os << ch;
+			if( std::isspace(ch) || ch==',' )
+				y += ch;
 			else if( ch=='{' || ch=='}' ){
-				os << ch;
+				y += ch;
 				inValue = false;
 			}
 			else if( inValue ){
@@ -712,7 +657,7 @@ namespace DB{
 						if( json[i2]=='{' )
 							++openCount;
 						else if( json[i2]=='}' && --openCount==0 ){
-							os << StringifyKeys( json.substr(i,i2-i) );
+							y += StringifyKeys( json.substr(i,i2-i) );
 							i = i2+1;
 							break;
 						}
@@ -720,14 +665,14 @@ namespace DB{
 				}
 				else if( ch=='[' ){
 					for( ; i<json.size() && ch!=']'; ch = json[++i] )
-						os << ch;
-					os << ']';
+						y += ch;
+					y += ']';
 				}
 				else{
 					for( ; i<json.size() && ch!=',' && ch!='}'; ch = json[++i] )
-						os << ch;
+						y += ch;
 					if( i<json.size() )
-						os << ch;
+						y += ch;
 				}
 				inValue = false;
 			}
@@ -735,20 +680,20 @@ namespace DB{
 				var quoted = ch=='"';
 				if( !quoted ) --i;
 				for( ch = '"'; i<json.size() && ch!=':'; ch=json[++i] )
-					os << ch;
+					y += ch;
 				if( !quoted )
-					os << '"';
-				os << ":";
+					y += '"';
+				y += ":";
 				inValue = true;
 			}
 		}
-		return os.str();
+		return y;
 	}
 	α ParseJson( Parser2& q )ε->json{
 		string params{ q.Next(')') }; THROW_IF( params.front()!='(', "Expected '(' vs {} @ '{}' to start function - '{}'.",  params.front(), q.Index()-1, q.Text() );
 		params.front()='{'; params.back() = '}';
 		params = StringifyKeys( params );
-		return json::parse( params );
+		return Json::Parse( params );
 	}
 	α LoadTable( Parser2& q, sv jsonName )ε->DB::TableQL{//__type(name: "Account") { fields { name type { name kind ofType{name kind} } } }
 		var j = q.Peek()=="(" ? ParseJson( q ) : json{};

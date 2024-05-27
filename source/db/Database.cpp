@@ -4,6 +4,7 @@
 #include "DataSource.h"
 #include <jde/App.h>
 #include <jde/io/File.h>
+#include <jde/io/Json.h>
 #include "../Settings.h"
 #include <jde/Dll.h>
 #include "Syntax.h"
@@ -113,14 +114,13 @@ namespace Jde
 	#define db DataSource()
 	DB::Schema _schema;
 	α DB::DefaultSchema()ι->Schema&{ return _schema; }
-	α DB::CreateSchema()ε->void
-	{
+	α DB::CreateSchema()ε->void{
 		auto path = Settings::Global().Getɛ<fs::path>( "db/meta" );
 		if( !fs::exists(path) ){
 			path = IApplication::ApplicationDataFolder()/path.filename();
 		}
 		INFO( "db meta='{}'", path.string() );
-		ordered_json j = json::parse( IO::FileUtilities::Load(path) );
+		ordered_json j = Json::Parse( IO::FileUtilities::Load(path) );
 		_schema = db.SchemaProc()->CreateSchema( j, path.parent_path() );
 	}
 	α DB::DefaultSyntax()ι->const DB::Syntax&

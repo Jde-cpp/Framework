@@ -13,8 +13,7 @@
 
 #define var const auto
 
-namespace Jde::Logging
-{
+namespace Jde::Logging{
 	vector<LogTag> _fileTags;
 	vector<LogTag> _serverTags;
 	up<vector<sp<LogTag>>> _availableTags;
@@ -27,17 +26,14 @@ namespace Jde::Logging
 	ELogLevel BreakLevel()ι{ return _breakLevel; }
 	α ServerLevel()ι->ELogLevel{ return Server::Level(); }
 
-	α SetTag( sv tag, vector<LogTag>& existing, ELogLevel defaultLevel=ELogLevel::Debug )ι->sv
-	{
+	α SetTag( sv tag, vector<LogTag>& existing, ELogLevel defaultLevel=ELogLevel::Debug )ι->sv{
 		var log{ tag[0]!='_' };
 		var tagName = log ? tag : tag.substr(1);
 		var pc = find_if( *_availableTags, [&](var& x){return x->Id==tagName;} );
-		if( pc==_availableTags->end() )
-		{
+		if( pc==_availableTags->end() ){
 			ERR( "unknown tag '{}'", tagName );
 			static auto showed{ false };
-			if( !showed )
-			{
+			if( !showed ){
 				showed = true;
 				ostringstream os;
 				for_each( *_availableTags, [&](var p){ os << p->Id << ", ";} );
@@ -48,15 +44,13 @@ namespace Jde::Logging
 		var level = log ? defaultLevel : ELogLevel::NoLog;
 
 		bool change = false;
-		if( auto p = find_if(existing.begin(), existing.end(), [&](var& x){return x.Id==tagName;}); p!=existing.end() )
-		{
+		if( auto p = find_if(existing.begin(), existing.end(), [&](var& x){return x.Id==tagName;}); p!=existing.end() ){
 			if( change = p->Level != level; change )
 				p->Level = level;
 		}
 		else if( (change = level!=ELogLevel::NoLog) )
 			existing.push_back( LogTag{(*pc)->Id, level} );
-		if( change )
-		{
+		if( change ){
 			var& otherTags = &existing==&_fileTags ? _serverTags : _fileTags;
 			var p = find_if( otherTags.begin(), otherTags.end(), [&](var& x){return x.Id==tagName;} );
 			auto minLevel = p==otherTags.end() ? level : std::min( level==ELogLevel::NoLog ? ELogLevel::Critical : level, p->Level==ELogLevel::NoLog ? ELogLevel::Critical : p->Level );
@@ -85,8 +79,7 @@ namespace Jde::Logging
 		}
 	}
 }
-namespace Jde
-{
+namespace Jde{
 	TimePoint _startTime = Clock::now(); Logging::Proto::Status _status; mutex _statusMutex; TimePoint _lastStatusUpdate;
 
 	α Logging::SetTag( sv tag, ELogLevel, bool file )ι->void{ SetTag( tag, file ? _fileTags : _serverTags ); }
@@ -104,8 +97,7 @@ namespace Jde
 		return iter==_availableTags->end() ? _availableTags->emplace_back( ms<LogTag>(LogTag{string{tag}}) ) : *iter;
 	}
 
-	α Logging::DestroyLogger()->void
-	{
+	α Logging::DestroyLogger()->void{
 		TRACE( "Destroying Logger"sv );
 		Logging::_pOnceMessages = nullptr;
 		{
@@ -117,20 +109,17 @@ namespace Jde
 	};
 
 #define PREFIX unique_lock l{ MemoryLogMutex }; if( !_pMemoryLog ) _pMemoryLog = mu<vector<Logging::Messages::ServerMessage>>();
-	α Logging::LogMemory( const Logging::MessageBase& m )ι->void
-	{
+	α Logging::LogMemory( const Logging::MessageBase& m )ι->void{
 		PREFIX
 		_pMemoryLog->emplace_back( move(m) );
 	}
 
-	α Logging::LogMemory( Logging::Message&& m, vector<string> values )ι->void
-	{
+	α Logging::LogMemory( Logging::Message&& m, vector<string> values )ι->void{
 		PREFIX
 		_pMemoryLog->emplace_back( move(m), move(values) );
 	}
 
-	α Logging::LogMemory( const Logging::MessageBase& m, vector<string> values )ι->void
-	{
+	α Logging::LogMemory( const Logging::MessageBase& m, vector<string> values )ι->void{
 		PREFIX
 		_pMemoryLog->emplace_back( m, move(values) );
 	}
@@ -334,13 +323,11 @@ namespace Jde
 
 	spdlog::logger* Logging::Default()ι{ return _logger.get(); }
 
-	α ClearMemoryLog()ι->void
-	{
+	α ClearMemoryLog()ι->void{
 		unique_lock l{ Logging::MemoryLogMutex };
 		Logging::_pMemoryLog = Logging::_logMemory ? mu<vector<Logging::Messages::ServerMessage>>() : nullptr;
 	}
-	vector<Logging::Messages::ServerMessage> FindMemoryLog( uint32 messageId )ι
-	{
+	vector<Logging::Messages::ServerMessage> FindMemoryLog( uint32 messageId )ι{
 		shared_lock l{ Logging::MemoryLogMutex };
 		ASSERT( Logging::_pMemoryLog );
 		vector<Logging::Messages::ServerMessage>  results;
@@ -349,8 +336,7 @@ namespace Jde
 	}
 
 
-	namespace Logging
-	{
+	namespace Logging{
 		MessageBase::MessageBase( ELogLevel level, const source_location& sl )ι:
 			Fields{ EFields::File | EFields::FileId | EFields::Function | EFields::FunctionId | EFields::LineNumber },
 			Level{ level },
@@ -359,15 +345,15 @@ namespace Jde
 			File{ sl.file_name() },
 			FunctionId{ Calc32RunTime(sl.function_name()) },
 			Function{ sl.function_name() },
-			LineNumber{ sl.line() }
-		{
+			LineNumber{ sl.line() }{
 			if( level!=ELogLevel::Trace )
 				Fields |= EFields::Level;
 		}
 		MessageBase::MessageBase( ELogLevel level, sv message, const char* file, const char* function, uint_least32_t line )ι:
 			Fields{ EFields::Message | EFields::File | EFields::FileId | EFields::Function | EFields::FunctionId | EFields::LineNumber },
 			Level{ level },
-			MessageId{ Calc32RunTime(message) },//{},
+			MessageId{ Calc32RunTime(message) },
+			MessageView{ message },
 			FileId{ Calc32RunTime(FileName(file)) },
 			File{ file },
 			FunctionId{ Calc32RunTime(function) },
@@ -386,8 +372,7 @@ namespace Jde
 		Message::Message( ELogLevel level, string message, const source_location& sl )ι:
 			MessageBase( level, sl ),
 			_pMessage{ mu<string>(move(message)) },
-			_fileName{ FileName(sl.file_name()) }
-		{
+			_fileName{ FileName(sl.file_name()) }{
 			File = _fileName.c_str();
 			MessageView = *_pMessage;
 			MessageId = Calc32RunTime( MessageView );
@@ -397,8 +382,7 @@ namespace Jde
 			MessageBase( level, sl ),
 			Tag{ tag },
 			_pMessage{ mu<string>(move(message)) },
-			_fileName{ FileName(sl.file_name()) }
-		{
+			_fileName{ FileName(sl.file_name()) }{
 			File = _fileName.c_str();
 			MessageView = *_pMessage;
 			MessageId = Calc32RunTime( MessageView );
@@ -408,8 +392,7 @@ namespace Jde
 			MessageBase{ level, message, file, function, line },
 			Tag{ tag },
 			_pMessage{ mu<string>(move(message)) },
-			_fileName{ FileName(file) }
-		{
+			_fileName{ FileName(file) }{
 			File = _fileName.c_str();
 			MessageView = *_pMessage;
 			MessageId = Calc32RunTime( MessageView );
@@ -420,11 +403,9 @@ namespace Jde
 			MessageBase{ x },
 			Tag{ x.Tag },
 			_pMessage{ x._pMessage ? mu<string>(*x._pMessage) : nullptr },
-			_fileName{ x._fileName }
-		{
+			_fileName{ x._fileName }{
 			File = _fileName.c_str();
-			if( _pMessage )
-			{
+			if( _pMessage ){
 				MessageView = *_pMessage;
 				MessageId = Calc32RunTime( MessageView );
 			}

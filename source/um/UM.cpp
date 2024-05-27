@@ -2,6 +2,7 @@
 #include <boost/container/flat_set.hpp>
 #include <jde/Str.h>
 #include <jde/io/File.h>
+#include <jde/io/Json.h>
 #include "../Settings.h"
 #include "../db/DataSource.h"
 #include "../db/Database.h"
@@ -9,8 +10,7 @@
 #include "../db/Syntax.h"
 
 #define var const auto
-namespace Jde
-{
+namespace Jde{
 	static sp<LogTag> _logTag{ Logging::Tag("users") };
 	using nlohmann::json;
 	using boost::container::flat_set;
@@ -86,7 +86,7 @@ namespace Jde
 			path = _msvc && _debug ? "../config/meta.json" : IApplication::ApplicationDataFolder()/path.stem();
 		json j;
 		try{
-			j = json::parse( IO::FileUtilities::Load(path) );
+			j = Json::Parse( IO::FileUtilities::Load(path) );
 		}
 		catch( const IOException& e ){
 			THROW( "Could not load db meta - {}", e.what() );
@@ -104,7 +104,7 @@ namespace Jde
 		if( !fs::exists(qlSchema) )
 			qlSchema = _msvc && _debug ? "../config/meta.json" : IApplication::ApplicationDataFolder()/path.stem();
 		try{
-			DB::SetQLIntrospection( json::parse(IO::FileUtilities::Load(qlSchema)) );
+			DB::SetQLIntrospection( Json::Parse(IO::FileUtilities::Load(qlSchema)) );
 		}
 		catch( const IOException& e ){
 			THROW( "Could not load ql meta - {}", e.what() );

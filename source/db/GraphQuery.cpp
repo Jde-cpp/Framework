@@ -4,6 +4,7 @@
 #include "Syntax.h"
 
 #define var const auto
+
 namespace Jde::DB{
 	using std::endl;
 	static sp<LogTag> _logTag = Logging::Tag( "ql" );

@@ -1,5 +1,6 @@
 ﻿#include "ServerSink.h"
 #include <boost/unordered/concurrent_flat_map.hpp>
+#include <jde/io/Json.h>
 #include "../threading/Thread.h"
 #include "../coroutine/Alarm.h"
 #include "../DateTime.h"
@@ -10,7 +11,6 @@ namespace Jde::Logging{
 	sp<Logging::IServerSink> _pServerSink;//IServerSink=ServerSink=TProtoClient=ProtoClient=ProtoClientSession
 	static sp<LogTag> _logTag{ Tag("appServer") };
 	//TODO when socket terminates, error these out.
-	boost::concurrent_flat_map<tuple<string,string,uint32>,HCoroutine> _addLoginCalls; //domain, loginName, providerId
 	boost::concurrent_flat_map<uint,HCoroutine> _returnCalls;  //request_id
 
 	namespace Server{
@@ -68,6 +68,10 @@ namespace Jde::Logging{
 		while( !_pServerSink ){
 			if( wait )
 				co_await Threading::Alarm::Wait( wait ? 5s : 0s );//ms asan issue for some reason when not hitting.
+			if( IApplication::ShuttingDown() ){
+				DBGT( Logging::_logTag, "ShuttingDown - Stop trying to connect to app server." );
+				break;
+			}
 			try{
 				auto p = ms<ServerSink>();
 				p->Connect();
@@ -93,6 +97,14 @@ namespace Jde::Logging{
 	α ServerSink::OnDisconnect()ι->void{
 		Server::Set( nullptr );
 		TRACE( "Disconnected from LogServer."sv );
+		vector<HCoroutine> handles;
+		if( _returnCalls.erase_if([&handles]( auto& kv ){
+			handles.push_back( kv.second );
+			return true;
+		} )){
+			for( auto& h : handles )
+				Resume( Exception{"Disconnected from LogServer"}, h );
+		}
 /*		_messagesSent.clear();
 		_filesSent.clear();
 		_functionsSent.clear();
@@ -165,9 +177,8 @@ namespace Jde::Logging{
 				}
 			}
 			else if( auto p = item.has_add_session_result() ? item.mutable_add_session_result() : nullptr; p ){
-				var key = make_tuple( p->domain(), p->user_id(), p->provider_id() );
 				HCoroutine h{};
-				if( _addLoginCalls.erase_if(key, [sessionId=p->session_id(), &h]( auto& kv ){
+				if( _returnCalls.erase_if(p->request_id(), [sessionId=p->session_id(), &h]( auto& kv ){
 					h = move( kv.second );
 					h.promise().SetResult( mu<SessionPK>(sessionId) );
 					return true;
@@ -175,21 +186,38 @@ namespace Jde::Logging{
 					h.resume();
 				}
 				else
-					ERR( "No AddLoginAwait found for domain='{}', userId='{}', providerType='{}'", p->domain(), p->user_id(), p->provider_id() );
+					ERR( "({})No AddLoginAwait found.", p->request_id() );
 			}
 			else if( auto p = item.has_graph_ql() ? item.mutable_graph_ql() : nullptr; p ){
 				HCoroutine h{};
 				if( _returnCalls.erase_if(p->request_id(), [&h,p]( auto& kv ){
 					h = move( kv.second );
-					h.promise().SetResult( mu<json>(move(*p->mutable_result())) );
-					h.resume();
+					try{
+						auto pJson = mu<json>( Json::Parse(move(*p->mutable_result())) );
+						h.promise().SetResult( move(pJson) );
+					}
+					catch( const nlohmann::json::exception& e ){
+						h.promise().SetResult( Exception{e.what()} );
+					}
 					return true;
 				} )){
 					h.resume();
 				}
 				else
-					ERR( "No GraphQLAwait found for request_id='{}'", p->request_id() );
+					ERR( "No returnCall found for request_id='{}'", p->request_id() );
 			}
+			else if( auto p = item.has_exception() ? item.mutable_exception() : nullptr; p ){
+				HCoroutine h{};
+				if( _returnCalls.erase_if(p->request_id(), [&h,p]( auto& kv ){
+					h = move( kv.second );
+					h.promise().SetResult( Exception{p->what()} );
+					return true;
+				} )){
+					h.resume();
+				}
+				else
+					ERR( "({}}No returnCall found.", p->request_id() );
+			}			
 			else
 				ERR( "Unknown message type." );
 		}
@@ -282,30 +310,36 @@ namespace Jde::Logging{
 			processMessage( _buffer );
 		}
 	}
-	
-	α AddLoginAwait::await_suspend( HCoroutine h )ι->void{
-		IAwait::await_suspend( h );
-		if( auto p=_pServerSink; p && _addLoginCalls.try_emplace(make_tuple(_domain,_loginName, _providerId), move(h)) )
-			p->Write( ToServerMsg::AddLogin(_domain,_loginName, _providerId) );
-	}
-	α AddLoginAwait::await_resume()ι->AwaitResult{
-		return _pPromise
-			? _pPromise->MoveResult()
-			: AwaitResult{ Exception{"No connection to Server"} };
-	}
-	
+
 	atomic<uint> _requestId = 0;
-	α GraphQL( str query, HCoroutine&& h )ι{
+	α LoginAwait( str domain, str loginName, uint32 providerId, HCoroutine h )ι->void{
 		var requestId = ++_requestId;
 		_returnCalls.emplace( requestId, move(h) );
 		if( auto p=_pServerSink; p )
+			p->Write( ToServerMsg::AddLogin(domain, loginName, providerId, requestId) );
+		else
+			Resume( Exception{"No connection to Server"}, move(h) );
+	}
+	
+	AddLoginAwait::AddLoginAwait( str domain, str loginName, uint32 providerId, SL sl )ι:
+		AsyncAwait{ [&, provId=providerId](auto h){ 
+			LoginAwait(domain, loginName, provId, move(h) ); 
+		}, sl, "LoginAwait" }
+	{}
+	
+	α GraphQL( str query, HCoroutine&& h, SL sl )ι{
+		var requestId = ++_requestId;
+		_returnCalls.emplace( requestId, move(h) );
+		if( auto p=_pServerSink; p ){
+			TRACESL( "({})GraphQL - query={}", requestId, query );
 			p->Write( ToServerMsg::GraphQL(query, requestId) );
+		}
 		else
 			Resume( Exception{"No connection to Server"}, move(h) );
 	}
 
 	GraphQLAwait::GraphQLAwait( str query, SL sl )ι:
-		AsyncAwait{ [&](auto h){ GraphQL(query, move(h) ); }, sl, "GraphQL" }{}
+		AsyncAwait{ [&](auto h){ GraphQL(query, move(h), sl ); }, sl, "GraphQL" }{}
 
 	α SessionInfoAwait::await_suspend( HCoroutine h )ι->void{
 		IAwait::await_suspend( h );

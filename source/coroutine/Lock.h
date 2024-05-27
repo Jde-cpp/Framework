@@ -5,8 +5,7 @@
 namespace Jde
 {
 	using namespace Coroutine;
-	struct Γ LockKeyAwait final : Await
-	{
+	struct Γ LockKeyAwait final : BaseAwait{
 		LockKeyAwait( string key, bool shared )ι:Key{move(key)}/*, _shared{shared}*/{}
 		//~LockKeyAwait(){ TRACE( "~LockKeyAwait" ); }
 
@@ -20,8 +19,7 @@ namespace Jde
 	};
 	Ξ CoLockKey( string key, bool shared )ι{ return LockKeyAwait{move(key), shared}; }
 
-	struct CoLockGuard final : boost::noncopyable
-	{
+	struct CoLockGuard final : boost::noncopyable{
 		CoLockGuard( string Key, std::variant<LockKeyAwait*,coroutine_handle<>> )ι;
 		Γ ~CoLockGuard();
 	private:
@@ -30,8 +28,7 @@ namespace Jde
 	};
 
 	using namespace Coroutine;
-	struct Γ LockWrapperAwait final: IAwait
-	{
+	struct Γ LockWrapperAwait final: IAwait{
 		LockWrapperAwait( string key, function<void(Coroutine::AwaitResult&)> f, bool shared=true, SRCE ):IAwait{sl},_key{move(key)}, _f{f}, _shared{shared}{}//TODO implement shared
 		LockWrapperAwait( string key, function<void(Coroutine::AwaitResult&, up<CoLockGuard> l)> f, bool shared=true, SRCE ):IAwait{sl},_key{move(key)}, _f{f}, _shared{shared}{}//TODO implement shared
 		Ω TryLock( string key, bool shared )ι->up<CoLockGuard>;

@@ -21,14 +21,9 @@ namespace Jde::Logging{
 	struct IServerSink;
 
 	//Add opc user to logins
-	struct Γ AddLoginAwait final : IAwait{
-		AddLoginAwait( str domain, str loginName, uint32 providerId, SRCE )ι:IAwait{sl},_domain{domain}, _loginName{loginName}, _providerId{providerId}{}
-		α await_suspend( HCoroutine h )ι->void override;
-		α await_resume()ι->AwaitResult override;
+	struct Γ AddLoginAwait final : AsyncAwait{
+		AddLoginAwait( str domain, str loginName, uint32 providerId, SRCE )ι;
 	private:
-		string _domain;
-		string _loginName;
-		uint32 _providerId;
 	};
 	struct Γ GraphQLAwait final : AsyncAwait{
 		GraphQLAwait( str query, SRCE )ι;

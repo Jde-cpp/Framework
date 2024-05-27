@@ -2,7 +2,6 @@
 #ifndef GRAPHQL_H
 #define GRAPHQL_H
 #include <variant>
-#include <nlohmann/json.hpp>
 #include <jde/Str.h>
 #include "../coroutine/Awaitable.h"
 #include "../um/UM.h"
@@ -13,13 +12,14 @@ namespace Jde::DB{
 	struct Schema; struct IDataSource; struct Syntax; struct Column;
 	namespace GraphQL{
 		α DataSource()ι->sp<IDataSource>;
+		α ToJsonName( DB::Column c )ε->tuple<string,string>;
 	}
 	α AppendQLDBSchema( const Schema& schema )ι->void;//database tables
 	α SetQLIntrospection( json&& j )ε->void;
 	Φ SetQLDataSource( sp<IDataSource> p )ι->void;
 	α ClearQLDataSource()ι->void;
 
-	Φ Query( sv query, UserPK userId )ε->nlohmann::json;
+	Φ Query( sv query, UserPK userId )ε->json;
 	Φ CoQuery( string&& query, UserPK userId, str threadName, SRCE )ι->Coroutine::TPoolAwait<json>;
 	struct ColumnQL final{
 		string JsonName;
@@ -31,24 +31,26 @@ namespace Jde::DB{
 		α DBName()Ι->string;
 		α FindColumn( sv jsonName )Ι->const ColumnQL*{ auto p = find_if( Columns, [&](var& c){return c.JsonName==jsonName;}); return p==Columns.end() ? nullptr : &*p; }
 		α FindTable( sv jsonTableName )Ι->const TableQL*{ auto p = find_if( Tables, [&](var& t){return t.JsonName==jsonTableName;}); return p==Tables.end() ? nullptr : &*p; }
+		const json& Input()Ε{ auto p =Args.find( "input" ); THROW_IF( p == Args.end(), "Could not find 'input' arg." ); return *p;}
 		string JsonName;
-		nlohmann::json Args;
+		json Args;
 		vector<ColumnQL> Columns;
 		vector<TableQL> Tables;
 	};
 	enum class EMutationQL : uint8{ Create=0, Update=1, Delete=2, Restore=3, Purge=4, Add=5, Remove=6 };
 	constexpr array<sv,7> MutationQLStrings = { "create", "update", "delete", "restore", "purge", "add", "remove" };
 	struct MutationQL final{
-		MutationQL( sv json, EMutationQL type, const nlohmann::json& args, optional<TableQL> resultPtr/*, sv parent*/ ):JsonName{json}, Type{type}, Args(args), ResultPtr{resultPtr}/*, ParentJsonName{parent}*/{}
+		MutationQL( sv j, EMutationQL type, const json& args, optional<TableQL> resultPtr ):JsonName{j}, Type{type}, Args(args), ResultPtr{resultPtr}{}
 		α TableSuffix()Ι->string;
+		α Input(SRCE)Ε->json;
+		α InputParam( sv name )Ε->json;
+		α ParentPK()Ε->PK;
+		α ChildPK()Ε->PK;
+
 		string JsonName;
 		EMutationQL Type;
-		nlohmann::json Args;
+		json Args;
 		optional<TableQL> ResultPtr;
-		nlohmann::json Input()Ε;
-		nlohmann::json InputParam( sv name )Ε;
-		PK ParentPK()Ε;
-		PK ChildPK()Ε;
 	private:
 		mutable string _tableSuffix;
 	};
