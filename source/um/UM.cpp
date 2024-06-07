@@ -230,7 +230,7 @@ namespace Jde{
 		vector<DB::object> parameters = { move(loginName), providerId };
 		if( opcServer.size() )
 			parameters.push_back( opcServer );
-		var sql = format( "select e.id from um_entities e join um_users u on e.id=u.entity_id and login_name=? join um_providers p on p.id=? and p.target{}", opcServer.size() ? "=?" : " is null" );
+		var sql = format( "select e.id from um_entities e join um_users u on e.id=u.entity_id join um_providers p on p.id=e.provider_id where u.login_name=? and p.id=? and p.target{}", opcServer.size() ? "=?" : " is null" );
 		auto task = DB::ScalerCo<UserPK>( string{sql}, parameters );
 		try{
 			auto p = (co_await task).UP<UserPK>(); //gcc compile issue
@@ -242,7 +242,7 @@ namespace Jde{
 			}
 			h.promise().SetResult( mu<UserPK>(userId) );
 		}
-		catch( Exception& e ){
+		catch( IException& e ){
 			h.promise().SetResult( move(e) );
 		}
 		h.resume();

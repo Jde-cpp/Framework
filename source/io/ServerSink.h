@@ -2,8 +2,8 @@
 #ifndef SERVER_SINK_H
 #define SERVER_SINK_H
 #include <jde/coroutine/Task.h>
+#include <jde/db/usings.h>
 #include "ProtoClient.h"
-//#include "typedefs.h"
 #include "../threading/Interrupt.h"
 #include "../collections/Queue.h"
 #include "../collections/UnorderedSet.h"
@@ -25,8 +25,13 @@ namespace Jde::Logging{
 		AddLoginAwait( str domain, str loginName, uint32 providerId, SRCE )ι;
 	private:
 	};
-	struct Γ GraphQLAwait final : AsyncAwait{
-		GraphQLAwait( str query, SRCE )ι;
+	struct Γ IAppServerAwait : AsyncReadyAwait{
+		IAppServerAwait( function<void(HCoroutine)>&& suspend, SRCE, str name="" )ι;
+	protected:
+		sp<Logging::IServerSink> _handler;
+	};
+	struct Γ GraphQLAwait final : IAppServerAwait{
+		GraphQLAwait( str query, UserPK userPK, SRCE )ι;
 	};	
 
 	struct Γ SessionInfoAwait final : IAwait{
@@ -43,7 +48,6 @@ namespace Jde::Logging{
 		Ξ Enabled()ι->bool{ return _enabled; }
 		Φ FetchSessionInfo( SessionPK sessionId )ε->SessionInfoAwait;
 		Ξ AddLogin( str domain, str loginName, uint32 providerId, SRCE )ι{ return AddLoginAwait{domain, loginName, providerId, sl}; }
-		Ξ GraphQL( str query, SRCE )ι{ return GraphQLAwait{query, sl}; }
 		
 		Φ InstanceId()ι->ApplicationInstancePK;
 		Φ IsLocal()ι->bool;
@@ -65,6 +69,8 @@ namespace Jde::Logging{
 
 		β ApplicationId()ι->ApplicationPK{return 0;}
 		β Close()ι->void=0;
+		Ω GraphQL( str query, UserPK userPK, SRCE )ι{ return GraphQLAwait{query, userPK, sl}; }
+		β GraphQL( string query, UserPK userPK, HCoroutine h, SL sl )ι->void=0;
 		β InstanceId()ι->ApplicationInstancePK{return _instanceId;}
 		β IsLocal()ι->bool{ return false; }
 		β Log( Messages::ServerMessage& message )ι->void=0;
@@ -113,6 +119,7 @@ namespace Jde::Logging{
 		ServerSink()ε;
 		~ServerSink();
 		α Close()ι->void override{ ProtoBase::Close(); }
+		α GraphQL( string query, UserPK userPK, HCoroutine h, SL sl )ι->void override;
 		α Log( Messages::ServerMessage& m )ι->void override{ Write( m, m.Timestamp, &m.Variables ); }
 		α Log( const MessageBase& m )ι->void override{ Write( m, Clock::now() ); }
 		α Log( const MessageBase& m, vector<string>& values )ι->void override{ Write( m, Clock::now(), &values ); };

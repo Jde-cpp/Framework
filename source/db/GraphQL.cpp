@@ -65,7 +65,7 @@ namespace DB{
 		return *p;
 	}
 	α MutationQL::Input(SL sl)Ε->json{
-		var pInput = Args.find("input"); THROW_IFSL( pInput==Args.end(), "Could not find input argument. {}", Args.dump() );
+		var pInput = Args.find("input"); THROW_IFSL( pInput==Args.end(), "Could not find input argument. '{}'", Args.dump() );
 		return *pInput;
 	}
 
@@ -278,20 +278,20 @@ namespace DB{
 		return _pDataSource->Execute( sql.str(), params );
 	}
 
-	α Mutation( const DB::MutationQL& m, UserPK userId )ε->uint{
+	α Mutation( const DB::MutationQL& m, UserPK userPK )ε->uint{
 		var& t = _schema.FindTableSuffix( m.TableSuffix() );
 		if( var pAuthorizer = UM::FindAuthorizer(t.Name); pAuthorizer )
-			pAuthorizer->Test( m.Type, userId );
+			pAuthorizer->Test( m.Type, userPK );
 		uint result;
 		if( m.Type==DB::EMutationQL::Create ){
 			uint extendedFromId{};
 			if( var pExtendedFrom = t.GetExtendedFromTable(_schema); pExtendedFrom ){
-				auto a = InsertAwait( *pExtendedFrom, m, 0 );
+				auto a = InsertAwait( *pExtendedFrom, m, userPK, 0 );
 				extendedFromId = *Future<uint>( move(a) ).get();
 			}
 			auto _logTag = ms<LogTag>( "InsertAwait", ELogLevel::Debug );
 			DBG( "calling InsertAwait" );
-			auto a = InsertAwait( t, m, extendedFromId );
+			auto a = InsertAwait( t, m, userPK, extendedFromId );
 			result = *Future<uint>( move(a) ).get();
 			DBG( "~calling InsertAwait" );
 		}
@@ -302,7 +302,7 @@ namespace DB{
 		else if( m.Type==DB::EMutationQL::Restore )
 			result = Restore( t, m );
 		else if( m.Type==DB::EMutationQL::Purge )
-			result = *Future<uint>( DB::GraphQL::PurgeAwait{t, m, userId} ).get();
+			result = *Future<uint>( DB::GraphQL::PurgeAwait{t, m, userPK} ).get();
 		else{
 			if( m.Type==DB::EMutationQL::Add )
 				result = Add( t, m.Input() );
@@ -546,20 +546,20 @@ namespace DB{
 		jData["__schema"] = jmutationType;
 	}
 #define TEST_ACCESS(a,b,c) TRACE( "TEST_ACCESS({},{},{})"sv, a, b, c )
-	α QueryTable( const DB::TableQL& table, UserPK userId, json& jData )ε->void{
-		TEST_ACCESS( "Read", table.DBName(), userId ); //TODO implement.
+	α QueryTable( const DB::TableQL& table, UserPK userPK, json& jData )ε->void{
+		TEST_ACCESS( "Read", table.DBName(), userPK ); //TODO implement.
 		if( table.JsonName=="__type" )
 			QueryType( table, jData );
 		else if( table.JsonName=="__schema" )
 			QuerySchema( table, jData );
 		else
-			DB::GraphQL::Query( table, jData, userId );
+			DB::GraphQL::Query( table, jData, userPK );
 	}
 
-	α QueryTables( const vector<DB::TableQL>& tables, UserPK userId )ε->json{
+	α QueryTables( const vector<DB::TableQL>& tables, UserPK userPK )ε->json{
 		json data;
 		for( var& table : tables )
-			QueryTable( table, userId, data["data"] );
+			QueryTable( table, userPK, data["data"] );
 		return data;
 	}
 
@@ -569,7 +569,7 @@ namespace DB{
 		}, threadName, sl );
 	}
 	
-	α DB::Query( sv query, UserPK userId )ε->json{
+	α DB::Query( sv query, UserPK userPK )ε->json{
 		ASSERT( _pDataSource );
 		TRACE( "{}", query );
 		try{
@@ -578,7 +578,7 @@ namespace DB{
 			json j;
 			if( qlType.index()==1 ){
 				var& mutation = get<MutationQL>( qlType );
-				uint result = Mutation( mutation, userId );
+				uint result = Mutation( mutation, userPK );
 				str resultMemberName = mutation.Type==EMutationQL::Create ? "id" : "rowCount";
 				var wantResults = mutation.ResultPtr && mutation.ResultPtr->Columns.size()>0;
 				if( wantResults && mutation.ResultPtr->Columns.front().JsonName==resultMemberName )
@@ -588,7 +588,7 @@ namespace DB{
 			}
 			else
 				tableQueries = get<vector<DB::TableQL>>( qlType );
-			json y = tableQueries.size() ? QueryTables( tableQueries, userId ) : j;
+			json y = tableQueries.size() ? QueryTables( tableQueries, userPK ) : j;
 			//Dbg( y.dump() );
 			return y;
 		}
@@ -638,8 +638,7 @@ namespace DB{
 		sv Delimiters;
 		sv _peekValue;
 	};
-	//{s=0x6060000c3020 "{filter:{target:{ eq:\"OpcServerTests\"}, providerTypeId:{ eq:6}}"}
-	//{s=0x60d000023b70 "{\"filter\":{\"target\":{ \"eq\":\"OpcServerTests\"}, \"providerTypeId\":{ \"eq\":6}}}"}
+
 	α StringifyKeys( sv json )ι->string{
 		string y{}; y.reserve( json.size()*2 );
 		bool inValue = false;

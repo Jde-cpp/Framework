@@ -22,7 +22,7 @@ namespace Jde::UM{
 		VK=5,
 		OpcServer=6
 	};
-	constexpr array<sv,3> ProviderTypeStrings = { "None", "Google", "OpcServer" };
+	constexpr array<sv,7> ProviderTypeStrings = { "None", "Google", "Facebook", "Amazon", "Microsoft", "VK", "OpcServer" };
 
 	enum class EAccess : uint8{ None=0, Administer=1, Write=2, Read=4 };
 	Ξ operator &( EAccess a, EAccess b )ι{ return static_cast<EAccess>( static_cast<uint8>(a) & static_cast<uint8>(b) ); }

@@ -24,6 +24,7 @@ namespace Jde::Logging{
 	static sp<LogTag> _logTag = Logging::Tag( "settings" );
 	const ELogLevel _breakLevel{ Settings::Get<ELogLevel>("logging/breakLevel").value_or(ELogLevel::Warning) };
 	ELogLevel BreakLevel()ι{ return _breakLevel; }
+	//TODO:  https://stackoverflow.com/questions/3596781/how-to-detect-if-the-current-process-is-being-run-by-gdb
 	α ServerLevel()ι->ELogLevel{ return Server::Level(); }
 
 	α SetTag( sv tag, vector<LogTag>& existing, ELogLevel defaultLevel=ELogLevel::Debug )ι->sv{
@@ -79,6 +80,8 @@ namespace Jde::Logging{
 		}
 	}
 }
+α Jde::CanBreak()ι->bool{ return Logging::_breakLevel>ELogLevel::Trace; }
+
 namespace Jde{
 	TimePoint _startTime = Clock::now(); Logging::Proto::Status _status; mutex _statusMutex; TimePoint _lastStatusUpdate;
 

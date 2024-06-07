@@ -31,7 +31,8 @@ namespace Jde::DB{
 		α DBName()Ι->string;
 		α FindColumn( sv jsonName )Ι->const ColumnQL*{ auto p = find_if( Columns, [&](var& c){return c.JsonName==jsonName;}); return p==Columns.end() ? nullptr : &*p; }
 		α FindTable( sv jsonTableName )Ι->const TableQL*{ auto p = find_if( Tables, [&](var& t){return t.JsonName==jsonTableName;}); return p==Tables.end() ? nullptr : &*p; }
-		const json& Input()Ε{ auto p =Args.find( "input" ); THROW_IF( p == Args.end(), "Could not find 'input' arg." ); return *p;}
+		α Input()Ε->const json&{ auto p =Args.find( "input" ); THROW_IF( p == Args.end(), "Could not find 'input' arg." ); return *p;}
+		α IsPlural()Ι{ return JsonName.ends_with( "s" ); }
 		string JsonName;
 		json Args;
 		vector<ColumnQL> Columns;

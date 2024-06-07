@@ -2,6 +2,7 @@
 #include "Database.h"
 #include "GraphQL.h"
 #include "Syntax.h"
+#include <jde/db/graphQL/GraphQLHook.h>
 
 #define var const auto
 
@@ -37,7 +38,7 @@ namespace Jde::DB{
 				where << endl << "\tand ";
 			where << *tableName << "." << columnName;
 			sv op = "=";
-			const json* pJson{ nullptr };
+			const json* pJson{};
 			if( value.is_string() || value.is_number() )
 				pJson = &value;
 			else if( value.is_null() )
@@ -52,6 +53,14 @@ namespace Jde::DB{
 					pJson = &first.value();
 				}
 			}
+			else if( value.is_array() ){
+				where << " in (";
+				for( var& v : value )
+					parameters.push_back( ToObject(pColumn->Type, v, name) );
+				where << Str::AddCommas( vector<string>( value.size(), "?" ) ) << ")";
+			}
+			else
+				THROW("Invalid filter value type '{}'.", value.type_name() );
 			if( pJson ){
 				where << op << "?";
 				parameters.push_back( ToObject(pColumn->Type, *pJson, name) );
@@ -162,9 +171,14 @@ namespace Jde::DB{
 		return Str::AddCommas( columns );
 	}
 
-	α GraphQL::Query( const DB::TableQL& table, json& jData, UserPK userId )ε->void{
+	α GraphQL::Query( const DB::TableQL& table, json& jData, UserPK userPK )ε->void{
 		ASSERT(_db);
-		var isPlural = table.JsonName.ends_with( "s" );
+		auto pHookData = Future<json>( GraphQL::Hook::Select(table, userPK) ).get();
+		if( pHookData ){
+			jData[table.JsonName] = *pHookData;
+			return;
+		}
+		var isPlural = table.IsPlural();
 		var& schemaTable = _schema.FindTableSuffix( table.DBName() );
 		vector<tuple<string,string>> jsonMembers;
 		vector<uint> dates; flat_map<uint,sp<const DB::Table>> flags;
@@ -216,7 +230,7 @@ namespace Jde::DB{
 							remainingFlags -= iFlag;
 						}
 					}
-					else if( pAuthorizer && memberName=="id" && !pAuthorizer->CanRead(userId, (UserPK)ToUInt(value)) )//TODO move to sql
+					else if( pAuthorizer && memberName=="id" && !pAuthorizer->CanRead(userPK, (UserPK)ToUInt(value)) )//TODO move to sql
 						return false;//TODO uncomment
 /*					else if( pMember && pMember->SchemaColumnPtr && pMember->SchemaColumnPtr->IsEnum )
 					{

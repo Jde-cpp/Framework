@@ -10,11 +10,11 @@
 
 namespace Jde::DB::GraphQL{
 
-	α PurgeStatements( const DB::Table& table, const DB::MutationQL& m, UserPK userId, vector<DB::object>& parameters, SRCE )ε->vector<string>{
+	α PurgeStatements( const DB::Table& table, const DB::MutationQL& m, UserPK userPK, vector<DB::object>& parameters, SRCE )ε->vector<string>{
 		var pId = m.Args.find( "id" ); THROW_IF( pId==m.Args.end(), "Could not find id argument. {}", m.Args.dump() );
 		parameters.push_back( ToObject(EType::ULong, *pId, "id") );
 		if( var p=UM::FindAuthorizer(table.Name); p )
-			p->TestPurge( *pId, userId );
+			p->TestPurge( *pId, userPK );
 		
 		sp<const DB::Table> pExtendedFromTable;
 		auto pColumn = table.FindColumn( "id" );
@@ -26,20 +26,20 @@ namespace Jde::DB::GraphQL{
 		}
 		vector<string> statements{ Jde::format("delete from {} where {}=?", table.Name, pColumn->Name) };
 		if( pExtendedFromTable ){
-			var extendedPurge = PurgeStatements( *pExtendedFromTable, m, userId, parameters, sl );
+			var extendedPurge = PurgeStatements( *pExtendedFromTable, m, userPK, parameters, sl );
 			statements.insert( end(statements), begin(extendedPurge), end(extendedPurge) );
 		}
 		return statements;
 	}
 
-	α PurgeAwait::Execute( const DB::Table& table, DB::MutationQL mutation, UserPK userId, HCoroutine h )ι->Task{
+	α PurgeAwait::Execute( const DB::Table& table, DB::MutationQL mutation, UserPK userPK, HCoroutine h )ι->Task{
 		vector<DB::object> parameters;
 		vector<string> statements;
 		try{
-			statements = PurgeStatements( table, mutation, userId, parameters, _sl );
-			( co_await Hook::PurgeBefore(mutation) ).CheckError();
+			statements = PurgeStatements( table, mutation, userPK, parameters, _sl );
+			( co_await Hook::PurgeBefore(mutation, userPK) ).CheckError();
 		}
-		catch( Exception& e ){
+		catch( IException& e ){
 			Resume( move(e), move(h) );
 			co_return;
 		}
@@ -53,13 +53,13 @@ namespace Jde::DB::GraphQL{
 			}
 			Resume( move(result), move(h) );
 		}
-		catch( Exception& e ){
+		catch( IException& e ){
 			success = false;
 		}
 		if( !success )
-			co_await Hook::PurgeFailure( mutation );
+			co_await Hook::PurgeFailure( mutation, userPK );
 	}
-	PurgeAwait::PurgeAwait( const DB::Table& table, const DB::MutationQL& mutation, uint userId, SL sl )ι:
-		AsyncAwait{ [&,user=userId](HCoroutine h){ Execute( table, mutation, user, move(h) ); }, sl, "PurgeAwait" }
+	PurgeAwait::PurgeAwait( const DB::Table& table, const DB::MutationQL& mutation, UserPK userPK, SL sl )ι:
+		AsyncAwait{ [&,user=userPK](HCoroutine h){ Execute( table, mutation, user, move(h) ); }, sl, "PurgeAwait" }
 	{}
 }

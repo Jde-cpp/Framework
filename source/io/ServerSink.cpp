@@ -1,6 +1,7 @@
 ﻿#include "ServerSink.h"
 #include <boost/unordered/concurrent_flat_map.hpp>
 #include <jde/io/Json.h>
+#include <jde/db/usings.h>
 #include "../threading/Thread.h"
 #include "../coroutine/Alarm.h"
 #include "../DateTime.h"
@@ -67,7 +68,7 @@ namespace Jde::Logging{
 		DBGT( Logging::_logTag, "ServerSink::Create" );
 		while( !_pServerSink ){
 			if( wait )
-				co_await Threading::Alarm::Wait( wait ? 5s : 0s );//ms asan issue for some reason when not hitting.
+				co_await Threading::Alarm::Wait( 5s );
 			if( IApplication::ShuttingDown() ){
 				DBGT( Logging::_logTag, "ShuttingDown - Stop trying to connect to app server." );
 				break;
@@ -78,7 +79,7 @@ namespace Jde::Logging{
 				Server::Set( move(p) );
 			}
 			catch( const IException& e ){
-				if( e.Code==2406168687 )//port=0
+				if( IApplication::ShuttingDown() || e.Code==2406168687 )//port=0
 					break;
 				wait = true;
 			}
@@ -111,7 +112,8 @@ namespace Jde::Logging{
 		_usersSent.clear();
 		_threadsSent.clear();
 		_instanceId = 0;*/
-		Create( true );
+		if( !IApplication::ShuttingDown() )//port=0
+			Create( true );
 	}
 
 	α ServerSink::OnReceive( Proto::FromServer& transmission )ι->void{
@@ -190,14 +192,15 @@ namespace Jde::Logging{
 			}
 			else if( auto p = item.has_graph_ql() ? item.mutable_graph_ql() : nullptr; p ){
 				HCoroutine h{};
-				if( _returnCalls.erase_if(p->request_id(), [&h,p]( auto& kv ){
+				if( _returnCalls.erase_if(p->request_id(), [this,&h,p]( auto& kv ){
 					h = move( kv.second );
 					try{
 						auto pJson = mu<json>( Json::Parse(move(*p->mutable_result())) );
+						TRACE( "({})GraphQL Result - '{}'", p->request_id(), pJson->dump() );
 						h.promise().SetResult( move(pJson) );
 					}
-					catch( const nlohmann::json::exception& e ){
-						h.promise().SetResult( Exception{e.what()} );
+					catch( IException& e ){
+						h.promise().SetResult( e.Move() );
 					}
 					return true;
 				} )){
@@ -312,34 +315,38 @@ namespace Jde::Logging{
 	}
 
 	atomic<uint> _requestId = 0;
-	α LoginAwait( str domain, str loginName, uint32 providerId, HCoroutine h )ι->void{
-		var requestId = ++_requestId;
-		_returnCalls.emplace( requestId, move(h) );
-		if( auto p=_pServerSink; p )
-			p->Write( ToServerMsg::AddLogin(domain, loginName, providerId, requestId) );
-		else
-			Resume( Exception{"No connection to Server"}, move(h) );
-	}
-	
-	AddLoginAwait::AddLoginAwait( str domain, str loginName, uint32 providerId, SL sl )ι:
-		AsyncAwait{ [&, provId=providerId](auto h){ 
-			LoginAwait(domain, loginName, provId, move(h) ); 
-		}, sl, "LoginAwait" }
-	{}
-	
-	α GraphQL( str query, HCoroutine&& h, SL sl )ι{
+	α LoginAwait( str domain, str loginName, ProviderPK providerId, HCoroutine h, SL sl )ι->void{
 		var requestId = ++_requestId;
 		_returnCalls.emplace( requestId, move(h) );
 		if( auto p=_pServerSink; p ){
-			TRACESL( "({})GraphQL - query={}", requestId, query );
-			p->Write( ToServerMsg::GraphQL(query, requestId) );
-		}
-		else
+			p->Write( ToServerMsg::AddLogin(domain, loginName, providerId, requestId) );
+			TRACESL( "({})AddLogin( '{}', '{}', '{}' )", requestId, domain, loginName, providerId );
+		}else
 			Resume( Exception{"No connection to Server"}, move(h) );
 	}
+	
+	AddLoginAwait::AddLoginAwait( str domain, str loginName, ProviderPK providerId, SL sl )ι:
+		AsyncAwait{ [&, provId=providerId](auto h){ 
+			LoginAwait(domain, loginName, provId, move(h), _sl ); 
+		}, sl, "LoginAwait" }
+	{}
+	
+	α ServerSink::GraphQL( string query, UserPK, HCoroutine h, SL sl )ι->void{
+		var requestId = ++_requestId;
+		_returnCalls.emplace( requestId, move(h) );
+		TRACESL( "({})GraphQL - query={}", requestId, query );
+		Write( ToServerMsg::GraphQL(move(query), requestId) );
+	}
 
-	GraphQLAwait::GraphQLAwait( str query, SL sl )ι:
-		AsyncAwait{ [&](auto h){ GraphQL(query, move(h), sl ); }, sl, "GraphQL" }{}
+	IAppServerAwait::IAppServerAwait( function<void(HCoroutine)>&& suspend, SL sl, str name )ι:
+		AsyncReadyAwait{
+			[&](){ _handler=Logging::_pServerSink; return _handler ? optional<AwaitResult>{} : AwaitResult{Exception{sl,ELogLevel::Warning, "No connection to Server"}}; },
+			move(suspend), sl, name }
+	{}
+	
+	GraphQLAwait::GraphQLAwait( str query, UserPK userPK_, SL sl )ι:
+		IAppServerAwait{ [&, userPK=userPK_](auto h){ _handler->GraphQL(query, userPK, h, sl); }, sl, "GraphQL" }
+	{}
 
 	α SessionInfoAwait::await_suspend( HCoroutine h )ι->void{
 		IAwait::await_suspend( h );

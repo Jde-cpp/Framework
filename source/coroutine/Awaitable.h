@@ -194,8 +194,7 @@ namespace Jde::Coroutine{
 		return f;
 	}
 
-	Ŧ CallAwait( std::promise<sp<T>>&& p_, IAwait&& a )ι->Task{
-		auto p = move( p_ );
+	Ŧ CallAwait( std::promise<sp<T>> p, IAwait&& a )ι->Task{
 		AwaitResult r = co_await a;
 		ASSERT( !r.HasValue() )
 		if( r.HasShared() )
@@ -217,12 +216,13 @@ namespace Jde::Coroutine{
 	}
 
 #define await(t,a) *( co_await a ).UP<t>()
+#define awaitp(t,a) ( co_await a ).UP<t>()
 
 	//await_suspend is async.
 	class AsyncAwait /*final*/ : public IAwait{
 		using base=IAwait;
 	public:
-		AsyncAwait( function<void(HCoroutine)> suspend, SRCE, str name={} )ι:base{name, sl}, _suspend{suspend}{};
+		AsyncAwait( function<void(HCoroutine)>&& suspend, SRCE, str name={} )ι:base{name, sl}, _suspend{move(suspend)}{};
 
 		α await_suspend( HCoroutine h )ι->void override{ base::await_suspend(h); _suspend( move(h) ); }
 	protected:
@@ -232,13 +232,14 @@ namespace Jde::Coroutine{
 	class AsyncReadyAwait : public AsyncAwait{
 		using base=AsyncAwait;
 	public:
+		using ReadyFunc=function<optional<AwaitResult>()>;
 		//AsyncReadyAwait()ι:base{ [](HCoroutine){return Task{};} },_ready{ [](){return AwaitResult{};} }{}
-		AsyncReadyAwait( function<optional<AwaitResult>()> ready, function<void(HCoroutine)> suspend, SRCE, str name={} )ι:base{suspend, sl, name}, _ready{ready}{};
+		AsyncReadyAwait( ReadyFunc&& ready, function<void(HCoroutine)>&& suspend, SRCE, str name={} )ι:base{move(suspend), sl, name}, _ready{move(ready)}{};
 
 		α await_ready()ι->bool override{  _result=_ready(); return _result.has_value(); }
 		α await_resume()ι->AwaitResult override{ AwaitResume(); ASSERT(_result.has_value() || _pPromise); return _result ? move(*_result) : _pPromise->MoveResult(); }
 	protected:
-		function<optional<AwaitResult>()> _ready;
+		ReadyFunc _ready;
 		optional<AwaitResult> _result;
 	};
 

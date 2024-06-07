@@ -99,7 +99,8 @@ namespace Jde{
 		AtomicGuard l{ _activeWorkersMutex };
 		_activeWorkers.erase( remove(_activeWorkers.begin(), _activeWorkers.end(), p), _activeWorkers.end() );
 	}
-	α IApplication::Pause()ι->void{
+	
+	α IApplication::Pause()ι->int{
 		INFO( "Pausing main thread." );
 		while( !_exitReason ){
 			AtomicGuard l{ _activeWorkersMutex };
@@ -133,11 +134,13 @@ namespace Jde{
 			for( auto& pThread : *_pBackgroundThreads )
 				pThread->Interrupt();
 		}
-		IApplication::Shutdown();
+		IApplication::Shutdown( _exitReason.value_or(-1) );
+		return _exitReason.value_or( -1 );
 	}
 
-	α IApplication::Shutdown()ι->void{
-		INFO( "Waiting for process to complete. {}"sv, OSApp::ProcessId() );
+	α IApplication::Shutdown( int exitReason )ι->void{
+		Exit( exitReason );
+		INFO( "({})Waiting for process to complete. {}", OSApp::ProcessId(), _exitReason.value() );
 		GarbageCollect();
 		{
 			lg _{ _objectMutex };
@@ -166,10 +169,10 @@ namespace Jde{
 			}
 			std::this_thread::yield(); //std::this_thread::sleep_for( 2s );
 		}
-		TRACE( "Leaving Application::Wait"sv );
+		TRACE( "Leaving Application::Wait" );
 	}
 	α IApplication::AddThread( sp<Threading::InterruptibleThread> pThread )ι->void{
-		TRACE( "Adding Backgound thread"sv );
+		TRACE( "Adding Backgound thread" );
 		lg _{_threadMutex};
 		_pBackgroundThreads->push_back( pThread );
 	}
@@ -220,7 +223,7 @@ namespace Jde{
 		if( auto p=find( _shutdowns.begin(), _shutdowns.end(), pShutdown ); p!=_shutdowns.end() )
 			_shutdowns.erase( p );
 		else
-			WARN( "Could not find shutdown"sv );
+			WARN( "Could not find shutdown" );
 	}
 
 	α IApplication::Remove( sp<void> pShared )ι->void
@@ -242,7 +245,7 @@ namespace Jde{
 		_pDeletedThreads = nullptr;
 		for( var& shutdown : *_pShutdownFunctions )
 			shutdown();
-		INFO( "Clearing Logger"sv );
+		INFO( "Clearing Logger" );
 		Logging::DestroyLogger();
 		_pApplicationName = nullptr;
 		_pInstance = nullptr;

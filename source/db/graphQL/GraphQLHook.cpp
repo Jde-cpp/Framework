@@ -10,43 +10,78 @@ namespace Jde::DB::GraphQL{
 		_hooks.emplace_back( move(hook) );
 	}
 	using Hook::Operation;	
-	α GraphQLHookAwait::CollectAwaits( const DB::MutationQL& mutation, Operation op )ι->optional<AwaitResult>{
+	α GraphQLHookAwait::CollectAwaits( const DB::MutationQL& mutation, UserPK userPK, Operation op )ι->optional<AwaitResult>{
 		up<IAwait> p;
-		_awaitables.reserve( _hooks.size() );
 		lg _{ _hookMutex };
+		_awaitables.reserve( _hooks.size() );
 		for( auto& hook : _hooks ){
 			switch( op ){
-				case (Operation::Insert | Operation::Before): p = hook->InsertBefore( mutation ); break;
-				case (Operation::Insert | Operation::Failure): p = hook->InsertFailure( mutation ); break;
-				case (Operation::Purge | Operation::Before): p = hook->PurgeBefore( mutation ); break;
-				case (Operation::Purge | Operation::Failure): p = hook->PurgeFailure( mutation ); break;
+				case (Operation::Insert | Operation::Before): p = hook->InsertBefore( mutation, userPK ); break;
+				case (Operation::Insert | Operation::Failure): p = hook->InsertFailure( mutation, userPK ); break;
+				case (Operation::Purge | Operation::Before): p = hook->PurgeBefore( mutation, userPK ); break;
+				case (Operation::Purge | Operation::Failure): p = hook->PurgeFailure( mutation, userPK ); break;
 			}
 			if( p )
 				_awaitables.emplace_back( move(p) );
 		}
-		return _awaitables.empty() ? optional<AwaitResult>{true} : nullopt;
+		return _awaitables.empty() ? optional<AwaitResult>{up<uint>{}} : nullopt;
 	}
-	α GraphQLHookAwait::Await( HCoroutine h )ι->Task{
+
+	α GraphQLHookAwait::CollectAwaits( const DB::TableQL& ql, UserPK userPK, Operation op )ι->optional<AwaitResult>{
+		up<IAwait> p;
+		lg _{ _hookMutex };
+		_awaitables.reserve( _hooks.size() );
+		for( auto& hook : _hooks ){
+			switch( op ){
+				case Operation::Select: p = hook->Select( ql, userPK ); break;
+			}
+			if( p )
+				_awaitables.emplace_back( move(p) );
+		}
+		return _awaitables.empty() ? optional<AwaitResult>{up<json>()} : nullopt;
+	}
+	
+	α GraphQLHookAwait::AwaitMutation( HCoroutine h )ι->Task{
 		for( auto& awaitable : _awaitables ){
 			try{
 				( co_await *awaitable ).CheckError();
 			}
-			catch( Exception& e ){
-				Resume( move(e), move(h) );
+			catch( IException& e ){
+				Resume( move(e), h );
 				co_return;
 			}
 		}
-		ResumeBool( true, move(h) );
+		ResumeBool( true, h );
 	}
 
-	GraphQLHookAwait::GraphQLHookAwait( const DB::MutationQL& mutation, Operation op, SL sl )ι:
+	α GraphQLHookAwait::Await( HCoroutine h )ι->Task{
+		up<json> pResult;
+		for( auto& awaitable : _awaitables ){
+			try{
+				pResult = awaitp( json, *awaitable );
+			}
+			catch( IException& e ){
+				Resume( move(e), h );
+				co_return;
+			}
+		}
+		Resume( move(pResult), h );
+	}
+
+	GraphQLHookAwait::GraphQLHookAwait( const DB::MutationQL& mutation, UserPK userPK_, Operation op_, SL sl )ι:
 		AsyncReadyAwait{ 
-			[&, op2=op](){return CollectAwaits(mutation, op2);}, 
-			[&](HCoroutine h){Await(move(h));}, sl, "GraphQLHookAwait" }
+			[&, userPK=userPK_, op=op_](){return CollectAwaits(mutation, userPK, op);},
+			[&](HCoroutine h){AwaitMutation(h);}, sl, "GraphQLHookAwait" }
 	{}
 
-	α Hook::InsertBefore( const DB::MutationQL& mutation, SL sl )ι->GraphQLHookAwait{ return GraphQLHookAwait{ mutation, Operation::Insert|Operation::Before, sl }; }
-	α Hook::InsertFailure( const DB::MutationQL& mutation, SL sl )ι->GraphQLHookAwait{ return GraphQLHookAwait{ mutation, Operation::Insert|Operation::Failure, sl }; }
-	α Hook::PurgeBefore( const DB::MutationQL& mutation, SL sl )ι->GraphQLHookAwait{ return GraphQLHookAwait{ mutation, Operation::Purge|Operation::Before, sl }; }
-	α Hook::PurgeFailure( const DB::MutationQL& mutation, SL sl )ι->GraphQLHookAwait{ return GraphQLHookAwait{ mutation, Operation::Purge|Operation::Failure, sl }; }
+	GraphQLHookAwait::GraphQLHookAwait( const DB::TableQL& ql, UserPK userPK_, Operation op_, SL sl )ι:
+		AsyncReadyAwait{ [&, userPK=userPK_, op=op_](){return CollectAwaits(ql, userPK, op);},
+			[&](HCoroutine h){Await(h);}, sl, "GraphQLHookAwait" }
+	{}
+
+	α Hook::Select( const DB::TableQL& ql, UserPK userPK, SL sl )ι->GraphQLHookAwait{ return GraphQLHookAwait{ ql, userPK, Operation::Select, sl }; };
+	α Hook::InsertBefore( const DB::MutationQL& mutation, UserPK userPK, SL sl )ι->GraphQLHookAwait{ return GraphQLHookAwait{ mutation, userPK, Operation::Insert|Operation::Before, sl }; }
+	α Hook::InsertFailure( const DB::MutationQL& mutation, UserPK userPK, SL sl )ι->GraphQLHookAwait{ return GraphQLHookAwait{ mutation, userPK, Operation::Insert|Operation::Failure, sl }; }
+	α Hook::PurgeBefore( const DB::MutationQL& mutation, UserPK userPK, SL sl )ι->GraphQLHookAwait{ return GraphQLHookAwait{ mutation, userPK, Operation::Purge|Operation::Before, sl }; }
+	α Hook::PurgeFailure( const DB::MutationQL& mutation, UserPK userPK, SL sl )ι->GraphQLHookAwait{ return GraphQLHookAwait{ mutation, userPK, Operation::Purge|Operation::Failure, sl }; }
 }
