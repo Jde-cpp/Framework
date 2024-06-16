@@ -14,6 +14,9 @@ namespace Jde::Logging{
 	//TODO when socket terminates, error these out.
 	boost::concurrent_flat_map<uint,HCoroutine> _returnCalls;  //request_id
 
+#define IF(x) if( auto p=_pServerSink; p ) x; throw Exception("Not connected")
+	α Server::FetchSessionInfo( SessionPK sessionId, tcp::endpoint userEndpoint )ε->SessionInfoAwait{ IF( return p->FetchSessionInfo(sessionId,userEndpoint) ); }
+
 	namespace Server{
 		bool _enabled{ Settings::Get<PortType>("logging/server/port").value_or(0)>0 };
 		atomic<ELogLevel> _level{ _enabled ? Settings::Get<ELogLevel>("logging/server/level").value_or(ELogLevel::Error) : ELogLevel::NoLog };
@@ -33,8 +36,6 @@ namespace Jde::Logging{
 			_pServerSink->Close();
 //			_pServerSink = nullptr;
 		}
-#define IF(x) if( auto p=_pServerSink; p ) x; throw Exception("Not connected")
-		α FetchSessionInfo( SessionPK sessionId )ε->SessionInfoAwait{ IF( return p->FetchSessionInfo(sessionId) ); }
 		α Write( Logging::Proto::ToServer&& message )ε->void{ IF( p->Write(move(message)) ); }
 		α Log( const Messages::ServerMessage& m )ι->void{
 			if( auto p=_pServerSink; p )

@@ -720,7 +720,7 @@ namespace DB{
 	}
 
 	α LoadMutation( Parser2& q )->DB::MutationQL{
-		THROW_IF( q.Next()!="{", "mutation expected '{' as 1st character." );
+		THROW_IF( q.Next()!="{", "mutation expected '{{' as 1st character." );
 		var command = q.Next();
 		uint iType=0;
 		for( ;iType<DB::MutationQLStrings.size() && !command.starts_with(DB::MutationQLStrings[iType]); ++iType ); 

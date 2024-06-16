@@ -1,6 +1,7 @@
 ﻿#pragma once
 #ifndef SERVER_SINK_H
 #define SERVER_SINK_H
+#include <boost/asio/ip/tcp.hpp>
 #include <jde/coroutine/Task.h>
 #include <jde/db/usings.h>
 #include "ProtoClient.h"
@@ -19,6 +20,7 @@ namespace Jde{
 namespace Jde::Logging{
 	namespace Messages{ struct ServerMessage; }
 	struct IServerSink;
+	using tcp = boost::asio::ip::tcp;
 
 	//Add opc user to logins
 	struct Γ AddLoginAwait final : AsyncAwait{
@@ -35,10 +37,11 @@ namespace Jde::Logging{
 	};	
 
 	struct Γ SessionInfoAwait final : IAwait{
-		SessionInfoAwait( SessionPK sessionId, SRCE )ι:IAwait{sl},_sessionId{sessionId}{}
+		SessionInfoAwait( SessionPK sessionId, tcp::endpoint userEndpoint, SRCE )ι:IAwait{sl},_sessionId{sessionId}, _userEndpoint{userEndpoint}{}
 		α await_suspend( HCoroutine h )ι->void override;
 	private:
 		SessionPK _sessionId;
+		tcp::endpoint _userEndpoint;
 	};
 #define Φ Γ auto
 	namespace Server{
@@ -46,7 +49,7 @@ namespace Jde::Logging{
 		α Destroy()ι->void;
 		extern bool _enabled;
 		Ξ Enabled()ι->bool{ return _enabled; }
-		Φ FetchSessionInfo( SessionPK sessionId )ε->SessionInfoAwait;
+		Φ FetchSessionInfo( SessionPK sessionId, tcp::endpoint userEndpoint )ε->SessionInfoAwait;
 		Ξ AddLogin( str domain, str loginName, uint32 providerId, SRCE )ι{ return AddLoginAwait{domain, loginName, providerId, sl}; }
 		
 		Φ InstanceId()ι->ApplicationInstancePK;
@@ -76,7 +79,7 @@ namespace Jde::Logging{
 		β Log( Messages::ServerMessage& message )ι->void=0;
 		β Log( const MessageBase& messageBase )ι->void=0;
 		β Log( const MessageBase& messageBase, vector<string>& values )ι->void=0;
-		β FetchSessionInfo( SessionPK sessionId )ι->SessionInfoAwait=0;
+		β FetchSessionInfo( SessionPK sessionId, tcp::endpoint userEndpoint )ι->SessionInfoAwait=0;
 		α ShouldSendMessage( ID messageId )ι->bool{ return _messagesSent.emplace(messageId); }
 		α ShouldSendFile( ID messageId )ι->bool{ return _filesSent.emplace(messageId); }
 		α ShouldSendFunction( ID messageId )ι->bool{ return _functionsSent.emplace(messageId); }
@@ -123,7 +126,7 @@ namespace Jde::Logging{
 		α Log( Messages::ServerMessage& m )ι->void override{ Write( m, m.Timestamp, &m.Variables ); }
 		α Log( const MessageBase& m )ι->void override{ Write( m, Clock::now() ); }
 		α Log( const MessageBase& m, vector<string>& values )ι->void override{ Write( m, Clock::now(), &values ); };
-		α FetchSessionInfo( SessionPK sessionId )ι->SessionInfoAwait override{ return SessionInfoAwait{sessionId}; }
+		α FetchSessionInfo( SessionPK sessionId, tcp::endpoint userEndpoint )ι->SessionInfoAwait override{ return SessionInfoAwait{sessionId, userEndpoint}; }
 
 		α OnDisconnect()ι->void override;
 		α OnConnected()ι->void override;

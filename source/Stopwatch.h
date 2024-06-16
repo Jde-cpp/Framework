@@ -5,12 +5,8 @@
 #include <string>
 #include <jde/Exports.h>
 
-using std::string;
-
-namespace Jde
-{
-	enum class StopwatchTypes
-	{
+namespace Jde{
+	enum class StopwatchTypes{
 		Other,
 		Calculate,
 		ComputeCost,
@@ -23,43 +19,42 @@ namespace Jde
 		WriteFile,
 		ServerCall
 	};
-	struct Γ Stopwatch
-	{
-		using SClock=std::chrono::steady_clock;
-		using SDuration=SClock::duration;
-		using STimePoint=SClock::time_point;
+	struct Γ Stopwatch final{
+		using SDuration=steady_clock::duration;
+		using STimePoint=steady_clock::time_point;
 		Stopwatch( sv what, bool started=true, SRCE )ι;
+		Stopwatch( sv what, sp<LogTag> logTag, bool started=true, SRCE )ι;
 		Stopwatch( Stopwatch* pParent, sv what="", sv instance="", bool started=true, SRCE )ι;
-		virtual ~Stopwatch();
+		~Stopwatch();
 
-		void Finish( sv description )ι;
-		void Finish( bool remove=true )ι;
-		string Progress( uint count, uint total=0 )Ι{ return Progress( count, total, "" ); }
-		string Progress( uint count, uint total, sv context, bool force=false )Ι;
+		α Finish( sv description )ι->void;
+		α Finish( bool remove=true )ι->void;
+		α Progress( uint count, uint total=0 )Ι->string{ return Progress( count, total, "" ); }
+		α Progress( uint count, uint total, sv context, bool force=false )Ι->string;
 		SDuration Elapsed()Ι;
-		static std::string FormatSeconds( const SDuration& seconds )ι;
-		static std::string FormatCount( double total )ι;
-		void Pause()ι;
-		void UnPause()ι;
-		void Restart()ι{ _start = std::chrono::steady_clock::now(); }
+		Ω FormatSeconds( const SDuration& seconds )ι->string;
+		Ω FormatCount( double total )ι->string;
+		α Pause()ι->void;
+		α UnPause()ι->void;
+		α Restart()ι->void{ _start = steady_clock::now(); }
 	private:
-		static void Output( sv what, const SDuration& elapsed, bool logMemory, SRCE )ι;
+		α Output( sv what, const SDuration& elapsed, bool logMemory, SRCE )ι->void;
 
-		const std::string _what;
-		const std::string _instance;
-		std::chrono::steady_clock::time_point _start;
+		const string _what;
+		const string _instance;
+		steady_clock::time_point _start;
+		sp<LogTag> _logTag;
+		Stopwatch* _pParent{};
+		flat_map<string,SDuration> _children;
 
-		Stopwatch* _pParent{nullptr};
-		std::map<std::string,SDuration> _children;
-
-		bool _finished{false};
-		const bool _logMemory{false};
+		bool _finished{};
+		const bool _logMemory{};
 		static SDuration _minimumToLog;
 		mutable SDuration _previousProgressElapsed{0};
 		static flat_map<string,SDuration> _accumulations;
 
 		STimePoint _startPause;
-		SDuration _elapsedPause{0};
+		SDuration _elapsedPause{};
 		source_location _sl;
 	};
 }

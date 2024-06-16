@@ -176,7 +176,7 @@ namespace Jde{
 			pSink->set_pattern( pattern );
 			var level = sink.Get<ELogLevel>( "level" ).value_or( ELogLevel::Trace );
 			pSink->set_level( (spdlog::level::level_enum)level );
-			std::cout << Jde::format( "({})level='{}' pattern='{}'{}", name, ToString(level), pattern, additional ) << std::endl;
+			//std::cout << Jde::format( "({})level='{}' pattern='{}'{}", name, ToString(level), pattern, additional ) << std::endl;
 			LogMemoryDetail( Logging::Message{"settings", ELogLevel::Information, "({})level='{}' pattern='{}'{}"}, name, ToString(level), pattern, additional );
 			sinks.push_back( pSink );
 		}

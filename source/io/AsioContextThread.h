@@ -8,8 +8,7 @@ namespace Jde::IO
 {
 	namespace net = boost::asio;
 
-	struct Γ AsioContextThread final //: IShutdown
-	{
+	struct Γ AsioContextThread final{ //: IShutdown
 		static sp<AsioContextThread> Instance()ι;
 		net::io_context& Context()ι{ return _ioc; }
 		~AsioContextThread();

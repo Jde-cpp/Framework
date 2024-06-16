@@ -50,7 +50,8 @@ message Message{
 message SessionInfo{
 	Timestamp expiration=1;
 	uint32 session_id=2;
-	uint32 user_id=3;
+	uint32 user_id=3; //TODO change to user_pk.
+	string user_endpoint=4;
 };
 
 enum EFields{

@@ -12,8 +12,7 @@ namespace Jde::IO::Sockets
 	α LogTag()ι->sp<Jde::LogTag>{ return _logTag; }
 
 	using std::system_error;
-	PortType CheckPort( PortType v )ε
-	{
+	PortType CheckPort( PortType v )ε{
 		THROW_IF( !v, "port==0" );
 		return v;
 	}
@@ -24,13 +23,11 @@ namespace Jde::IO::Sockets
 
 	IClientSocket::IClientSocket( str settingsPath, PortType defaultPort )ε:
 		ISocket{ settingsPath, defaultPort },
-		Host{ Settings::Get<string>(settingsPath+"/host").value_or("localhost") }
-	{
+		Host{ Settings::Get<string>(settingsPath+"/host").value_or("localhost") }{
 		DBG( "IClientSocket::IClientSocket( path='{}', Host='{}', Port='{}' )", settingsPath, Host, Port );
 	}
 
-	IClientSocket::~IClientSocket()
-	{
+	IClientSocket::~IClientSocket(){
 		TRACE( "IClientSocket::~IClientSocket" );
 	}
 }

@@ -11,7 +11,7 @@ namespace Jde::IO
 
 	sp<AsioContextThread> _pInstance;
 	sp<AsioContextThread> AsioContextThread::Instance()ι{
-		return _pInstance ?  _pInstance : _pInstance = sp<AsioContextThread>( new AsioContextThread() );
+		return _pInstance ?  _pInstance : _pInstance = sp<AsioContextThread>( new AsioContextThread{} );
 	}
 
 	AsioContextThread::AsioContextThread()ι:
@@ -23,7 +23,7 @@ namespace Jde::IO
 	AsioContextThread::~AsioContextThread(){
 		TRACET( LogTag(), "~AsioContextThread" );
 		_ioc.stop();
-		if( _thread.joinable() )//check if same thread?  if( _thread.get_id()==std::this_thread::get_id() ) Resource deadlock avoided
+		if( _thread.joinable() )
 			_thread.join();
 	}
 

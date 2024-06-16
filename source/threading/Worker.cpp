@@ -24,7 +24,7 @@ namespace Jde::Threading{
 
 	α IWorker::StartThread()ι->void
 	{
-		_pThread = mu<jthread>( [&]( stop_token st ){ Run( st );} );
+		_pThread = mu<std::jthread>( [&]( stop_token st ){ Run( st );} );
 	}
 
 	α IWorker::Run( stop_token /*st*/ )ι->void

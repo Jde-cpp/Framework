@@ -3,7 +3,6 @@
 #define WORKER_H
 #include <jde/TypeDefs.h>
 #include <jde/App.h>
-#include "./jthread.h"
 #include "./Mutex.h"
 #include "../collections/Queue.h"
 #include "InterruptibleThread.h"
@@ -28,7 +27,7 @@ namespace Jde::Threading{
 		α StartThread()ι->void;
 	protected:
 		static sp<IWorker> _pInstance;
-		up<jthread> _pThread;
+		up<std::jthread> _pThread;
 		static std::atomic_flag _mutex;
 	};
 	struct Γ IPollWorker : IWorker, IPollster{
