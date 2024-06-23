@@ -5,8 +5,7 @@
 #include <jde/TypeDefs.h>
 #include <jde/Exports.h>
 
-namespace Jde::Chrono
-{
+namespace Jde::Chrono{
 	using namespace std::chrono;
 	Γ α Epoch()ι->TimePoint;
 	Ξ MillisecondsSinceEpoch( TimePoint time=Clock::now() )ι->uint{ return duration_cast<std::chrono::milliseconds>( time-Epoch() ).count(); }
@@ -23,12 +22,10 @@ namespace Jde::Chrono
 	template<class T=Duration>
 	α ToString( T duration )ι->string;
 }
-namespace Jde
-{
+namespace Jde{
 	enum class DayOfWeek : uint8{ Sunday=0, Monday=1, Tuesday=2, Wednesday=3, Thursday=4, Friday=5, Saturday=6 };
 
-	struct Γ DateTime
-	{
+	struct Γ DateTime{
 		DateTime()ι;
 		DateTime( const DateTime& other )ι;
 		DateTime( time_t time )ι;
@@ -36,6 +33,7 @@ namespace Jde
 		DateTime( sv iso )ε;
 		DateTime( TimePoint tp )ι;
 		DateTime( fs::file_time_type time )ι;
+		DateTime( steady_clock::time_point time )ι;
 		Ω BeginingOfWeek()->DateTime;
 		DateTime& operator=(const DateTime& other)ι;
 		bool operator==(const DateTime& other)Ι{return _time_point==other._time_point; }
@@ -90,16 +88,14 @@ namespace Jde
 	Ξ DateDisplay( DayIndex day )ι->string{ return DateTime{Chrono::FromDays(day)}.DateDisplay(); }
 }
 #define var const auto
-namespace Jde::Timezone
-{
+namespace Jde::Timezone{
 	Γ Duration GetGmtOffset( sv name, TimePoint utc, SRCE )ε;
 	Γ Duration TryGetGmtOffset( sv name, TimePoint utc, SRCE )ι;
 	Γ Duration EasternTimezoneDifference( TimePoint time, SRCE )ε;
 	Ξ EasternTimeNow(SRCE)ε->TimePoint{ var now=Clock::now(); return now+EasternTimezoneDifference(now, sl); };
 }
 
-namespace Jde::TimeSpan
-{
+namespace Jde::TimeSpan{
 	constexpr static size_t NanosPerMicro{ 1000 };
 	constexpr static size_t MicrosPerMilli{ 1000 };
 	constexpr static size_t MilliPerSecond{ 1000 };
@@ -112,8 +108,7 @@ namespace Jde::TimeSpan
 	constexpr static size_t NanosPerMinute{ NanosPerSecond*SecondsPerMinute };
 }
 
-namespace Jde::Chrono
-{
+namespace Jde::Chrono{
 	Ξ ToTimePoint( uint16 year, uint8 month, uint8 day, uint8 hour=0, uint8 minute=0, uint8 second=0, Duration nanoFraction=Duration{0} )ι->TimePoint{ return DateTime(year,month, day, hour, minute,second, nanoFraction).GetTimePoint(); }
 	Ξ EndOfMonth( TimePoint time )ι->TimePoint{ DateTime date{time}; return DateTime(date.Year()+(date.Month()==12 ? 1 : 0), date.Month()%12+1, 1).GetTimePoint()-1s; }
 	Ξ to_timepoint( sv iso )ι->TimePoint{ return DateTime{iso}.GetTimePoint(); }

@@ -37,6 +37,7 @@ namespace Jde{
 		α Pause()ι->void;
 		α UnPause()ι->void;
 		α Restart()ι->void{ _start = steady_clock::now(); }
+		α StartTime()Ι->STimePoint{ return _start; }
 	private:
 		α Output( sv what, const SDuration& elapsed, bool logMemory, SRCE )ι->void;
 

@@ -57,20 +57,6 @@
          "label": "echo",
          "type": "shell",
          "command": "clear;echo compile ${fileBasename}"
-		},
-      {
-         "type": "shell",
-         "label": "compile",
-			"command": "ccache",
-			"args": ["/usr/bin/g++-13","-DJde_EXPORTS","-O0","-g", "-fsanitize=address", "-fno-omit-frame-pointer", "-fno-limit-debug-info", "-Xclang",
-				"-D_GLIBCXX_DEBUG",
-				"-I${env:BOOST_ROOT}","-I${env:REPO_DIR}/spdlog/include", "-I${env:REPO_DIR}/json/include", "-I${JDE_DIR}/Public",
-				"-fPIC","-std=c++23", "-stdlib=libc++","-include",
-				"${workspaceFolder}/.obj/asan/CMakeFiles/Jde.dir/CMakeFiles/Jde.dir/cmake_pch.hxx","-o","${workspaceFolder}/.obj/asan/CMakeFiles/Jde.dir/${fileBasename}.o","-c", "${file}"],
-			"dependsOrder": "sequence",
-			"dependsOn": ["echo"],
-			"options": {"cwd": "/usr/bin" },
-         "problemMatcher": { "base": "$gcc", "fileLocation": "absolute"},
-      }
+		}
    ]
 }

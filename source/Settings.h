@@ -104,7 +104,7 @@ namespace Jde::Settings{
 	Ŧ Container::Get( sv path )Ι->optional<T>{
 		auto p = FindPath( path );
 		try{
-			return p ? optional<T>{ p->get<T>() } : nullopt;
+			return p && !p->is_null() ? optional<T>{ p->get<T>() } : nullopt;
 		}
 		catch( const nlohmann::detail::type_error& e ){
 			LOG_ONCE( ELogLevel::Debug, LogTag(), "({}) - {}", path, e.what() );

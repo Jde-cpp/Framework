@@ -14,17 +14,14 @@ namespace Jde
 
 	α Chrono::Epoch()ι->TimePoint{ return _epoch; };
 
-	α Chrono::ToDuration( sv iso )ε->Duration //P3Y6M4DT12H30M5S
-	{
+	α Chrono::ToDuration( sv iso )ε->Duration{
 		std::istringstream is{ string{iso} };
 		if( is.get()!='P' )
 			THROW( "Expected 'P' as first character." );
 		bool parsingTime = false;
 		Duration duration{ Duration::zero() };
-		while( is.good() )
-		{
-			if( !parsingTime && (parsingTime = is.peek()=='T') )
-			{
+		while( is.good() ){
+			if( !parsingTime && (parsingTime = is.peek()=='T') ){
 				is.get();
 				continue;
 			}
@@ -67,6 +64,11 @@ namespace Jde
 	DateTime::DateTime( fs::file_time_type t )ι:
 		_time_point( Chrono::ToClock<Clock,fs::file_time_type::clock>(t) )
 	{}
+
+	DateTime::DateTime( steady_clock::time_point time )ι:
+		_time_point( Chrono::ToClock<Clock,steady_clock::time_point>(time) )
+	{}
+
 
 	DateTime::DateTime( uint16 year, uint8 month, uint8 day, uint8 hour, uint8 minute, uint8 second, Duration nanoFraction )ι
 	{
