@@ -9,20 +9,12 @@
          "group": {"kind": "build","isDefault": false }
       },
       {
-         "label": "clean",
-         "type": "shell",
-         "command": "clear;cd .obj/asan;make clean; cd ../release; make clean;cd ../..",
-         "problemMatcher": { "base": "$gcc", "fileLocation": "absolute",
-				"pattern": {"regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$","file": 1,"line": 2,"column": 3,"severity": 4,"message": 5}
-			}
-      },
-      {
-         "label": "rebuild",
-         "type": "shell",
-         "command": "tput reset;../cmake/buildc.sh ${workspaceFolder} asan 1",
-         "problemMatcher": { "base": "$gcc", "fileLocation": "absolute",
-				"pattern": {"regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$","file": 1,"line": 2,"column": 3,"severity": 4,"message": 5}
-			}
+				"label": "rebuild",
+				"type": "shell",
+				"command": "tput reset;../cmake/buildc.sh ${workspaceFolder} asan 1",
+				"problemMatcher": { "base": "$gcc", "fileLocation": "absolute",
+					"pattern": {"regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$","file": 1,"line": 2,"column": 3,"severity": 4,"message": 5}
+				}
       },
       {
          "label": "rebuildRelease",

@@ -138,10 +138,6 @@ enum EFromServer{
 	ReadError=2;
 }
 
-message Acknowledgement{
-	uint32 InstanceId=1;
-}
-
 message GenericFromServer{
 	EFromServer What = 1;
 	string Description=2;
@@ -166,6 +162,10 @@ message LogLevels{
 message AddSessionResult{
 	uint32 request_id=1;
 	uint32 session_id=2;
+}
+
+message Acknowledgement{
+	uint32 InstanceId=1;
 }
 
 message Exception{

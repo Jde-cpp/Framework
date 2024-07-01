@@ -1,4 +1,6 @@
 ﻿#pragma once
+#ifndef STOPWATCH_H
+#define STOPWATCH_H
 #include <chrono>
 #include <map>
 #include <memory>
@@ -59,3 +61,4 @@ namespace Jde{
 		source_location _sl;
 	};
 }
+#endif
