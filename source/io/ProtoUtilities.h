@@ -25,7 +25,7 @@ namespace Jde::IO::Proto{
 	α SizePrefixed( const google::protobuf::MessageLite&& m )ι->tuple<up<google::protobuf::uint8[]>,uint>;
 	α ToTimestamp( TimePoint t )ι->Logging::Proto::Timestamp;
 	α ToTimePoint( Logging::Proto::Timestamp t )ι->TimePoint;
-	
+
 	namespace Internal{
 		Ŧ Deserialize( const google::protobuf::uint8* p, int size, T& proto )ε->void{
 			google::protobuf::io::CodedInputStream input{ p, (int)size };

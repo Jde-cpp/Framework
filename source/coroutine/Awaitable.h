@@ -9,34 +9,21 @@ namespace Jde{
 
 namespace Jde::Coroutine{
 	using ClientHandle = uint;
-	/*https://stackoverflow.com/questions/44960760/msvc-dll-exporting-class-that-inherits-from-template-cause-lnk2005-already-defin
-	template<class TTask=Task>
-	struct TAwait
-	{
-		using TResult=typename TTask::TResult;
-		using TPromise=typename TTask::promise_type;
+	template<class TResult,class TTask2=Coroutine::TTask<TResult>>
+	struct TAwait{
+		//using TTask=Coroutine::TTask<TResult>;
+		using TPromise=typename TTask2::promise_type;
 		using THandle=coroutine_handle<TPromise>;
-		TAwait()ι=default;
-		TAwait( string name )ι:_name{move(name)}{};
 
 		β await_ready()ι->bool{ return false; }
+		β await_suspend( THandle h )ι->void{ _promise=&h.promise();  OriginalThreadParamPtr = { Threading::GetThreadDescription(), Threading::GetAppThreadHandle() };  }
 		β await_resume()ι->TResult=0;
-		β await_suspend( coroutine_handle<typename TTask::promise_type> / *h* / )ι->void{ OriginalThreadParamPtr = { Threading::GetThreadDescription(), Threading::GetAppThreadHandle() }; }
-		α AwaitResume()ι->void
-		{
-			if( _name.size() )
-				TRACE("({}){}::await_resume"sv, Threading::GetThreadId(), _name);
-			if( OriginalThreadParamPtr )
-				Threading::SetThreadInfo( *OriginalThreadParamPtr );
-		}
 	protected:
+		α AwaitResume()ι->void{ if( OriginalThreadParamPtr ) Threading::SetThreadInfo( *OriginalThreadParamPtr ); }
+		TPromise* _promise{};
+	private:
 		optional<Threading::ThreadParam> OriginalThreadParamPtr;
-		uint ThreadHandle;
-		string ThreadName;
-		const string _name;
 	};
-	template struct TAwait<Task>;
-	*/
 //TODO look into combining BaseAwait and IAwait
 	struct BaseAwait{
 		BaseAwait()ι=default;
@@ -46,14 +33,14 @@ namespace Jde::Coroutine{
 		β await_resume()ι->AwaitResult=0;
 		β await_suspend( HCoroutine )ι->void=0;//->void{ OriginalThreadParamPtr = { Threading::GetThreadDescription(), Threading::GetAppThreadHandle() }; }
 		α AwaitSuspend()ι{ OriginalThreadParamPtr = { Threading::GetThreadDescription(), Threading::GetAppThreadHandle() }; }
-		α AwaitResume()ι->void
-		{
+		α AwaitResume()ι->void{
 			if( OriginalThreadParamPtr )
 				Threading::SetThreadInfo( *OriginalThreadParamPtr );
 		}
 	protected:
 		optional<Threading::ThreadParam> OriginalThreadParamPtr;
 		const string _name;
+		const source_location _sl;
 	};
 
 	class IAwait : public BaseAwait{
@@ -253,7 +240,7 @@ namespace Jde::Coroutine{
 	private:
 		sp<void> _pCache;
 	};
-	
+
 	// Allows cancellation of an awaitable.  Used for alarms.
 	struct CancelAwait /*abstract*/ : BaseAwait{
 		CancelAwait()ι:_hClient{ NextHandle() }{}

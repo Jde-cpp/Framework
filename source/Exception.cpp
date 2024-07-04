@@ -96,6 +96,12 @@ namespace Jde{
 			p->log( spdlog::source_loc{fileName.c_str(), (int)sl.line(), functionName}, (spdlog::level::level_enum)Level(), what() );
 		if( Logging::Server::Enabled() )
 			Logging::LogServer( Logging::Messages::ServerMessage{Logging::Message{Level(), what(), sl}, vector<string>{_args}} );
+		if( Logging::LogMemory() ){
+			if( _format.size() )
+				Logging::LogMemory( Logging::Message{Level(), string{_format}, sl}, vector<string>{_args} );
+			else
+				Logging::LogMemory( Logging::Message{Level(), _what, sl} );
+		}
 	}
 
 	α IException::what()Ι->const char*{
@@ -123,11 +129,11 @@ namespace Jde{
 	{}
 
 	CodeException::CodeException( std::error_code&& code, ELogLevel level, SL sl )ι:
-		CodeException( Jde::format("{}-{}", code.value(), code.message()), move(code), level, sl )
+		CodeException( Jde::format("[{}]{}", code.value(), code.message()), move(code), level, sl )
 	{}
 
 	CodeException::CodeException( std::error_code&& code, sp<LogTag> tag, ELogLevel level, SL sl )ι:
-		IException{ Jde::format("{}-{}", code.value(), code.message()), level, (uint)code.value(), move(tag), sl },
+		IException{ Jde::format("[{}]{}", code.value(), code.message()), level, (uint)code.value(), move(tag), sl },
 		_errorCode{ move(code) }
 	{}
 

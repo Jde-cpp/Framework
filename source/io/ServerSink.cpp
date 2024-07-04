@@ -14,7 +14,7 @@ namespace Jde::Logging{
 	//TODO when socket terminates, error these out.
 	boost::concurrent_flat_map<uint,HCoroutine> _returnCalls;  //request_id
 
-#define IF(x) if( auto p=_pServerSink; p ) x; throw Exception("Not connected")
+#define IF(x) if( auto p=_pServerSink; p ) x; throw Exception("Not connected to app server")
 	α Server::FetchSessionInfo( SessionPK sessionId, tcp::endpoint userEndpoint )ε->SessionInfoAwait{ IF( return p->FetchSessionInfo(sessionId,userEndpoint) ); }
 
 	namespace Server{
@@ -221,7 +221,7 @@ namespace Jde::Logging{
 				}
 				else
 					ERR( "({}}No returnCall found.", p->request_id() );
-			}			
+			}
 			else
 				ERR( "Unknown message type." );
 		}
@@ -325,13 +325,13 @@ namespace Jde::Logging{
 		}else
 			Resume( Exception{"No connection to Server"}, move(h) );
 	}
-	
+
 	AddLoginAwait::AddLoginAwait( str domain, str loginName, ProviderPK providerId, SL sl )ι:
-		AsyncAwait{ [&, provId=providerId](auto h){ 
-			LoginAwait(domain, loginName, provId, move(h), _sl ); 
+		AsyncAwait{ [&, provId=providerId](auto h){
+			LoginAwait(domain, loginName, provId, move(h), _sl );
 		}, sl, "LoginAwait" }
 	{}
-	
+
 	α ServerSink::GraphQL( string query, UserPK, HCoroutine h, SL sl )ι->void{
 		var requestId = ++_requestId;
 		_returnCalls.emplace( requestId, move(h) );
@@ -344,7 +344,7 @@ namespace Jde::Logging{
 			[&](){ _handler=Logging::_pServerSink; return _handler ? optional<AwaitResult>{} : AwaitResult{Exception{sl,ELogLevel::Warning, "No connection to Server"}}; },
 			move(suspend), sl, name }
 	{}
-	
+
 	GraphQLAwait::GraphQLAwait( str query, UserPK userPK_, SL sl )ι:
 		IAppServerAwait{ [&, userPK=userPK_](auto h){ _handler->GraphQL(query, userPK, h, sl); }, sl, "GraphQL" }
 	{}

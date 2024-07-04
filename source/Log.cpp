@@ -27,22 +27,23 @@ namespace Jde::Logging{
 	//TODO:  https://stackoverflow.com/questions/3596781/how-to-detect-if-the-current-process-is-being-run-by-gdb
 	α ServerLevel()ι->ELogLevel{ return Server::Level(); }
 
-	α SetTag( sv tag, vector<LogTag>& existing, ELogLevel defaultLevel=ELogLevel::Debug )ι->sv{
+	ELogLevel _defaultLogLevel{ Settings::Get<ELogLevel>("logging/defaultLevel").value_or(ELogLevel::Information) };
+	α SetTag( sv tag, vector<LogTag>& existing, ELogLevel configLevel )ι->string{
 		var log{ tag[0]!='_' };
 		var tagName = log ? tag : tag.substr(1);
 		var pc = find_if( *_availableTags, [&](var& x){return x->Id==tagName;} );
 		if( pc==_availableTags->end() ){
-			ERR( "unknown tag '{}'", tagName );
+			LOG_MEMORY( "settings", ELogLevel::Error, "unknown tag '{}'", tagName );
 			static auto showed{ false };
 			if( !showed ){
 				showed = true;
 				ostringstream os;
 				for_each( *_availableTags, [&](var p){ os << p->Id << ", ";} );
-				INFO( "available tags:  {}", os.str().substr(0, os.str().size()-2) );
+				LOG_MEMORY( "settings", ELogLevel::Debug, "available tags:  {}", os.str().substr(0, os.str().size()-2) );
 			}
 			return {};
 		}
-		var level = log ? defaultLevel : ELogLevel::NoLog;
+		var level = log ? configLevel : _defaultLogLevel;
 
 		bool change = false;
 		if( auto p = find_if(existing.begin(), existing.end(), [&](var& x){return x.Id==tagName;}); p!=existing.end() ){
@@ -62,17 +63,17 @@ namespace Jde::Logging{
 		return (*pc)->Id;
 	}
 
-	α AddTags( vector<LogTag>& tags, sv path )ι->void{
+	α AddTags( vector<LogTag>& sinkTags, sv path )ι->void{
 		try{
 			uint i=0;
 			for( var& level : ELogLevelStrings ){
-				var levelTags = Settings::TryArray<json>( Jde::format("{}/{}", path, level) );
-				vector<sv> tagIds;
+				var levelTags = Settings::TryArray<string>( Jde::format("{}/{}", path, level) );
+				vector<string> tagIds;
 				for( var& tag : levelTags )
-					tagIds.push_back( SetTag(tag.get<string>(), tags, (ELogLevel)i) );
+					tagIds.push_back( SetTag(tag, sinkTags, (ELogLevel)i) );
 				++i;
 				if( tagIds.size() )
-					LOG_MEMORY( "settings", ELogLevel::Information, &tags==&_fileTags ? "({})FileTags:  {}." : "({})ServerTags:  {}.", level, Str::AddCommas(tagIds) );
+					LOG_MEMORY( "settings", ELogLevel::Information, &sinkTags==&_fileTags ? "({})FileTags:  {}." : "({})ServerTags:  {}.", level, Str::AddCommas(tagIds) );
 			}
 		}
 		catch( const json::exception& e ){
@@ -85,19 +86,18 @@ namespace Jde::Logging{
 namespace Jde{
 	TimePoint _startTime = Clock::now(); Logging::Proto::Status _status; mutex _statusMutex; TimePoint _lastStatusUpdate;
 
-	α Logging::SetTag( sv tag, ELogLevel, bool file )ι->void{ SetTag( tag, file ? _fileTags : _serverTags ); }
+	//α Logging::SetTag( sv tag, ELogLevel, bool file )ι->void{ SetTag( string{tag}, file ? _fileTags : _serverTags ); }
 	α Logging::Tag( const std::span<const sv> tags )ι->vector<sp<LogTag>>{
 		vector<sp<LogTag>> y;
 		for( var tag : tags )
 			y.emplace_back( Tag(tag) );
 		return y;
 	}
-
 	α Logging::Tag( sv tag )ι->sp<LogTag>{
 		if( !_availableTags )
 			_availableTags = mu<vector<sp<LogTag>>>();
 		auto iter = find_if( *_availableTags, [&](var& x){return x->Id==tag;} );
-		return iter==_availableTags->end() ? _availableTags->emplace_back( ms<LogTag>(LogTag{string{tag}}) ) : *iter;
+		return iter==_availableTags->end() ? _availableTags->emplace_back( ms<LogTag>(LogTag{string{tag}, _defaultLogLevel}) ) : *iter;
 	}
 
 	α Logging::DestroyLogger()->void{
@@ -216,7 +216,6 @@ namespace Jde{
 		_logger->set_level( (spdlog::level::level_enum)minSinkLevel );
 		if( _pMemoryLog ){
 			for( var& m : *_pMemoryLog ){
-				
  				using ctx = fmt::format_context;
     		vector<fmt::basic_format_arg<ctx>> args;
 				for( var& a : m.Variables )
@@ -321,7 +320,7 @@ namespace Jde{
 			Log( move(m), tag, true );
 	}
 	α HaveLogger()ι->bool{
-		return _logger.get(); 
+		return _logger.get();
 	}
 
 	spdlog::logger* Logging::Default()ι{ return _logger.get(); }

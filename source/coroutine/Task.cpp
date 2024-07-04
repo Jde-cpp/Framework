@@ -20,37 +20,10 @@ namespace Jde::Coroutine{
 		if( !Uninitialized() )
 			CRITICAL( "Uninitialized - index={}", _result.index() );
 	}
-	atomic<uint> TaskIndex{ 0 };
-/*	Task::Task()ι:i{++TaskIndex}
-	{
-		TRACE( "({:x}-{}) created", (uint)this, i );
-		if( i==7 )
-			BREAK;
-	}
-	Task::Task( Task&& x )ι:
-		_result{ move(x._result) }
-	{
-		i = ++TaskIndex;
-		TRACE( "({:x}-{}) moved ({:x})-{}", (uint)this, i, (uint)&x, x.i );
-	}
-	Task::Task( const Task& x )ι:
-		i{++TaskIndex}
-	{
-		TRACE( "({:x}-{}) copied ({:x})-{}", (uint)this, i, (uint)&x, x.i );
-	}
 
-	Task::~Task()ι
-	{
-		TRACE( "({:x}-{}) removed", (uint)this, i );
-	}
-	*/
 	α Task::promise_type::unhandled_exception()ι->void{
 		try{
-			BREAK;
-			if( auto p = std::current_exception(); p )
-				std::rethrow_exception( p );
-			else
-				CRITICAL( "unhandled_exception - no exception"sv );
+			throw;
 		}
 		catch( CoException& e ){
 			e.Resume( *this );
