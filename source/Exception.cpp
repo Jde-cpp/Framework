@@ -5,7 +5,7 @@
 #include <boost/system/error_code.hpp>
 
 #include <jde/Log.h>
-#include "io/ServerSink.h"
+//#include "io/ServerSink.h"
 #include <jde/TypeDefs.h>
 #define var const auto
 
@@ -23,14 +23,6 @@ namespace Jde{
 		BreakLog();
 	}
 
-	IException::IException( vector<string>&& args, string&& format, SL sl, uint c, ELogLevel level )ι:
-		_stack{ sl },
-		_format{ move(format) },
-		_args{ move(args) },
-		Code( c ? c : Calc32RunTime(format) ),
-		_level{ level }{
-		BreakLog();
-	}
 	IException::IException( const IException& from )ι:
 		_stack{ from._stack },
 		_what{ from._what },
@@ -94,8 +86,8 @@ namespace Jde{
 		var functionName = strlen(sl.file_name()) ? sl.function_name() : "{Unknown}\0";
 		if( auto p = Logging::Default(); p )
 			p->log( spdlog::source_loc{fileName.c_str(), (int)sl.line(), functionName}, (spdlog::level::level_enum)Level(), what() );
-		if( Logging::Server::Enabled() )
-			Logging::LogServer( Logging::Messages::ServerMessage{Logging::Message{Level(), what(), sl}, vector<string>{_args}} );
+		if( Logging::HaveExternal() )
+			Logging::LogExternal( Logging::ExternalMessage{Logging::Message{Level(), what(), sl}, vector<string>{_args}} );
 		if( Logging::LogMemory() ){
 			if( _format.size() )
 				Logging::LogMemory( Logging::Message{Level(), string{_format}, sl}, vector<string>{_args} );
@@ -123,14 +115,14 @@ namespace Jde{
 		return _what.c_str();
 	}
 
-	CodeException::CodeException( string value, std::error_code&& code, ELogLevel level, SL sl )ι:
-		IException{ move(value), level, (uint)code.value(), sl },
+	CodeException::CodeException( std::error_code&& code, sp<LogTag> tag, string value, ELogLevel level, SL sl )ι:
+		IException{ Jde::format("[{}]{} - {}", code.value(), value, code.message()), level, (uint)code.value(), move(tag), sl },
 		_errorCode{ move(code) }
 	{}
 
-	CodeException::CodeException( std::error_code&& code, ELogLevel level, SL sl )ι:
-		CodeException( Jde::format("[{}]{}", code.value(), code.message()), move(code), level, sl )
-	{}
+	// CodeException::CodeException( std::error_code&& code, ELogLevel level, SL sl )ι:
+	// 	CodeException( Jde::format("[{}]{}", code.value(), code.message()), move(code), level, sl )
+	// {}
 
 	CodeException::CodeException( std::error_code&& code, sp<LogTag> tag, ELogLevel level, SL sl )ι:
 		IException{ Jde::format("[{}]{}", code.value(), code.message()), level, (uint)code.value(), move(tag), sl },
@@ -164,11 +156,11 @@ namespace Jde{
 		return Jde::format( "({}){} - {})", value, category.name(), message );
 	}
 
-	OSException::OSException( TErrorCode result, string&& msg, SL sl )ι:
+	OSException::OSException( TErrorCode result, string&& m, SL sl )ι:
 #ifdef _MSC_VER
 		IException{ {std::to_string(result), std::to_string(GetLastError()), move(msg)}, "result={}/error={} - {}", sl, GetLastError() }
 #else
-		IException{ {std::to_string(result), std::to_string(errno), move(msg)}, "result={}/error={} - {}", sl, (uint)errno }
+		IException{ sl, ELogLevel::Error, (uint)errno, "result={}/error={} - {}", result, errno, m }
 #endif
 	{}
 
@@ -189,7 +181,8 @@ namespace Jde{
 	}
 
 	NetException::NetException( sv host, sv target, uint code, string result, ELogLevel level, SL sl )ι:
-		IException{ {string{host}, string{target}, std::to_string(code), string{result.substr(0,100)}}, "{}{} ({}){}", sl, code }, //"
+//		IException{ {string{host}, string{target}, std::to_string(code), string{result.substr(0,100)}}, "{}{} ({}){}", sl, code }, //"
+		IException{ sl, level, code, "{}{} ({}){}", host, target, code, result.substr(0,100) }, //"
 		Host{ host },
 		Target{ target },
 		//Code{ code },
@@ -213,7 +206,7 @@ namespace Jde{
 #endif
 		if( auto p = Logging::Default(); p )
 			p->log( spdlog::source_loc{FileName(sl.file_name()).c_str(), (int)sl.line(), sl.function_name()}, (spdlog::level::level_enum)Level(), extra.size() ? Jde::format("{}\n{}", extra, _what) : _what );
-		SetLevel( ELogLevel::NoLog );
+/*		SetLevel( ELogLevel::NoLog );
 		//if( Logging::Server() )
 		//	Logging::LogServer( Logging::Messages::Message{Logging::Message2{_level, _what, _sl.file_name(), _sl.function_name(), _sl.line()}, vector<string>{_args}} );
 
@@ -225,6 +218,6 @@ namespace Jde{
 		}
 		catch( std::exception& e ){
 			ERRT( IO::Sockets::LogTag(), "could not save error result:  {}", e.what() );
-		}
+		}*/
 	}
 }

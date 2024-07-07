@@ -9,20 +9,45 @@ namespace Jde{
 
 namespace Jde::Coroutine{
 	using ClientHandle = uint;
-	template<class TResult,class TTask2=Coroutine::TTask<TResult>>
-	struct TAwait{
-		//using TTask=Coroutine::TTask<TResult>;
-		using TPromise=typename TTask2::promise_type;
-		using THandle=coroutine_handle<TPromise>;
-
-		β await_ready()ι->bool{ return false; }
-		β await_suspend( THandle h )ι->void{ _promise=&h.promise();  OriginalThreadParamPtr = { Threading::GetThreadDescription(), Threading::GetAppThreadHandle() };  }
-		β await_resume()ι->TResult=0;
+	template<class Result=void,class TTask=VoidTask>
+	struct VoidAwait{
 	protected:
-		α AwaitResume()ι->void{ if( OriginalThreadParamPtr ) Threading::SetThreadInfo( *OriginalThreadParamPtr ); }
-		TPromise* _promise{};
+		using TPromise=/*typename*/ TTask::promise_type;
+	public:
+		using Task=TTask;
+		using Handle=coroutine_handle<TPromise>;
+		VoidAwait( SRCE )ι:_sl{sl}{}
+		β await_ready()ι->bool{ return false; }
+		β await_suspend( Handle h )ι->void{ _h=h;  OriginalThreadParamPtr = { Threading::GetThreadDescription(), Threading::GetAppThreadHandle() };  }
+		β await_resume()ε->Result{ AwaitResume(); return Result{}; }
+		α Resume()ι{ ASSERT(_h); _h->resume(); }
+	protected:
+		α AwaitResume()ε->void{
+			if( OriginalThreadParamPtr )
+				Threading::SetThreadInfo( *OriginalThreadParamPtr );
+			TPromise* p = Promise();
+			if( p && p->Exception )
+				Promise()->Exception->Throw();
+		};
+		Handle _h{};
+		TPromise* Promise(){ return _h ? &_h.promise() : nullptr; }
 	private:
 		optional<Threading::ThreadParam> OriginalThreadParamPtr;
+		SL _sl;
+	};
+
+	template<class Result,class Task=Coroutine::TTask<Result>>
+	struct TAwait : VoidAwait<Result,Task>{
+		using base = VoidAwait<Result,Task>;
+		TAwait( SRCE )ι:base{sl}{}
+		α await_resume()ε->Result{
+			base::AwaitResume();
+			if( !base::Promise() )
+				THROW( "promise is null" );
+			if( !base::Promise()->Result )
+				THROW( "Result is null" );
+			return move( *base::Promise()->Result );
+		};
 	};
 //TODO look into combining BaseAwait and IAwait
 	struct BaseAwait{

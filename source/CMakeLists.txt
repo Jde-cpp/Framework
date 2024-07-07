@@ -9,7 +9,7 @@ link_directories( ${Protobuf_DIR}/../.. )
 set( sources )
 list( APPEND sources db/graphQL/Purge.cpp
 	DateTime.cpp Exception.cpp Stopwatch.cpp Str.cpp Cache.cpp Settings.cpp App.cpp Log.cpp
-	io/AsioContextThread.cpp io/DiskWatcher.cpp io/File.cpp io/FileCo.cpp io/ProtoClient.cpp io/ServerSink.cpp io/Socket.cpp io/tinyxml2.cpp io/proto/messages.pb.cc
+	io/AsioContextThread.cpp io/DiskWatcher.cpp io/File.cpp io/FileCo.cpp io/tinyxml2.cpp
 	threading/Interrupt.cpp threading/InterruptibleThread.cpp threading/Pool.cpp threading/Worker.cpp threading/Mutex.cpp
 	coroutine/Alarm.cpp coroutine/Coroutine.cpp coroutine/CoWorker.cpp coroutine/Lock.cpp coroutine/Task.cpp
 	db/Await.cpp db/Database.cpp db/DataSource.cpp db/DataType.cpp db/DBException.cpp db/DBQueue.cpp db/SchemaProc.cpp db/GraphQL.cpp db/GraphQuery.cpp db/types/Table.cpp

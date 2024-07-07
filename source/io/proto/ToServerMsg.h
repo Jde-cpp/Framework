@@ -1,5 +1,5 @@
 #pragma once
-
+/*
 namespace Jde::ToServerMsg{
 	using Jde::Logging::Proto::ToServer;
 	Ξ AddLogin( str domain, str loginName, uint32 providerId, uint requestId )ι->ToServer{
@@ -18,4 +18,4 @@ namespace Jde::ToServerMsg{
 		p->set_request_id( requestId );
 		return t;
 	}
-}
+}*/

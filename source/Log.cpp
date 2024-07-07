@@ -8,25 +8,22 @@
 #endif
 #include <boost/lexical_cast.hpp>
 #include "Settings.h"
-#include "io/ServerSink.h"
+//#include "io/ServerSink.h"
 #include "collections/Collections.h"
 
 #define var const auto
 
 namespace Jde::Logging{
 	vector<LogTag> _fileTags;
-	vector<LogTag> _serverTags;
+	//vector<LogTag> _serverTags;
 	up<vector<sp<LogTag>>> _availableTags;
 	bool _logMemory{true};
-	up<vector<Logging::Messages::ServerMessage>> _pMemoryLog; shared_mutex MemoryLogMutex;
-	auto _pOnceMessages = mu<flat_map<uint,std::set<string>>>(); std::shared_mutex OnceMessageMutex;
+	up<vector<Logging::ExternalMessage>> _pMemoryLog; shared_mutex MemoryLogMutex;//TODO make external logger.
+	auto _pOnceMessages = mu<flat_map<uint,flat_set<string>>>(); std::shared_mutex OnceMessageMutex;
 	sp<LogTag> _statusTag = Logging::Tag( "status" );
 	static sp<LogTag> _logTag = Logging::Tag( "settings" );
 	const ELogLevel _breakLevel{ Settings::Get<ELogLevel>("logging/breakLevel").value_or(ELogLevel::Warning) };
-	ELogLevel BreakLevel()ι{ return _breakLevel; }
-	//TODO:  https://stackoverflow.com/questions/3596781/how-to-detect-if-the-current-process-is-being-run-by-gdb
-	α ServerLevel()ι->ELogLevel{ return Server::Level(); }
-
+	ELogLevel BreakLevel()ι{ return _breakLevel; } //TODO:  https://stackoverflow.com/questions/3596781/how-to-detect-if-the-current-process-is-being-run-by-gdb
 	ELogLevel _defaultLogLevel{ Settings::Get<ELogLevel>("logging/defaultLevel").value_or(ELogLevel::Information) };
 	α SetTag( sv tag, vector<LogTag>& existing, ELogLevel configLevel )ι->string{
 		var log{ tag[0]!='_' };
@@ -52,14 +49,14 @@ namespace Jde::Logging{
 		}
 		else if( (change = level!=ELogLevel::NoLog) )
 			existing.push_back( LogTag{(*pc)->Id, level} );
-		if( change ){
+/*	if( change ){
 			var& otherTags = &existing==&_fileTags ? _serverTags : _fileTags;
 			var p = find_if( otherTags.begin(), otherTags.end(), [&](var& x){return x.Id==tagName;} );
 			auto minLevel = p==otherTags.end() ? level : std::min( level==ELogLevel::NoLog ? ELogLevel::Critical : level, p->Level==ELogLevel::NoLog ? ELogLevel::Critical : p->Level );
 			//if( minLevel==ELogLevel::None )
 			//	minLevel = ELogLevel::NoLog;
 			(*pc)->Level = minLevel;
-		}
+		}*/
 		return (*pc)->Id;
 	}
 
@@ -84,7 +81,8 @@ namespace Jde::Logging{
 α Jde::CanBreak()ι->bool{ return Logging::_breakLevel>ELogLevel::Trace; }
 
 namespace Jde{
-	TimePoint _startTime = Clock::now(); Logging::Proto::Status _status; mutex _statusMutex; TimePoint _lastStatusUpdate;
+	TimePoint _startTime = Clock::now(); //Logging::Proto::Status _status; mutex _statusMutex; TimePoint _lastStatusUpdate;
+	TimePoint Logging::StartTime()ι{ return _startTime;}
 
 	//α Logging::SetTag( sv tag, ELogLevel, bool file )ι->void{ SetTag( string{tag}, file ? _fileTags : _serverTags ); }
 	α Logging::Tag( const std::span<const sv> tags )ι->vector<sp<LogTag>>{
@@ -100,6 +98,17 @@ namespace Jde{
 		return iter==_availableTags->end() ? _availableTags->emplace_back( ms<LogTag>(LogTag{string{tag}, _defaultLogLevel}) ) : *iter;
 	}
 
+	vector<up<Logging::IExternalLogger>> _externalLoggers;
+	α Logging::HaveExternal()ι->bool{ return _externalLoggers.size(); }
+	α Logging::ServerMinLevel()ι->ELogLevel{
+		return std::accumulate( _externalLoggers.begin(), _externalLoggers.end(), ELogLevel::NoLog, [](ELogLevel min, auto& x){ return std::max( min, x->MinLevel() );} );
+	}
+	α Logging::MinLevel( sv externalName )ι->ELogLevel{
+		auto p = find_if( _externalLoggers, [externalName](auto& x){return x->Name()==externalName;} );
+		LOG_IF( p==_externalLoggers.end(), ELogLevel::Error, "Could not find external logger '{}'", externalName );
+		return p==_externalLoggers.end() ? ELogLevel::NoLog : (*p)->MinLevel();
+	}
+
 	α Logging::DestroyLogger()->void{
 		TRACE( "Destroying Logger"sv );
 		Logging::_pOnceMessages = nullptr;
@@ -108,10 +117,10 @@ namespace Jde{
 			_pMemoryLog = nullptr;
 			_logMemory = false;
 		}
-		Server::Destroy();
+		for_each( _externalLoggers, [](auto& x){x->Destroy();} );
 	};
 
-#define PREFIX unique_lock l{ MemoryLogMutex }; if( !_pMemoryLog ) _pMemoryLog = mu<vector<Logging::Messages::ServerMessage>>();
+#define PREFIX unique_lock l{ MemoryLogMutex }; if( !_pMemoryLog ) _pMemoryLog = mu<vector<Logging::ExternalMessage>>();
 	α Logging::LogMemory( const Logging::MessageBase& m )ι->void{
 		PREFIX
 		_pMemoryLog->emplace_back( move(m) );
@@ -188,6 +197,8 @@ namespace Jde{
 	void OnCloseLogger( spdlog::logger* pLogger )ι;
 	using LoggerPtr = up<spdlog::logger, decltype(&Jde::OnCloseLogger)>;
 	auto _logger = LoggerPtr{ new spdlog::logger{"my_logger", _sinks.begin(), _sinks.end()}, Jde::OnCloseLogger };
+	α Logging::ClientMinLevel()ι->ELogLevel{ return (ELogLevel)_logger->level(); }
+
 	void OnCloseLogger( spdlog::logger* pLogger )ι{
 		static bool firstPass{ true };
 		if( firstPass ){
@@ -200,14 +211,13 @@ namespace Jde{
 	}
 
 	α Logging::Initialize()ι->void{
-		_status.set_starttime( (google::protobuf::uint32)Clock::to_time_t(_startTime) );
+		//_status.set_starttime( (google::protobuf::uint32)Clock::to_time_t(_startTime) );
 
 		var flushOn = Settings::Get<ELogLevel>( "logging/flushOn" ).value_or( _debug ? ELogLevel::Debug : ELogLevel::Information );
 		_logger->flush_on( (spdlog::level::level_enum)flushOn );
-		if( Server::Enabled() ){
-			AddTags( _serverTags, "logging/server/tags" );
-			ServerSink::Create();
-		}
+		for_each( _externalLoggers, [](auto& x){
+			AddTags( x->Tags, Jde::format("logging/{}/tags", x->Name()) );
+		} );
 		AddTags( _fileTags, "logging/tags" );
 
 		var minSinkLevel = std::accumulate( _sinks.begin(), _sinks.end(), ELogLevel::Critical, [](ELogLevel min, auto& p){ return std::min((ELogLevel)p->level(), min);} );
@@ -232,8 +242,10 @@ namespace Jde{
 				catch( const fmt::format_error& e ){
 					ERR( "{} - {}", m.MessageView, e.what() );
 				}
-				if( Server::Enabled() && Server::Level()<=m.Level )
-					Server::Log( Messages::ServerMessage{m} );
+				for_each( _externalLoggers, [&](auto& x){
+					if( x->MinLevel()<=m.Level )
+						x->Log( ExternalMessage{m} );
+				});
 			}
 			if( !_logMemory )
 				ClearMemoryLog();
@@ -242,24 +254,20 @@ namespace Jde{
 		INFO( "log minLevel='{}' flushOn='{}'", ELogLevelStrings[(int8)minSinkLevel], ELogLevelStrings[(uint8)flushOn] );//TODO add flushon to Server
 	}
 
-	α Logging::LogServer( const MessageBase& m )ι->void
-	{
+	α Logging::LogExternal( const MessageBase& m )ι->void{
 		ASSERTX( m.Level!=ELogLevel::NoLog );
-		Server::Log( m );
+		for_each( _externalLoggers, [&](auto& x){ x->Log( m ); });
 	}
-	α Logging::LogServer( const MessageBase& m, vector<string>& values )ι->void
-	{
+	α Logging::LogExternal( const MessageBase& m, const vector<string>& values )ι->void{
 		ASSERTX( m.Level!=ELogLevel::NoLog );
-		Server::Log( m, values );
+		for_each( _externalLoggers, [&](auto& x){ x->Log( m, &values ); });
 	}
-	α Logging::LogServer( Messages::ServerMessage& m )ι->void
-	{
+	α Logging::LogExternal( const ExternalMessage& m )ι->void{
 		ASSERTX( m.Level!=ELogLevel::NoLog );
-		Server::Log( m );
+		for_each( _externalLoggers, [&](auto& x){ x->Log( m ); });
 	}
 
-	TimePoint Logging::StartTime()ι{ return _startTime;}
-	α SendStatus()ι->void
+/*	α SendStatus()ι->void
 	{
 		lg _{_statusMutex};
 		vector<string> variables; variables.reserve( _status.details_size()+1 );
@@ -273,26 +281,18 @@ namespace Jde{
 		if( Logging::Server::Enabled() )
 			Logging::Server::SetSendStatus();
 		_lastStatusUpdate = Clock::now();
-	}
-	α Logging::SetLogLevel( ELogLevel client, ELogLevel server )ι->void
-	{
-		if( _logger->level()!=(spdlog::level::level_enum)client )
-		{
+	}*/
+	α Logging::SetLogLevel( ELogLevel client, ELogLevel server )ι->void{
+		if( _logger->level()!=(spdlog::level::level_enum)client ){
 			INFO( "Setting log level from '{}' to '{}'", Str::FromEnum(ELogLevelStrings, _logger->level()), Str::FromEnum(ELogLevelStrings, client) );
 			Settings::Set( "logging/console/level", string{ToString(client)}, false );
 			Settings::Set( "logging/file/level", string{ToString(client)} );
-			//TODO remvoe comment _logger->set_level( (spdlog::level::level_enum)client );
+			_logger->set_level( (spdlog::level::level_enum)client );
 		}
-		Logging::Server::SetLevel( server );
-		{
-			lg _{_statusMutex};
-			_status.set_serverloglevel( (Proto::ELogLevel)server );
-			_status.set_clientloglevel( (Proto::ELogLevel)_logger->level() );
-		}
-		SendStatus();
+		for_each( _externalLoggers, [&](auto& x){ x->SetMinLevel( server ); });
 	}
-	α Logging::SetStatus( const vector<string>& values )ι->void
-	{
+
+/*	α Logging::SetStatus( const vector<string>& values )ι->void{
 		{
 			lg _{_statusMutex};
 			_status.clear_details();
@@ -308,11 +308,11 @@ namespace Jde{
 		lg _{_statusMutex};
 		return mu<Proto::Status>( _status );
 	}
-
+*/
 	α Logging::ShouldLogOnce( const Logging::MessageBase& messageBase )ι->bool
 	{
 		std::unique_lock l( OnceMessageMutex );
-		auto& messages = _pOnceMessages->emplace( messageBase.FileId, set<string>{} ).first->second;
+		auto& messages = _pOnceMessages->emplace( messageBase.FileId, flat_set<string>{} ).first->second;
 		return messages.emplace(messageBase.MessageView).second;
 	}
 	α Logging::LogOnce( Logging::MessageBase&& m, const sp<LogTag>& tag )ι->void{
@@ -327,12 +327,12 @@ namespace Jde{
 
 	α ClearMemoryLog()ι->void{
 		unique_lock l{ Logging::MemoryLogMutex };
-		Logging::_pMemoryLog = Logging::_logMemory ? mu<vector<Logging::Messages::ServerMessage>>() : nullptr;
+		Logging::_pMemoryLog = Logging::_logMemory ? mu<vector<Logging::ExternalMessage>>() : nullptr;
 	}
-	vector<Logging::Messages::ServerMessage> FindMemoryLog( uint32 messageId )ι{
-		shared_lock l{ Logging::MemoryLogMutex };
+	vector<Logging::ExternalMessage> FindMemoryLog( uint32 messageId )ι{
+		sl l{ Logging::MemoryLogMutex };
 		ASSERT( Logging::_pMemoryLog );
-		vector<Logging::Messages::ServerMessage>  results;
+		vector<Logging::ExternalMessage>  results;
 		for_each( Logging::_pMemoryLog->begin(), Logging::_pMemoryLog->end(), [messageId,&results](var& msg){if( msg.MessageId==messageId) results.push_back(msg);} );
 		return results;
 	}
