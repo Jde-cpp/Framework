@@ -112,7 +112,7 @@ namespace Jde::IO
 	}
 
 	Ŧ Proto::ToVector( const google::protobuf::RepeatedPtrField<T>& x )ι->vector<T>{
-		vector<T> y;
+		vector<T> y; y.reserve( x.size() );
 		for_each( x.begin(), x.end(), [&y]( auto item ){ y.push_back(item); } );
 		return y;
 	}

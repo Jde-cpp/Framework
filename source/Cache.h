@@ -1,6 +1,6 @@
 ﻿#pragma once
 #include <jde/App.h>
-#include <jde/Log.h>
+#include <jde/log/Log.h>
 #include <jde/Str.h>
 #include <jde/Exports.h>
 #include "Settings.h"

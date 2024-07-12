@@ -1,7 +1,7 @@
 ﻿#pragma once
 #ifndef DATA_SOURCE_H
 #define DATA_SOURCE_H
-#include <jde/Log.h>
+#include <jde/log/Log.h>
 #include "Await.h"
 #include "Row.h"
 #include "SchemaProc.h"

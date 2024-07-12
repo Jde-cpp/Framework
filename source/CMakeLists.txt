@@ -5,20 +5,35 @@ include(common)
 link_directories( ${fmt_DIR}/../.. )
 link_directories( ${Protobuf_DIR}/../.. )
 #######################################################
+add_library( ${CMAKE_PROJECT_NAME} SHARED )
 
-set( sources )
-list( APPEND sources db/graphQL/Purge.cpp
-	DateTime.cpp Exception.cpp Stopwatch.cpp Str.cpp Cache.cpp Settings.cpp App.cpp Log.cpp
-	io/AsioContextThread.cpp io/DiskWatcher.cpp io/File.cpp io/FileCo.cpp io/tinyxml2.cpp
-	threading/Interrupt.cpp threading/InterruptibleThread.cpp threading/Pool.cpp threading/Worker.cpp threading/Mutex.cpp
-	coroutine/Alarm.cpp coroutine/Coroutine.cpp coroutine/CoWorker.cpp coroutine/Lock.cpp coroutine/Task.cpp
-	db/Await.cpp db/Database.cpp db/DataSource.cpp db/DataType.cpp db/DBException.cpp db/DBQueue.cpp db/SchemaProc.cpp db/GraphQL.cpp db/GraphQuery.cpp db/types/Table.cpp
-	db/graphQL/GraphQLHook.cpp db/graphQL/Insert.cpp db/graphQL/Introspection.cpp
-	um/UM.cpp)
+file(GLOB src_files *.cpp **/*.cpp **/**/*.cpp )
+file(GLOB hdr_files   "**/*.h")
 if(NOT MSVC)
-    list(APPEND sources ../../Linux/source/LinuxApp.cpp ../../Linux/source/LinuxDrive.cpp ../../Linux/source/LinuxTimezone.cpp  ../../Linux/source/LinuxThread.cpp)
+    list(APPEND src_files ../../Linux/source/LinuxApp.cpp ../../Linux/source/LinuxDrive.cpp ../../Linux/source/LinuxTimezone.cpp  ../../Linux/source/LinuxThread.cpp)
+		get_filename_component(thread_cpp ${CMAKE_CURRENT_SOURCE_DIR}/threading/Thread.cpp ABSOLUTE)
+		list(REMOVE_ITEM src_files "${thread_cpp}")
 endif()
-add_library( ${CMAKE_PROJECT_NAME} SHARED ${sources} )
+
+#set( sources )
+#list( APPEND sources db/graphQL/Purge.cpp
+#	DateTime.cpp Exception.cpp Stopwatch.cpp Str.cpp Cache.cpp Settings.cpp App.cpp Log.cpp
+#	io/AsioContextThread.cpp io/DiskWatcher.cpp io/File.cpp io/FileCo.cpp io/tinyxml2.cpp
+#	threading/Interrupt.cpp threading/InterruptibleThread.cpp threading/Pool.cpp threading/Worker.cpp threading/Mutex.cpp
+#	coroutine/Alarm.cpp coroutine/Coroutine.cpp coroutine/CoWorker.cpp coroutine/Lock.cpp coroutine/Task.cpp
+#	db/Await.cpp db/Database.cpp db/DataSource.cpp db/DataType.cpp db/DBException.cpp db/DBQueue.cpp db/SchemaProc.cpp db/GraphQL.cpp db/GraphQuery.cpp db/types/Table.cpp
+#	db/graphQL/GraphQLHook.cpp db/graphQL/Insert.cpp db/graphQL/Introspection.cpp
+#	um/UM.cpp)
+#if(NOT MSVC)
+#    list(APPEND sources ../../Linux/source/LinuxApp.cpp ../../Linux/source/LinuxDrive.cpp ../../Linux/source/LinuxTimezone.cpp  ../../Linux/source/LinuxThread.cpp)
+#endif()
+#add_library( ${CMAKE_PROJECT_NAME} SHARED ${sources} )
+target_sources("${CMAKE_PROJECT_NAME}"
+    PRIVATE
+        "${src_files}"
+        "${hdr_files}"
+)
+
 
 #######################################################
 target_link_libraries( ${CMAKE_PROJECT_NAME} debug libfmtd.a optimized libfmt.a )
@@ -38,7 +53,7 @@ target_precompile_headers(${CMAKE_PROJECT_NAME}
   <jde/TypeDefs.h>
 	<jde/Assert.h>
 	<jde/Exports.h>
-	<jde/Log.h>
+	<jde/log/Log.h>
 	<jde/Exception.h>
 	"Settings.h"
 

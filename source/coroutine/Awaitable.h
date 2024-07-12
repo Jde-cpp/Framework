@@ -9,44 +9,39 @@ namespace Jde{
 
 namespace Jde::Coroutine{
 	using ClientHandle = uint;
-	template<class Result=void,class TTask=VoidTask>
+	template<class TResult=void,class TTask=VoidTask>
 	struct VoidAwait{
 	protected:
-		using TPromise=/*typename*/ TTask::promise_type;
 	public:
+		using TPromise = TTask::promise_type;
 		using Task=TTask;
 		using Handle=coroutine_handle<TPromise>;
 		VoidAwait( SRCE )ι:_sl{sl}{}
 		β await_ready()ι->bool{ return false; }
-		β await_suspend( Handle h )ι->void{ _h=h;  OriginalThreadParamPtr = { Threading::GetThreadDescription(), Threading::GetAppThreadHandle() };  }
-		β await_resume()ε->Result{ AwaitResume(); return Result{}; }
+		β await_suspend( Handle h )ε->void{ _h=h; }
+		β await_resume()ε->TResult{ AwaitResume(); return TResult{}; }
 		α Resume()ι{ ASSERT(_h); _h->resume(); }
 	protected:
 		α AwaitResume()ε->void{
-			if( OriginalThreadParamPtr )
-				Threading::SetThreadInfo( *OriginalThreadParamPtr );
-			TPromise* p = Promise();
-			if( p && p->Exception )
-				Promise()->Exception->Throw();
-		};
+			if( up<IException> e = Promise() ? Promise()->Error() : nullptr; e )
+				e->Throw();
+		}
 		Handle _h{};
 		TPromise* Promise(){ return _h ? &_h.promise() : nullptr; }
-	private:
-		optional<Threading::ThreadParam> OriginalThreadParamPtr;
 		SL _sl;
 	};
 
-	template<class Result,class Task=Coroutine::TTask<Result>>
-	struct TAwait : VoidAwait<Result,Task>{
-		using base = VoidAwait<Result,Task>;
+	template<class Result,class TTask=Coroutine::TTask<Result>>
+	struct TAwait : VoidAwait<Result,TTask>{
+		using base = VoidAwait<Result,TTask>;
 		TAwait( SRCE )ι:base{sl}{}
-		α await_resume()ε->Result{
+		β await_resume()ε->Result{
 			base::AwaitResume();
 			if( !base::Promise() )
-				THROW( "promise is null" );
-			if( !base::Promise()->Result )
-				THROW( "Result is null" );
-			return move( *base::Promise()->Result );
+				throw Jde::Exception{ SRCE_CUR, Jde::ELogLevel::Critical, "promise is null" };
+			if( !base::Promise()->Value() )
+				throw Jde::Exception{ SRCE_CUR, Jde::ELogLevel::Critical, "Value is null" };
+			return move( *base::Promise()->Value() );
 		};
 	};
 //TODO look into combining BaseAwait and IAwait

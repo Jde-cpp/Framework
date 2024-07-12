@@ -10,5 +10,5 @@
 #include <boost/exception/diagnostic_information.hpp>
 #include <boost/core/noncopyable.hpp>
 #include <jde/Exports.h>
-#include <jde/Log.h>
+#include <jde/log/Log.h>
 #include <jde/Assert.h>

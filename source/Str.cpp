@@ -7,8 +7,22 @@
 
 #define var const auto
 
-namespace Jde
-{
+namespace Jde{
+	α Str::ToString( sv format, vector<string> args )ι->string{
+		using ctx = fmt::format_context;
+		vector<fmt::basic_format_arg<ctx>> ctxArgs;
+		for( var& a : args )
+			ctxArgs.push_back( fmt::detail::make_arg<ctx>(a) );
+		string y;
+		try{
+			y = fmt::vformat( format, fmt::basic_format_args<ctx>{ctxArgs.data(), (int)ctxArgs.size()} );
+		}
+		catch( const fmt::format_error& e ){
+			y = Jde::format( "format error format='{}' - {}", format, e.what() );
+		}
+		return y;
+	}
+
 	const string empty;
 	α Str::Empty()ι->str{ return empty; };
 

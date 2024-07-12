@@ -1,4 +1,4 @@
-﻿#include <jde/Log.h>
+﻿#include <jde/log/Log.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #ifdef _MSC_VER
 	#include <crtdbg.h>
@@ -7,16 +7,11 @@
 	#include <spdlog/sinks/msvc_sink.h>
 #endif
 #include <boost/lexical_cast.hpp>
-#include "Settings.h"
-//#include "io/ServerSink.h"
-#include "collections/Collections.h"
+#include "../Settings.h"
 
 #define var const auto
 
 namespace Jde::Logging{
-	vector<LogTag> _fileTags;
-	//vector<LogTag> _serverTags;
-	up<vector<sp<LogTag>>> _availableTags;
 	bool _logMemory{true};
 	up<vector<Logging::ExternalMessage>> _pMemoryLog; shared_mutex MemoryLogMutex;//TODO make external logger.
 	auto _pOnceMessages = mu<flat_map<uint,flat_set<string>>>(); std::shared_mutex OnceMessageMutex;
@@ -24,90 +19,12 @@ namespace Jde::Logging{
 	static sp<LogTag> _logTag = Logging::Tag( "settings" );
 	const ELogLevel _breakLevel{ Settings::Get<ELogLevel>("logging/breakLevel").value_or(ELogLevel::Warning) };
 	ELogLevel BreakLevel()ι{ return _breakLevel; } //TODO:  https://stackoverflow.com/questions/3596781/how-to-detect-if-the-current-process-is-being-run-by-gdb
-	ELogLevel _defaultLogLevel{ Settings::Get<ELogLevel>("logging/defaultLevel").value_or(ELogLevel::Information) };
-	α SetTag( sv tag, vector<LogTag>& existing, ELogLevel configLevel )ι->string{
-		var log{ tag[0]!='_' };
-		var tagName = log ? tag : tag.substr(1);
-		var pc = find_if( *_availableTags, [&](var& x){return x->Id==tagName;} );
-		if( pc==_availableTags->end() ){
-			LOG_MEMORY( "settings", ELogLevel::Error, "unknown tag '{}'", tagName );
-			static auto showed{ false };
-			if( !showed ){
-				showed = true;
-				ostringstream os;
-				for_each( *_availableTags, [&](var p){ os << p->Id << ", ";} );
-				LOG_MEMORY( "settings", ELogLevel::Debug, "available tags:  {}", os.str().substr(0, os.str().size()-2) );
-			}
-			return {};
-		}
-		var level = log ? configLevel : _defaultLogLevel;
-
-		bool change = false;
-		if( auto p = find_if(existing.begin(), existing.end(), [&](var& x){return x.Id==tagName;}); p!=existing.end() ){
-			if( change = p->Level != level; change )
-				p->Level = level;
-		}
-		else if( (change = level!=ELogLevel::NoLog) )
-			existing.push_back( LogTag{(*pc)->Id, level} );
-/*	if( change ){
-			var& otherTags = &existing==&_fileTags ? _serverTags : _fileTags;
-			var p = find_if( otherTags.begin(), otherTags.end(), [&](var& x){return x.Id==tagName;} );
-			auto minLevel = p==otherTags.end() ? level : std::min( level==ELogLevel::NoLog ? ELogLevel::Critical : level, p->Level==ELogLevel::NoLog ? ELogLevel::Critical : p->Level );
-			//if( minLevel==ELogLevel::None )
-			//	minLevel = ELogLevel::NoLog;
-			(*pc)->Level = minLevel;
-		}*/
-		return (*pc)->Id;
-	}
-
-	α AddTags( vector<LogTag>& sinkTags, sv path )ι->void{
-		try{
-			uint i=0;
-			for( var& level : ELogLevelStrings ){
-				var levelTags = Settings::TryArray<string>( Jde::format("{}/{}", path, level) );
-				vector<string> tagIds;
-				for( var& tag : levelTags )
-					tagIds.push_back( SetTag(tag, sinkTags, (ELogLevel)i) );
-				++i;
-				if( tagIds.size() )
-					LOG_MEMORY( "settings", ELogLevel::Information, &sinkTags==&_fileTags ? "({})FileTags:  {}." : "({})ServerTags:  {}.", level, Str::AddCommas(tagIds) );
-			}
-		}
-		catch( const json::exception& e ){
-			LOG_MEMORY( "settings", ELogLevel::Error, e.what() );
-		}
-	}
 }
 α Jde::CanBreak()ι->bool{ return Logging::_breakLevel>ELogLevel::Trace; }
 
 namespace Jde{
 	TimePoint _startTime = Clock::now(); //Logging::Proto::Status _status; mutex _statusMutex; TimePoint _lastStatusUpdate;
 	TimePoint Logging::StartTime()ι{ return _startTime;}
-
-	//α Logging::SetTag( sv tag, ELogLevel, bool file )ι->void{ SetTag( string{tag}, file ? _fileTags : _serverTags ); }
-	α Logging::Tag( const std::span<const sv> tags )ι->vector<sp<LogTag>>{
-		vector<sp<LogTag>> y;
-		for( var tag : tags )
-			y.emplace_back( Tag(tag) );
-		return y;
-	}
-	α Logging::Tag( sv tag )ι->sp<LogTag>{
-		if( !_availableTags )
-			_availableTags = mu<vector<sp<LogTag>>>();
-		auto iter = find_if( *_availableTags, [&](var& x){return x->Id==tag;} );
-		return iter==_availableTags->end() ? _availableTags->emplace_back( ms<LogTag>(LogTag{string{tag}, _defaultLogLevel}) ) : *iter;
-	}
-
-	vector<up<Logging::IExternalLogger>> _externalLoggers;
-	α Logging::HaveExternal()ι->bool{ return _externalLoggers.size(); }
-	α Logging::ServerMinLevel()ι->ELogLevel{
-		return std::accumulate( _externalLoggers.begin(), _externalLoggers.end(), ELogLevel::NoLog, [](ELogLevel min, auto& x){ return std::max( min, x->MinLevel() );} );
-	}
-	α Logging::MinLevel( sv externalName )ι->ELogLevel{
-		auto p = find_if( _externalLoggers, [externalName](auto& x){return x->Name()==externalName;} );
-		LOG_IF( p==_externalLoggers.end(), ELogLevel::Error, "Could not find external logger '{}'", externalName );
-		return p==_externalLoggers.end() ? ELogLevel::NoLog : (*p)->MinLevel();
-	}
 
 	α Logging::DestroyLogger()->void{
 		TRACE( "Destroying Logger"sv );
@@ -117,7 +34,7 @@ namespace Jde{
 			_pMemoryLog = nullptr;
 			_logMemory = false;
 		}
-		for_each( _externalLoggers, [](auto& x){x->Destroy();} );
+		External::DestroyLoggers();
 	};
 
 #define PREFIX unique_lock l{ MemoryLogMutex }; if( !_pMemoryLog ) _pMemoryLog = mu<vector<Logging::ExternalMessage>>();
@@ -215,37 +132,24 @@ namespace Jde{
 
 		var flushOn = Settings::Get<ELogLevel>( "logging/flushOn" ).value_or( _debug ? ELogLevel::Debug : ELogLevel::Information );
 		_logger->flush_on( (spdlog::level::level_enum)flushOn );
-		for_each( _externalLoggers, [](auto& x){
-			AddTags( x->Tags, Jde::format("logging/{}/tags", x->Name()) );
-		} );
-		AddTags( _fileTags, "logging/tags" );
+		AddFileTags();
 
 		var minSinkLevel = std::accumulate( _sinks.begin(), _sinks.end(), ELogLevel::Critical, [](ELogLevel min, auto& p){ return std::min((ELogLevel)p->level(), min);} );
-		for( auto tag : *_availableTags )
-			tag->Level = tag->Level==ELogLevel::NoLog ? tag->Level : std::max( tag->Level, minSinkLevel );
 		_logger->set_level( (spdlog::level::level_enum)minSinkLevel );
 		if( _pMemoryLog ){
 			for( var& m : *_pMemoryLog ){
- 				using ctx = fmt::format_context;
-    		vector<fmt::basic_format_arg<ctx>> args;
-				for( var& a : m.Variables )
-				 	args.push_back( fmt::detail::make_arg<ctx>(a) );
-				try{
-					if( m.Tag.size() && find_if(_fileTags.begin(), _fileTags.end(), [&](var& x){return x.Id==m.Tag;})==_fileTags.end() )
-						continue;
-					if( _sinks.size() )
-						_logger->log( spdlog::source_loc{m.File,(int)m.LineNumber,m.Function}, (spdlog::level::level_enum)m.Level, fmt::vformat(m.MessageView, fmt::basic_format_args<ctx>{args.data(), (int)args.size()}) );
-						//_logger->log( spdlog::source_loc{m.File,(int)m.LineNumber,m.Function}, (spdlog::level::level_enum)m.Level, ToVec::FormatVectorArgs(m.MessageView, m.Variables) );
-					else
-						std::cerr << fmt::vformat( m.MessageView, fmt::basic_format_args<ctx>{args.data(), (int)args.size()} ) << std::endl;
-				}
-				catch( const fmt::format_error& e ){
-					ERR( "{} - {}", m.MessageView, e.what() );
-				}
-				for_each( _externalLoggers, [&](auto& x){
-					if( x->MinLevel()<=m.Level )
-						x->Log( ExternalMessage{m} );
-				});
+				if( !ShouldLog(m) )
+					continue;
+				var message = Str::ToString( m.MessageView, m.Args );
+				if( _sinks.size() )
+					_logger->log( spdlog::source_loc{m.File,(int)m.LineNumber,m.Function}, (spdlog::level::level_enum)m.Level, message );
+				else
+					std::cerr << message << std::endl;
+				//no use case for loggers being initialized before this.
+				// for_each( _externalLoggers, [&](auto& x){
+				// 	if( x->MinLevel()<=m.Level )
+				// 		x->Log( ExternalMessage{m} );
+				// });
 			}
 			if( !_logMemory )
 				ClearMemoryLog();
@@ -254,18 +158,6 @@ namespace Jde{
 		INFO( "log minLevel='{}' flushOn='{}'", ELogLevelStrings[(int8)minSinkLevel], ELogLevelStrings[(uint8)flushOn] );//TODO add flushon to Server
 	}
 
-	α Logging::LogExternal( const MessageBase& m )ι->void{
-		ASSERTX( m.Level!=ELogLevel::NoLog );
-		for_each( _externalLoggers, [&](auto& x){ x->Log( m ); });
-	}
-	α Logging::LogExternal( const MessageBase& m, const vector<string>& values )ι->void{
-		ASSERTX( m.Level!=ELogLevel::NoLog );
-		for_each( _externalLoggers, [&](auto& x){ x->Log( m, &values ); });
-	}
-	α Logging::LogExternal( const ExternalMessage& m )ι->void{
-		ASSERTX( m.Level!=ELogLevel::NoLog );
-		for_each( _externalLoggers, [&](auto& x){ x->Log( m ); });
-	}
 
 /*	α SendStatus()ι->void
 	{
@@ -282,14 +174,14 @@ namespace Jde{
 			Logging::Server::SetSendStatus();
 		_lastStatusUpdate = Clock::now();
 	}*/
-	α Logging::SetLogLevel( ELogLevel client, ELogLevel server )ι->void{
+	α Logging::SetLogLevel( ELogLevel client, ELogLevel external )ι->void{
 		if( _logger->level()!=(spdlog::level::level_enum)client ){
 			INFO( "Setting log level from '{}' to '{}'", Str::FromEnum(ELogLevelStrings, _logger->level()), Str::FromEnum(ELogLevelStrings, client) );
 			Settings::Set( "logging/console/level", string{ToString(client)}, false );
 			Settings::Set( "logging/file/level", string{ToString(client)} );
 			_logger->set_level( (spdlog::level::level_enum)client );
 		}
-		for_each( _externalLoggers, [&](auto& x){ x->SetMinLevel( server ); });
+		External::SetMinLevel( external );
 	}
 
 /*	α Logging::SetStatus( const vector<string>& values )ι->void{
@@ -335,82 +227,5 @@ namespace Jde{
 		vector<Logging::ExternalMessage>  results;
 		for_each( Logging::_pMemoryLog->begin(), Logging::_pMemoryLog->end(), [messageId,&results](var& msg){if( msg.MessageId==messageId) results.push_back(msg);} );
 		return results;
-	}
-
-
-	namespace Logging{
-		MessageBase::MessageBase( ELogLevel level, const source_location& sl )ι:
-			Fields{ EFields::File | EFields::FileId | EFields::Function | EFields::FunctionId | EFields::LineNumber },
-			Level{ level },
-			MessageId{ 0 },//{},
-			FileId{ Calc32RunTime(FileName(sl.file_name())) },
-			File{ sl.file_name() },
-			FunctionId{ Calc32RunTime(sl.function_name()) },
-			Function{ sl.function_name() },
-			LineNumber{ sl.line() }{
-			if( level!=ELogLevel::Trace )
-				Fields |= EFields::Level;
-		}
-		MessageBase::MessageBase( ELogLevel level, sv message, const char* file, const char* function, uint_least32_t line )ι:
-			Fields{ EFields::Message | EFields::File | EFields::FileId | EFields::Function | EFields::FunctionId | EFields::LineNumber },
-			Level{ level },
-			MessageId{ Calc32RunTime(message) },
-			MessageView{ message },
-			FileId{ Calc32RunTime(FileName(file)) },
-			File{ file },
-			FunctionId{ Calc32RunTime(function) },
-			Function{ function },
-			LineNumber{ line }
-		{}
-
-
-		Message::Message( const MessageBase& b )ι:
-			MessageBase{ b },
-			_fileName{ FileName(b.File) }
-		{
-			File = _fileName.c_str();
-		}
-
-		Message::Message( ELogLevel level, string message, const source_location& sl )ι:
-			MessageBase( level, sl ),
-			_pMessage{ mu<string>(move(message)) },
-			_fileName{ FileName(sl.file_name()) }{
-			File = _fileName.c_str();
-			MessageView = *_pMessage;
-			MessageId = Calc32RunTime( MessageView );
-		}
-
-		Message::Message( sv tag, ELogLevel level, string message, const source_location& sl )ι:
-			MessageBase( level, sl ),
-			Tag{ tag },
-			_pMessage{ mu<string>(move(message)) },
-			_fileName{ FileName(sl.file_name()) }{
-			File = _fileName.c_str();
-			MessageView = *_pMessage;
-			MessageId = Calc32RunTime( MessageView );
-		}
-
-		Message::Message( sv tag, ELogLevel level, string message, char const* file, char const * function, boost::uint_least32_t line )ι:
-			MessageBase{ level, message, file, function, line },
-			Tag{ tag },
-			_pMessage{ mu<string>(move(message)) },
-			_fileName{ FileName(file) }{
-			File = _fileName.c_str();
-			MessageView = *_pMessage;
-			MessageId = Calc32RunTime( MessageView );
-			ASSERT( level>=ELogLevel::NoLog && level<=ELogLevel::Critical );
-		}
-
-		Message::Message( const Message& x )ι:
-			MessageBase{ x },
-			Tag{ x.Tag },
-			_pMessage{ x._pMessage ? mu<string>(*x._pMessage) : nullptr },
-			_fileName{ x._fileName }{
-			File = _fileName.c_str();
-			if( _pMessage ){
-				MessageView = *_pMessage;
-				MessageId = Calc32RunTime( MessageView );
-			}
-		}
 	}
 }

@@ -4,7 +4,7 @@ DISABLE_WARNINGS
 #include <nlohmann/json.hpp>
 ENABLE_WARNINGS
 #include <jde/Str.h>
-#include <jde/Log.h>
+#include <jde/log/Log.h>
 #include <jde/Assert.h>
 
 namespace Jde::DB

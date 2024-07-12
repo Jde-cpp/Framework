@@ -5,7 +5,7 @@
 #include <boost/core/noncopyable.hpp>
 #include "Thread.h"
 #include <jde/Assert.h>
-#include <jde/Log.h>
+#include <jde/log/Log.h>
 #include <jde/coroutine/Task.h>
 #include "../coroutine/Awaitable.h"
 

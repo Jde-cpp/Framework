@@ -4,7 +4,7 @@
 #include <spdlog/fmt/ostr.h>
 #include <boost/system/error_code.hpp>
 
-#include <jde/Log.h>
+#include <jde/log/Log.h>
 //#include "io/ServerSink.h"
 #include <jde/TypeDefs.h>
 #define var const auto
@@ -86,8 +86,8 @@ namespace Jde{
 		var functionName = strlen(sl.file_name()) ? sl.function_name() : "{Unknown}\0";
 		if( auto p = Logging::Default(); p )
 			p->log( spdlog::source_loc{fileName.c_str(), (int)sl.line(), functionName}, (spdlog::level::level_enum)Level(), what() );
-		if( Logging::HaveExternal() )
-			Logging::LogExternal( Logging::ExternalMessage{Logging::Message{Level(), what(), sl}, vector<string>{_args}} );
+		if( Logging::External::Size() )
+			Logging::External::Log( Logging::ExternalMessage{Logging::Message{Level(), what(), sl}, vector<string>{_args}} );
 		if( Logging::LogMemory() ){
 			if( _format.size() )
 				Logging::LogMemory( Logging::Message{Level(), string{_format}, sl}, vector<string>{_args} );
@@ -97,35 +97,18 @@ namespace Jde{
 	}
 
 	α IException::what()Ι->const char*{
-		if( _what.empty() ){
-			using ctx = fmt::format_context;
-			vector<fmt::basic_format_arg<ctx>> args;
-			for( var& a : _args )
-				args.push_back( fmt::detail::make_arg<ctx>(a) );
-			try{
-				_what = fmt::vformat( _format, fmt::basic_format_args<ctx>{args.data(), (int)args.size()} );
-				//_what = ToVec::FormatVectorArgs( _format, _args );
-				//std::vformat( _format, std::basic_format_args<ctx>(args2.data(), (int)args2.size()) );
-//				_what = std::vformat( _format, std::basic_format_args<ctx>(args2.data(), (int)args2.size()) );
-			}
-			catch( const fmt::format_error& e ){
-				_what = Jde::format( "format error _format='{}' - {}", _format, e.what() );
-			}
-		}
+		if( _what.empty() )
+			Str::ToString( _format, _args );
 		return _what.c_str();
 	}
 
 	CodeException::CodeException( std::error_code&& code, sp<LogTag> tag, string value, ELogLevel level, SL sl )ι:
-		IException{ Jde::format("[{}]{} - {}", code.value(), value, code.message()), level, (uint)code.value(), move(tag), sl },
+		IException{ Jde::format("({}){} - {}", code.value(), value, code.message()), level, (uint)code.value(), move(tag), sl },
 		_errorCode{ move(code) }
 	{}
 
-	// CodeException::CodeException( std::error_code&& code, ELogLevel level, SL sl )ι:
-	// 	CodeException( Jde::format("[{}]{}", code.value(), code.message()), move(code), level, sl )
-	// {}
-
 	CodeException::CodeException( std::error_code&& code, sp<LogTag> tag, ELogLevel level, SL sl )ι:
-		IException{ Jde::format("[{}]{}", code.value(), code.message()), level, (uint)code.value(), move(tag), sl },
+		IException{ Jde::format("({}){}", code.value(), code.message()), level, (uint)code.value(), move(tag), sl },
 		_errorCode{ move(code) }
 	{}
 
