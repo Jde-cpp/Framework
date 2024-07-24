@@ -26,12 +26,12 @@ namespace Jde::Math
 		if( !_engine )
 		{
 			_engine = mu<std::mt19937>();
-#ifdef NDEBUG
+//#ifdef NDEBUG
 	    std::random_device rd;
 	    auto rd_range = std::ranges::transform_view(std::ranges::iota_view(static_cast<std::size_t>(0), std::mt19937::state_size), [&rd](size_t){return rd();});
 	    std::seed_seq seeds(rd_range.begin(), rd_range.end());
 			_engine->seed( seeds );
-#endif
+//#endif
 		}
 		return (*_engine)();
 	}

@@ -22,7 +22,7 @@ namespace Jde::IO::Proto{
 	Ŧ ToVector( const google::protobuf::RepeatedPtrField<T>& x )ι->vector<T>;
 
 	α Save( const google::protobuf::MessageLite& msg, fs::path path, SL )ε->void;
-	α ToString( const google::protobuf::MessageLite& msg )ε->string;
+	α ToString( const google::protobuf::MessageLite& msg )ι->string;
 	α SizePrefixed( const google::protobuf::MessageLite&& m )ι->tuple<up<google::protobuf::uint8[]>,uint>;
 	α ToTimestamp( TimePoint t )ι->google::protobuf::Timestamp;
 	α ToTimePoint( google::protobuf::Timestamp t )ι->TimePoint;
@@ -38,7 +38,7 @@ namespace Jde::IO::Proto{
 
 namespace Jde::IO
 {
-	Ξ Proto::ToString( const google::protobuf::MessageLite& msg )ε->string{
+	Ξ Proto::ToString( const google::protobuf::MessageLite& msg )ι->string{
 		string output;
 		msg.SerializeToString( &output );
 		return output;

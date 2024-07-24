@@ -1,6 +1,7 @@
 ﻿#include <jde/Str.h>
 #include <algorithm>
 #include <functional>
+#include <boost/algorithm/hex.hpp>
 #ifdef _MSC_VER
 	#include "../../Windows/source/WindowsUtilities.h"
 #endif
@@ -18,13 +19,14 @@ namespace Jde{
 			y = fmt::vformat( format, fmt::basic_format_args<ctx>{ctxArgs.data(), (int)ctxArgs.size()} );
 		}
 		catch( const fmt::format_error& e ){
+			BREAK;
 			y = Jde::format( "format error format='{}' - {}", format, e.what() );
 		}
 		return y;
 	}
 
-	const string empty;
-	α Str::Empty()ι->str{ return empty; };
+	const string _empty;
+	α Str::Empty()ι->str{ return _empty; };
 
 	α Str::Replace( sv source, char find, char replace )ι->string
 	{
@@ -56,5 +58,11 @@ namespace Jde{
 	{
 		var p = NextWordLocation( x );
 		return p ? get<0>( *p ) : sv{};
+	}
+	α Str::ToHex( byte* p, uint size )ι->string{
+		string hex;
+		hex.reserve( size*2 );
+		boost::algorithm::hex_lower( (char*)p, (char*)p+size, std::back_inserter(hex) );
+		return hex;
 	}
 }

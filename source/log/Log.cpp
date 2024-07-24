@@ -228,4 +228,33 @@ namespace Jde{
 		for_each( Logging::_pMemoryLog->begin(), Logging::_pMemoryLog->end(), [messageId,&results](var& msg){if( msg.MessageId==messageId) results.push_back(msg);} );
 		return results;
 	}
+/*	α Logging::Log( const Logging::ILogEntry& m )ι->void{
+	//	if( m.Level<tag->Level || m.Level==ELogLevel::NoLog || tag->Level==ELogLevel::NoLog )
+	//		return;
+		try{
+			BREAK_IF( m.Message.empty() );
+			if( auto p = Default(); p )
+				p->log( m.Source(), (spdlog::level::level_enum)m.Level(), m.Message() );
+			else{
+				if( m.Level>=ELogLevel::Error )
+					std::cerr << m.Message() << std::endl;
+				else
+					std::cout << m.Message() << std::endl;
+			}
+			BREAK_IF( m.Level>=BreakLevel() );
+		}
+		catch( const fmt::format_error& e ){
+			critical( "FormatException message:'{}', file:'{}', line:{}, error:'{}'", m.Format(), m.File(), m.LineNumber(), e.what() );
+		}
+		var logServer{ (m.Tags() & ELogTags::ExternalLogger)!=ELogTags::None };
+		if( logServer || LogMemory() ){
+			//vector<string> values; values.reserve( sizeof...(args) );
+			//ToVec::Append( values, args... );
+			if( LogMemory() )
+				LogMemory( m );
+			if( logServer )
+				External::Log( m );
+		}
+	}
+*/
 }

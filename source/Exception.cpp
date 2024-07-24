@@ -10,6 +10,9 @@
 #define var const auto
 
 namespace Jde{
+	up<IException> _empty;
+	α IException::EmptyPtr()ι->const up<IException>&{ return _empty; }
+
 	IException::IException( string value, ELogLevel level, uint code, SL sl )ι:
 		IException{ value, level, code, nullptr, sl }
 	{}
@@ -28,6 +31,7 @@ namespace Jde{
 		_what{ from._what },
 		_pInner{ from._pInner },
 		_format{ from._format },
+		_pTag{ from._pTag },
 		_args{ from._args },
 		Code{ from.Code },
 		_level{ from.Level() }{
@@ -39,6 +43,7 @@ namespace Jde{
 		_what{ move(from._what) },
 		_pInner{ move(from._pInner) },
 		_format{ move(from._format) },
+		_pTag{ from._pTag },
 		_args{ move(from._args) },
 		Code{ from.Code },
 		_level{ from.Level() }{
@@ -98,7 +103,7 @@ namespace Jde{
 
 	α IException::what()Ι->const char*{
 		if( _what.empty() )
-			Str::ToString( _format, _args );
+			_what = Str::ToString( _format, _args );
 		return _what.c_str();
 	}
 

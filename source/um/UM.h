@@ -20,12 +20,23 @@ namespace Jde::UM{
 		Amazon=3,
 		Microsoft=4,
 		VK=5,
-		OpcServer=6
+		Key = 6,
+		Certificate = 7,
+		OpcServer = 8
 	};
-	constexpr array<sv,7> ProviderTypeStrings = { "None", "Google", "Facebook", "Amazon", "Microsoft", "VK", "OpcServer" };
+	constexpr array<sv,9> ProviderTypeStrings = { "None", "Google", "Facebook", "Amazon", "Microsoft", "VK", "key", "Certificate", "OpcServer" };
 
 	enum class EAccess : uint8{ None=0, Administer=1, Write=2, Read=4 };
-	Ξ operator &( EAccess a, EAccess b )ι{ return static_cast<EAccess>( static_cast<uint8>(a) & static_cast<uint8>(b) ); }
+//	Ξ operator &( EAccess a, EAccess b )ι{ return static_cast<EAccess>( static_cast<uint8>(a) & static_cast<uint8>(b) ); }
+
+	struct LoginAwait final : TAwait<UserPK>{
+		using base = TAwait<UserPK>;
+		LoginAwait( vector<unsigned char> modulus, uint32 exponent, string&& name, string&& target, string&& description, SRCE )ι;
+		α await_suspend( Handle h )ε->void override;
+	private:
+		α LoginTask()ε->Jde::Task;
+		vector<unsigned char> _modulus; uint32 _exponent; string _name; string _target; string _description;
+	};
 
 	Φ Configure()ε->void;
 	α IsTarget( sv url )ι->bool;

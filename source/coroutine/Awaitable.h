@@ -23,7 +23,7 @@ namespace Jde::Coroutine{
 		α Resume()ι{ ASSERT(_h); _h->resume(); }
 	protected:
 		α AwaitResume()ε->void{
-			if( up<IException> e = Promise() ? Promise()->Error() : nullptr; e )
+			if( up<IException> e = Promise() ? Promise()->MoveError() : nullptr; e )
 				e->Throw();
 		}
 		Handle _h{};
@@ -43,6 +43,8 @@ namespace Jde::Coroutine{
 				throw Jde::Exception{ SRCE_CUR, Jde::ELogLevel::Critical, "Value is null" };
 			return move( *base::Promise()->Value() );
 		};
+		α Resume( Result&& r )ι{ ASSERT(base::Promise()); base::Promise()->Resume( move(r), base::_h ); }
+		α Resume( IException&& r )ι{ ASSERT(base::Promise()); base::Promise()->ResumeWithError( move(r), base::_h ); }
 	};
 //TODO look into combining BaseAwait and IAwait
 	struct BaseAwait{

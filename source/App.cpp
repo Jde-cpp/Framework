@@ -99,7 +99,7 @@ namespace Jde{
 		AtomicGuard l{ _activeWorkersMutex };
 		_activeWorkers.erase( remove(_activeWorkers.begin(), _activeWorkers.end(), p), _activeWorkers.end() );
 	}
-	
+
 	α IApplication::Pause()ι->int{
 		INFO( "Pausing main thread." );
 		while( !_exitReason ){
@@ -213,7 +213,6 @@ namespace Jde{
 	α IApplication::AddShutdown( sp<IShutdown> pShared )ι->void
 	{
 		lg _{ _objectMutex };
-		//_objects.push_back( pShared ); not sure why objects would be added also.
 		_shutdowns.push_back( move(pShared) );
 	}
 	α IApplication::RemoveShutdown( sp<IShutdown> pShutdown )ι->void

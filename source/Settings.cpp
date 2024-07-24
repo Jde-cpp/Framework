@@ -119,7 +119,7 @@ namespace Jde{
 #ifdef _MSC_VER
 		return executable.string().starts_with( "Jde." ) ? OSApp::Executable().stem().extension().string().substr(1) : OSApp::Executable().stem().string();
 #else
-		return executable.string().starts_with( "Tests." ) ? executable.string() : OSApp::Executable().extension().string().substr( 1 );
+		return executable.string().starts_with( "Jde." ) ? fs::path( executable.string().substr(4) ) : executable;
 #endif
 	}
 	α Settings::Path()ι->fs::path{

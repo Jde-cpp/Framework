@@ -20,7 +20,7 @@ namespace Jde::DB{
 		bool Left{};
 	};
 
-	α Where( const DB::TableQL& table, const Table& schemaTable, vector<object>& parameters )ε->string{
+	α Where( const DB::TableQL& table, const Table& schemaTable, vector<object>& parameters )ε->string{//TODO use FilterQL
 		TRACE( "Where({})", table.Args.dump() );
 		var pWhere = table.Args.find( "filter" );
 		var j = pWhere==table.Args.end() ? table.Args : *pWhere;
@@ -89,7 +89,7 @@ namespace Jde::DB{
 			if( pDefTable->QLView.size() )
 				pDefTable = &_schema.FindTable( pDefTable->QLView );
 			var fkName = pSchemaColumn->Name;
-			auto pOther = findColumn( *pDefTable, "name" ); 
+			auto pOther = findColumn( *pDefTable, "name" );
 			if( !pOther )
 				pOther = findColumn( *pDefTable, "target" );
 			CHECK( pOther );
@@ -147,7 +147,7 @@ namespace Jde::DB{
 			const DB::Column* pColumn = nullptr;
 			string childPrefix;
 			auto findFK = [&pkTable]( var& x ){ return x.PKTable==pkTable->Name; };
-			auto setFromTable = [&]( const DB::Table& t ){ 
+			auto setFromTable = [&]( const DB::Table& t ){
 				if( auto pDBColumn = find_if( t.Columns, findFK ); pDBColumn!=t.Columns.end() ){
 					pColumn = &*pDBColumn;
 					childPrefix = t.Name;
@@ -171,6 +171,42 @@ namespace Jde::DB{
 		return Str::AddCommas( columns );
 	}
 
+	α GraphQL::SelectStatement( const DB::TableQL& table, bool includeIdColumn, string* whereString )ι->tuple<string,vector<object>>{
+		var& schemaTable = _schema.FindTableSuffix( table.DBName() );
+		vector<uint> dates; flat_map<uint,sp<const DB::Table>> flags;
+		vector<tuple<string,string>> jsonMembers;
+		vector<Join> joins;
+		ostringstream sql;
+		auto columnSqlValue = ColumnSql( table, schemaTable, nullptr, dates, flags, schemaTable.Name, false, nullptr, joins, &jsonMembers );
+		if( columnSqlValue.empty() )
+			return {};
+
+		sql << "select " << columnSqlValue;
+		if( var addId = includeIdColumn && table.Tables.size() && !table.FindColumn("id") && table.Columns.size(); addId ) //putting in a map
+			sql << ", id";
+
+		auto pExtendedFrom = schemaTable.GetExtendedFromTable( _schema );
+		var& tableName = pExtendedFrom ? pExtendedFrom->Name : schemaTable.Name;
+		sql << endl << "from\t" << tableName;
+		for( var& j : joins )
+			sql << endl << j.ToString();
+
+		sql << endl << "from\t" << schemaTable.Name;
+		for( var& j : joins )
+			sql << endl << j.ToString();
+		vector<object> parameters;
+		auto where = Where( table, schemaTable, parameters );
+		if( pExtendedFrom && schemaTable.SurrogateKey().Criteria.size() ){ //um_entities is_group?
+			if( where.size() )
+				where += " and ";
+			where += schemaTable.SurrogateKey().Criteria;
+		}
+		if( where.size() )
+			sql << endl << "where " << where;
+		if( whereString )
+			*whereString = where;
+		return make_tuple( sql.str(), parameters );
+	}
 	α GraphQL::Query( const DB::TableQL& table, json& jData, UserPK userPK )ε->void{
 		ASSERT(_db);
 		auto pHookData = Future<json>( GraphQL::Hook::Select(table, userPK) ).get();
@@ -184,12 +220,11 @@ namespace Jde::DB{
 		vector<uint> dates; flat_map<uint,sp<const DB::Table>> flags;
 		vector<Join> joins;
 		var columnSqlValue = ColumnSql( table, schemaTable, nullptr, dates, flags, schemaTable.Name, false, nullptr, joins, &jsonMembers );
-		ostringstream sql;
+		ostringstream sql; //TODO =  SelectStatement( table );
 		if( columnSqlValue.size() )
 			sql << "select " << columnSqlValue;
 
-		var addId = table.Tables.size() && !table.FindColumn("id") && table.Columns.size();
-		if( addId )
+		if( var addId = table.Tables.size() && !table.FindColumn("id") && table.Columns.size(); addId ) //Why?
 			sql << ", id";
 		auto pExtendedFrom = schemaTable.GetExtendedFromTable( _schema );
 		var& tableName = pExtendedFrom ? pExtendedFrom->Name : schemaTable.Name;
@@ -200,7 +235,7 @@ namespace Jde::DB{
 		}
 		vector<object> parameters;
 		auto where = Where( table, schemaTable, parameters );
-		if( pExtendedFrom && schemaTable.SurrogateKey().Criteria.size() ){
+		if( pExtendedFrom && schemaTable.SurrogateKey().Criteria.size() ){ //um_entities is_group?
 			if( where.size() )
 				where += " and ";
 			where += schemaTable.SurrogateKey().Criteria;

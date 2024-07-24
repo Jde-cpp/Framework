@@ -180,7 +180,7 @@ namespace Jde::DB
 			else if( attribute=="map"){
 				auto parentId = DB::Schema::FromJson( value["parentId"].get<string>() );
 				auto pParentColumn = FindColumn( parentId );
-				auto childId = DB::Schema::FromJson( value["childId"].get<string>() ); 
+				auto childId = DB::Schema::FromJson( value["childId"].get<string>() );
 				auto pChildColumn = FindColumn( childId );
 				if( pParentColumn && pChildColumn )
 					ParentChildMap = make_tuple( ms<Column>(*pParentColumn), ms<Column>(*pChildColumn) );
@@ -227,7 +227,7 @@ namespace Jde::DB
 		osCreate << "\tselect " << syntax.IdentitySelect() <<";" << endl << syntax.ProcEnd() << endl;// into _id
 		return CIString{ osCreate.str() };
 	}
-	
+
 	α Table::GetExtendedFromTable( const DB::Schema& schema )Ι->sp<const Table>{//um_users return um_entities
 		auto pPK = SurrogateKeys.size()>0 ? FindColumn( SurrogateKeys[0] ) : nullptr;
 		return pPK && pPK->PKTable.size() ? schema.TryFindTable(pPK->PKTable) : sp<const Table>{};
@@ -288,7 +288,17 @@ namespace Jde::DB
 	}
 	α Table::FindColumn( sv name )Ι->const Column*{
 		auto pColumn = find_if( Columns.begin(), Columns.end(), [&name](var& c){return c.Name==name;} );
+		if( pColumn!=Columns.end() && !pColumn->TablePtr )
+			pColumn->TablePtr = this;
 		return pColumn==Columns.end() ? nullptr : &(*pColumn);
+	}
+
+	α Table::FindColumn( sv name, DB::Schema& schema )Ε->const Column&{
+		auto pColumn = FindColumn( name );
+		if( var pExtendedFrom = pColumn ? nullptr : GetExtendedFromTable(schema); pExtendedFrom )
+			pColumn = pExtendedFrom->FindColumn( name );
+		THROW_IF( !pColumn || !pColumn->TablePtr, "Could not find column '{}'", name );
+		return *pColumn;
 	}
 
 	α ColumnStartingWith( const Table& table, sv part )ι->SchemaName{

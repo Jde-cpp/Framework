@@ -58,6 +58,7 @@ namespace Jde::DB{
 		α InsertProcName()Ι->SchemaName;
 		α InsertProcText( const Syntax& syntax )Ι->string;
 		α FindColumn( sv name )Ι->const Column*;
+		α FindColumn( sv name, DB::Schema& schema )Ε->const Column&;//also looks into extended from table
 
 		α IsFlags()Ι->bool{ return FlagsData.size(); }
 		α IsEnum()Ι->bool;//GraphQL attribute

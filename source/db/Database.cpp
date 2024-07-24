@@ -87,8 +87,7 @@ namespace Jde
 	sp<DB::Syntax> _pSyntax;
 	sp<DB::IDataSource> _pDefault;
 	up<vector<function<void()>>> _pDBShutdowns = mu<vector<function<void()>>>();
-	α DB::ShutdownClean( function<void()>& shutdown )ι->void
-	{
+	α DB::ShutdownClean( function<void()> shutdown )ι->void{
 		_pDBShutdowns->push_back( shutdown );
 	}
 	α DB::CleanDataSources()ι->void
