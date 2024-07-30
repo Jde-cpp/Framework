@@ -7,13 +7,12 @@ namespace Jde::Coroutine
 	sp<CoWorker> CoWorker::_pInstance;
 	std::once_flag CoWorker::_singleThread;
 
-	α CoWorker::Start()ι->void
-	{
-		IApplication::AddShutdown( _pInstance );
-		_pThread = make_unique<Threading::InterruptibleThread>( _name, [this](){Run();} );
+	α CoWorker::Start()ι->void{
+		Process::AddShutdown( _pInstance );
+		_pThread = mu<Threading::InterruptibleThread>( _name, [this](){Run();} );
 	}
-	α CoWorker::Shutdown()ι->void
-	{
+
+	α CoWorker::Shutdown( bool terminate )ι->void{
 		TRACE( "({})Shutdown", _name );
 		_pThread->Interrupt();
 		{
@@ -25,12 +24,10 @@ namespace Jde::Coroutine
 		TRACE( "({})~Shutdown", _name );
 	}
 
-	α CoWorker::Run()ι->void
-	{
+	α CoWorker::Run()ι->void{
 		Threading::SetThreadDscrptn( _name );
 		TRACE( "{} - Starting", _name );
-		while( !Threading::GetThreadInterruptFlag().IsSet() )
-		{
+		while( !Threading::GetThreadInterruptFlag().IsSet() ){
 			Process();
 		}
 		TRACE( "{} - Ending", _name );

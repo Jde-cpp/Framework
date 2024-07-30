@@ -16,15 +16,15 @@ namespace Jde{
 	//static var _logTag{ Logging::Tag("stopwatch") };
 	Stopwatch::SDuration Stopwatch::_minimumToLog = 1s;
 
-	Stopwatch::Stopwatch( sv what, sp<LogTag> logTag, bool started, SL sl )ι:
+	Stopwatch::Stopwatch( sv what, ELogTags tags, bool started, SL sl )ι:
 		_what{ what },
 		_start{ started ? steady_clock::now() : STimePoint{} },
-		_logTag{ logTag },
+		_tags{ tags },
 		_sl{ sl }
 	{}
 
 	Stopwatch::Stopwatch( sv what, bool started, SL sl )ι:
-		Stopwatch{ what, AppTag(), started, sl }
+		Stopwatch{ what, ELogTags::App, started, sl }
 	{}
 
 	Stopwatch::Stopwatch( Stopwatch* pParent, sv what, sv instance, bool started, SL sl )ι:
@@ -80,7 +80,7 @@ namespace Jde{
 					var& childElapsed = child.second;
 					os << "(" << child.first << "=" << FormatSeconds(childElapsed/index) << ")";
 				}
-				TRACE( "Progress={}"sv, os.str() );
+				Trace{ _tags, "Progress={}", os.str() };
 			}
 		}
 		_previousProgressElapsed = elapsed;
@@ -88,9 +88,9 @@ namespace Jde{
 	}
 	α Stopwatch::Output( sv what, const SDuration& elapsed, bool logMemory, SL sl )ι->void{
 		if( logMemory )
-			TRACESL( "{{}) time:  {} - {} Gigs", what, FormatSeconds(elapsed), IApplication::MemorySize()/std::pow(2,30) );
+			Trace( sl, _tags, "({}) time:  {} - {} Gigs", what, FormatSeconds(elapsed), IApplication::MemorySize()/std::pow(2,30) );
 		else
-			TRACESL( "({}) time:  {}", what, FormatSeconds(elapsed) );
+			Trace( sl, _tags, "({}) time:  {}", what, FormatSeconds(elapsed) );
 	}
 	α Stopwatch::Finish( bool /*remove=true*/ )ι->void{
 		Finish( ""sv );

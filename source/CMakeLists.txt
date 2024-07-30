@@ -32,10 +32,8 @@ target_precompile_headers(${CMAKE_PROJECT_NAME}
   PRIVATE
 	<functional>
 	<iostream>
-	<boost/exception/diagnostic_information.hpp>
+#	<boost/exception/diagnostic_information.hpp>
 	<boost/core/noncopyable.hpp>
-#	<spdlog/spdlog.h>
-#	<spdlog/sinks/basic_file_sink.h>
 
   <jde/TypeDefs.h>
 	<jde/Assert.h>
@@ -43,6 +41,4 @@ target_precompile_headers(${CMAKE_PROJECT_NAME}
 	<jde/log/Log.h>
 	<jde/Exception.h>
 	"Settings.h"
-
-	#"log/server/proto/messages.pb.h"
 )

@@ -71,7 +71,7 @@ namespace Jde::IO
 		α await_suspend( HCoroutine h )ι->void override;//{ base::await_suspend( h ); _pPromise = &h.promise(); }
 		α await_resume()ι->AwaitResult override;
 	private:
-		sp<IException> ExceptionPtr;
+		up<IException> ExceptionPtr;
 		FileIOArg _arg;
 		bool _cache;
 	};

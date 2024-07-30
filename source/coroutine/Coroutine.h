@@ -32,8 +32,8 @@ namespace Jde::Coroutine{
 
 	struct Γ CoroutinePool final: IShutdown{
 		~CoroutinePool(){ _pInstance=nullptr; }
-		Ω Resume( coroutine_handle<>&& h )ι->void;
-		α Shutdown()ι->void;
+		Ω Resume( coroutine_handle<> h )ι->void;
+		α Shutdown( bool terminate )ι->void;
 #define SETTINGS(T,n,dflt) optional<T> v; if( _pSettings ) v=_pSettings->TryGet<T>(n); return v.value_or(dflt)
 	private:
 		α InnerResume( CoroutineParam&& param )ι->void;

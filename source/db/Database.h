@@ -25,7 +25,7 @@ namespace Jde::DB{
 	Φ DefaultSyntax()ι->const DB::Syntax&;
 	Φ CreateSchema()ε->void;
 	Φ DefaultSchema()ι->Schema&;
-	Φ CleanDataSources()ι->void;
+	Φ CleanDataSources( bool terminate )ι->void;
 	Φ ShutdownClean( function<void()> shutdown )ι->void;
 
 	Ξ ExecuteProc( string sql, vec<object> parameters, RowΛ f, SRCE )ε->uint{ return DataSource().ExecuteProc( move(sql), parameters, f, sl ); }

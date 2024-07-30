@@ -25,7 +25,7 @@ namespace Jde{
 		using SDuration=steady_clock::duration;
 		using STimePoint=steady_clock::time_point;
 		Stopwatch( sv what, bool started=true, SRCE )ι;
-		Stopwatch( sv what, sp<LogTag> logTag, bool started=true, SRCE )ι;
+		Stopwatch( sv what, ELogTags tags, bool started=true, SRCE )ι;
 		Stopwatch( Stopwatch* pParent, sv what="", sv instance="", bool started=true, SRCE )ι;
 		~Stopwatch();
 
@@ -46,7 +46,7 @@ namespace Jde{
 		const string _what;
 		const string _instance;
 		steady_clock::time_point _start;
-		sp<LogTag> _logTag;
+		ELogTags _tags;
 		Stopwatch* _pParent{};
 		flat_map<string,SDuration> _children;
 

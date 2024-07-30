@@ -65,7 +65,7 @@ namespace Jde::Settings{
 		optional<std::chrono::system_clock::duration> result;
 		if( strng.has_value() )
 			Try( [strng, &result](){ result = Chrono::ToDuration(*strng);} );
-		return  result;
+		return result;
 	}
 	$ Container::Get<ELogLevel>( sv path )Ι->optional<ELogLevel>{
 		optional<ELogLevel> level;

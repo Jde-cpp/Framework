@@ -1,7 +1,7 @@
 ﻿#pragma once
 #ifndef AWAITABLE_H
 #define AWAITABLE_H
-#include <jde/coroutine/Task.h>
+#include <jde/coroutine/TaskOld.h>
 #include "Coroutine.h"
 namespace Jde{
 	using namespace Jde::Coroutine;
@@ -9,44 +9,8 @@ namespace Jde{
 
 namespace Jde::Coroutine{
 	using ClientHandle = uint;
-	template<class TResult=void,class TTask=VoidTask>
-	struct VoidAwait{
-	protected:
-	public:
-		using TPromise = TTask::promise_type;
-		using Task=TTask;
-		using Handle=coroutine_handle<TPromise>;
-		VoidAwait( SRCE )ι:_sl{sl}{}
-		β await_ready()ι->bool{ return false; }
-		β await_suspend( Handle h )ε->void{ _h=h; }
-		β await_resume()ε->TResult{ AwaitResume(); return TResult{}; }
-		α Resume()ι{ ASSERT(_h); _h->resume(); }
-	protected:
-		α AwaitResume()ε->void{
-			if( up<IException> e = Promise() ? Promise()->MoveError() : nullptr; e )
-				e->Throw();
-		}
-		Handle _h{};
-		TPromise* Promise(){ return _h ? &_h.promise() : nullptr; }
-		SL _sl;
-	};
 
-	template<class Result,class TTask=Coroutine::TTask<Result>>
-	struct TAwait : VoidAwait<Result,TTask>{
-		using base = VoidAwait<Result,TTask>;
-		TAwait( SRCE )ι:base{sl}{}
-		β await_resume()ε->Result{
-			base::AwaitResume();
-			if( !base::Promise() )
-				throw Jde::Exception{ SRCE_CUR, Jde::ELogLevel::Critical, "promise is null" };
-			if( !base::Promise()->Value() )
-				throw Jde::Exception{ SRCE_CUR, Jde::ELogLevel::Critical, "Value is null" };
-			return move( *base::Promise()->Value() );
-		};
-		α Resume( Result&& r )ι{ ASSERT(base::Promise()); base::Promise()->Resume( move(r), base::_h ); }
-		α Resume( IException&& r )ι{ ASSERT(base::Promise()); base::Promise()->ResumeWithError( move(r), base::_h ); }
-	};
-//TODO look into combining BaseAwait and IAwait
+//TODO remove, use Await.h
 	struct BaseAwait{
 		BaseAwait()ι=default;
 		BaseAwait( str name )ι:_name{name}{};

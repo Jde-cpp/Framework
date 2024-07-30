@@ -199,7 +199,7 @@ namespace Jde::Collections{
 		for( const auto& subsetItem : subset ){
 			const uint index = find( population.begin(), population.end(), subsetItem ) - population.begin();
 			if( index==population.size() )
-				ERRT( AppTag(), "Could not index {}", subsetItem );
+				Error( ELogTags::App, "Could not index {}", subsetItem );
 			results.push_back( index );
 		}
 		return results;

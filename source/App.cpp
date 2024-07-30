@@ -7,29 +7,35 @@
 #include <jde/io/File.h>
 #include "Settings.h"
 #include "threading/InterruptibleThread.h"
+#include "collections/Vector.h"
 
 #define var const auto
 
 namespace Jde{
 	static sp<LogTag> _logTag = Logging::Tag( "app" );
-	α AppTag()ι->sp<LogTag>{ return _logTag; }
 
+	sp<IApplication> _pInstance;
+	α IApplication::SetInstance( sp<IApplication> app )ι->void{ _pInstance = app; }
+	α IApplication::Instance()ι->IApplication&{ return *_pInstance; }
+	α IApplication::Kill( uint processId )ι->bool{return _pInstance ? _pInstance->KillInstance( processId ) : false;}
 
-	sp<IApplication> IApplication::_pInstance;
-	up<string> IApplication::_pApplicationName;
+	string _applicationName;
 
-	mutex IApplication::_threadMutex;
-	VectorPtr<sp<Threading::InterruptibleThread>> IApplication::_pBackgroundThreads{ make_shared<vector<sp<Threading::InterruptibleThread>>>() };
+	Vector<sp<Threading::InterruptibleThread>> _backgroundThreads;
 	function<void()> OnExit;
-
-	auto _pDeletedThreads = make_shared<vector<sp<Threading::InterruptibleThread>>>();
-
-	vector<sp<void>> IApplication::_objects; mutex IApplication::_objectMutex;
+}
+namespace Jde{
+	Vector<sp<void>> _keepAlives;
+	α Process::AddKeepAlive( sp<void> pShared )ι->void{ _keepAlives.push_back( pShared ); }
+	α Process::RemoveKeepAlive( sp<void> pShared )ι->void{
+		_keepAlives.erase( pShared );
+	}
+}
+namespace Jde{
 	vector<Threading::IPollWorker*> IApplication::_activeWorkers; std::atomic_flag IApplication::_activeWorkersMutex;
-	vector<sp<IShutdown>> IApplication::_shutdowns;
 
-	const TimePoint Start=Clock::now();
-	TimePoint IApplication::StartTime()ι{ return Start; }
+	const TimePoint _start=Clock::now();
+	α IApplication::StartTime()ι->TimePoint{ return _start; }
 
 	flat_set<string> IApplication::BaseStartup( int argc, char** argv, sv appName, string serviceDescription/*, sv companyName*/ )ε{//no config file
 		{
@@ -39,7 +45,7 @@ namespace Jde{
 				os << argv[i] << " ";
 			Logging::Default()->log( spdlog::source_loc{FileName(SRCE_CUR.file_name()).c_str(),SRCE_CUR.line(),SRCE_CUR.function_name()}, (spdlog::level::level_enum)ELogLevel::Information, os.str() ); //TODO add cwd.
 		}
-		_pApplicationName = mu<string>( appName );
+		_applicationName = appName;
 
 		bool console = false;
 		const string arg0{ argv[0] };
@@ -69,20 +75,48 @@ namespace Jde{
 			AsService();
 		Logging::Initialize();
 		Threading::SetThreadDscrptn( appName );
-
-		//_driveWorker.Initialize();
 		_pInstance->AddSignals();
 		return values;
 	}
 
 	std::condition_variable _workerCondition; mutex _workerConditionMutex;
 	optional<int> _exitReason;
-	α IApplication::Exit( int reason )ι->void{ _exitReason = reason; }
-	α IApplication::ShuttingDown()ι->bool{ return (bool)_exitReason; }
+	bool _terminate{};
+	α Process::ExitReason()ι->optional<int>{ return _exitReason; }
+	α Process::SetExitReason( int reason, bool terminate )ι->void{ _exitReason = reason; _terminate = terminate; }
+	α Process::ShuttingDown()ι->bool{ return (bool)_exitReason; }
+	bool _finalizing{};
+	α Process::Finalizing()ι->bool{ return _finalizing; }
 
+	up<vector<function<void(bool)>>> _pShutdownFunctions;
+	α Process::AddShutdownFunction( function<void(bool)>&& shutdown )ι->void{
+		if( !_pShutdownFunctions )
+			_pShutdownFunctions = mu<vector<function<void(bool)>>>();
+		_pShutdownFunctions->push_back( shutdown );
+	}
+
+	static Vector<sp<IShutdown>> _shutdowns;
+	α Process::AddShutdown( sp<IShutdown> pShared )ι->void{
+		_shutdowns.push_back( move(pShared) );
+	}
+	α Process::RemoveShutdown( sp<IShutdown> pShutdown )ι->void{
+		_shutdowns.erase( pShutdown );
+	}
+
+	Vector<IShutdown*> _rawShutdowns;
+	α Process::AddShutdown( IShutdown* shutdown )ι->void{
+		ASSERT( !_rawShutdowns.find(shutdown) );
+		_rawShutdowns.push_back( shutdown );
+	}
+	α Process::RemoveShutdown( IShutdown* pShutdown )ι->void{
+		ASSERT( _rawShutdowns.find(pShutdown) );
+		_rawShutdowns.erase( pShutdown );
+	}
+
+	//TODOThreading remove this
 	α IApplication::AddActiveWorker( Threading::IPollWorker* p )ι->void{
 #ifndef _MSC_VER
-		ASSERT( false );//need to implement signals in linux for _workerCondition.
+		ASSERT( false );
 #endif
 		AtomicGuard l{ _activeWorkersMutex };
 		if( find(_activeWorkers.begin(), _activeWorkers.end(), p)==_activeWorkers.end() ){
@@ -129,126 +163,51 @@ namespace Jde{
 			}
 		}
 		INFO( "Pause returned = {}.", _exitReason ? std::to_string(_exitReason.value()) : "null" );
-		{
-			lg _{_threadMutex};
-			for( auto& pThread : *_pBackgroundThreads )
-				pThread->Interrupt();
-		}
-		IApplication::Shutdown( _exitReason.value_or(-1) );
+		_backgroundThreads.visit( [](auto&& p){ p->Interrupt(); } );
+		Process::Shutdown( _exitReason.value_or(-1) );
 		return _exitReason.value_or( -1 );
 	}
+	α Cleanup()ι->void;
+	α Process::Shutdown( int exitReason )ι->void{
+		bool terminate{ false }; //use case might be if non-terminate took too long
+		SetExitReason( exitReason, terminate );//Sets ShuttingDown should be called in OnExit handler
+		INFO( "[{}]Waiting for process to complete. exitReason: {}, terminate: {}", OSApp::ProcessId(), _exitReason.value(), terminate );
+		_shutdowns.erase( [terminate](auto& p){ p->Shutdown( terminate ); } );
 
-	α IApplication::Shutdown( int exitReason )ι->void{
-		Exit( exitReason );
-		INFO( "({})Waiting for process to complete. {}", OSApp::ProcessId(), _exitReason.value() );
-		GarbageCollect();
-		{
-			lg _{ _objectMutex };
-			for( auto pShutdown : _shutdowns )
-			{
-				if( pShutdown )//not sure why it would be null.
-					pShutdown->Shutdown();
-			}
-			_shutdowns.clear();
-		}
-		for(;;){
-			{
-				unique_lock l{_threadMutex};
-				for( auto ppThread = _pBackgroundThreads->begin(); ppThread!=_pBackgroundThreads->end();  )
-				{
-					if( (*ppThread)->IsDone() )
-					{
-						(*ppThread)->Join();
-						ppThread = _pBackgroundThreads->erase( ppThread );
-					}
-					else
-						++ppThread;
-				}
-				if( _pBackgroundThreads->size()==0 )
-					break;
-			}
+		while( _backgroundThreads.size() ){
+			_backgroundThreads.erase_if( [](var& p)->bool {
+				var done = p->IsDone();
+				if( done )
+					p->Join();
+				return done;
+			});
 			std::this_thread::yield(); //std::this_thread::sleep_for( 2s );
 		}
-		TRACE( "Leaving Application::Wait" );
+		if( _pShutdownFunctions )
+			for_each( *_pShutdownFunctions, [=](var& shutdown){ shutdown( terminate ); } );
+		_rawShutdowns.erase( [=](auto& p){ p->Shutdown( terminate );} );
+		Cleanup();
+		_finalizing = true;
 	}
 	α IApplication::AddThread( sp<Threading::InterruptibleThread> pThread )ι->void{
 		TRACE( "Adding Backgound thread" );
-		lg _{_threadMutex};
-		_pBackgroundThreads->push_back( pThread );
+		_backgroundThreads.push_back( pThread );
 	}
 
-	α IApplication::RemoveThread( sv name )ι->sp<Threading::InterruptibleThread>{
-		lg _{_threadMutex};
-		auto ppThread = find_if( _pBackgroundThreads->begin(), _pBackgroundThreads->end(), [name](var& p){ return p->Name==name;} );
-		auto p = ppThread==_pBackgroundThreads->end() ? sp<Threading::InterruptibleThread>{} : *ppThread;
-		if( ppThread!=_pBackgroundThreads->end() )
-			_pBackgroundThreads->erase( ppThread );
-		return p;
+	α IApplication::RemoveThread( sv name )ι->void{
+		_backgroundThreads.erase_if( [name](var& p){ return p->Name==name;} );
 	}
+
 	α IApplication::RemoveThread( sp<Threading::InterruptibleThread> pThread )ι->void{
-		lg _{_threadMutex};
-		_pDeletedThreads->push_back( pThread );
-		for( auto ppThread = _pBackgroundThreads->begin(); ppThread!=_pBackgroundThreads->end(); ){
-			if( *ppThread==pThread ){
-				_pBackgroundThreads->erase( ppThread );
-				break;
-			}
-			++ppThread;
-		}
-	}
-	α IApplication::GarbageCollect()ι->void{
-		lg _{_threadMutex};
-		for( auto ppThread = _pDeletedThreads->begin(); ppThread!=_pDeletedThreads->end(); ){
-			(*ppThread)->Join();
-			ppThread = _pDeletedThreads->erase( ppThread );
-		}
+		_backgroundThreads.erase( pThread );
 	}
 
-	α IApplication::Add( sp<void> pShared )ι->void
-	{
-		lg _{ _objectMutex };
-		_objects.push_back( pShared );
-	}
 
-	α IApplication::AddShutdown( sp<IShutdown> pShared )ι->void
-	{
-		lg _{ _objectMutex };
-		_shutdowns.push_back( move(pShared) );
-	}
-	α IApplication::RemoveShutdown( sp<IShutdown> pShutdown )ι->void
-	{
-		Remove( pShutdown );
-		lg _{ _objectMutex };
-		if( auto p=find( _shutdowns.begin(), _shutdowns.end(), pShutdown ); p!=_shutdowns.end() )
-			_shutdowns.erase( p );
-		else
-			WARN( "Could not find shutdown" );
-	}
-
-	α IApplication::Remove( sp<void> pShared )ι->void
-	{
-		lg _{ _objectMutex };
-		for( auto ppObject = _objects.begin(); ppObject!=_objects.end(); ++ppObject ){
-			if( *ppObject==pShared ){
-				_objects.erase( ppObject );
-				break;
-			}
-		}
-	}
-	up<vector<function<void()>>> _pShutdownFunctions = mu<vector<function<void()>>>();
-	α IApplication::AddShutdownFunction( function<void()>&& shutdown )ι->void{
-		_pShutdownFunctions->push_back( shutdown );
-	}
-	α IApplication::Cleanup()ι->void{
-		_pBackgroundThreads = nullptr;
-		_pDeletedThreads = nullptr;
-		for( var& shutdown : *_pShutdownFunctions )
-			shutdown();
-		INFO( "Clearing Logger" );
-		Logging::DestroyLogger();
-		_pApplicationName = nullptr;
+	α Cleanup()ι->void{
 		_pInstance = nullptr;
 		_pShutdownFunctions = nullptr;
+		Information( ELogTags::App, "Clearing Logger" );
+		Logging::DestroyLogger();
 	}
 	α IApplication::ApplicationDataFolder()ι->fs::path{
 		return ProgramDataFolder()/OSApp::CompanyRootDir()/OSApp::ProductName();

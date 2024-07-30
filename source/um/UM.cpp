@@ -8,6 +8,7 @@
 #include "../db/Database.h"
 #include "../db/GraphQL.h"
 #include "../db/Syntax.h"
+#include "../coroutine/Awaitable.h"
 
 #define var const auto
 namespace Jde{
@@ -253,15 +254,18 @@ namespace Jde{
 	}
 }
 namespace Jde::UM{
-	LoginAwait::LoginAwait( vector<unsigned char> modulus, uint32 exponent, string&& name, string&& target, string&& description, SL sl )ι:
-			base{sl}, _modulus{ move(modulus) }, _exponent{ exponent }, _name{ move(name) }, _target{ move(target) }, _description{ move(description) }
+	LoginAwait::LoginAwait( vector<unsigned char> modulus, vector<unsigned char> exponent, string&& name, string&& target, string&& description, SL sl )ι:
+			base{sl}, _modulus{ move(modulus) }, _exponent{ move(exponent) }, _name{ move(name) }, _target{ move(target) }, _description{ move(description) }
 	{}
 
 	α LoginAwait::LoginTask()ε->Jde::Task{
 		auto modulusHex = Str::ToHex( (byte*)_modulus.data(), _modulus.size() );
 		if( modulusHex.size() > 1024 )
 			THROW( "modulus {} is too long. max length: {}", modulusHex.size(), 1024 );
-		vector<DB::object> parameters = { modulusHex, _exponent, underlying(EProviderType::Key) };
+		uint32_t exponent{};
+		for( var i : _exponent )
+			exponent = (exponent<<8) | i;
+		vector<DB::object> parameters = { modulusHex, exponent, underlying(EProviderType::Key) };
 		var sql = "select e.id from um_entities e join um_users u on e.id=u.entity_id where u.modulus=? and u.exponent=? and e.provider_id=?";
 		try{
 			auto task = DB::ScalerCo<UserPK>( string{sql}, parameters );

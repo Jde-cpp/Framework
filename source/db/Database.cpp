@@ -90,9 +90,9 @@ namespace Jde
 	α DB::ShutdownClean( function<void()> shutdown )ι->void{
 		_pDBShutdowns->push_back( shutdown );
 	}
-	α DB::CleanDataSources()ι->void
+	α DB::CleanDataSources( bool terminate )ι->void
 	{
-		TRACE( "CleanDataSources"sv );
+		TRACE( "CleanDataSources" );
 		DB::ClearQLDataSource();
 		_pDefault = nullptr;
 		TRACE( "_pDefault=nullptr" );
@@ -108,7 +108,7 @@ namespace Jde
 			std::unique_lock l{_dataSourcesMutex};
 			_pDataSources = nullptr;
 		}
-		TRACE( "~CleanDataSources"sv );
+		TRACE( "~CleanDataSources" );
 	}
 	#define db DataSource()
 	DB::Schema _schema;
@@ -160,7 +160,7 @@ namespace Jde
 		sp<IDataSource> pDataSource;
 		std::unique_lock l{_dataSourcesMutex};
 		string key = libraryName.string();
-		std::call_once( _singleShutdown, [](){ IApplication::AddShutdownFunction( CleanDataSources ); } );
+		std::call_once( _singleShutdown, [](){ Process::AddShutdownFunction( CleanDataSources ); } );
 		auto pSource = _pDataSources->find( key );
 		if( pSource==_pDataSources->end() )
 			pSource = _pDataSources->emplace( key, make_shared<DataSourceApi>(libraryName) ).first;

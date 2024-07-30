@@ -104,7 +104,7 @@ namespace Jde::IO{
 		}
 		IApplication::RemoveThread( _pThread );
 		auto pThis = shared_from_this();//keep alive
-		IApplication::Remove( pThis );
+		Process::RemoveKeepAlive( pThis );
 	}
 
 	α DiskWatcher::ReadEvent( const pollfd& fd, bool isRetry )ε->void

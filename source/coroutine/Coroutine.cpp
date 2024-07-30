@@ -46,8 +46,8 @@ namespace Jde::Coroutine
 	}
 	{}
 	ResumeThread::~ResumeThread(){
-		//if( !IApplication::ShuttingDown() )
-			TRACE( "({:x}:{})ResumeThread::~ResumeThread", Threading::GetThreadId(), ThreadParam.AppHandle );
+		//if( !Process::ShuttingDown() )
+		TRACE( "({:x}:{})ResumeThread::~ResumeThread", Threading::GetThreadId(), ThreadParam.AppHandle );
 		if( _thread.joinable() ){
 			_thread.request_stop();
 			_thread.join();
@@ -74,27 +74,27 @@ namespace Jde::Coroutine
 	Settings::Item<Duration> CoroutinePool::PoolIdleThreshold{ "coroutinePool/poolIdleThreshold", 1s };
 
 
-	α CoroutinePool::Shutdown()ι->void{
+	α CoroutinePool::Shutdown( bool terminate )ι->void{
 		if( _pThread ){
 			_pThread->Interrupt();
 			_pThread->Join();
 		}
 	}
 
-	α CoroutinePool::Resume( coroutine_handle<>&& h )ι->void{
-		if( IApplication::ShuttingDown() ){
-			DBG( "Can't resume, shutting down."sv );
-			return;
-		}
+	α CoroutinePool::Resume( coroutine_handle<> h )ι->void{
+		// if( Process::ShuttingDown() ){  Is this needed?
+		// 	DBG( "Can't resume, shutting down."sv );
+		// 	return;
+		// }
 		{
 			unique_lock l{ _mtx };
 			if( !_pInstance ){
 				INFO( "MaxThreadCount={}, WakeDuration={} ThreadDuration={}, PoolIdleThreshold={}", (uint16)MaxThreadCount, Chrono::ToString<Duration>(WakeDuration), Chrono::ToString<Duration>(ThreadDuration), Chrono::ToString<Duration>(PoolIdleThreshold) );
-				_pInstance = make_shared<CoroutinePool>();
-				IApplication::AddShutdown( _pInstance );
+				_pInstance = ms<CoroutinePool>();
+				Process::AddShutdown( _pInstance );
 			}
 		}
-		_pInstance->InnerResume( CoroutineParam{move(h)} );
+		_pInstance->InnerResume( CoroutineParam{h} );
 	}
 
 	α CoroutinePool::InnerResume( CoroutineParam&& param )ι->void{

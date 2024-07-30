@@ -65,12 +65,12 @@ namespace Jde::Threading
 		}
 		return _coroutines.empty() ? std::nullopt : optional<bool>{ processed };
 	}
-	α Alarm::Shutdown()ι->void{
+	α Alarm::Shutdown( bool terminate )ι->void{
 		DBG("Alarm::Shutdown()");
 		_pThread->request_stop();
 		lg _( _mtx );
 		_cv.notify_one();
-		IWorker::Shutdown();
+		IWorker::Shutdown( terminate );
 		lg _2{ _coroutineMutex };
 		for( auto p = _coroutines.begin(); p!=_coroutines.end(); p=_coroutines.erase(p) ){
 			SL sl{ get<2>(p->second) };

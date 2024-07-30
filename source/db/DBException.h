@@ -17,7 +17,6 @@ namespace Jde::DB
 		α Log()Ι->void override;
 		α what()Ι->const char* override;
 		using T=DBException;
-		α Clone()ι->sp<IException> override{ return ms<T>(move(*this)); }
 		α Move()ι->up<IException> override{ return mu<T>(move(*this)); }
 		α Ptr()ι->std::exception_ptr override{ return Jde::make_exception_ptr(move(*this)); }
 		[[noreturn]] α Throw()ε->void override{ throw move(*this); }

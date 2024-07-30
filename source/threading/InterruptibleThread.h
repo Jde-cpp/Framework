@@ -28,8 +28,7 @@ namespace Jde::Threading{  //TODO Reflection remove Threading from public items.
 	extern thread_local InterruptFlag ThreadInterruptFlag;
 	Γ InterruptFlag& GetThreadInterruptFlag()ι;
 
-	struct InterruptibleThread : public IShutdown
-	{
+	struct InterruptibleThread : public IShutdown{
 		template<typename FunctionType>
 		InterruptibleThread( string name, FunctionType f )ι;
 		virtual Γ ~InterruptibleThread();
@@ -37,7 +36,7 @@ namespace Jde::Threading{  //TODO Reflection remove Threading from public items.
 		Γ void Join();
 		bool IsDone()Ι{ return _pFlag && _pFlag->IsDone(); }
 		const string Name;
-		Γ void Shutdown()ι override;
+		Γ void Shutdown( bool terminate )ι override;
 		void Detach()ι{ _internalThread.detach(); ShouldJoin = false; }//destructor on same thread.
 	private:
 		std::thread _internalThread;
@@ -98,6 +97,6 @@ namespace Jde::Threading{  //TODO Reflection remove Threading from public items.
 	}
 	struct ThreadInterrupted : public Exception{ ThreadInterrupted()ι:Exception{"interupted", ELogLevel::Trace}{} };
 }
-#undef _logTag 
+#undef _logTag
 #undef ω
 #endif

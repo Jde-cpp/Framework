@@ -26,13 +26,12 @@ namespace Jde::Threading{
 	struct Γ Alarm final: Threading::TWorker<Alarm>{
 		using base=Threading::TWorker<Alarm>;
 		Alarm():base{}{};
-		~Alarm(){  TRACE("Alarm::~Alarm"sv); }
 		Ω Wait( TimePoint t, Handle& handle, SRCE )ι{ return AlarmAwait{t, handle, sl}; }
 		Ω Wait( Duration d, SRCE )ι{ return AlarmAwait{Clock::now()+d, sl}; }
 		static void Cancel( Handle handle )ι;
 		static constexpr sv Name{ "Alarm" };
 	private:
-		void Shutdown()ι override;
+		void Shutdown( bool terminate )ι override;
 		optional<bool> Poll()ι override;
 		static void Add( TimePoint t, HCoroutine h, Handle myHandle, SL sl )ι;
 		static constexpr Duration WakeDuration{5s};

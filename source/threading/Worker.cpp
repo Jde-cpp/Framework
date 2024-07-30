@@ -31,18 +31,16 @@ namespace Jde::Threading{
 	{
 	}
 
-	α IWorker::Shutdown()ι->void
-	{
+	α IWorker::Shutdown( bool terminate )ι->void{
 		AtomicGuard l{ _mutex };
-		if( _pThread )
-		{
+		if( _pThread ){
 			_pThread->request_stop();
 			_pThread->join();
 			_pThread = nullptr;
 		}
 	}
-	α IPollWorker::WakeUp()ι->void
-	{
+
+	α IPollWorker::WakeUp()ι->void{
 		AtomicGuard l{ _mutex };
 		++_calls;
 		if( ThreadCount && !_pThread )
@@ -50,8 +48,8 @@ namespace Jde::Threading{
 		else if( !ThreadCount && _calls==1 )
 			IApplication::AddActiveWorker( this );
 	}
-	α IPollWorker::Sleep()ι->void
-	{
+
+	α IPollWorker::Sleep()ι->void{
 		AtomicGuard l{ _mutex };
 		--_calls;
 		_lastRequest = Clock::now();

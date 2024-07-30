@@ -107,13 +107,18 @@ namespace Jde{
 		return _what.c_str();
 	}
 
-	CodeException::CodeException( std::error_code&& code, sp<LogTag> tag, string value, ELogLevel level, SL sl )ι:
+	CodeException::CodeException( std::error_code code, sp<LogTag> tag, string value, ELogLevel level, SL sl )ι:
 		IException{ Jde::format("({}){} - {}", code.value(), value, code.message()), level, (uint)code.value(), move(tag), sl },
 		_errorCode{ move(code) }
 	{}
 
-	CodeException::CodeException( std::error_code&& code, sp<LogTag> tag, ELogLevel level, SL sl )ι:
+	CodeException::CodeException( std::error_code code, sp<LogTag> tag, ELogLevel level, SL sl )ι:
 		IException{ Jde::format("({}){}", code.value(), code.message()), level, (uint)code.value(), move(tag), sl },
+		_errorCode{ move(code) }
+	{}
+
+	CodeException::CodeException( std::error_code code, ELogTags tags, ELogLevel level, SL sl )ι:
+		IException{ tags, sl, level, "({}){}", code.value(), code.message() },
 		_errorCode{ move(code) }
 	{}
 
@@ -168,44 +173,44 @@ namespace Jde{
 		return _what.c_str();
 	}
 
-	NetException::NetException( sv host, sv target, uint code, string result, ELogLevel level, SL sl )ι:
-//		IException{ {string{host}, string{target}, std::to_string(code), string{result.substr(0,100)}}, "{}{} ({}){}", sl, code }, //"
-		IException{ sl, level, code, "{}{} ({}){}", host, target, code, result.substr(0,100) }, //"
-		Host{ host },
-		Target{ target },
-		//Code{ code },
-		Result{ move(result) }{
-		SetLevel( level );
-		_what = Jde::format( "{}{} ({}){}", Host, Target, code, Result );
-		if( var f = Settings::Get<fs::path>("net/errorFile"); f ){
-			std::ofstream os{ *f };
-			os << Result;
-		}
-		//Log();
-	}
+// 	NetException::NetException( sv host, sv target, uint code, string result, ELogLevel level, SL sl )ι:
+// //		IException{ {string{host}, string{target}, std::to_string(code), string{result.substr(0,100)}}, "{}{} ({}){}", sl, code }, //"
+// 		IException{ sl, level, code, "{}{} ({}){}", host, target, code, result.substr(0,100) }, //"
+// 		Host{ host },
+// 		Target{ target },
+// 		//Code{ code },
+// 		Result{ move(result) }{
+// 		SetLevel( level );
+// 		_what = Jde::format( "{}{} ({}){}", Host, Target, code, Result );
+// 		if( var f = Settings::Get<fs::path>("net/errorFile"); f ){
+// 			std::ofstream os{ *f };
+// 			os << Result;
+// 		}
+// 		//Log();
+// 	}
 
-	α NetException::Log( string extra )Ι->void{
-		if( Level()==ELogLevel::NoLog )
-			return;
-		var sl = _stack.front();
-#ifndef NDEBUG
-		if( string{sl.file_name()}.ends_with("construct_at") || Level()>=Logging::BreakLevel() )
-			BREAK;
-#endif
-		if( auto p = Logging::Default(); p )
-			p->log( spdlog::source_loc{FileName(sl.file_name()).c_str(), (int)sl.line(), sl.function_name()}, (spdlog::level::level_enum)Level(), extra.size() ? Jde::format("{}\n{}", extra, _what) : _what );
-/*		SetLevel( ELogLevel::NoLog );
-		//if( Logging::Server() )
-		//	Logging::LogServer( Logging::Messages::Message{Logging::Message2{_level, _what, _sl.file_name(), _sl.function_name(), _sl.line()}, vector<string>{_args}} );
+// 	α NetException::Log( string extra )Ι->void{
+// 		if( Level()==ELogLevel::NoLog )
+// 			return;
+// 		var sl = _stack.front();
+// #ifndef NDEBUG
+// 		if( string{sl.file_name()}.ends_with("construct_at") || Level()>=Logging::BreakLevel() )
+// 			BREAK;
+// #endif
+// 		if( auto p = Logging::Default(); p )
+// 			p->log( spdlog::source_loc{FileName(sl.file_name()).c_str(), (int)sl.line(), sl.function_name()}, (spdlog::level::level_enum)Level(), extra.size() ? Jde::format("{}\n{}", extra, _what) : _what );
+// /*		SetLevel( ELogLevel::NoLog );
+// 		//if( Logging::Server() )
+// 		//	Logging::LogServer( Logging::Messages::Message{Logging::Message2{_level, _what, _sl.file_name(), _sl.function_name(), _sl.line()}, vector<string>{_args}} );
 
-		try{
-			var path = fs::temp_directory_path()/"ssl_error_response.json";
-			auto l{ Threading::UniqueLock(path.string()) };
-			std::ofstream os{ path };
-			os << Result;
-		}
-		catch( std::exception& e ){
-			ERRT( IO::Sockets::LogTag(), "could not save error result:  {}", e.what() );
-		}*/
-	}
+// 		try{
+// 			var path = fs::temp_directory_path()/"ssl_error_response.json";
+// 			auto l{ Threading::UniqueLock(path.string()) };
+// 			std::ofstream os{ path };
+// 			os << Result;
+// 		}
+// 		catch( std::exception& e ){
+// 			ERRT( IO::Sockets::LogTag(), "could not save error result:  {}", e.what() );
+// 		}*/
+// 	}
 }
