@@ -194,8 +194,15 @@ namespace Jde{
 		_backgroundThreads.push_back( pThread );
 	}
 
-	α IApplication::RemoveThread( sv name )ι->void{
-		_backgroundThreads.erase_if( [name](var& p){ return p->Name==name;} );
+	α IApplication::RemoveThread( sv name )ι->sp<Threading::InterruptibleThread>{
+		sp<Threading::InterruptibleThread> pThread;
+		_backgroundThreads.erase_if( [name,&pThread](var& p){
+			bool equal = p->Name==name;
+			if( equal )
+				pThread = p;
+			return equal;
+		});
+		return pThread;
 	}
 
 	α IApplication::RemoveThread( sp<Threading::InterruptibleThread> pThread )ι->void{

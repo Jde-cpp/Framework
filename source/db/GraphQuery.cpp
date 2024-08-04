@@ -8,7 +8,7 @@
 
 namespace Jde::DB{
 	using std::endl;
-	static sp<LogTag> _logTag = Logging::Tag( "ql" );
+	constexpr ELogTags _tags{ ELogTags::GraphQL };
 	#define _schema DB::DefaultSchema()
 	struct Join{
 		α ToString()Ι->string{ return Jde::format( "{0}join {1} on {1}.{2}={3}.{4}", Left ? "left " : "", NewTable, NewTableId, ExistingTable, ExistingColumn ); }
@@ -21,7 +21,7 @@ namespace Jde::DB{
 	};
 
 	α Where( const DB::TableQL& table, const Table& schemaTable, vector<object>& parameters )ε->string{//TODO use FilterQL
-		TRACE( "Where({})", table.Args.dump() );
+		Trace( _tags, "Where({})", table.Args.dump() );
 		var pWhere = table.Args.find( "filter" );
 		var j = pWhere==table.Args.end() ? table.Args : *pWhere;
 		ostringstream where;
@@ -166,7 +166,7 @@ namespace Jde::DB{
 					joins.emplace_back( pkTable->Name, pkTable->SurrogateKey().Name, childPrefix, pColumn->Name, true );
 			}
 			else
-				ERR( "Could not extract data {}->{}", dbTable.Name, childTable.DBName() );
+				Error( _tags, "Could not extract data {}->{}", dbTable.Name, childTable.DBName() );
 		}
 		return Str::AddCommas( columns );
 	}

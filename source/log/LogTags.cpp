@@ -4,18 +4,21 @@
 #define var const auto
 
 namespace Jde{
-	inline constexpr std::array<sv,24> ELogTagStrings = {"none",
-		"sql", "exception", "users", "tests", "app", "settings", "io", "locks",
-		"alarm", "cache", "sessions", "http", "socket", "client", "server", "read",
-		"write", "startup", "shutdown", "subscription", "externalLogger", "graphQL", "parsing"};
+	constexpr std::array<sv,26> ELogTagStrings = {"none",
+		"app", "cache", "client", "exception", "externalLogger", "graphQL", "http", "io",
+		"locks", "parsing", "pedantic", "read", "write", "scheduler", "server", "sessions",
+		"settings", "shutdown", "socket", "sql", "startup", "subscription", "test", "threads",
+		"users"
+		};
 
 	up<vector<sp<LogTag>>> _availableTags;
 	vector<LogTag> _fileTags;
 	concurrent_flat_map<ELogTags,ELogLevel> _fileLogLevels;
 	optional<ELogLevel> _defaultFileLogLevel;
+	function<optional<ELogTags>(sv)> _parser;
 	α DefaultLogLevel()ι->ELogLevel{
 		if( !_defaultFileLogLevel ) //may not be set when tags are initialized.
-			_defaultFileLogLevel = Settings::Get<ELogLevel>("logging/defaultLevel").value_or(ELogLevel::Information);
+			_defaultFileLogLevel = Settings::Get<ELogLevel>( "logging/defaultLevel" ).value_or( ELogLevel::Information );
 		return *_defaultFileLogLevel;
 	}
 
@@ -131,31 +134,48 @@ namespace Jde{
 	}
 	return tagStrings.empty() ? string{ELogTagStrings[0]} : Str::AddSeparators( tagStrings, "." );
 }
+
 α Jde::ToLogTags( str name )ι->ELogTags{
 	auto flags = Str::Split( name, '.' );
-	using UTag = std::underlying_type_t<ELogTags>;
-	UTag y{};
+	ELogTags y{};
 	for( var& tag : flags ){
-		if( UTag i = std::distance( ELogTagStrings.begin(), find(ELogTagStrings, tag) ); i<ELogTagStrings.size() )
-			y |= y | (1<<(i-1));
+		if( auto i = (ELogTags)std::distance( ELogTagStrings.begin(), find(ELogTagStrings, tag) ); i<(ELogTags)ELogTagStrings.size() )
+			y |= (ELogTags)( 1ul<<(underlying(i)-1) );
+		else if( auto parsed = _parser ? _parser(tag) : nullopt; parsed )
+			y |= *parsed;
 		else
-			Debug( ELogTags::Settings, "Unknown tag '{}'", tag );
+			Warning( ELogTags::Settings, "Unknown tag '{}'", tag );
 	}
-	return (ELogTags)y;
+	return y;
+}
+
+α Jde::TagParser( function<optional<ELogTags>(sv)> parser )ι->void{
+	_parser = parser;
 }
 
 α Jde::FileMinLevel( ELogTags tags )ι->ELogLevel{
-	optional<ELogLevel> minLevel;
-	if( !_fileLogLevels.cvisit(tags, [&](var& kv){minLevel = kv.second;}) ){
-		for( uint i=1; i<ELogTagStrings.size(); ++i ){
-			var flag = (ELogTags)(1<<(i-1));
-			if( !empty(tags & flag) )
-				_fileLogLevels.cvisit( flag, [&](var& kv){minLevel = std::min(minLevel.value_or(kv.second), kv.second);} );
-		}
-	}
-	return minLevel.value_or( *_defaultFileLogLevel );
+	return Min( tags, _fileLogLevels ).value_or( *_defaultFileLogLevel );
 }
 
+using enum Jde::ELogLevel;
+α Jde::MinLevel( ELogTags tags )ι->ELogLevel{
+	return Min( FileMinLevel(tags), Logging::External::MinLevel(tags) );
+}
+
+α Jde::Min( ELogLevel a, ELogLevel b )ι->ELogLevel{
+	return a==NoLog || b==NoLog ? std::max( a, b ) : std::min( a, b );
+}
+α Jde::Min( ELogTags tags, const concurrent_flat_map<ELogTags,ELogLevel>& settings )ι->optional<ELogLevel>{
+	optional<ELogLevel> min;
+	if( !settings.cvisit(tags, [&](var& kv){min = kv.second;}) ){
+		for( uint i=1; i<sizeof(ELogTags)*8; ++i ){
+			var flag = (ELogTags)( 1ul<<(i-1) );
+			if( !empty(tags & flag) )
+				settings.cvisit( flag, [&](var& kv){min = min ? Min(*min, kv.second) : kv.second;} );
+		}
+	}
+	return min;
+}
 α Jde::ShouldTrace( sp<LogTag> pTag )ι->bool{
 	//TODO go through all tags.
 	return pTag->Level==ELogLevel::Trace;

@@ -27,7 +27,14 @@ namespace Jde::Logging{
 	}
 
 	α External::MinLevel()ι->ELogLevel{
-		return std::accumulate( _externalLoggers.begin(), _externalLoggers.end(), ELogLevel::NoLog, [](ELogLevel min, auto& x){ return std::max( min, x->MinLevel() );} );
+		return std::accumulate( _externalLoggers.begin(), _externalLoggers.end(), ELogLevel::NoLog, [](ELogLevel min, auto& x){
+			return Min( min, x->MinLevel() );
+		});
+	}
+	α External::MinLevel( ELogTags tags )ι->ELogLevel{
+		return std::accumulate( _externalLoggers.begin(), _externalLoggers.end(), ELogLevel::NoLog, [&](ELogLevel min, auto& x){
+			return Min( min, Min(tags, x->Tags).value_or(x->DefaultLevel()) );
+		});
 	}
 	α External::MinLevel( sv externalName )ι->ELogLevel{
 		auto p = find_if( _externalLoggers, [externalName](auto& x){return x->Name()==externalName;} );

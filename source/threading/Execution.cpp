@@ -62,6 +62,7 @@ namespace Jde{
 			for( auto i = _threadCount - 1; i > 0; --i )
 				v.emplace_back( [=]{ Threading::SetThreadDscrptn( 𐢜("Ex[{}]", i) ); _ioc->run(); } );
 			_started.test_and_set();
+			Trace( ELogTags::App, "Executor Started: instances: {}.", _ioc.use_count() );
 			_started.notify_all();
 			_ioc->run();
 			_shutdowns->erase( [=](auto p){ p->Shutdown( false ); } );

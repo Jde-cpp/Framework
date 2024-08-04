@@ -16,7 +16,7 @@ namespace Jde::DB{
 	struct IDataSource;
 
 	static sp<LogTag> _logTag{ Logging::Tag("sql") };
-
+	constexpr ELogTags _tags{ ELogTags::Sql };
 	α UniqueIndexName( const Index& index, ISchemaProc& dbSchema, bool uniqueName, const vector<Index>& indexes )ε->string;
 
 	string AbbrevName( sv schemaName ){
@@ -109,19 +109,17 @@ namespace Jde::DB{
 					name = name.parent_path()/( name.stem().string()+string{_syntax.ProcFileSuffix()}+name.extension().string() );
 				var path = relativePath/name; CHECK_PATH( path, SRCE_CUR );
 				var text = IO::FileUtilities::Load( path );
-				TRACE( "Executing '{}'"sv, path.string() );
+				Trace( _tags, "Executing '{}'", path.string() );
 				var queries = Str::Split<sv,iv>( text, "\ngo"_iv );
-				for( var& query : queries )
-				{
+				for( var& query : queries ){
 					ostringstream os;
-					for( uint i=0; i<query.size(); ++i )
-					{
+					for( uint i=0; i<query.size(); ++i ){
 						if( query[i]=='#' )
 							for( ; i<query.size() && query[i]!='\n'; ++i );
 						if( i<query.size() )
 							os.put( query[i] );
 					}
-					_pDataSource->Execute( os.str(), nullptr, nullptr, false );
+					_pDataSource->Execute( os.str(), nullptr, nullptr, false ); //TODONext - add views for app server.
 				}
 				INFO( "Finished '{}'"sv, path.string() );
 			}

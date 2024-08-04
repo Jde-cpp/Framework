@@ -21,11 +21,10 @@ namespace Jde{
 	using DB::EObject;
 	using DB::EType;
 	using DB::GraphQL::QLFieldKind;
-	sp<DB::IDataSource> _pDataSource;
+#define	_pDataSource DB::DataSourcePtr()
 #define  _schema DB::DefaultSchema()
-	static sp<LogTag> _logTag = Logging::Tag( "ql" );
 	up<DB::GraphQL::Introspection> _introspection;
-	constexpr ELogTags tags{ ELogTags::GraphQL };
+	constexpr ELogTags _tags{ ELogTags::GraphQL };
 	constexpr ELogTags _parsingTags{ ELogTags::GraphQL | ELogTags::Parsing };
 
 	α DB::SetQLDataSource( sp<DB::IDataSource> p )ι->void{ _pDataSource = p; }
@@ -285,11 +284,11 @@ namespace DB{
 				auto a = InsertAwait( *pExtendedFrom, m, userPK, 0 );
 				extendedFromId = *Future<uint>( move(a) ).get();
 			}
-			auto _logTag = ms<LogTag>( "InsertAwait", ELogLevel::Debug );
-			DBG( "calling InsertAwait" );
+			auto _tag = ELogTags::GraphQL | ELogTags::Pedantic;
+			Debug{ _tag, "calling InsertAwait" };
 			auto a = InsertAwait( t, m, userPK, extendedFromId );
 			result = *Future<uint>( move(a) ).get();
-			DBG( "~calling InsertAwait" );
+			Debug{ _tag, "~calling InsertAwait" };
 		break;}
 		case EMutationQL::Update:
 			result = get<0>( Update(t, m, DB::DefaultSyntax()) );
@@ -524,7 +523,7 @@ namespace DB{
 		json jSchema; jSchema["mutationType"] = jmutationType;
 		jData["__schema"] = jmutationType;
 	}
-#define TEST_ACCESS(a,b,c) TRACE( "TEST_ACCESS({},{},{})"sv, a, b, c )
+#define TEST_ACCESS(a,b,c) Trace( _tags, "TEST_ACCESS({},{},{})", a, b, c )
 	α QueryTable( const DB::TableQL& table, UserPK userPK, json& jData )ε->void{
 		TEST_ACCESS( "Read", table.DBName(), userPK ); //TODO implement.
 		if( table.JsonName=="__type" )
@@ -542,7 +541,7 @@ namespace DB{
 		return data;
 	}
 
-	α DB::CoQuery( string&& q_, UserPK u_, str threadName, SL sl )ι->TPoolAwait<json>{
+	α DB::CoQuery( string q_, UserPK u_, str threadName, SL sl )ι->TPoolAwait<json>{
 		return Coroutine::TPoolAwait<json>( [q=move(q_), u=u_](){
 			return mu<json>(Query(q,u));
 		}, threadName, sl );
@@ -550,7 +549,7 @@ namespace DB{
 
 	α DB::Query( sv query, UserPK userPK )ε->json{
 		ASSERT( _pDataSource );
-		TRACE( "{}", query );
+		Trace( _tags, "{}", query );
 		try{
 			var qlType = ParseQL( query );
 			vector<DB::TableQL> tableQueries;
@@ -608,7 +607,7 @@ namespace DB{
 			return result;
 		};
 		sv Peek()ι{ return _peekValue.empty() ? _peekValue = Next() : _peekValue; }
-		uint Index()ι{ return i;}
+		uint Index()ι{ return i; }
 		sv Text()ι{ return i<_text.size() ? _text.substr(i) : sv{}; }
 		sv AllText()ι{ return _text; }
 	private:

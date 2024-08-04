@@ -6,7 +6,7 @@ using namespace std::chrono;
 namespace Jde::Coroutine
 {
 	std::shared_mutex CoroutinePool::_mtx;
-	static var _logTag{ Logging::Tag("threads") };
+	static ELogTags _tag{ ELogTags::Threads };
 
 	sp<CoroutinePool> CoroutinePool::_pInstance;
 	std::atomic<uint> INDEX=0;
@@ -26,28 +26,28 @@ namespace Jde::Coroutine
 						if( timeout>now )
 							std::this_thread::yield();
 						else{
-							TRACE( "({})CoroutineThread Stopping", index );
+							Trace( _tag, "({})CoroutineThread Stopping", index );
 							_thread.request_stop();
 						}
 						continue;
 					}
 				}
-				TRACE( "({}:{}:{})CoroutineThread call resume - on thread:{:x}", ThreadParam.AppHandle, index, _param->CoHandle.address(), Threading::GetThreadId() );
+				Trace( _tag, "({}:{}:{})CoroutineThread call resume - on thread:{:x}", ThreadParam.AppHandle, index, _param->CoHandle.address(), Threading::GetThreadId() );
 				_param->CoHandle.resume();
-				TRACE( "({})CoroutineThread finish resume", index );
+				Trace( _tag, "({})CoroutineThread finish resume", index );
 				SetThreadInfo( ThreadParam );
 				timeout = Clock::now()+IdleLimit;
-				TRACE( "({})CoroutineThread timeout={}", index, ToIsoString(timeout) );
+				Trace( _tag, "({})CoroutineThread timeout={}", index, ToIsoString(timeout) );
 				unique_lock l{ _paramMutex };
 				_param = {};
 			}
-			TRACE( "({})CoroutineThread::Done", index );
+			Trace( _tag, "({})CoroutineThread::Done", index );
 		}
 	}
 	{}
 	ResumeThread::~ResumeThread(){
 		//if( !Process::ShuttingDown() )
-		TRACE( "({:x}:{})ResumeThread::~ResumeThread", Threading::GetThreadId(), ThreadParam.AppHandle );
+		Trace( _tag, "({:x}:{})ResumeThread::~ResumeThread", Threading::GetThreadId(), ThreadParam.AppHandle );
 		if( _thread.joinable() ){
 			_thread.request_stop();
 			_thread.join();
@@ -62,7 +62,7 @@ namespace Jde::Coroutine
 		bool done = Done();
 		auto result = !haveParam && !done ? optional<CoroutineParam>{} : optional<CoroutineParam>{ move(param) };
 		if( !result ){
-			TRACE( "({})ResumeThread::CheckIfReady - Reusing", ThreadParam.AppHandle );
+			Trace( _tag, "({})ResumeThread::CheckIfReady - Reusing", ThreadParam.AppHandle );
 			_param = move( param );
 		}
 		return result;
@@ -89,7 +89,7 @@ namespace Jde::Coroutine
 		{
 			unique_lock l{ _mtx };
 			if( !_pInstance ){
-				INFO( "MaxThreadCount={}, WakeDuration={} ThreadDuration={}, PoolIdleThreshold={}", (uint16)MaxThreadCount, Chrono::ToString<Duration>(WakeDuration), Chrono::ToString<Duration>(ThreadDuration), Chrono::ToString<Duration>(PoolIdleThreshold) );
+				Information( _tag, "MaxThreadCount={}, WakeDuration={} ThreadDuration={}, PoolIdleThreshold={}", (uint16)MaxThreadCount, Chrono::ToString<Duration>(WakeDuration), Chrono::ToString<Duration>(ThreadDuration), Chrono::ToString<Duration>(PoolIdleThreshold) );
 				_pInstance = ms<CoroutinePool>();
 				Process::AddShutdown( _pInstance );
 			}
@@ -135,7 +135,7 @@ namespace Jde::Coroutine
 
 	α CoroutinePool::Run()ι->void{
 		Threading::SetThreadInfo( Threading::ThreadParam{ string{Name}, (uint)Threading::EThread::CoroutinePool} );
-		TRACE( "{} - Starting", Name );
+		Trace( _tag, "{} - Starting", Name );
 		TimePoint quitTime = Clock::now()+(Duration)ThreadDuration;
 		while( !Threading::GetThreadInterruptFlag().IsSet() ||  !_pQueue->empty() ){
 			for( auto h = _pQueue->TryPop( WakeDuration ); h; ){
@@ -148,6 +148,6 @@ namespace Jde::Coroutine
 				break;
 			}
 		}
-		TRACE( "{} - Ending", Name );
+		Trace( _tag, "{} - Ending", Name );
 	}
 }

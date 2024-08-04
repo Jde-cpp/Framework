@@ -84,7 +84,7 @@ namespace Jde{
 #endif
 	}
 	α IException::Log()Ι->void{
-		if( Level()==ELogLevel::NoLog || (_pTag && Level()<_pTag->Level) )
+		if( Level()==ELogLevel::NoLog || (_pTag && Level()<MinLevel(ToLogTags(_pTag->Id))) )
 			return;
 		var& sl = _stack.front();
 		const string fileName{ strlen(sl.file_name()) ? FileName(sl.file_name()) : "{Unknown}\0"sv };

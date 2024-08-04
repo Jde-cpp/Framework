@@ -18,7 +18,7 @@ namespace Jde::DB::GraphQL{
 			if( !c.Insertable )
 				continue;
 			var [memberName, tableName] = ToJsonName( c );
-			
+
 			if( _parameters.size() )
 				_sql << ", ";
 			_sql << "?";
@@ -48,8 +48,8 @@ namespace Jde::DB::GraphQL{
 		return extendedFromId && !cNonDefaultArgs ? optional<AwaitResult>{ mu<uint>(extendedFromId) } : nullopt; // if no extended columns set, nothing todo.
 	}
 	α InsertAwait::Execute( HCoroutine h, UserPK userPK )ι->Task{
-		auto _logTag = ms<LogTag>( "InsertAwait", ELogLevel::Debug );
-		DBG("({})InsertAwait::Execute", h.address() );
+		var _tag{ ELogTags::GraphQL | ELogTags::Pedantic };
+		Trace( _tag, "({})InsertAwait::Execute", h.address() );
 		try{
 				( co_await Hook::InsertBefore(_mutation, userPK) ).UP<uint>();
 		}
@@ -67,13 +67,8 @@ namespace Jde::DB::GraphQL{
 			exception = e.Move();
 		}
 		if( exception ){
-			int i{0};
-			++i;
-			DBG("({})InsertAwait::SetResult", h.address() );
-			h.promise().SetResult(move(*exception)); 
-			DBG("({})InsertAwait::resume", h.address() );
+			h.promise().SetResult( move(*exception) );
 			h.resume();
-			DBG("({})InsertAwait::~resume", h.address() );
 		}
 	}
 	InsertAwait::InsertAwait( const DB::Table& table, const DB::MutationQL& mutation, UserPK userPK_, uint extendedFromId, SL sl )ι:

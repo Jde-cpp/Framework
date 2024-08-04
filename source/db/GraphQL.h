@@ -21,7 +21,7 @@ namespace Jde::DB{
 	α ClearQLDataSource()ι->void;
 
 	Φ Query( sv query, UserPK userId )ε->json;
-	Φ CoQuery( string&& query, UserPK userId, str threadName, SRCE )ι->Coroutine::TPoolAwait<json>;
+	Φ CoQuery( string query, UserPK userId, str threadName, SRCE )ι->Coroutine::TPoolAwait<json>;
 
 	typedef std::variant<vector<TableQL>,MutationQL> RequestQL;
 
