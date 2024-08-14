@@ -39,12 +39,13 @@ namespace Jde{
 	struct ExecutorContext final : IShutdown{
 		ExecutorContext()ι:
 			_thread{ [&](){Execute();} }{
-			_started.wait( true );
+			_started.wait( false );
 			Information( ELogTags::App, "Created executor threadCount: {}.", _threadCount );
 			Process::AddShutdown( this );
 		}
 		~ExecutorContext()ι{ if( !Process::Finalizing() ) Process::RemoveShutdown( this ); }
 		α Shutdown( bool terminate )ι->void override{
+			Debug( ELogTags::App, "Executor Shutdown: instances: {}.", _ioc.use_count() );
 			_shutdowns->erase( [=](auto p){ p->Shutdown( terminate ); } );
 			if( _ioc && terminate )
 				_ioc->stop(); // Stop the `io_context`. This will cause `run()` to return immediately, eventually destroying the `io_context` and all of the sockets in it.
@@ -61,8 +62,8 @@ namespace Jde{
 			std::vector<std::jthread> v; v.reserve( _threadCount - 1 );
 			for( auto i = _threadCount - 1; i > 0; --i )
 				v.emplace_back( [=]{ Threading::SetThreadDscrptn( 𐢜("Ex[{}]", i) ); _ioc->run(); } );
-			_started.test_and_set();
 			Trace( ELogTags::App, "Executor Started: instances: {}.", _ioc.use_count() );
+			_started.test_and_set();
 			_started.notify_all();
 			_ioc->run();
 			_shutdowns->erase( [=](auto p){ p->Shutdown( false ); } );

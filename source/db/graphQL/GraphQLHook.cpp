@@ -41,16 +41,17 @@ namespace Jde::DB::GraphQL{
 	}
 
 	α GraphQLHookAwait::AwaitMutation( HCoroutine h )ι->Task{
+		uint y{};
 		for( auto& awaitable : _awaitables ){
 			try{
-				( co_await *awaitable ).CheckError();
+				y+=*( co_await *awaitable ).UP<uint>();
 			}
 			catch( IException& e ){
 				Resume( move(e), h );
 				co_return;
 			}
 		}
-		ResumeBool( true, h );
+		Resume( mu<uint>(y), h );
 	}
 
 	α GraphQLHookAwait::Await( HCoroutine h )ι->Task{

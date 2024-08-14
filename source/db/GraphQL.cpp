@@ -285,10 +285,10 @@ namespace DB{
 				extendedFromId = *Future<uint>( move(a) ).get();
 			}
 			auto _tag = ELogTags::GraphQL | ELogTags::Pedantic;
-			Debug{ _tag, "calling InsertAwait" };
+			Trace{ _tag, "calling InsertAwait" };
 			auto a = InsertAwait( t, m, userPK, extendedFromId );
 			result = *Future<uint>( move(a) ).get();
-			Debug{ _tag, "~calling InsertAwait" };
+			Trace{ _tag, "~calling InsertAwait" };
 		break;}
 		case EMutationQL::Update:
 			result = get<0>( Update(t, m, DB::DefaultSyntax()) );

@@ -21,7 +21,6 @@ namespace Jde::DB{
 	};
 
 	α Where( const DB::TableQL& table, const Table& schemaTable, vector<object>& parameters )ε->string{//TODO use FilterQL
-		Trace( _tags, "Where({})", table.Args.dump() );
 		var pWhere = table.Args.find( "filter" );
 		var j = pWhere==table.Args.end() ? table.Args : *pWhere;
 		ostringstream where;
@@ -71,9 +70,6 @@ namespace Jde::DB{
 #define _db DataSource()
 #define _syntax DB::DefaultSyntax()
 	α AddColumn( const ColumnQL& c, const DB::TableQL& qlTable, const DB::Table& dbTable, vector<string>& columns, const DB::Table* pDefTable, vector<uint>& dates, flat_map<uint,sp<const DB::Table>>& flags, str defaultPrefix, bool excludeId, uint* pIndex, vector<Join>& joins, vector<tuple<string,string>>* pJsonMembers )->void{
-		// if( auto pView = dbTable.QLView.size() ? _schema.Tables.find(dbTable.QLView) : _schema.Tables.end(); pView!=_schema.Tables.end() )
-		// 	return AddColumn( c, qlTable, *pView->second, columns, pDefTable, dates, flags, defaultPrefix, excludeId, pIndex, joins, pJsonMembers );
-
 		auto columnName = DB::Schema::FromJson( c.JsonName );
 		if( columnName=="id" && excludeId )
 			return;

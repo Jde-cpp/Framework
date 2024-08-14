@@ -95,7 +95,11 @@ namespace Jde::Threading{  //TODO Reflection remove Threading from public items.
 		cv.wait( cl );
 		InterruptionPoint();
 	}
-	struct ThreadInterrupted : public Exception{ ThreadInterrupted()ι:Exception{"interupted", ELogLevel::Trace}{} };
+	struct ThreadInterrupted final : public IException{
+		ThreadInterrupted()ι:IException{"interupted", ELogLevel::Trace}{}
+		α Move()ι->up<IException>{ return mu<ThreadInterrupted>(move(*this)); }
+		[[noreturn]] α Throw()->void override{ throw move(*this); }
+	};
 }
 #undef _logTag
 #undef ω

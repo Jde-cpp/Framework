@@ -20,6 +20,7 @@ namespace Jde{
 	α IApplication::Kill( uint processId )ι->bool{return _pInstance ? _pInstance->KillInstance( processId ) : false;}
 
 	string _applicationName;
+	α Process::ApplicationName()ι->const string&{ return _applicationName; }
 
 	Vector<sp<Threading::InterruptibleThread>> _backgroundThreads;
 	function<void()> OnExit;

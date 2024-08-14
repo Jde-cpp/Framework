@@ -87,6 +87,7 @@ namespace Jde::DB{
 		bool CustomInsertProc{};
 		bool IsView{};
 		tuple<sp<Column>,sp<Column>> ParentChildMap;//groups entity_id, member_id
+		SchemaName PurgeProcName;
 		SchemaName QLView;
 	};
 	struct ForeignKey{

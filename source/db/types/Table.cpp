@@ -147,7 +147,7 @@ namespace Jde::DB
 				}
 				Indexes.push_back( Index{"pk", Name, true, &SurrogateKeys} );
 			}
-			else if( attribute=="naturalKey" ){
+			else if( attribute=="naturalKey" ){//TODONext - have multiple in json.  can't have multiple attributes with same name.
 				vector<SchemaName> columns;
 				for( var& it : value )
 					columns.push_back( DB::Schema::FromJson(it.get<string>()) );
@@ -175,6 +175,8 @@ namespace Jde::DB
 			}
 			else if( attribute=="customInsertProc" )
 				CustomInsertProc = value.get<bool>();
+			else if( attribute=="purgeProc" )
+				PurgeProcName = value.get<string>();
 			else if( attribute=="isView" )
 				IsView = value.get<bool>();
 			else if( attribute=="map"){

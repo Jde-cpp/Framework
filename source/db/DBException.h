@@ -12,10 +12,10 @@ namespace Jde::DB
 		DBException( int32 errorCode, string sql, const vector<object>* pValues, string what, SRCE )ι;
 		DBException( string sql, const vector<object>* pValues, string what, SRCE )ι:DBException{ 0, move(sql), pValues, move(what), sl }{}
 		DBException( DBException&& from )ι:IException{move(from)}, Sql{from.Sql}, Parameters{from.Parameters}{}
-		~DBException()ι{ Log(); SetLevel( ELogLevel::NoLog ); };
+		~DBException(){ Log(); SetLevel( ELogLevel::NoLog ); };
 
 		α Log()Ι->void override;
-		α what()Ι->const char* override;
+		α what()const noexcept->const char* override;
 		using T=DBException;
 		α Move()ι->up<IException> override{ return mu<T>(move(*this)); }
 		α Ptr()ι->std::exception_ptr override{ return Jde::make_exception_ptr(move(*this)); }

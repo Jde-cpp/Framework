@@ -15,7 +15,7 @@ namespace Jde::DB::GraphQL{
 		parameters.push_back( ToObject(EType::ULong, *pId, "id") );
 		if( var p=UM::FindAuthorizer(table.Name); p )
 			p->TestPurge( *pId, userPK );
-		
+
 		sp<const DB::Table> pExtendedFromTable;
 		auto pColumn = table.FindColumn( "id" );
 		if( !pColumn ){
@@ -24,7 +24,7 @@ namespace Jde::DB::GraphQL{
 			else
 				THROW( "Could not find 'id' column" );
 		}
-		vector<string> statements{ Jde::format("delete from {} where {}=?", table.Name, pColumn->Name) };
+		vector<string> statements{ table.PurgeProcName.size() ? 𐢜("{}( ? )", table.PurgeProcName) : 𐢜("delete from {} where {}=?", table.Name, pColumn->Name) };
 		if( pExtendedFromTable ){
 			var extendedPurge = PurgeStatements( *pExtendedFromTable, m, userPK, parameters, sl );
 			statements.insert( end(statements), begin(extendedPurge), end(extendedPurge) );
@@ -33,10 +33,7 @@ namespace Jde::DB::GraphQL{
 	}
 
 	α PurgeAwait::Execute( const DB::Table& table, DB::MutationQL mutation, UserPK userPK, HCoroutine h )ι->Task{
-		vector<DB::object> parameters;
-		vector<string> statements;
 		try{
-			statements = PurgeStatements( table, mutation, userPK, parameters, _sl );
 			( co_await Hook::PurgeBefore(mutation, userPK) ).CheckError();
 		}
 		catch( IException& e ){
@@ -45,10 +42,15 @@ namespace Jde::DB::GraphQL{
 		}
 		bool success{ true };
 		try{
+		vector<DB::object> parameters;
+		auto statements = PurgeStatements( table, mutation, userPK, parameters, _sl );
+
 			//TODO for mysql allow CLIENT_MULTI_STATEMENTS return _pDataSource->Execute( Str::AddSeparators(statements, ";"), parameters, sl );
 			auto result{ mu<uint>() };
-			for( var& statement : statements ){
-				auto a = _pDataSource->ExecuteCo(statement, vector<DB::object>{parameters.front()}, _sl); //right now, parameters should singular and the same.
+			for( auto& statement : statements ){
+				auto a = statement.starts_with("delete ")
+					? _pDataSource->ExecuteCo(move(statement), vector<DB::object>{parameters.front()}, _sl) //right now, parameters should singular and the same.
+					: _pDataSource->ExecuteProcCo( move(statement), move(parameters), _sl );
 			 	*result += *( co_await *a ).UP<uint>(); //gcc compiler error.
 			}
 			Resume( move(result), move(h) );

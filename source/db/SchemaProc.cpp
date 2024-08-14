@@ -135,7 +135,7 @@ namespace Jde::DB{
 				ostringstream osSelect{ "select count(*) from ", std::ios::ate }; osSelect << tableName << " where ";
 				vector<object> selectParams;
 				ostringstream osWhere;
-				var set = [&,&table=*pTable](){
+				var set = [&,&table=*pTable]() {
 					osWhere.str("");
 					for( var& keyColumn : table.SurrogateKeys ){
 						if( osWhere.tellp() != std::streampos(0) )
@@ -154,7 +154,9 @@ namespace Jde::DB{
 					if( !set() )
 						for( auto p = pTable->NaturalKeys.begin(); p!=pTable->NaturalKeys.end() && !set(); ++p );
 				}
-				RETHROW( "Could not set data for {}", tableName );
+				catch( std::exception& e ){
+					throw Exception{ SRCE_CUR, move(e), "Could not set data for {}", tableName }; 
+				}
 				THROW_IF( selectParams.empty(), "Could not find keys in data for '{}'", tableName );
 				osSelect << osWhere.str();
 

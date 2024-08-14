@@ -13,10 +13,6 @@ namespace Jde{
 	up<IException> _empty;
 	α IException::EmptyPtr()ι->const up<IException>&{ return _empty; }
 
-	IException::IException( string value, ELogLevel level, uint code, SL sl )ι:
-		IException{ value, level, code, nullptr, sl }
-	{}
-
 	IException::IException( string value, ELogLevel level, uint code, sp<LogTag>&& tag, SL sl )ι:
 		_stack{ sl },
 		_what{ move(value) },
@@ -102,8 +98,12 @@ namespace Jde{
 	}
 
 	α IException::what()Ι->const char*{
-		if( _what.empty() )
-			_what = Str::ToString( _format, _args );
+		if( _what.empty() ){
+			if( _format.size() )
+				_what = Str::ToString( _format, _args );
+			else if( _pInner )
+				_what = _pInner->what();
+		}
 		return _what.c_str();
 	}
 
@@ -123,7 +123,7 @@ namespace Jde{
 	{}
 
 	BoostCodeException::BoostCodeException( const boost::system::error_code& c, sv msg, SL sl )ι:
-		IException{ string{msg}, ELogLevel::Debug, (uint)c.value(), sl },
+		IException{ string{msg}, ELogLevel::Debug, (uint)c.value(), {}, sl },
 		_errorCode{ mu<boost::system::error_code>(c) }
 	{}
 	BoostCodeException::BoostCodeException( BoostCodeException&& e )ι:
@@ -158,7 +158,7 @@ namespace Jde{
 	{}
 
 	Exception::Exception( string what, ELogLevel l, SL sl )ι:
-		IException{ move(what), l, 0, sl }
+		IException{ move(what), l, 0, {}, sl }
 	{}
 
 	α IOException::Path()Ι->const fs::path&{
@@ -172,45 +172,4 @@ namespace Jde{
 	α IOException::what()Ι->const char*{
 		return _what.c_str();
 	}
-
-// 	NetException::NetException( sv host, sv target, uint code, string result, ELogLevel level, SL sl )ι:
-// //		IException{ {string{host}, string{target}, std::to_string(code), string{result.substr(0,100)}}, "{}{} ({}){}", sl, code }, //"
-// 		IException{ sl, level, code, "{}{} ({}){}", host, target, code, result.substr(0,100) }, //"
-// 		Host{ host },
-// 		Target{ target },
-// 		//Code{ code },
-// 		Result{ move(result) }{
-// 		SetLevel( level );
-// 		_what = Jde::format( "{}{} ({}){}", Host, Target, code, Result );
-// 		if( var f = Settings::Get<fs::path>("net/errorFile"); f ){
-// 			std::ofstream os{ *f };
-// 			os << Result;
-// 		}
-// 		//Log();
-// 	}
-
-// 	α NetException::Log( string extra )Ι->void{
-// 		if( Level()==ELogLevel::NoLog )
-// 			return;
-// 		var sl = _stack.front();
-// #ifndef NDEBUG
-// 		if( string{sl.file_name()}.ends_with("construct_at") || Level()>=Logging::BreakLevel() )
-// 			BREAK;
-// #endif
-// 		if( auto p = Logging::Default(); p )
-// 			p->log( spdlog::source_loc{FileName(sl.file_name()).c_str(), (int)sl.line(), sl.function_name()}, (spdlog::level::level_enum)Level(), extra.size() ? Jde::format("{}\n{}", extra, _what) : _what );
-// /*		SetLevel( ELogLevel::NoLog );
-// 		//if( Logging::Server() )
-// 		//	Logging::LogServer( Logging::Messages::Message{Logging::Message2{_level, _what, _sl.file_name(), _sl.function_name(), _sl.line()}, vector<string>{_args}} );
-
-// 		try{
-// 			var path = fs::temp_directory_path()/"ssl_error_response.json";
-// 			auto l{ Threading::UniqueLock(path.string()) };
-// 			std::ofstream os{ path };
-// 			os << Result;
-// 		}
-// 		catch( std::exception& e ){
-// 			ERRT( IO::Sockets::LogTag(), "could not save error result:  {}", e.what() );
-// 		}*/
-// 	}
 }

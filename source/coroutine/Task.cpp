@@ -3,7 +3,7 @@
 #include <nlohmann/json.hpp>
 
 namespace Jde::Coroutine{
-	static sp<LogTag> _logTag{ Logging::Tag("coroutine") };
+	constexpr ELogTags _tags{ ELogTags::Threads };
 
 	std::atomic<ClientHandle> _handleIndex{0};
 	α NextHandle()ι->Handle{return ++_handleIndex;}
@@ -18,7 +18,7 @@ namespace Jde::Coroutine{
 	}
 	α AwaitResult::CheckUninitialized()ι->void{
 		if( !Uninitialized() )
-			CRITICAL( "Uninitialized - index={}", _result.index() );
+			Critical( _tags, "Uninitialized - index={}", _result.index() );
 	}
 
 	α Task::promise_type::unhandled_exception()ι->void{
@@ -29,23 +29,16 @@ namespace Jde::Coroutine{
 			e.Resume( *this );
 		}
 		catch( IException& e ){
-			//e.Log();
-			// if( _unhandledResume )
-			// {
-			// 	_pReturnObject->SetResult( move(e) );
-			// 	_unhandledResume.resume();
-			// }
-			// else
-				CRITICAL( "Jde::Task::promise_type::unhandled_exception - {}", e.what() );
+			Critical( _tags, "Jde::Task::promise_type::unhandled_exception - {}", e.what() );
 		}
 		catch( const nlohmann::json::exception& e ){
-			CRITICAL( "Jde::Task::promise_type::unhandled_exception - json exception - {}"sv, e.what() );
+			Critical( _tags, "Jde::Task::promise_type::unhandled_exception - json exception - {}", e.what() );
 		}
 		catch( const std::exception& e ){
-			CRITICAL( "Jde::Task::promise_type::unhandled_exception ->{}"sv, e.what() );
+			Critical( _tags, "Jde::Task::promise_type::unhandled_exception ->{}", e.what() );
 		}
 		catch( ... ){
-			CRITICAL( "Jde::Task::promise_type::unhandled_exception"sv );
+			Critical( _tags, "Jde::Task::promise_type::unhandled_exception" );
 		}
 	}
 }
