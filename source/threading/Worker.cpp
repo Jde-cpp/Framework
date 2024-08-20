@@ -31,7 +31,7 @@ namespace Jde::Threading{
 	{
 	}
 
-	α IWorker::Shutdown( bool terminate )ι->void{
+	α IWorker::Shutdown( bool /*terminate*/ )ι->void{
 		AtomicGuard l{ _mutex };
 		if( _pThread ){
 			_pThread->request_stop();

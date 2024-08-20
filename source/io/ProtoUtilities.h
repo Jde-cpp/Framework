@@ -127,8 +127,16 @@ namespace Jde::IO
 	}
 	Ξ Proto::ToTimePoint( google::protobuf::Timestamp t )ι->TimePoint{
 		google::protobuf::Timestamp proto;
+#ifdef _MSC_VER
+		Clock::duration duration = duration_cast<Clock::duration>( std::chrono::nanoseconds( t.seconds() ) );
+		return Clock::from_time_t( t.seconds() ) + duration;
+		//	std::chrono::nanoseconds( t.nanos() );
+#else
 		return Clock::from_time_t( t.seconds() )+std::chrono::nanoseconds( t.nanos() );
+#endif
 	}
+//	std::chrono::time_point<std::chrono::system_clock,std::chrono::duration<__int64,std::nano>>
+//	std::chrono::time_point<std::chrono::system_clock,std::chrono::duration<std::chrono::system_clock::rep,std::chrono::system_clock::period>>
 }
 #undef var
 #endif

@@ -260,14 +260,13 @@ namespace Jde::UM{
 
 	α LoginAwait::LoginTask()ε->Jde::Task{
 		auto modulusHex = Str::ToHex( (byte*)_modulus.data(), _modulus.size() );
-		if( modulusHex.size() > 1024 )
-			THROW( "modulus {} is too long. max length: {}", modulusHex.size(), 1024 );
-		uint32_t exponent{};
-		for( var i : _exponent )
-			exponent = (exponent<<8) | i;
-		vector<DB::object> parameters = { modulusHex, exponent, underlying(EProviderType::Key) };
-		var sql = "select e.id from um_entities e join um_users u on e.id=u.entity_id where u.modulus=? and u.exponent=? and e.provider_id=?";
 		try{
+			THROW_IF( modulusHex.size() > 1024, "modulus {} is too long. max length: {}", modulusHex.size(), 1024 );
+			uint32_t exponent{};
+			for( var i : _exponent )
+				exponent = (exponent<<8) | i;
+			vector<DB::object> parameters = { modulusHex, exponent, underlying(EProviderType::Key) };
+			var sql = "select e.id from um_entities e join um_users u on e.id=u.entity_id where u.modulus=? and u.exponent=? and e.provider_id=?";
 			auto task = DB::ScalerCo<UserPK>( string{sql}, parameters );
 			auto p = ( co_await task ).UP<UserPK>(); //gcc compile issue
 			auto userPK = p ? *p : 0;
@@ -284,8 +283,7 @@ namespace Jde::UM{
 		}
 	}
 
-	α LoginAwait::await_suspend( Handle h )ε->void{
-		base::await_suspend( h );
+	α LoginAwait::Suspend()ι->void{
 		LoginTask();
 	}
 	//	vector<unsigned char> _modulus;  vector<unsigned char> _exponent;

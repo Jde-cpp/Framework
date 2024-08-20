@@ -14,8 +14,6 @@ namespace Jde::Coroutine{
 	std::atomic<ClientHandle> TaskPromiseHandle{0};
 	α NextTaskPromiseHandle()ι->Handle{ return ++TaskPromiseHandle; }
 
-	AwaitResult::~AwaitResult(){
-	}
 	α AwaitResult::CheckUninitialized()ι->void{
 		if( !Uninitialized() )
 			Critical( _tags, "Uninitialized - index={}", _result.index() );

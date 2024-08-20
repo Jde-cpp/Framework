@@ -205,11 +205,16 @@ namespace Jde::DB{
 	}
 	α GraphQL::Query( const DB::TableQL& table, json& jData, UserPK userPK )ε->void{
 		ASSERT(_db);
-		auto pHookData = Future<json>( GraphQL::Hook::Select(table, userPK) ).get();
-		if( pHookData ){
-			jData[table.JsonName] = *pHookData;
+		optional<up<json>> hookData;
+		[]( auto& table, auto userPK, auto& jData, auto& hookData )->Task{
+			hookData = ( co_await GraphQL::Hook::Select(table, userPK) ).UP<json>();
+			if( *hookData )
+				jData[table.JsonName] = *(*hookData);
+		}( table, userPK, jData, hookData );
+		while( !hookData )
+			std::this_thread::yield();
+		if( *hookData )
 			return;
-		}
 		var isPlural = table.IsPlural();
 		var& schemaTable = _schema.FindTableSuffix( table.DBName() );
 		vector<tuple<string,string>> jsonMembers;

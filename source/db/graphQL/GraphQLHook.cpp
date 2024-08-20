@@ -9,6 +9,7 @@ namespace Jde::DB::GraphQL{
 		_hooks.emplace_back( move(hook) );
 	}
 	using Hook::Operation;
+#pragma warning(disable:4063)
 	α GraphQLHookAwait::CollectAwaits( const DB::MutationQL& mutation, UserPK userPK, Operation op )ι->optional<AwaitResult>{
 		up<IAwait> p;
 		lg _{ _hookMutex };
@@ -99,8 +100,7 @@ namespace Jde::DB::GraphQL{
 		return _awaitables.empty();
 	}
 
-	α MutationAwaits::await_suspend( base::Handle h )ι->void{
-		base::await_suspend( h );
+	α MutationAwaits::Suspend()ι->void{
 		uint result{};
 		for( auto& awaitable : _awaitables ){
 			up<IException> pException;
@@ -119,7 +119,7 @@ namespace Jde::DB::GraphQL{
 		}
 		if( !Promise()->Error() )
 			Promise()->SetValue( move(result) );
-		h.resume();
+		_h.resume();
 	}
 
 	α Hook::Select( const DB::TableQL& ql, UserPK userPK, SL sl )ι->GraphQLHookAwait{ return GraphQLHookAwait{ ql, userPK, Operation::Select, sl }; };

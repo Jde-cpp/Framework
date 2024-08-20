@@ -55,7 +55,7 @@ namespace Jde::DB::GraphQL{
 			}
 			Resume( move(result), move(h) );
 		}
-		catch( IException& e ){
+		catch( IException& ){
 			success = false;
 		}
 		if( !success )

@@ -32,7 +32,7 @@ namespace Jde::UM{
 	struct LoginAwait final : TAwait<UserPK>{
 		using base = TAwait<UserPK>;
 		LoginAwait( vector<unsigned char> modulus, vector<unsigned char> exponent, string&& name, string&& target, string&& description, SRCE )ι;
-		α await_suspend( Handle h )ε->void override;
+		α Suspend()ι->void override;
 	private:
 		α LoginTask()ε->Jde::Task;
 		vector<unsigned char> _modulus; vector<unsigned char> _exponent; string _name; string _target; string _description;

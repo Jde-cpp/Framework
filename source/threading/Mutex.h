@@ -29,10 +29,11 @@ namespace Jde{
 	class Γ LockAwait : public IAwait{
 		using base=IAwait;
 	public:
-		LockAwait( CoLock& lock )ι:_lock{lock}{}
+		LockAwait( CoLock& lock )ι;
+		~LockAwait();
 		α await_ready()ι->bool override;
-		α await_suspend( HCoroutine h )ι->void override;
-		α await_resume()ι->AwaitResult override{ return _pGuard ? AwaitResult{move(_pGuard)} : base::await_resume(); }
+		α Suspend()ι->void override;
+		α await_resume()ι->AwaitResult override;
 	private:
 		CoLock& _lock;
 		up<CoGuard> _pGuard;

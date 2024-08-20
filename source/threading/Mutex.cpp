@@ -16,36 +16,36 @@ namespace Jde
 		TRACE( "~CoGuard" );
 		_lock.Clear();
 	}
-
+	LockAwait::LockAwait( CoLock& lock )ι:_lock{lock}{}
+	LockAwait::~LockAwait(){} //clang error without this.
 	α LockAwait::await_ready()ι->bool
 	{
 		_pGuard = _lock.TestAndSet();
 		return !!_pGuard;
 	}
-	α LockAwait::await_suspend( HCoroutine h )ι->void
-	{
-		base::await_suspend( h );
-		if( (_pGuard = _lock.Push(h)) )
-			h.resume();
+
+	α LockAwait::await_resume()ι->AwaitResult{ 
+		return _pGuard ? AwaitResult{move(_pGuard)} : base::await_resume(); 
 	}
-	α CoLock::TestAndSet()ι->up<CoGuard>
-	{
+
+	α LockAwait::Suspend()ι->void{
+		if( (_pGuard = _lock.Push(_h)) )
+			_h.resume();
+	}
+	α CoLock::TestAndSet()ι->up<CoGuard>{
 		lg l{ _mutex };
 		return _flag.test_and_set(std::memory_order_acquire) ? up<CoGuard>{} : up<CoGuard>( new CoGuard(*this) );
 	}
-	α CoLock::Push( HCoroutine h )ι->up<CoGuard>
-	{
+	α CoLock::Push( HCoroutine h )ι->up<CoGuard>{
 		lg l{ _mutex };
 		auto p = _flag.test_and_set(std::memory_order_acquire) ? up<CoGuard>{} : up<CoGuard>{ new CoGuard(*this) };
 		if( !p )
 			_queue.push( move(h) );
 		return p;
 	}
-	α CoLock::Clear()ι->void
-	{
+	α CoLock::Clear()ι->void{
 		lg _{ _mutex };
-		if( !_queue.empty() )
-		{
+		if( !_queue.empty() ){
 			auto h = _queue.front();
 			_queue.pop();
 			h.promise().SetResult( up<CoGuard>{ new CoGuard(*this) } );

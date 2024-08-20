@@ -16,7 +16,7 @@ namespace Jde{
 			char ch = *i;
       if( ch == '%' ){
         if (i[1] && i[2]){
-          ch = from_hex(i[1]) << 4 | from_hex(i[2]);
+          ch = (char)( from_hex(i[1]) << 4 | from_hex(i[2]) );
           i += 2;
         }
       }
@@ -35,10 +35,10 @@ namespace Jde{
 		return p ? get<0>( *p ) : sv{};
 	}
 
-	α Str::Replace( sv source, char find, char replace )ι->string{
+	α Str::Replace( sv source, char find_, char replace )ι->string{
 		string result{ source };
 		for( char* pFrom=(char*)source.data(), *pTo=(char*)result.data(); pFrom<source.data()+source.size(); ++pFrom, ++pTo )
-			*pTo = *pFrom==find ? replace : *pFrom;
+			*pTo = *pFrom==find_ ? replace : *pFrom;
 
 		return result;
 	}

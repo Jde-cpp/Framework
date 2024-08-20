@@ -80,6 +80,7 @@ namespace Jde{
 			}
 			else if( name=="file" ){
 				auto pPath = sink.Get<fs::path>( "path" );
+#pragma warning(disable: 4127)
 				if( !_msvc && pPath && pPath->string().starts_with("/Jde-cpp") )
 					pPath = fs::path{ "~/."+pPath->string().substr(1) };
 				var markdown = sink.Get<bool>( "md" ).value_or( false );

@@ -66,12 +66,11 @@ namespace Jde
 	{}
 
 	DateTime::DateTime( steady_clock::time_point time )ι:
-		_time_point( Chrono::ToClock<Clock,steady_clock::time_point>(time) )
+		_time_point( Chrono::ToClock<Clock,steady_clock>(time) )
 	{}
 
 
-	DateTime::DateTime( uint16 year, uint8 month, uint8 day, uint8 hour, uint8 minute, uint8 second, Duration nanoFraction )ι
-	{
+	DateTime::DateTime( uint16 year, uint8 month, uint8 day, uint8 hour, uint8 minute, uint8 second, Duration nanoFraction )ι{
 		std::tm tm;
 		tm.tm_year = year-1900;
 		tm.tm_mon = month-1;

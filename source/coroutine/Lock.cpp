@@ -25,18 +25,17 @@ namespace Jde
 		TRACE( "({})LockKeyAwait::await_ready={} size={}", Key, ready, locks.size() );
 		return locks.size()==1;
 	}
-	α LockKeyAwait::await_suspend( HCoroutine h )ι->void{
-		BaseAwait::AwaitSuspend();
+	α LockKeyAwait::Suspend()ι->void{
 		AtomicGuard l( _coLocksLock ); ASSERT( _coLocks.find(Key)!=_coLocks.end() );
 		auto& locks = _coLocks.find( Key )->second;
 		if( locks.size()==1 ){//if other locks freed after await_ready
 			l.unlock();
-			h.resume();
+			_h.resume();
 		}
 		else{
 			for( uint i=0; !Handle && i<locks.size(); ++i ){
 				if( locks[i].index()==0 && get<LockKeyAwait*>(locks[i])==this )
-					locks[i] = Handle = h;
+					locks[i] = Handle = _h;
 			}
 			ASSERT( Handle );
 			TRACE( "({})LockKeyAwait::await_suspend size={}", Key, locks.size() );
@@ -67,15 +66,15 @@ namespace Jde
 	α LockWrapperAwait::await_ready()ι->bool{
 		return (bool)(_pLock = TryLock(_key, _shared) );//TODO just hold _coLocksLock wait till key isn't a string.
 	}
-	α LockWrapperAwait::AwaitSuspend( HCoroutine h )->Task{
+	α LockWrapperAwait::AwaitSuspend()ι->Task{
 		_pLock = ( co_await CoLockKey(_key, _shared) ).UP<CoLockGuard>();
-		h.resume();
+		_h.resume();
 	}
-	α LockWrapperAwait::await_suspend( HCoroutine h )ι->void{
-		AwaitSuspend( h );
+	α LockWrapperAwait::Suspend()ι->void{
+		AwaitSuspend();
 	}
 	α LockWrapperAwait::await_resume()ι->AwaitResult{
-		auto p = _pPromise ? ms<AwaitResult>( move(_pPromise->MoveResult()) ) : ReadyResult();
+		auto p = _pPromise ? ms<AwaitResult>( _pPromise->MoveResult() ) : ReadyResult();
 		if( _f.index()==0 )
 			get<0>( _f )( *p );
 		else

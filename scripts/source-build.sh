@@ -85,37 +85,41 @@ function buildLinux
 		buildConfig RelWithDebInfo $projectClean
 	fi;
 }
-function buildWindows2
-{
-	echo buildWindows2 $1 $2 $3;
-	echo $3 - starting;
+function buildWindows2 {
 	local configuration=$3;
 	local cmd="$1=$configuration";
 	local file=$2;
+	echo buildWindows2 - cmd: $cmd file: $2;
 	local out=.bin/$configuration/$file;
-	local targetDir=$baseDir/$jdeRoot/Public/stage/$configuration;
+	#local targetDir=$baseDir/$jdeRoot/Public/stage/$configuration;
+	local targetDir=.bin/$configuration;
 	local target=$targetDir/$file;
 	if [ ! -f $target ]; then
 		echo $target - not found;
-		$cmd; if [ $? -ne 0 ]; then echo `pwd`; echo $cmd; exit 1; fi;
-		if [ -f $target ]; then echo $cmd outputing stage dir.; rm $taget; fi;
-		sourceDir=`pwd`;
-		subDir=$(if [ -d .bin ]; then echo "/.bin"; else echo ""; fi);
-		cd $targetDir;
-
-		cp "$sourceDir$subDir/$configuration/$file" .;
-		if [[ $file == *.dll ]]; then
-			cp "$sourceDir$subDir/$configuration/${file:0:-3}lib" .;
+		$cmd;
+		if [ $? -ne 0 ];
+			then echo `pwd`;
+			echo $cmd;
+			exit 1;
 		fi;
-		cd "$sourceDir";
+#		if [ -f $target ]; then echo $cmd outputing stage dir.; rm $taget; fi;
+#		sourceDir=`pwd`;
+#		subDir=$(if [ -d .bin ]; then echo "/.bin"; else echo ""; fi);
+#		cd $targetDir;
+
+#		cp "$sourceDir$subDir/$configuration/$file" .;
+#		if [[ $file == *.dll ]]; then
+#			cp "$sourceDir$subDir/$configuration/${file:0:-3}lib" .;
+#		fi;
+#		cd "$sourceDir";
 	else
 		echo $target - found;
 	fi;
 }
-function buildWindows
-{
+function buildWindows {
 	dir=$1;
-	echo buildWindows - $dir clean=$clean;
+	file=$2;
+	echo buildWindows - dir: $dir, file: $file, clean: $clean, pwd=`pwd`;
 	if [[ ! -f "$dir.vcxproj.user" && -f "$dir.vcxproj._user" ]]; then
 		echo 'linked $dir.vcxproj.user to $dir.vcxproj._user'
 		linkFile $dir.vcxproj._user $dir.vcxproj.user;	if [ $? -ne 0 ]; then echo `pwd`; echo FAILED:  linkFile $dir.vcxproj._user $dir.vcxproj.user; exit 1; fi;
@@ -124,16 +128,15 @@ function buildWindows
 		echo rm -r -f $dir/.bin;
 		rm -r -f .bin;
 	fi;
-	file=$2;
-	echo file=$file dir=$dir pwd=`pwd`;
 	if [[ -z $file ]]; then
-		echo file empty;
 		if [[ $dir = "Framework" ]]; then
 			file="Jde.dll";
+		elif [[ $dir == Jde* ]]; then
+			file="$dir.dll";
+			echo file: $file;
 		else
 			file="Jde.$dir.dll";
 		fi;
-		echo file=$file;
 	fi;
 	projFile=$([ "${PWD##*/}" = "tests" ] && echo "Tests.$dir" || echo "$dir");
 	baseCmd="msbuild.exe $projFile.vcxproj -p:Platform=x64 -maxCpuCount -nologo -v:q /clp:ErrorsOnly -p:Configuration"
@@ -161,7 +164,7 @@ function createProto {
 
 function fetchDefault {
 	cd $baseDir/$jdeRoot;
-	fetch $1;
+	fetch $1 $2;
 	return $?;
 }
 #$1 - directory, $2 - whether to use local build file, $3 - resulting dll/exe.
@@ -172,6 +175,19 @@ function build {
 		buildLinux $2
 	fi;
 }
+function buildCMake {
+	if windows; then
+		moveToDir .build;
+		cmake -DVCPKG=ON -Wno-dev ..; if [ $? -ne 0 ]; then exit $LINENO; fi;
+		build $1 $3;
+	else
+		echo "Not implemented";
+		exit 1;
+	fi;
+}
+
+
+
 function buildTest {
 	if windows; then
 		MSBuild.exe -t:restore -p:RestorePackagesConfig=true
@@ -186,7 +202,6 @@ function buildTest {
 }
 function fetchBuild {
 	fetchDefault $1;
-	#echo fetchDefault $1 finished;
 	build $1 $2 $3;
 }
 function findProtoc {

@@ -31,10 +31,9 @@ namespace Jde::Threading{
 	{
 		_queue.Push( std::function<void()>(f) );
 	}
-
+#ifdef Unused
 	template<typename T>
-	struct TypePool : IShutdown
-	{
+	struct TypePool : IShutdown{
 		TypePool( uint8 threadCount, sv name )ι;
 		virtual ~TypePool(){ TRACE("~TypePool"sv); }
 
@@ -119,6 +118,7 @@ namespace Jde::Threading{
 			_threads.pop_back();
 		}
 	}
+#endif
 }
 #undef var
 #undef _logTag

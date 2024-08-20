@@ -45,7 +45,7 @@ namespace Jde::IO
 		//~FileIOArg(){ DBG("FileIOArg::~FileIOArg"sv); }
 		α Open()ε->void;
 		α HandleChunkComplete( IFileChunkArg* pChunkArg )ι->bool;
-		α Send( coroutine_handle<Task::promise_type>&& h )ι->void;
+		α Send( coroutine_handle<Task::promise_type> h )ι->void;
 		α SetWorker( sp<Threading::IWorker> p ){ _pWorkerKeepAlive=p; }
 		α Data()ι{ return std::visit( [](auto&& x){return x->data();}, Buffer ); }
 		α Size()Ι{ return std::visit( [](auto&& x){return x->size();}, Buffer ); }
@@ -68,7 +68,7 @@ namespace Jde::IO
 		DriveAwaitable( fs::path path, sp<vector<char>> data, SRCE )ι:base{ sl },_arg{ move(path), data },_cache{false}{}
 		DriveAwaitable( fs::path path, sp<string> data, SRCE )ι:base{ sl },_arg{ move(path), data },_cache{false}{}
 		α await_ready()ι->bool override;
-		α await_suspend( HCoroutine h )ι->void override;//{ base::await_suspend( h ); _pPromise = &h.promise(); }
+		α Suspend()ι->void override;//{ base::await_suspend( h ); _pPromise = &h.promise(); }
 		α await_resume()ι->AwaitResult override;
 	private:
 		up<IException> ExceptionPtr;
