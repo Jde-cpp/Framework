@@ -13,8 +13,8 @@ namespace Jde::Threading{
 	struct Γ AlarmAwait final : CancelAwait{
 		AlarmAwait( TimePoint when, Handle& handle, SL sl )ι:CancelAwait{handle}, _alarm{when}, _sl{sl}{}
 		AlarmAwait( TimePoint when, SL sl )ι:_alarm{when}, _sl{sl}{}
-		bool await_ready()ι override{ return _alarm<Clock::now(); }
-		void await_suspend( HCoroutine h )ι override;
+		α await_ready()ι->bool override{ return _alarm<Clock::now(); }
+		α Suspend()ι->void override;
 		α await_resume()ι->AwaitResult override{ Trace(ELogTags::Scheduler, "({})AlarmAwait::await_resume", Threading::GetThreadId()); return {}; }//returns the result value for co_await expression.
 	private:
 		TimePoint _alarm;

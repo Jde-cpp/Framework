@@ -90,8 +90,7 @@ namespace Jde
 	α DB::ShutdownClean( function<void()> shutdown )ι->void{
 		_pDBShutdowns->push_back( shutdown );
 	}
-	α DB::CleanDataSources( bool terminate )ι->void
-	{
+	α DB::CleanDataSources( bool /*terminate*/ )ι->void{
 		TRACE( "CleanDataSources" );
 		DB::ClearQLDataSource();
 		_pDefault = nullptr;

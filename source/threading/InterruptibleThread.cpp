@@ -49,7 +49,7 @@ namespace Jde::Threading
 		if( _internalThread.joinable() )
 			_internalThread.join();
 	}
-	void InterruptibleThread::Shutdown( bool terminate )ι{
+	void InterruptibleThread::Shutdown( bool /*terminate*/ )ι{
 		DBG( "{} - Shutdown", Name );
 		Interrupt();
 	};

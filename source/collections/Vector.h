@@ -9,10 +9,10 @@ namespace Jde{
 		Vector()ι:base{}{}
 		Vector( uint size )ι:base{}{ base::reserve(size); }
 
-		α begin( sl& l )Ι->typename base::const_iterator{ return base::begin(); }
-		α end( sl& l )Ι->typename base::const_iterator{ return base::end(); }
-		α begin( ul& l )ι->typename base::iterator{ return base::begin(); }
-		α end( ul& l )ι->typename base::iterator{ return base::end(); }
+		α begin( sl& )Ι->typename base::const_iterator{ return base::begin(); }
+		α end( sl& )Ι->typename base::const_iterator{ return base::end(); }
+		α begin( ul& )ι->typename base::iterator{ return base::begin(); }
+		α end( ul& )ι->typename base::iterator{ return base::end(); }
 
 		α clear()ι{ ul _( Mutex ); base::clear(); }
 		α find( const T& x )ι->optional<T>{ sl l( Mutex ); auto p = std::ranges::find(Base(), x); return p==end(l) ? nullopt : optional<T>{ *p }; }
@@ -23,7 +23,7 @@ namespace Jde{
 		α push_back( const T& val )ι{ ul _( Mutex ); base::push_back( val ); }
 		α push_back( T&& val )ι{ ul _( Mutex ); base::push_back( move(val) ); }
 		α size()Ι->uint{ sl l( Mutex ); return size( l ); }
-		α size( sl& l )Ι->uint{ return base::size(); }
+		α size( sl& )Ι->uint{ return base::size(); }
 		α visit( function<void(const T& p)> f )ι->void;
 
 		mutable std::shared_mutex Mutex;

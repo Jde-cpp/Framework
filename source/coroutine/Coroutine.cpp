@@ -74,7 +74,7 @@ namespace Jde::Coroutine
 	Settings::Item<Duration> CoroutinePool::PoolIdleThreshold{ "coroutinePool/poolIdleThreshold", 1s };
 
 
-	α CoroutinePool::Shutdown( bool terminate )ι->void{
+	α CoroutinePool::Shutdown( bool /*terminate*/ )ι->void{
 		if( _pThread ){
 			_pThread->Interrupt();
 			_pThread->Join();

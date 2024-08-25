@@ -13,7 +13,7 @@ namespace Jde{
 	up<IException> _empty;
 	α IException::EmptyPtr()ι->const up<IException>&{ return _empty; }
 
-	IException::IException( string value, ELogLevel level, uint code, sp<LogTag>&& tag, SL sl )ι:
+	IException::IException( string value, ELogLevel level, uint32 code, sp<LogTag>&& tag, SL sl )ι:
 		_stack{ sl },
 		_what{ move(value) },
 		_pTag{ move(tag) },
@@ -121,14 +121,18 @@ namespace Jde{
 		IException{ tags, sl, level, "({}){}", code.value(), code.message() },
 		_errorCode{ move(code) }
 	{}
+	CodeException::CodeException( std::error_code code, ELogTags tags, string msg, ELogLevel level, SL sl )ι:
+		IException{ tags, sl, level, "({}){} - {}", code.value(), code.message(), msg },
+		_errorCode{ move(code) }
+	{}
 
 	BoostCodeException::BoostCodeException( const boost::system::error_code& c, sv msg, SL sl )ι:
 		IException{ string{msg}, ELogLevel::Debug, (uint)c.value(), {}, sl },
-		_errorCode{ mu<boost::system::error_code>(c) }
+		_errorCode{ c }
 	{}
 	BoostCodeException::BoostCodeException( BoostCodeException&& e )ι:
 		IException{ move(e) },
-		_errorCode{ mu<boost::system::error_code>(*e._errorCode) }
+		_errorCode{ move(e._errorCode) }
 	{}
 	BoostCodeException::~BoostCodeException()
 	{}
@@ -151,7 +155,7 @@ namespace Jde{
 
 	OSException::OSException( TErrorCode result, string&& m, SL sl )ι:
 #ifdef _MSC_VER
-		IException{ {std::to_string(result), std::to_string(GetLastError()), move(msg)}, "result={}/error={} - {}", sl, GetLastError() }
+		IException{ sl, ELogLevel::Error, (uint)GetLastError(), "result={}/error={} - {}", result, GetLastError(), m }
 #else
 		IException{ sl, ELogLevel::Error, (uint)errno, "result={}/error={} - {}", result, errno, m }
 #endif

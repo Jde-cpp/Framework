@@ -24,7 +24,7 @@ namespace Jde::DB::GraphQL{
 			else
 				THROW( "Could not find 'id' column" );
 		}
-		vector<string> statements{ table.PurgeProcName.size() ? 𐢜("{}( ? )", table.PurgeProcName) : 𐢜("delete from {} where {}=?", table.Name, pColumn->Name) };
+		vector<string> statements{ table.PurgeProcName.size() ? Ƒ("{}( ? )", table.PurgeProcName) : Ƒ("delete from {} where {}=?", table.Name, pColumn->Name) };
 		if( pExtendedFromTable ){
 			var extendedPurge = PurgeStatements( *pExtendedFromTable, m, userPK, parameters, sl );
 			statements.insert( end(statements), begin(extendedPurge), end(extendedPurge) );
@@ -55,7 +55,7 @@ namespace Jde::DB::GraphQL{
 			}
 			Resume( move(result), move(h) );
 		}
-		catch( IException& e ){
+		catch( IException& ){
 			success = false;
 		}
 		if( !success )

@@ -12,7 +12,7 @@ namespace Jde::Coroutine
 		_pThread = mu<Threading::InterruptibleThread>( _name, [this](){Run();} );
 	}
 
-	α CoWorker::Shutdown( bool terminate )ι->void{
+	α CoWorker::Shutdown( bool /*terminate*/ )ι->void{
 		TRACE( "({})Shutdown", _name );
 		_pThread->Interrupt();
 		{

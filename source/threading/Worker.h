@@ -9,11 +9,7 @@
 
 namespace Jde::Threading{
 	#define var const auto
-#ifdef __clang__
-	using Jde::stop_token;
-#else
 	using std::stop_token;
-#endif
 	/*handle signals, configuration*/
 	struct Γ IWorker : IShutdown, std::enable_shared_from_this<IWorker>{
 		IWorker( sv name )ι;

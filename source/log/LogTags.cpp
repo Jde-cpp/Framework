@@ -102,7 +102,7 @@ namespace Jde{
 			LOG_MEMORY( "settings", ELogLevel::Error, e.what() );
 		}
 	}
-	α Logging::TagSettings( string name, str path )ι->concurrent_flat_map<ELogTags,ELogLevel>{
+	α Logging::TagSettings( string /*name*/, str path )ι->concurrent_flat_map<ELogTags,ELogLevel>{
 		uint i=0;
 		concurrent_flat_map<ELogTags,ELogLevel> y;
 		for( var& level : ELogLevelStrings ){
@@ -124,12 +124,14 @@ namespace Jde{
 		return p!=_fileTags.end() && p->Level<=m.Level;
 	}
 }
+
+#pragma warning(disable:4334)
 α Jde::ToString( ELogTags tags )ι->string{
 	if( tags==ELogTags::None )
 		return string{ELogTagStrings[0]};
 	vector<sv> tagStrings;
 	for( uint i=1; i<ELogTagStrings.size(); ++i ){
-		if( (uint)tags & (1<<(i-1)) )
+		if( (uint)tags & (uint)(1ul<<(i-1ul)) )
 			tagStrings.push_back( ELogTagStrings[i] );
 	}
 	return tagStrings.empty() ? string{ELogTagStrings[0]} : Str::AddSeparators( tagStrings, "." );
@@ -179,4 +181,8 @@ using enum Jde::ELogLevel;
 α Jde::ShouldTrace( sp<LogTag> pTag )ι->bool{
 	//TODO go through all tags.
 	return pTag->Level==ELogLevel::Trace;
+}
+
+α Jde::ShouldTrace( ELogTags tags )ι->bool {
+	return MinLevel( tags ) == ELogLevel::Trace;
 }

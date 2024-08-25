@@ -97,7 +97,7 @@ namespace Jde::Threading{  //TODO Reflection remove Threading from public items.
 	}
 	struct ThreadInterrupted final : public IException{
 		ThreadInterrupted()ι:IException{"interupted", ELogLevel::Trace}{}
-		α Move()ι->up<IException>{ return mu<ThreadInterrupted>(move(*this)); }
+		α Move()ι->up<IException> override{ return mu<ThreadInterrupted>(move(*this)); }
 		[[noreturn]] α Throw()->void override{ throw move(*this); }
 	};
 }

@@ -19,16 +19,14 @@ namespace Jde::DB{
 		IApplication::AddThread( _pThread );
 	}
 
-	void DBQueue::Shutdown( bool terminate )ι
-	{
+	void DBQueue::Shutdown( bool /*terminate*/ )ι{
 		_pThread->Interrupt();
 		while( !_stopped )
 			std::this_thread::yield();
 		//_queue.Push( sp<Statement>{} );
 	}
 
-	void DBQueue::Push( string sql, sp<vector<object>> parameters, bool isStoredProc, SL sl )ι
-	{
+	void DBQueue::Push( string sql, sp<vector<object>> parameters, bool isStoredProc, SL sl )ι{
 		if( _stopped )
 			return;
 		// if( !_stopped )

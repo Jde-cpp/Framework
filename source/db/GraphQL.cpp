@@ -134,8 +134,13 @@ namespace DB{
 				if( c.IsFlags ){
 					uint value = 0;
 					if( pValue->is_array() && pValue->size() ){
-						auto a = _pDataSource->SelectMap<string,uint>( Jde::format("select name, id from {}", tableName) );
-						var values = Future<flat_map<string,uint>>( move(a) ).get();
+						optional<flat_map<string,uint>> values;
+						[] (auto& values, auto& tableName)ι->Task{ 
+							values = *( co_await _pDataSource->SelectMap<string,uint>(Jde::format("select name, id from {}", tableName)) ).UP<flat_map<string,uint>>(); 
+						}(values, tableName);
+						while( !values )
+							std::this_thread::yield();
+
 						for( var& flag : *pValue ){
 							if( var pFlag = values->find(flag); pFlag != values->end() )
 								value |= pFlag->second;
@@ -253,60 +258,72 @@ namespace DB{
 	}
 
 	α Start( sp<DB::MutationQL> m, UserPK userPK )ε->uint{
-		optional<uint> result{};
+		optional<uint> result;
 		[&]()ι->DB::GraphQL::MutationAwaits::Task {
-			result = co_await DB::GraphQL::Hook::Start( m, userPK );
+			auto await_ = DB::GraphQL::Hook::Start( m, userPK );
+			result = co_await await_;
 		}();
 		while( !result )
-			std::this_thread::sleep_for( 500ms );//TODO remove this when async.
-		return *result;
-	}
-	α Stop( sp<DB::MutationQL> m, UserPK userPK )ε->uint{
-		optional<uint> result{};
-		[&]()ι->DB::GraphQL::MutationAwaits::Task {
-			result = co_await DB::GraphQL::Hook::Stop( m, userPK );
-		}();
-		while( !result )
-			std::this_thread::sleep_for( 500ms );//TODO remove this when async.
+			std::this_thread::yield();//TODO remove this when async.
 		return *result;
 	}
 
+	α Stop( sp<DB::MutationQL> m, UserPK userPK )ε->uint{
+		optional<uint> result;
+		[&]()ι->DB::GraphQL::MutationAwaits::Task {
+			result = co_await DB::GraphQL::Hook::Stop( m, userPK );
+		}();
+	while( !result )
+			std::this_thread::yield();//TODO remove this when async.
+		return *result;
+	}
+#pragma warning( disable : 4701 )
 	α Mutation( const DB::MutationQL& m, UserPK userPK )ε->uint{
-		var& t = _schema.FindTableSuffix( m.TableSuffix() );
-		if( var pAuthorizer = UM::FindAuthorizer(t.Name); pAuthorizer )
+		var& table = _schema.FindTableSuffix( m.TableSuffix() );
+		if( var pAuthorizer = UM::FindAuthorizer(table.Name); pAuthorizer )
 			pAuthorizer->Test( m.Type, userPK );
-		uint result;
+		optional<uint> result;
 		switch( m.Type ){
 		using namespace DB;
 		case EMutationQL::Create:{
-			uint extendedFromId{};
-			if( var pExtendedFrom = t.GetExtendedFromTable(_schema); pExtendedFrom ){
-				auto a = InsertAwait( *pExtendedFrom, m, userPK, 0 );
-				extendedFromId = *Future<uint>( move(a) ).get();
+			optional<uint> extendedFromId;
+			if( var pExtendedFrom = table.GetExtendedFromTable(_schema); pExtendedFrom ){
+				[](auto extendedFromId, var& pExtendedFrom, var& m, auto userPK)ι->Task{
+					extendedFromId = *( co_await InsertAwait(*pExtendedFrom, m, userPK, 0) ).UP<uint>();
+				}(extendedFromId, pExtendedFrom, m, userPK);
+				while (!extendedFromId)
+					std::this_thread::yield();
 			}
 			auto _tag = ELogTags::GraphQL | ELogTags::Pedantic;
 			Trace{ _tag, "calling InsertAwait" };
-			auto a = InsertAwait( t, m, userPK, extendedFromId );
-			result = *Future<uint>( move(a) ).get();
+			[] (auto& table, auto& m, auto userPK, auto extendedFromId, auto& result)ι->Task{
+				result = *( co_await InsertAwait(table, m, userPK, extendedFromId.value_or(0)) ).UP<uint>();
+			}(table, m, userPK, extendedFromId, result);
+			while (!result)
+				std::this_thread::yield();
 			Trace{ _tag, "~calling InsertAwait" };
 		break;}
 		case EMutationQL::Update:
-			result = get<0>( Update(t, m, DB::DefaultSyntax()) );
+			result = get<0>( Update(table, m, DB::DefaultSyntax()) );
 			break;
 		case EMutationQL::Delete:
-			result = Delete( t, m );
+			result = Delete( table, m );
 			break;
 		case EMutationQL::Restore:
-			result = Restore( t, m );
+			result = Restore( table, m );
 			break;
 		case EMutationQL::Purge:
-			result = *Future<uint>( DB::GraphQL::PurgeAwait{t, m, userPK} ).get();
+			[] (auto& table, auto& m, auto userPK, auto& result)ι->Task{
+				result = *( co_await DB::GraphQL::PurgeAwait{table, m, userPK} ).UP<uint>();
+			}( table, m, userPK, result );
+			while (!result)
+				std::this_thread::yield();
 			break;
 		case EMutationQL::Add:
-			result = Add( t, m.Input() );
+			result = Add( table, m.Input() );
 			break;
 		case EMutationQL::Remove:
-			result = Remove( t, m.Input() );
+			result = Remove( table, m.Input() );
 			break;
 		case EMutationQL::Start:
 			Start( ms<DB::MutationQL>(m), userPK );
@@ -319,17 +336,17 @@ namespace DB{
 //		default:
 //			THROW( "unknown type" );
 		}
-		if( t.Name.starts_with("um_") )
-			Try( [&]{UM::ApplyMutation( m, (UserPK)result );} );
+		if( table.Name.starts_with("um_") )
+			Try( [&]{UM::ApplyMutation( m, (UserPK)result.value_or(0) );} );
 		sl _{ _applyMutationListenerMutex };
 		//deprecated, use hooks
-		if( var p = ApplyMutationListeners().find(string{t.Prefix()}); p!=ApplyMutationListeners().end() )
-			std::for_each( p->second.begin(), p->second.end(), [&](var& f){f(m, result);} );
+		if( var p = ApplyMutationListeners().find(string{table.Prefix()}); p!=ApplyMutationListeners().end() )
+			std::for_each( p->second.begin(), p->second.end(), [&](var& f){f(m, result.value_or(0));} );
 
-		return result;
+		return *result;
 	}
 
-	α IntrospectFields( sv typeName, const DB::Table& mainTable, const DB::TableQL& fieldTable, json& jData )ε{
+	α IntrospectFields( sv /*typeName*/, const DB::Table& mainTable, const DB::TableQL& fieldTable, json& jData )ε{
 		auto fields = json::array();
 		var pTypeTable = fieldTable.FindTable( "type" );
 		var haveName = fieldTable.FindColumn( "name" )!=nullptr;
@@ -364,7 +381,7 @@ namespace DB{
 			}
 			fields.push_back( field );
 		};
-		function<void(const DB::Table&, bool, string)> addColumns = [&addColumns,&addField,&typeName,&mainTable]( const DB::Table& dbTable, bool isMap, string prefix={} ){
+		function<void(const DB::Table&, bool, string)> addColumns = [&addColumns,&addField,&mainTable]( const DB::Table& dbTable, bool isMap, string prefix={} ){
 			for( var& column : dbTable.Columns ){
 				BREAK_IF( column.Name=="member_id" );
 				string fieldName;

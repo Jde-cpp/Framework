@@ -61,7 +61,7 @@ namespace Jde{
 			Threading::SetThreadDscrptn( "Ex[0]" );
 			std::vector<std::jthread> v; v.reserve( _threadCount - 1 );
 			for( auto i = _threadCount - 1; i > 0; --i )
-				v.emplace_back( [=]{ Threading::SetThreadDscrptn( 𐢜("Ex[{}]", i) ); _ioc->run(); } );
+				v.emplace_back( [=]{ Threading::SetThreadDscrptn( Ƒ("Ex[{}]", i) ); _ioc->run(); } );
 			Trace( ELogTags::App, "Executor Started: instances: {}.", _ioc.use_count() );
 			_started.test_and_set();
 			_started.notify_all();

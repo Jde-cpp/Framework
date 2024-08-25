@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
-    <ProjectConfiguration Include="DebugMem|x64">
-      <Configuration>DebugMem</Configuration>
+    <ProjectConfiguration Include="Clang-Debug|x64">
+      <Configuration>Clang-Debug</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
     <ProjectConfiguration Include="Debug|x64">
@@ -29,10 +29,10 @@
     <CharacterSet>MultiByte</CharacterSet>
     <EnableASAN>true</EnableASAN>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugMem|x64'" Label="Configuration">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Clang-Debug|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>ClangCL</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
     <EnableASAN>false</EnableASAN>
   </PropertyGroup>
@@ -51,7 +51,7 @@
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='DebugMem|x64'" Label="PropertySheets">
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Clang-Debug|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -66,8 +66,8 @@
     <LibraryPath>$(LibraryPath)</LibraryPath>
     <IntDir>.obj\$(Configuration)\</IntDir>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugMem|x64'">
-    <LinkIncremental>true</LinkIncremental>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Clang-Debug|x64'">
+    <LinkIncremental>false</LinkIncremental>
     <IncludePath>$(IncludePath)</IncludePath>
     <OutDir>$(SolutionDir).bin\$(Configuration)\</OutDir>
     <TargetName>Jde</TargetName>
@@ -88,11 +88,10 @@
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>false</SDLCheck>
-      <PreprocessorDefinitions>Jde_EXPORTS;BOOST_ALL_DYN_LINK;_SCL_SECURE_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;_SILENCE_CXX17_ALLOCATOR_VOID_DEPRECATION_WARNING;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;NOMINMAX;_WINDOWS;_USRDLL;PROTOBUF_USE_DLLS;ONE_CORE;WINVER=0x0A00;_WIN32_WINNT=0x0A00;WIN32_LEAN_AND_MEAN;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>Jde_EXPORTS;BOOST_ALL_DYN_LINK;_SCL_SECURE_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;_SILENCE_CXX17_ALLOCATOR_VOID_DEPRECATION_WARNING;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;NOMINMAX;_WINDOWS;_USRDLL;ONE_CORE;WINVER=0x0A00;_WIN32_WINNT=0x0A00;WIN32_LEAN_AND_MEAN;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp20</LanguageStandard>
-      <DisableSpecificWarnings>4025;4068;4251;4275;4297;4305;4456;4459;4706;4996;5054;5104;5105;5260;5272</DisableSpecificWarnings>
-      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <DisableSpecificWarnings>4025;4068;4251;4275;4297;4305;4456;4459;4706;4996;5054;5104;5105;5260</DisableSpecificWarnings>
       <ForcedIncludeFiles>stdafx.h</ForcedIncludeFiles>
       <EnableModules>false</EnableModules>
       <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
@@ -104,6 +103,7 @@
       <UseStandardPreprocessor>true</UseStandardPreprocessor>
       <CompileAs>CompileAsCpp</CompileAs>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <AdditionalOptions>/bigobj /utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -117,21 +117,20 @@
       </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugMem|x64'">
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Clang-Debug|x64'">
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>false</SDLCheck>
-      <PreprocessorDefinitions>Jde_EXPORTS;BOOST_ALL_DYN_LINK;_SCL_SECURE_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;_SILENCE_CXX17_ALLOCATOR_VOID_DEPRECATION_WARNING;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;NOMINMAX;_WINDOWS;_USRDLL;PROTOBUF_USE_DLLS;ONE_CORE;WINVER=0x0A00;_WIN32_WINNT=0x0A00;WIN32_LEAN_AND_MEAN;_DEBUG;_CRTDBG_MAP_ALLOC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>Jde_EXPORTS;BOOST_ALL_DYN_LINK;_SCL_SECURE_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;_SILENCE_CXX17_ALLOCATOR_VOID_DEPRECATION_WARNING;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;NOMINMAX;_WINDOWS;_USRDLL;ONE_CORE;WINVER=0x0A00;_WIN32_WINNT=0x0A00;WIN32_LEAN_AND_MEAN;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp20</LanguageStandard>
-      <DisableSpecificWarnings>4025;4068;4251;4275;4297;4305;4456;4459;4706;4996;5054;5104;5105;5260</DisableSpecificWarnings>
-      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
-      <ForcedIncludeFiles>stdafx.h</ForcedIncludeFiles>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <DisableSpecificWarnings>4025;4068;4251;4275;4297;4305;4456;4459;4706;4996;5054;5104;5105;5260;5272</DisableSpecificWarnings>
+      <AdditionalOptions>/bigobj /utf-8 -Wno-unqualified-std-cast-call -Wno-missing-field-initializers -Wno-empty-body %(AdditionalOptions)</AdditionalOptions>
+      <ForcedIncludeFiles>pc.h</ForcedIncludeFiles>
       <EnableModules>false</EnableModules>
       <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
-      <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <StringPooling>true</StringPooling>
       <AdditionalIncludeDirectories>../../Public</AdditionalIncludeDirectories>
@@ -139,6 +138,8 @@
       <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
       <UseStandardPreprocessor>true</UseStandardPreprocessor>
       <CompileAs>CompileAsCpp</CompileAs>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <PrecompiledHeaderFile>pc.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -160,11 +161,10 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>false</SDLCheck>
-      <PreprocessorDefinitions>Jde_EXPORTS;BOOST_ALL_DYN_LINK;_SCL_SECURE_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;_SILENCE_CXX17_ALLOCATOR_VOID_DEPRECATION_WARNING;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;NOMINMAX;_WINDOWS;_USRDLL;PROTOBUF_USE_DLLS;ONE_CORE;WINVER=0x0A00;_WIN32_WINNT=0x0A00;WIN32_LEAN_AND_MEAN;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>Jde_EXPORTS;BOOST_ALL_DYN_LINK;_SCL_SECURE_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;_SILENCE_CXX17_ALLOCATOR_VOID_DEPRECATION_WARNING;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;NOMINMAX;_WINDOWS;_USRDLL;ONE_CORE;WINVER=0x0A00;_WIN32_WINNT=0x0A00;WIN32_LEAN_AND_MEAN;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp20</LanguageStandard>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
       <DisableSpecificWarnings>4025;4068;4251;4275;4297;4305;4456;4459;4706;4996;5054;5104;5105;5260</DisableSpecificWarnings>
-      <AdditionalOptions>/Zc:preprocessor /Zc:__cplusplus /bigobj %(AdditionalOptions)</AdditionalOptions>
       <ForcedIncludeFiles>stdafx.h</ForcedIncludeFiles>
       <EnableModules>false</EnableModules>
       <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
@@ -172,7 +172,9 @@
       <StringPooling>true</StringPooling>
       <AdditionalIncludeDirectories>../../Public</AdditionalIncludeDirectories>
       <PreprocessToFile>false</PreprocessToFile>
+      <UseStandardPreprocessor>true</UseStandardPreprocessor>
       <CompileAs>CompileAsCpp</CompileAs>
+      <AdditionalOptions>/bigobj /utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -195,34 +197,24 @@
     <ClCompile Include="coroutine\Lock.cpp" />
     <ClCompile Include="coroutine\Task.cpp" />
     <ClCompile Include="db\Await.cpp" />
-    <ClCompile Include="db\DataSource.cpp">
-      <ForcedIncludeFiles Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">stdafx.h</ForcedIncludeFiles>
-      <ForcedIncludeFiles Condition="'$(Configuration)|$(Platform)'=='DebugMem|x64'">stdafx.h</ForcedIncludeFiles>
-      <ForcedIncludeFiles Condition="'$(Configuration)|$(Platform)'=='Release|x64'">stdafx.h</ForcedIncludeFiles>
-    </ClCompile>
+    <ClCompile Include="db\DataSource.cpp" />
     <ClCompile Include="db\GraphQL.cpp" />
+    <ClCompile Include="db\graphQL\FilterQL.cpp" />
+    <ClCompile Include="db\graphQL\GraphQLHook.cpp" />
+    <ClCompile Include="db\graphQL\Insert.cpp" />
+    <ClCompile Include="db\graphQL\Introspection.cpp" />
+    <ClCompile Include="db\graphQL\Purge.cpp" />
+    <ClCompile Include="db\graphQL\TableQL.cpp" />
     <ClCompile Include="db\GraphQuery.cpp" />
     <ClCompile Include="db\SchemaProc.cpp" />
-    <ClCompile Include="io\AsioContextThread.cpp" />
     <ClCompile Include="io\FileCo.cpp" />
-    <ClCompile Include="io\ProtoClient.cpp" />
-    <ClCompile Include="io\proto\messages.pb.cc">
-      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">TurnOffAllWarnings</WarningLevel>
-      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='DebugMem|x64'">TurnOffAllWarnings</WarningLevel>
-      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">TurnOffAllWarnings</WarningLevel>
-      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4025;4068;4125;4127;4244;4251;4275;4297;4305;4456;4459;4706;4996;5054;5104;5105;5260</DisableSpecificWarnings>
-      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='DebugMem|x64'">4025;4068;4125;4127;4244;4251;4275;4297;4305;4456;4459;4706;4996;5054;5104;5105;5260</DisableSpecificWarnings>
-      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4025;4068;4125;4127;4244;4251;4275;4297;4305;4456;4459;4706;4996;5054;5104;5105;5260</DisableSpecificWarnings>
-    </ClCompile>
-    <ClCompile Include="io\ServerSink.cpp" />
-    <ClCompile Include="io\Socket.cpp" />
     <ClCompile Include="io\tinyxml2.cpp" />
-    <ClCompile Include="Log.cpp">
-      <PreprocessToFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</PreprocessToFile>
-      <PreprocessToFile Condition="'$(Configuration)|$(Platform)'=='DebugMem|x64'">false</PreprocessToFile>
-      <PreprocessToFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</PreprocessToFile>
-    </ClCompile>
+    <ClCompile Include="log\IExternalLogger.cpp" />
+    <ClCompile Include="log\Log.cpp" />
+    <ClCompile Include="log\LogTags.cpp" />
+    <ClCompile Include="log\Message.cpp" />
     <ClCompile Include="Str.cpp" />
+    <ClCompile Include="threading\Execution.cpp" />
     <ClCompile Include="threading\Mutex.cpp" />
     <ClCompile Include="threading\Worker.cpp" />
     <ClCompile Include="um\UM.cpp" />
@@ -235,6 +227,10 @@
     <ClInclude Include="..\..\Public\jde\io\File.h" />
     <ClInclude Include="..\..\Public\jde\JdeAssert.h" />
     <ClInclude Include="..\..\Public\jde\Log.h" />
+    <ClInclude Include="..\..\Public\jde\log\IExternalLogger.h" />
+    <ClInclude Include="..\..\Public\jde\log\Log.h" />
+    <ClInclude Include="..\..\Public\jde\log\LogTags.h" />
+    <ClInclude Include="..\..\Public\jde\log\Message.h" />
     <ClInclude Include="..\..\Public\jde\Str.h" />
     <ClInclude Include="..\..\Public\jde\TypeDefs.h" />
     <ClInclude Include="..\..\Windows\source\WindowsDrive.h" />
@@ -310,17 +306,17 @@
     <ClCompile Include="io\DiskWatcher.cpp" />
     <ClCompile Include="pc.h">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='DebugMem|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Clang-Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
       </PrecompiledHeaderFile>
-      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='DebugMem|x64'">
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Clang-Debug|x64'">
       </PrecompiledHeaderFile>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
       </PrecompiledHeaderFile>
       <ForcedIncludeFiles Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
       </ForcedIncludeFiles>
-      <ForcedIncludeFiles Condition="'$(Configuration)|$(Platform)'=='DebugMem|x64'">
+      <ForcedIncludeFiles Condition="'$(Configuration)|$(Platform)'=='Clang-Debug|x64'">
       </ForcedIncludeFiles>
       <ForcedIncludeFiles Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
       </ForcedIncludeFiles>
@@ -339,9 +335,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DateTime.cpp" />
-    <ClCompile Include="Exception.cpp">
-      <ForcedIncludeFiles Condition="'$(Configuration)|$(Platform)'=='Release|x64'">stdafx.h</ForcedIncludeFiles>
-    </ClCompile>
+    <ClCompile Include="Exception.cpp" />
     <ClCompile Include="io\File.cpp" />
     <ClCompile Include="math\MathUtilities.cpp" />
     <ClCompile Include="Settings.cpp" />
