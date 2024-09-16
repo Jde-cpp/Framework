@@ -4,8 +4,8 @@
 #define var const auto
 
 namespace Jde{
-	constexpr std::array<sv,26> ELogTagStrings = {"none",
-		"app", "cache", "client", "exception", "externalLogger", "graphQL", "http", "io",
+	constexpr std::array<sv,27> ELogTagStrings = {"none",
+		"app", "cache", "client", "dbDriver", "exception", "externalLogger", "graphQL", "http", "io",
 		"locks", "parsing", "pedantic", "read", "write", "scheduler", "server", "sessions",
 		"settings", "shutdown", "socket", "sql", "startup", "subscription", "test", "threads",
 		"users"

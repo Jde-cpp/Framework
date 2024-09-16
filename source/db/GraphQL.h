@@ -25,7 +25,7 @@ namespace Jde::DB{
 
 	typedef std::variant<vector<TableQL>,MutationQL> RequestQL;
 
-	α ParseQL( sv query )ε->RequestQL;
+	Φ ParseQL( sv query )ε->RequestQL;
 
 	Φ AddMutationListener( string tablePrefix, function<void(const DB::MutationQL& m, PK id)> listener )ι->void;
 }

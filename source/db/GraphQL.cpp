@@ -288,7 +288,7 @@ namespace DB{
 		case EMutationQL::Create:{
 			optional<uint> extendedFromId;
 			if( var pExtendedFrom = table.GetExtendedFromTable(_schema); pExtendedFrom ){
-				[](auto extendedFromId, var& pExtendedFrom, var& m, auto userPK)ι->Task{
+				[](auto& extendedFromId, var& pExtendedFrom, var& m, auto userPK)ι->Task{
 					extendedFromId = *( co_await InsertAwait(*pExtendedFrom, m, userPK, 0) ).UP<uint>();
 				}(extendedFromId, pExtendedFrom, m, userPK);
 				while (!extendedFromId)
@@ -301,6 +301,8 @@ namespace DB{
 			}(table, m, userPK, extendedFromId, result);
 			while (!result)
 				std::this_thread::yield();
+			if( extendedFromId )
+				result = extendedFromId;
 			Trace{ _tag, "~calling InsertAwait" };
 		break;}
 		case EMutationQL::Update:

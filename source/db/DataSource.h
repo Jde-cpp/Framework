@@ -22,29 +22,29 @@ namespace Jde::DB
 		Ŧ SelectSet( string sql, vector<object>&& params, string cacheName, SL sl )ι->SelectCacheAwait<flat_set<T>>;
 
 		β SchemaProc()ι->sp<ISchemaProc> =0;
-		α ScalerNonNull( string sql, vec<object> parameters, SRCE )ε->uint;
+		α ScalerNonNull( string sql, vec<object> params, SRCE )ε->uint;
 
-		Ŧ TryScaler( string sql, vec<object> parameters, SRCE )ι->optional<T>;
-		Ŧ Scaler( string sql, vec<object> parameters, SRCE )ε->optional<T>;
-		Ŧ ScalerCo( string sql, vec<object> parameters, SRCE )ε->SelectAwait<T>;
+		Ŧ TryScaler( string sql, vec<object> params, SRCE )ι->optional<T>;
+		Ŧ Scaler( string sql, vec<object> params, SRCE )ε->optional<T>;
+		Ŧ ScalerCo( string sql, vec<object> params, SRCE )ε->SelectAwait<T>;
 		Ŧ SelectCo( string sql, vec<object> params, CoRowΛ<T> fnctn, SRCE )ε->SelectAwait<T>;
 
 		α TryExecute( string sql, SRCE )ι->optional<uint>;
-		α TryExecute( string sql, vec<object> parameters, SRCE )ι->optional<uint>;
-		α TryExecuteProc( string sql, vec<object> parameters, SRCE )ι->optional<uint>;
+		α TryExecute( string sql, vec<object> params, SRCE )ι->optional<uint>;
+		α TryExecuteProc( string sql, vec<object> params, SRCE )ι->optional<uint>;
 
 		β Execute( string sql, SRCE )ε->uint=0;
-		β Execute( string sql, vec<object> parameters, SRCE )ε->uint=0;
-		β Execute( string sql, const vector<object>* pParameters, const RowΛ* f, bool isStoredProc=false, SRCE )ε->uint=0;
+		β Execute( string sql, vec<object> params, SRCE )ε->uint=0;
+		β Execute( string sql, const vector<object>* params, const RowΛ* f, bool isStoredProc=false, SRCE )ε->uint=0;
 		β ExecuteCo( string sql, vector<object> p, SRCE )ι->up<IAwait> =0;
-		β ExecuteNoLog( string sql, const vector<object>* pParameters, RowΛ* f=nullptr, bool isStoredProc=false, SRCE )ε->uint=0;
-		β ExecuteProc( string sql, vec<object> parameters, SRCE )ε->uint=0;
-		β ExecuteProc( string sql, vec<object> parameters, RowΛ f, SRCE )ε->uint=0;
-		β ExecuteProcCo( string sql, vector<object> p, SRCE )ι->up<IAwait> =0;
-		β ExecuteProcCo( string sql, vector<object> parameters, RowΛ f, SRCE )ε->up<IAwait> =0;
-		β ExecuteProcNoLog( string sql, vec<object> parameters, SRCE )ε->uint=0;
+		β ExecuteNoLog( string sql, const vector<object>* params, RowΛ* f=nullptr, bool isStoredProc=false, SRCE )ε->uint=0;
+		β ExecuteProc( string sql, vec<object> params, SRCE )ε->uint=0;
+		β ExecuteProc( string sql, vec<object> params, RowΛ f, SRCE )ε->uint=0;
+		β ExecuteProcCo( string sql, vector<object> params, SRCE )ι->up<IAwait> =0;
+		β ExecuteProcCo( string sql, vector<object> params, RowΛ f, SRCE )ε->up<IAwait> =0;
+		β ExecuteProcNoLog( string sql, vec<object> params, SRCE )ε->uint=0;
 
-		α Select( string sql, RowΛ f, vec<object> parameters, SRCE )ε->void;
+		α Select( string sql, RowΛ f, vec<object> params, SRCE )ε->void;
 		α Select( string sql, RowΛ f, SRCE )ε->void;
 		β Select( string sql, RowΛ f, const vector<object>* pValues, SRCE )ε->uint=0;
 		β SelectNoLog( string sql, RowΛ f, const vector<object>* pValues, SRCE )ε->uint=0;
@@ -74,10 +74,10 @@ namespace Jde::DB
 			return nullopt;
 		}
 	}
-	Ŧ IDataSource::Scaler( string sql, vec<object> parameters, SL sl )ε->optional<T>
+	Ŧ IDataSource::Scaler( string sql, vec<object> params, SL sl )ε->optional<T>
 	{
 		optional<T> result;
-		Select( move(sql), [&result](const IRow& row){ result = row.Get<T>(0); }, parameters, sl );
+		Select( move(sql), [&result](const IRow& row){ result = row.Get<T>(0); }, params, sl );
 		return result;
 	}
 

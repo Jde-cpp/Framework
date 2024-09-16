@@ -60,10 +60,10 @@ namespace Jde{
 			y = e.Move();
 		}
 		catch( const nlohmann::json::exception& e ){
-			y = mu<Exception>( Jde::format("nlohmann::json::exception - {}", e.what()), ELogLevel::Error, sl );
+			y = mu<Exception>( Ƒ("nlohmann::json::exception - {}", e.what()), ELogLevel::Error, sl );
 		}
 		catch( const std::exception& e ){
-			y = mu<Exception>( Jde::format("std::exception - {}", e.what()), ELogLevel::Critical, sl );
+			y = mu<Exception>( Ƒ("std::exception - {}", e.what()), ELogLevel::Critical, sl );
 		}
 		catch( ... ){
 			y = mu<Exception>( "unknown exception", ELogLevel::Critical, sl );
@@ -80,20 +80,21 @@ namespace Jde{
 #endif
 	}
 	α IException::Log()Ι->void{
-		if( Level()==ELogLevel::NoLog || (_pTag && Level()<MinLevel(ToLogTags(_pTag->Id))) )
+		var level = Level();
+		if( level==ELogLevel::NoLog || (_pTag && level<MinLevel(ToLogTags(_pTag->Id))) )
 			return;
-		var& sl = _stack.front();
+		var& sl = _stack.size() ? _stack.front() : SRCE_CUR;
 		const string fileName{ strlen(sl.file_name()) ? FileName(sl.file_name()) : "{Unknown}\0"sv };
 		var functionName = strlen(sl.file_name()) ? sl.function_name() : "{Unknown}\0";
 		if( auto p = Logging::Default(); p )
-			p->log( spdlog::source_loc{fileName.c_str(), (int)sl.line(), functionName}, (spdlog::level::level_enum)Level(), what() );
+			p->log( spdlog::source_loc{fileName.c_str(), (int)sl.line(), functionName}, (spdlog::level::level_enum)level, what() );
 		if( Logging::External::Size() )
-			Logging::External::Log( Logging::ExternalMessage{Logging::Message{Level(), what(), sl}, vector<string>{_args}} );
+			Logging::External::Log( Logging::ExternalMessage{Logging::Message{level, what(), sl}, vector<string>{_args}} );
 		if( Logging::LogMemory() ){
 			if( _format.size() )
-				Logging::LogMemory( Logging::Message{Level(), string{_format}, sl}, vector<string>{_args} );
+				Logging::LogMemory( Logging::Message{level, string{_format}, sl}, vector<string>{_args} );
 			else
-				Logging::LogMemory( Logging::Message{Level(), _what, sl} );
+				Logging::LogMemory( Logging::Message{level, _what, sl} );
 		}
 	}
 
@@ -108,12 +109,12 @@ namespace Jde{
 	}
 
 	CodeException::CodeException( std::error_code code, sp<LogTag> tag, string value, ELogLevel level, SL sl )ι:
-		IException{ Jde::format("({}){} - {}", code.value(), value, code.message()), level, (uint)code.value(), move(tag), sl },
+		IException{ Ƒ("({}){} - {}", code.value(), value, code.message()), level, (uint)code.value(), move(tag), sl },
 		_errorCode{ move(code) }
 	{}
 
 	CodeException::CodeException( std::error_code code, sp<LogTag> tag, ELogLevel level, SL sl )ι:
-		IException{ Jde::format("({}){}", code.value(), code.message()), level, (uint)code.value(), move(tag), sl },
+		IException{ Ƒ("({}){}", code.value(), code.message()), level, (uint)code.value(), move(tag), sl },
 		_errorCode{ move(code) }
 	{}
 
@@ -141,7 +142,7 @@ namespace Jde{
 		var value = errorCode.value();
 		var& category = errorCode.category();
 		var message = errorCode.message();
-		return Jde::format( "({}){} - {})", value, category.name(), message );
+		return Ƒ( "({}){} - {})", value, category.name(), message );
 	}
 
 	α CodeException::ToString( const std::error_category& errorCategory )ι->string{	return errorCategory.name(); }
@@ -150,7 +151,7 @@ namespace Jde{
 		const int value = errorCondition.value();
 		const std::error_category& category = errorCondition.category();
 		const string message = errorCondition.message();
-		return Jde::format( "({}){} - {})", value, category.name(), message );
+		return Ƒ( "({}){} - {})", value, category.name(), message );
 	}
 
 	OSException::OSException( TErrorCode result, string&& m, SL sl )ι:
@@ -170,8 +171,8 @@ namespace Jde{
 	}
 	α IOException::SetWhat()Ι->void{
 		_what = _pUnderLying ? _pUnderLying->what() : Code
-			? Jde::format( "({}) {} - {} path='{}'", Code, std::strerror(errno), IException::what(), Path().string() )
-			: Jde::format( "({}){}", Path().string(), IException::what() );
+			? Ƒ( "({}) {} - {} path='{}'", Code, std::strerror(errno), IException::what(), Path().string() )
+			: Ƒ( "({}){}", Path().string(), IException::what() );
 	}
 	α IOException::what()Ι->const char*{
 		return _what.c_str();

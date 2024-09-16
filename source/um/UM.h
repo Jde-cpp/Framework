@@ -29,7 +29,7 @@ namespace Jde::UM{
 	enum class EAccess : uint8{ None=0, Administer=1, Write=2, Read=4 };
 //	Ξ operator &( EAccess a, EAccess b )ι{ return static_cast<EAccess>( static_cast<uint8>(a) & static_cast<uint8>(b) ); }
 
-	struct LoginAwait final : TAwait<UserPK>{
+	struct Γ LoginAwait final : TAwait<UserPK>{
 		using base = TAwait<UserPK>;
 		LoginAwait( vector<unsigned char> modulus, vector<unsigned char> exponent, string&& name, string&& target, string&& description, SRCE )ι;
 		α Suspend()ι->void override;
@@ -40,7 +40,7 @@ namespace Jde::UM{
 
 	Φ Configure()ε->void;
 	α IsTarget( sv url )ι->bool;
-	α Login( string loginName, uint providerId, string opcServer={}, SRCE )ι->AsyncAwait;
+	Φ Login( string loginName, uint providerId, string opcServer={}, SRCE )ι->AsyncAwait;
 	α TestRead( str tableName, UserPK userId )ε->void;
 	α TestAccess( EAccess access, UserPK userId, ApiPK apiId )ε->void;
 	α ApplyMutation( const DB::MutationQL& m, UserPK id )ε->void;

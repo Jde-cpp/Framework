@@ -60,7 +60,9 @@ namespace Jde::DB::GraphQL{
 		up<IException> exception;
 		try{
 			auto pId = mu<uint>();
-			(co_await *_pDataSource->ExecuteProcCo(_sql.str(), move(_parameters), [&](const DB::IRow& row){*pId = (int32)row.GetInt(0);}) ).CheckError();
+			(co_await *_pDataSource->ExecuteProcCo(_sql.str(), move(_parameters), [&](const DB::IRow& row){
+				*pId = (int32)row.GetInt(0);
+			}) ).CheckError();
 			Resume( move(pId), move(h) );
 		}
 		catch( IException& e ){

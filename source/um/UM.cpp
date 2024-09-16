@@ -95,13 +95,15 @@ namespace Jde{
 		catch( const std::exception& e ){//nlohmann::detail::parse_error
 			throw IOException{ path, e.what() };
 		}
-			auto& db = *pDataSource;
-		var sqlPath = _msvc && _debug ? path.parent_path().parent_path() : path.parent_path();
+		auto& db = *pDataSource;
+		auto sqlPath = Settings::Get<fs::path>( "db/scriptDir" ).value_or( "" );
+		if( sqlPath.empty() )
+			sqlPath = _msvc && _debug ? path.parent_path().parent_path() : path.parent_path();
 		var schema = db.SchemaProc()->CreateSchema( j, sqlPath );
 		AppendQLDBSchema( schema );
 		SetQLDataSource( pDataSource );
 
-		fs::path qlSchema{ Settings::Env("db/ql_schema").value_or("ql.json") };
+		fs::path qlSchema{ Settings::Env("db/qlSchema").value_or("ql.json") };
 		if( !fs::exists(qlSchema) )
 			qlSchema = _msvc && _debug ? "../config/meta.json" : IApplication::ApplicationDataFolder()/path.stem();
 		try{
@@ -216,7 +218,7 @@ namespace Jde{
 		if( j.find("connectionString")!=j.end() ){
 			string connectionString;
 			j.at("connectionString").get_to( connectionString );
-			settings.ConnectionString = OSApp::EnvironmentVariable( connectionString );
+			settings.ConnectionString = OSApp::EnvironmentVariable( connectionString ).value_or( "" );
 		}
 		if( j.find("libraryName")!=j.end() )
 			j.at("libraryName").get_to( settings.LibraryName );

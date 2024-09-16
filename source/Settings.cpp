@@ -2,6 +2,7 @@
 #include <jde/App.h>
 //#include <fstream>
 #include <jde/io/File.h>
+#include <regex>
 
 #define var const auto
 
@@ -117,7 +118,8 @@ namespace Jde{
 	α Settings::FileStem()ι->string{
 		var executable = OSApp::Executable().filename();
 #ifdef _MSC_VER
-		return executable.string().starts_with( "Jde." ) ? OSApp::Executable().stem().extension().string().substr(1) : OSApp::Executable().stem().string();
+		auto stem = executable.stem().string();
+		return stem.size()>4 ? stem.substr(4) : stem;
 #else
 		return executable.string().starts_with( "Jde." ) ? fs::path( executable.string().substr(4) ) : executable;
 #endif
@@ -149,5 +151,29 @@ namespace Jde{
 			}
 		}
 		return *_pGlobal;
+	}
+
+	α Settings::Env( sv path, SL sl )ι->optional<string>{
+		auto setting = Global().Get( path );
+		if( setting ){
+			std::regex regex( "\\$\\((.+?)\\)" );
+			for(;;){
+				auto begin = std::sregex_iterator( setting->begin(), setting->end(), regex );
+				if( begin==std::sregex_iterator() )
+					break;
+				std::smatch b = *begin;
+				string match = begin->str();
+				string group = match.substr( 2, match.size()-3 );
+				var env = OSApp::EnvironmentVariable( group, sl ).value_or( "" );
+				setting = Str::Replace( *setting, match, env );
+			}
+		}
+		return setting;
+	}
+
+	α Settings::Envɛ( sv path, SL sl )ε->string{
+		auto y = Env( path, sl );
+		THROW_IF( !y, "${} not found in settings", path );
+		return *y;
 	}
 }

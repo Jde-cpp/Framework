@@ -94,14 +94,15 @@ function buildWindows2 {
 	#local targetDir=$baseDir/$jdeRoot/Public/stage/$configuration;
 	local targetDir=.bin/$configuration;
 	local target=$targetDir/$file;
-	if [ ! -f $target ]; then
-		echo $target - not found;
-		$cmd;
-		if [ $? -ne 0 ];
-			then echo `pwd`;
-			echo $cmd;
-			exit 1;
-		fi;
+	local found=0;
+	if [[ -f $target ]]; then found=1; fi;
+	echo $target found:  $found;
+	$cmd;
+	if [ $? -ne 0 ];
+		then echo `pwd`;
+		echo $cmd;
+		exit 1;
+	fi;
 #		if [ -f $target ]; then echo $cmd outputing stage dir.; rm $taget; fi;
 #		sourceDir=`pwd`;
 #		subDir=$(if [ -d .bin ]; then echo "/.bin"; else echo ""; fi);
@@ -112,21 +113,21 @@ function buildWindows2 {
 #			cp "$sourceDir$subDir/$configuration/${file:0:-3}lib" .;
 #		fi;
 #		cd "$sourceDir";
-	else
-		echo $target - found;
-	fi;
+#	else
+#		echo $target - found;
+#	fi;
 }
 function buildWindows {
 	dir=$1;
 	file=$2;
 	echo buildWindows - dir: $dir, file: $file, clean: $clean, pwd=`pwd`;
-	if [[ ! -f "$dir.vcxproj.user" && -f "$dir.vcxproj._user" ]]; then
-		echo 'linked $dir.vcxproj.user to $dir.vcxproj._user'
-		linkFile $dir.vcxproj._user $dir.vcxproj.user;	if [ $? -ne 0 ]; then echo `pwd`; echo FAILED:  linkFile $dir.vcxproj._user $dir.vcxproj.user; exit 1; fi;
-	fi;
+#	if [[ ! -f "$dir.vcxproj.user" && -f "$dir.vcxproj._user" ]]; then
+#		echo 'linked $dir.vcxproj.user to $dir.vcxproj._user'
+#		linkFile $dir.vcxproj._user $dir.vcxproj.user;	if [ $? -ne 0 ]; then echo `pwd`; echo FAILED:  linkFile $dir.vcxproj._user $dir.vcxproj.user; exit 1; fi;
+#	fi;
 	if [ ${clean:-1} -eq 1 ]; then
-		echo rm -r -f $dir/.bin;
-		rm -r -f .bin;
+		echo rm -r -f $dir/.build;
+		rm -r -f .build;
 	fi;
 	if [[ -z $file ]]; then
 		if [[ $dir = "Framework" ]]; then
@@ -179,7 +180,7 @@ function buildCMake {
 	if windows; then
 		moveToDir .build;
 		cmake -DVCPKG=ON -Wno-dev ..; if [ $? -ne 0 ]; then exit $LINENO; fi;
-		build $1 $3;
+		build $1 $2 $3;
 	else
 		echo "Not implemented";
 		exit 1;

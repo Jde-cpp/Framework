@@ -58,6 +58,12 @@ if windows; then
 	moveToDir stage;
 	moveToDir debug; cd ..;
 	moveToDir release; popd  > /dev/null;
+
+
+	if [ ! -d $REPO_BASH/vcpkg/installed/x64-windows/include/gtest ]; then
+		vcpkg.exe install gtest --triplet x64-windows;
+	fi;
+
 	if [ $shouldFetch -eq 1 ]; then
 		if [ ! -d $REPO_BASH/vcpkg/installed/x64-windows/include/nlohmann ]; then vcpkg.exe install nlohmann-json --triplet x64-windows; fi;
 		if [ ! -f $REPO_BASH/vcpkg/installed/x64-windows/lib/zlib.lib ]; then

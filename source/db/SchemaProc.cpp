@@ -71,8 +71,12 @@ namespace Jde::DB{
 				for( auto& column : pTable->Columns ){
 					var& dbTable = pNameDBTable->second;
 					var pDBColumn = dbTable.FindColumn( column.Name ); if( !pDBColumn ){ ERR("Could not find db column {}.{}", tableName, column.Name); continue; }
-					if( pDBColumn->Default.empty() && column.Default.size() && column.Default!="$now" )
-						_pDataSource->TryExecute( _syntax.AddDefault(tableName, column.Name, column.Default) );
+					if( pDBColumn->Default.empty() && column.Default.size() && column.Default!="$now" ){
+						if( column.Type==DB::EType::Bit )
+							_pDataSource->TryExecute( _syntax.AddDefault(tableName, column.Name, column.Default=="true") );
+						else
+							_pDataSource->TryExecute( _syntax.AddDefault(tableName, column.Name, column.Default) );
+					}
 				}
 			}
 			else if( !pTable->IsView ){
@@ -100,6 +104,7 @@ namespace Jde::DB{
 			}
 		}
 		if( j.contains("$scripts") ){
+			var sqlPath = fs::path(Settings::Env("db/scriptDir").value_or(relativePath.string()));
 			for( var& nameObj : *j.find("$scripts") ){
 				auto name = fs::path{ nameObj.get<string>() };
 				var procName = name.stem();
@@ -107,7 +112,7 @@ namespace Jde::DB{
 					continue;
 				if( _syntax.ProcFileSuffix().size() )
 					name = name.parent_path()/( name.stem().string()+string{_syntax.ProcFileSuffix()}+name.extension().string() );
-				var path = relativePath/name; CHECK_PATH( path, SRCE_CUR );
+				var path = sqlPath/name; CHECK_PATH( path, SRCE_CUR );
 				var text = IO::FileUtilities::Load( path );
 				Trace( _tags, "Executing '{}'", path.string() );
 				var queries = Str::Split<sv,iv>( text, "\ngo"_iv );
