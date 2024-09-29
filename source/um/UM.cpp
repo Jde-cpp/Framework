@@ -260,6 +260,10 @@ namespace Jde::UM{
 			base{sl}, _modulus{ move(modulus) }, _exponent{ move(exponent) }, _name{ move(name) }, _target{ move(target) }, _description{ move(description) }
 	{}
 
+	α LoginAwait::Suspend()ι->void{
+		LoginTask();
+	}
+
 	α LoginAwait::LoginTask()ε->Jde::Task{
 		auto modulusHex = Str::ToHex( (byte*)_modulus.data(), _modulus.size() );
 		try{
@@ -267,6 +271,7 @@ namespace Jde::UM{
 			uint32_t exponent{};
 			for( var i : _exponent )
 				exponent = (exponent<<8) | i;
+
 			vector<DB::object> parameters = { modulusHex, exponent, underlying(EProviderType::Key) };
 			var sql = "select e.id from um_entities e join um_users u on e.id=u.entity_id where u.modulus=? and u.exponent=? and e.provider_id=?";
 			auto task = DB::ScalerCo<UserPK>( string{sql}, parameters );
@@ -284,11 +289,6 @@ namespace Jde::UM{
 			Promise()->ResumeWithError( move(e), _h );
 		}
 	}
-
-	α LoginAwait::Suspend()ι->void{
-		LoginTask();
-	}
-	//	vector<unsigned char> _modulus;  vector<unsigned char> _exponent;
 
 #pragma warning(disable:4100)
 	α IAuthorize::TestPurge( uint pk, UserPK userId, SL sl )ε->void{

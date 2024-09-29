@@ -207,9 +207,10 @@ namespace Jde::DB{
 		ASSERT(_db);
 		optional<up<json>> hookData;
 		[]( auto& table, auto userPK, auto& jData, auto& hookData )->Task{
-			hookData = ( co_await GraphQL::Hook::Select(table, userPK) ).UP<json>();
-			if( *hookData )
-				jData[table.JsonName] = *(*hookData);
+			auto j = ( co_await GraphQL::Hook::Select(table, userPK) ).UP<json>();
+			if( j )
+				jData[table.JsonName] = *j;
+			hookData = move(j);
 		}( table, userPK, jData, hookData );
 		while( !hookData )
 			std::this_thread::yield();

@@ -136,7 +136,7 @@ namespace Jde{
 	}
 
 	α IApplication::Pause()ι->int{
-		INFO( "Pausing main thread." );
+		Information{ ELogTags::App, "Pausing main thread." };
 		while( !_exitReason ){
 			AtomicGuard l{ _activeWorkersMutex };
 			uint size = _activeWorkers.size();
@@ -172,21 +172,28 @@ namespace Jde{
 	α Process::Shutdown( int exitReason )ι->void{
 		bool terminate{ false }; //use case might be if non-terminate took too long
 		SetExitReason( exitReason, terminate );//Sets ShuttingDown should be called in OnExit handler
-		INFO( "[{}]Waiting for process to complete. exitReason: {}, terminate: {}", OSApp::ProcessId(), _exitReason.value(), terminate );
-		_shutdowns.erase( [terminate](auto& p){ p->Shutdown( terminate ); } );
-
+		_shutdowns.erase( [terminate](auto& p){ 
+			p->Shutdown( terminate ); 
+		});
+		Information{ ELogTags::App | ELogTags::Shutdown, "[{}]Waiting for process to complete. exitReason: {}, terminate: {}, background threads: {}", OSApp::ProcessId(), _exitReason.value(), terminate, _backgroundThreads.size() };
 		while( _backgroundThreads.size() ){
 			_backgroundThreads.erase_if( [](var& p)->bool {
-				var done = p->IsDone();
+				auto done = p->IsDone();
 				if( done )
 					p->Join();
+				else if( done = p->Id()==std::this_thread::get_id(); done )
+					p->Detach();
 				return done;
 			});
 			std::this_thread::yield(); //std::this_thread::sleep_for( 2s );
 		}
+		Debug{ ELogTags::App | ELogTags::Shutdown, "Background threads removed" };
+
 		if( _pShutdownFunctions )
 			for_each( *_pShutdownFunctions, [=](var& shutdown){ shutdown( terminate ); } );
+		Debug{ ELogTags::App | ELogTags::Shutdown, "Shutdown functions removed" };
 		_rawShutdowns.erase( [=](auto& p){ p->Shutdown( terminate );} );
+		Debug{ ELogTags::App | ELogTags::Shutdown, "Raw functions removed" };
 		Cleanup();
 		_finalizing = true;
 	}

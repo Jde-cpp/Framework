@@ -11,16 +11,13 @@
 #include <boost/pointer_cast.hpp>
 
 #define var const auto
-namespace Jde
-{
+namespace Jde{
 	using boost::container::flat_map;
 	using nlohmann::json;
 	using nlohmann::ordered_json;
-	static var _logTag{ Logging::Tag("sql") };
-	α DB::SqlTag()ι->sp<LogTag>{ return _logTag; }
-	α DB::Driver()ι->string{ 
+	α DB::Driver()ι->string{
 		auto settings = Settings::Env("db/driver").value_or("");
-		return settings.size() ? settings : _msvc ? "Jde.DB.Odbc.dll" : "./libJde.MySql.so"; 
+		return settings.size() ? settings : _msvc ? "Jde.DB.Odbc.dll" : "./libJde.MySql.so";
 	}
 	α DB::ToParamString( uint c )->string{
 		string y{'?'}; y.reserve( c*2-1 );
@@ -48,15 +45,14 @@ namespace Jde
 		return os.str();
 	}
 	α DB::Log( sv sql, const vector<object>* pParameters, SL sl )ι->void{
-		Logging::Log( Logging::Message{ELogLevel::Trace, LogDisplay(sql, pParameters, {}), sl}, _logTag );
+		Trace{ sl, ELogTags::Sql, "{}", LogDisplay(sql, pParameters, {}) };
 	}
 
-	α DB::Log( sv sql, const vector<object>* pParameters, ELogLevel level, string error, SL sl )ι->void
-	{
-		Logging::Log( Logging::Message{level, LogDisplay(sql, pParameters, move(error)), sl}, _logTag );
+	α DB::Log( sv sql, const vector<object>* pParameters, ELogLevel level, string error, SL sl )ι->void{
+		Log( level, ELogTags::Sql, sl, "{}", LogDisplay(sql, pParameters, error) );
 	}
 	α DB::LogNoServer( string sql, const vector<object>* pParameters, ELogLevel level, string error, SL sl )ι->void{
-		Logging::LogNoServer( Logging::Message{level, LogDisplay(move(sql), pParameters, move(error)), sl}, _logTag );
+		Log( level, ELogTags::Sql | ELogTags::ExternalLogger, sl, "{}", LogDisplay(sql, pParameters, error) );
 	}
 
 	class DataSourceApi{
@@ -89,10 +85,10 @@ namespace Jde
 		_pDBShutdowns->push_back( shutdown );
 	}
 	α DB::CleanDataSources( bool /*terminate*/ )ι->void{
-		TRACE( "CleanDataSources" );
+		Trace{ ELogTags::Sql | ELogTags::Shutdown, "CleanDataSources" };
 		DB::ClearQLDataSource();
 		_pDefault = nullptr;
-		TRACE( "_pDefault=nullptr" );
+		Trace{ ELogTags::Sql | ELogTags::Shutdown, "_pDefault=nullptr" };
 		for( auto p=_pDBShutdowns->begin(); p!=_pDBShutdowns->end(); p=_pDBShutdowns->erase(p) )
 			(*p)();
 		_pDBShutdowns = nullptr;
@@ -105,7 +101,7 @@ namespace Jde
 			std::unique_lock l{_dataSourcesMutex};
 			_pDataSources = nullptr;
 		}
-		TRACE( "~CleanDataSources" );
+		Trace{ ELogTags::Sql | ELogTags::Shutdown, "~CleanDataSources" };
 	}
 	#define db DataSource()
 	DB::Schema _schema;
@@ -115,7 +111,7 @@ namespace Jde
 		if( !fs::exists(path) ){
 			path = IApplication::ApplicationDataFolder()/path.filename();
 		}
-		INFO( "db meta='{}'", path.string() );
+		Information{ ELogTags::Sql, "db meta='{}'", path.string() };
 		ordered_json j = Json::Parse( IO::FileUtilities::Load(path) );
 		_schema = db.SchemaProc()->CreateSchema( j, path.parent_path() );
 	}

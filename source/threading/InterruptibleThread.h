@@ -38,6 +38,7 @@ namespace Jde::Threading{  //TODO Reflection remove Threading from public items.
 		const string Name;
 		Γ void Shutdown( bool terminate )ι override;
 		void Detach()ι{ _internalThread.detach(); ShouldJoin = false; }//destructor on same thread.
+		α Id()Ι{ return _internalThread.get_id(); }
 	private:
 		std::thread _internalThread;
 		InterruptFlag* _pFlag{nullptr};
