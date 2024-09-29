@@ -9,9 +9,7 @@
 					"${env:REPO_DIR}/install/g++-13/asan/protobuf/include/",
 					"${env:REPO_DIR}/install/g++-13/asan/spdlog/include/",
 					"${env:REPO_DIR}/json/include",
-					"${env:JDE_DIR}/Public",
-					"${env:JDE_DIR}/Framework/tests/.obj/asan/googletest-src/googletest/include",
-					".."
+					"${env:JDE_DIR}/Public"
 				], 
 				"limitSymbolsToIncludedHeaders": true },
 				"includePath": [

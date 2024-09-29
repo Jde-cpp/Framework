@@ -5,8 +5,9 @@
 #pragma warning( disable : 4127 )
 #pragma warning( disable : 5054 )
 #include <google/protobuf/message.h>
+#include <google/protobuf/timestamp.pb.h>
 #pragma warning(pop)
-#include "proto/messages.pb.h"
+//#include "proto/messages.pb.h"
 #include <jde/io/File.h>
 
 #define var const auto
@@ -21,11 +22,11 @@ namespace Jde::IO::Proto{
 	Ŧ ToVector( const google::protobuf::RepeatedPtrField<T>& x )ι->vector<T>;
 
 	α Save( const google::protobuf::MessageLite& msg, fs::path path, SL )ε->void;
-	α ToString( const google::protobuf::MessageLite& msg )ε->string;
+	α ToString( const google::protobuf::MessageLite& msg )ι->string;
 	α SizePrefixed( const google::protobuf::MessageLite&& m )ι->tuple<up<google::protobuf::uint8[]>,uint>;
-	α ToTimestamp( TimePoint t )ι->Logging::Proto::Timestamp;
-	α ToTimePoint( Logging::Proto::Timestamp t )ι->TimePoint;
-	
+	α ToTimestamp( TimePoint t )ι->google::protobuf::Timestamp;
+	α ToTimePoint( google::protobuf::Timestamp t )ι->TimePoint;
+
 	namespace Internal{
 		Ŧ Deserialize( const google::protobuf::uint8* p, int size, T& proto )ε->void{
 			google::protobuf::io::CodedInputStream input{ p, (int)size };
@@ -37,7 +38,7 @@ namespace Jde::IO::Proto{
 
 namespace Jde::IO
 {
-	Ξ Proto::ToString( const google::protobuf::MessageLite& msg )ε->string{
+	Ξ Proto::ToString( const google::protobuf::MessageLite& msg )ι->string{
 		string output;
 		msg.SerializeToString( &output );
 		return output;
@@ -111,23 +112,31 @@ namespace Jde::IO
 	}
 
 	Ŧ Proto::ToVector( const google::protobuf::RepeatedPtrField<T>& x )ι->vector<T>{
-		vector<T> y;
+		vector<T> y; y.reserve( x.size() );
 		for_each( x.begin(), x.end(), [&y]( auto item ){ y.push_back(item); } );
 		return y;
 	}
 
-	Ξ Proto::ToTimestamp( TimePoint t )ι->Logging::Proto::Timestamp{
-		Logging::Proto::Timestamp proto;
+	Ξ Proto::ToTimestamp( TimePoint t )ι->google::protobuf::Timestamp{
+		google::protobuf::Timestamp proto;
 		var seconds = Clock::to_time_t( t );
 		var nanos = std::chrono::duration_cast<std::chrono::nanoseconds>( t-TimePoint{} )-std::chrono::duration_cast<std::chrono::nanoseconds>( std::chrono::seconds(seconds) );
 		proto.set_seconds( seconds );
 		proto.set_nanos( (int)nanos.count() );
 		return proto;
 	}
-	Ξ Proto::ToTimePoint( Logging::Proto::Timestamp t )ι->TimePoint{
-		Logging::Proto::Timestamp proto;
+	Ξ Proto::ToTimePoint( google::protobuf::Timestamp t )ι->TimePoint{
+		google::protobuf::Timestamp proto;
+#ifdef _MSC_VER
+		Clock::duration duration = duration_cast<Clock::duration>( std::chrono::nanoseconds( t.seconds() ) );
+		return Clock::from_time_t( t.seconds() ) + duration;
+		//	std::chrono::nanoseconds( t.nanos() );
+#else
 		return Clock::from_time_t( t.seconds() )+std::chrono::nanoseconds( t.nanos() );
+#endif
 	}
+//	std::chrono::time_point<std::chrono::system_clock,std::chrono::duration<__int64,std::nano>>
+//	std::chrono::time_point<std::chrono::system_clock,std::chrono::duration<std::chrono::system_clock::rep,std::chrono::system_clock::period>>
 }
 #undef var
 #endif

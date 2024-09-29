@@ -11,23 +11,21 @@
 #include <boost/pointer_cast.hpp>
 
 #define var const auto
-namespace Jde
-{
+namespace Jde{
 	using boost::container::flat_map;
 	using nlohmann::json;
 	using nlohmann::ordered_json;
-	static var _logTag{ Logging::Tag("sql") };
-	α DB::SqlTag()ι->sp<LogTag>{ return _logTag; }
-
-	α DB::ToParamString( uint c )->string
-	{
+	α DB::Driver()ι->string{
+		auto settings = Settings::Env("db/driver").value_or("");
+		return settings.size() ? settings : _msvc ? "Jde.DB.Odbc.dll" : "./libJde.MySql.so";
+	}
+	α DB::ToParamString( uint c )->string{
 		string y{'?'}; y.reserve( c*2-1 );
 		for( uint i=1; i<c; ++i )
 			y+=",?";
 		return y;
 	}
-	α DB::LogDisplay( sv sql, const vector<object>* pParameters, string error )ι->string
-	{
+	α DB::LogDisplay( sv sql, const vector<object>* pParameters, string error )ι->string{
 		ostringstream os;
 		if( error.size() )
 			os << move(error) << std::endl;
@@ -47,19 +45,17 @@ namespace Jde
 		return os.str();
 	}
 	α DB::Log( sv sql, const vector<object>* pParameters, SL sl )ι->void{
-		Logging::Log( Logging::Message{ELogLevel::Trace, LogDisplay(sql, pParameters, {}), sl}, _logTag );
+		Trace{ sl, ELogTags::Sql, "{}", LogDisplay(sql, pParameters, {}) };
 	}
 
-	α DB::Log( sv sql, const vector<object>* pParameters, ELogLevel level, string error, SL sl )ι->void
-	{
-		Logging::Log( Logging::Message{level, LogDisplay(sql, pParameters, move(error)), sl}, _logTag );
+	α DB::Log( sv sql, const vector<object>* pParameters, ELogLevel level, string error, SL sl )ι->void{
+		Log( level, ELogTags::Sql, sl, "{}", LogDisplay(sql, pParameters, error) );
 	}
 	α DB::LogNoServer( string sql, const vector<object>* pParameters, ELogLevel level, string error, SL sl )ι->void{
-		Logging::LogNoServer( Logging::Message{level, LogDisplay(move(sql), pParameters, move(error)), sl}, _logTag );
+		Log( level, ELogTags::Sql | ELogTags::ExternalLogger, sl, "{}", LogDisplay(sql, pParameters, error) );
 	}
 
-	class DataSourceApi
-	{
+	class DataSourceApi{
 		DllHelper _dll;
 	public:
 		DataSourceApi( const fs::path& path ):
@@ -68,12 +64,10 @@ namespace Jde
 		{}
 		decltype(GetDataSource) *GetDataSourceFunction;
 
-		α Emplace( str connectionString )->sp<DB::IDataSource>
-		{
+		α Emplace( str connectionString )->sp<DB::IDataSource>{
 			std::unique_lock l{ _connectionsMutex };
 			auto pDataSource = _pConnections->find( connectionString );
-			if( pDataSource == _pConnections->end() )
-			{
+			if( pDataSource == _pConnections->end() ){
 				auto pNew = sp<Jde::DB::IDataSource>{ GetDataSourceFunction() };
 				pNew->SetConnectionString( connectionString );
 				pDataSource = _pConnections->emplace( connectionString, pNew ).first;
@@ -87,16 +81,14 @@ namespace Jde
 	sp<DB::Syntax> _pSyntax;
 	sp<DB::IDataSource> _pDefault;
 	up<vector<function<void()>>> _pDBShutdowns = mu<vector<function<void()>>>();
-	α DB::ShutdownClean( function<void()>& shutdown )ι->void
-	{
+	α DB::ShutdownClean( function<void()> shutdown )ι->void{
 		_pDBShutdowns->push_back( shutdown );
 	}
-	α DB::CleanDataSources()ι->void
-	{
-		TRACE( "CleanDataSources"sv );
+	α DB::CleanDataSources( bool /*terminate*/ )ι->void{
+		Trace{ ELogTags::Sql | ELogTags::Shutdown, "CleanDataSources" };
 		DB::ClearQLDataSource();
 		_pDefault = nullptr;
-		TRACE( "_pDefault=nullptr" );
+		Trace{ ELogTags::Sql | ELogTags::Shutdown, "_pDefault=nullptr" };
 		for( auto p=_pDBShutdowns->begin(); p!=_pDBShutdowns->end(); p=_pDBShutdowns->erase(p) )
 			(*p)();
 		_pDBShutdowns = nullptr;
@@ -109,59 +101,53 @@ namespace Jde
 			std::unique_lock l{_dataSourcesMutex};
 			_pDataSources = nullptr;
 		}
-		TRACE( "~CleanDataSources"sv );
+		Trace{ ELogTags::Sql | ELogTags::Shutdown, "~CleanDataSources" };
 	}
 	#define db DataSource()
 	DB::Schema _schema;
 	α DB::DefaultSchema()ι->Schema&{ return _schema; }
 	α DB::CreateSchema()ε->void{
-		auto path = Settings::Global().Getɛ<fs::path>( "db/meta" );
+		fs::path path{ Settings::Env("db/meta").value_or((OSApp::Executable().parent_path()/fs::path{OSApp::Executable().filename().stem().string()+"Meta.json"}).string()) };
 		if( !fs::exists(path) ){
 			path = IApplication::ApplicationDataFolder()/path.filename();
 		}
-		INFO( "db meta='{}'", path.string() );
+		Information{ ELogTags::Sql, "db meta='{}'", path.string() };
 		ordered_json j = Json::Parse( IO::FileUtilities::Load(path) );
 		_schema = db.SchemaProc()->CreateSchema( j, path.parent_path() );
 	}
-	α DB::DefaultSyntax()ι->const DB::Syntax&
-	{
+	α DB::DefaultSyntax()ι->const DB::Syntax&{
 		if( !_pSyntax )
 			_pSyntax = Driver()=="Jde.DB.Odbc.dll" ? make_shared<Syntax>() : make_shared<MySqlSyntax>();
 		return *_pSyntax;
 	}
 
 	std::once_flag _singleShutdown;
-	α Initialize( const fs::path& libraryName )ε->void
-	{
+	α Initialize( const fs::path& libraryName )ε->void{
 		static DataSourceApi api{ libraryName };
 		_pDefault = sp<Jde::DB::IDataSource>{ api.GetDataSourceFunction(), [](auto) {
          //  delete p;  needs to be deleted before api
       } };
 	}
 
-	α DB::DataSourcePtr()ε->sp<IDataSource>
-	{
-		if( !_pDefault )
-		{
+	α DB::DataSourcePtr()ε->sp<IDataSource>{
+		if( !_pDefault ){
 			Initialize( Driver() );
 			string cs{ Settings::Env("db/connectionString").value_or("DSN=Jde_Log_Connection") };
 			_pDefault->SetConnectionString( move(cs) );
 		}
 		return _pDefault;
 	}
-	α DB::DataSource()ι->IDataSource&
-	{
+	α DB::DataSource()ι->IDataSource&{
 		auto p = DataSourcePtr();
 		THROW_IF( !p, "No default datasource" );//ie terminate
 		return *p;
 	}
 
-	α DB::DataSource( const fs::path& libraryName, string connectionString )->sp<DB::IDataSource>
-	{
+	α DB::DataSource( const fs::path& libraryName, string connectionString )->sp<DB::IDataSource>{
 		sp<IDataSource> pDataSource;
 		std::unique_lock l{_dataSourcesMutex};
 		string key = libraryName.string();
-		std::call_once( _singleShutdown, [](){ IApplication::AddShutdownFunction( CleanDataSources ); } );
+		std::call_once( _singleShutdown, [](){ Process::AddShutdownFunction( CleanDataSources ); } );
 		auto pSource = _pDataSources->find( key );
 		if( pSource==_pDataSources->end() )
 			pSource = _pDataSources->emplace( key, make_shared<DataSourceApi>(libraryName) ).first;
@@ -171,18 +157,15 @@ namespace Jde
 	α DB::Select( string sql, function<void(const IRow&)> f, SL sl )ε->void{ db.Select(move(sql), f, sl); }
 	α DB::Select( string sql, function<void(const IRow&)> f, const vector<object>& values, SL sl )ε->void{ db.Select(move(sql), f, values, sl); }
 
-	α DB::IdFromName( sv tableName, string name, SL sl )ι->SelectAwait<uint>
-	{
+	α DB::IdFromName( sv tableName, string name, SL sl )ι->SelectAwait<uint>{
 		return db.ScalerCo<uint>( Jde::format("select id from {} where name=?", tableName), {name}, sl );
 	}
 
-	α DB::Execute( string sql, vector<object>&& parameters, SL sl )ε->uint
-	{
+	α DB::Execute( string sql, vector<object>&& parameters, SL sl )ε->uint{
 		return db.Execute( move(sql), parameters, sl );
 	}
 
-	α DB::SelectName( string sql, uint id, sv cacheName, SL sl )ε->CIString
-	{
+	α DB::SelectName( string sql, uint id, sv cacheName, SL sl )ε->CIString{
 		CIString y;
 		if( auto p = cacheName.size() ? Cache::GetValue<uint,CIString>(string{cacheName}, id) : sp<CIString>{}; p )
 			y = CIString{ *p };
@@ -191,8 +174,7 @@ namespace Jde
 		return y;
 	}
 
-	α DB::SelectIds( string sql, const std::set<uint>& ids, function<void(const IRow&)> f, SL sl )ε->void
-	{
+	α DB::SelectIds( string sql, const std::set<uint>& ids, function<void(const IRow&)> f, SL sl )ε->void{
 		vector<object> params; params.reserve( ids.size() );
 		string s; s.reserve( ids.size()*2 );
 		for( var id : ids )

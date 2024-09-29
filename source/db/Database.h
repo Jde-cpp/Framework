@@ -12,7 +12,7 @@ namespace Jde::DB{
 	Φ DataSource()ι->IDataSource&;
 	Φ DataSource( const fs::path& libraryName, string connectionString )ε->sp<IDataSource>;
 	Φ DataSourcePtr()ε->sp<IDataSource>;
-	Ξ Driver()ι->string{ return Settings::Env("db/driver").value_or( _msvc ? "Jde.DB.Odbc.dll" : "./libJde.MySql.so" ); }
+	Φ Driver()ι->string;
 	Ŧ SelectEnum( sv tableName, SRCE )ε->SelectCacheAwait<flat_map<T,string>>{ return DataSource().SelectEnum<T>(tableName, sl); }//sp<flat_map<T,string>>
 	template<class K=uint,class V=string> α SelectEnumSync( sv tableName, SRCE )ε->sp<flat_map<K,V>>{ return DataSource().SelectEnumSync<K,V>( tableName, sl ); }//sp<flat_map<T,string>>
 	Φ IdFromName( sv tableName, string name, SRCE )ι->SelectAwait<uint>;
@@ -25,8 +25,8 @@ namespace Jde::DB{
 	Φ DefaultSyntax()ι->const DB::Syntax&;
 	Φ CreateSchema()ε->void;
 	Φ DefaultSchema()ι->Schema&;
-	Φ CleanDataSources()ι->void;
-	Φ ShutdownClean( function<void()>& shutdown )ι->void;
+	Φ CleanDataSources( bool terminate )ι->void;
+	Φ ShutdownClean( function<void()> shutdown )ι->void;
 
 	Ξ ExecuteProc( string sql, vec<object> parameters, RowΛ f, SRCE )ε->uint{ return DataSource().ExecuteProc( move(sql), parameters, f, sl ); }
 	Ξ ExecuteProc( string sql, vector<object>&& parameters, SRCE )ε->uint{ return DataSource().ExecuteProc( move(sql), parameters, sl ); }

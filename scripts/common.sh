@@ -90,23 +90,22 @@ function fetchFile
 
 function fetch
 {
-	#trap error ERR;
-	#echo shouldFetch=$shouldFetch;
-	fetchDir $1 $shouldFetch; #if [ $? -ne 0 ]; then exit $?; fi;
-	cd $1;
+	fetchDir $1 $2 $shouldFetch; #if [ $? -ne 0 ]; then exit $?; fi;
+	cd $2;
 	if [ -d source ];then cd source; fi;
 }
 
 function fetchDir
 {
-	local dir=${1}; local fetch=${2};
+	local branch=${1}; local dir=${2}; local fetch=${3};
 	url=$([ ! -z "$jde_token" ] && echo $jde_token@ || echo "");
 	if [ ! -d $dir ]; then
-		git clone https://"$url"github.com/Jde-cpp/$dir.git -q;
+		git clone -b $branch --single-branch https://"$url"github.com/Jde-cpp/$dir.git -q;
 	else
 		cd $dir;
 		if  [[ $fetch -eq 1 ]]; then
 			git pull -q; if [ $? -ne 0 ]; then echo fetch failed:  `pwd`; exit 1; fi;
+			git checkout $branch -q; if [ $? -ne 0 ]; then echo checkout failed:  `pwd`; exit 1; fi;
 		fi;
 		cd ..;
 	fi;

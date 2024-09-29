@@ -10,10 +10,10 @@ namespace Jde::DB
 {
 	struct Statement final
 	{
-		Statement( string sql, const VectorPtr<object>& parameters, bool isStoredProc, SL sl );//TODO remove this.
+		Statement( string sql, sp<vector<object>> parameters, bool isStoredProc, SL sl );//TODO remove this.
 
 		string Sql;//const?
-		const VectorPtr<object> Parameters;
+		const sp<vector<object>> Parameters;
 		bool IsStoredProc;//const?
 		source_location SourceLocation;
 	};
@@ -23,8 +23,8 @@ namespace Jde::DB
 	struct Γ DBQueue final : IShutdown//, std::enable_shared_from_this<DBQueue>
 	{
 		DBQueue( sp<IDataSource> spDataSource )ι;
-		α Push( string sql, const VectorPtr<object>& parameters, bool isStoredProc=true, SRCE )ι->void;
-		α Shutdown()ι->void override;
+		α Push( string sql, sp<vector<object>> parameters, bool isStoredProc=true, SRCE )ι->void;
+		α Shutdown( bool terminate )ι->void override;
 	private:
 		α Run()ι->void;
 		sp<Threading::InterruptibleThread> _pThread;

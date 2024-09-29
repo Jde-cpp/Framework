@@ -1,6 +1,6 @@
 ﻿#pragma once
 #include <jde/App.h>
-#include <jde/Log.h>
+#include <jde/log/Log.h>
 #include <jde/Str.h>
 #include <jde/Exports.h>
 #include "Settings.h"
@@ -10,8 +10,7 @@ namespace Jde
 {
 #define var const auto
 #define Φ Γ Ω
-	struct Cache2
-	{
+	struct Cache2{
 		Φ Has( str id )ι->bool;
 
 		Φ Duration( str id )ι->Jde::Duration;
@@ -27,15 +26,13 @@ namespace Jde
 		Φ LogTag()ι->sp<LogTag>;
 	};
 
-	Ŧ Cache2::Emplace( str id )ι->sp<T>
-	{
+	Ŧ Cache2::Emplace( str id )ι->sp<T>{
 		sp<T> p;
 		Jde::Duration d = Cache2::Duration( id );
 		Jde::Duration d2 = Jde::Duration::zero();
 		if( d <= d2 )
 			p = make_shared<T>();
-		else
-		{
+		else{
 			ul l{ _cacheLock };
 			auto i = _cache.find( id );
 			p = i==_cache.end()
@@ -45,24 +42,20 @@ namespace Jde
 		return p;
 	}
 
-	Ŧ Cache2::Get( str id )ι->sp<T>
-	{
+	Ŧ Cache2::Get( str id )ι->sp<T>{
 		sl l{_cacheLock};
 		auto p = _cache.find( id );
 		return p==_cache.end() ? sp<T>{} : std::static_pointer_cast<T>( p->second );
 	}
 
 #define _logTag LogTag()
-	Ŧ Cache2::Set( str id, sp<T> p )ι->sp<T>
-	{
+	Ŧ Cache2::Set( str id, sp<T> p )ι->sp<T>{
 		ul l{_cacheLock};
-		if( !p )
-		{
+		if( !p ){
 			var erased = _cache.erase( id );
 			TRACE( "Cache::{} erased={}"sv, id, erased );
 		}
-		else
-		{
+		else{
 			_cache[id] = p;
 			TRACE( "Cache::{} set"sv, id );
 		}
@@ -70,9 +63,7 @@ namespace Jde
 	}
 
 
-	struct Cache final
-	{
-		~Cache(){ if( HaveLogger() ) TRACE("~Cache"sv); }
+	struct Cache final{
 		Ω Has( str name )ι{ return Instance().InstanceHas( name ); }
 		Ω Duration( str /*name*/ )ι{ return Settings::Get<Jde::Duration>( "cache/default/duration" ).value_or( Duration::max() ); }
 		Ṫ Emplace( str name )ι->sp<T>{ return Instance().InstanceEmplace<T>( name ); }
@@ -95,15 +86,13 @@ namespace Jde
 		Φ LogTag()ι->sp<LogTag>;
 	};
 
-	Ŧ Cache::InstanceGet( str name )ι->sp<T>
-	{
+	Ŧ Cache::InstanceGet( str name )ι->sp<T>{
 		sl l{_cacheLock};
 		auto p = _cache.find( name );
 		return p==_cache.end() ? sp<T>{} : std::static_pointer_cast<T>( p->second );
 	}
 
-	Ŧ Cache::InstanceEmplace( str name )ι->sp<T>
-	{
+	Ŧ Cache::InstanceEmplace( str name )ι->sp<T>{
 		sl l{_cacheLock};
 		auto p = _cache.find( name );
 		if( p==_cache.end() )
@@ -111,14 +100,11 @@ namespace Jde
 		return std::static_pointer_cast<T>( p->second );
 	}
 
-	ẗ Cache2::GetValue( str cacheName, K id )ι->sp<V>
-	{
+	ẗ Cache2::GetValue( str cacheName, K id )ι->sp<V>{
 		sp<V> pValue;
 		sl l{_cacheLock};
-		if( auto p = _cache.find( cacheName ); p!=_cache.end() )
-		{
-			if( var pMap = std::static_pointer_cast<flat_map<K,sp<V>>>(p->second); pMap )
-			{
+		if( auto p = _cache.find( cacheName ); p!=_cache.end() ){
+			if( var pMap = std::static_pointer_cast<flat_map<K,sp<V>>>(p->second); pMap ){
 				if( auto pItem = pMap->find( id ); pItem != pMap->end() )
 					pValue = pItem->second;
 			}
@@ -126,30 +112,25 @@ namespace Jde
 		return pValue;
 	}
 
-	ẗ Cache::InstanceGetValue( str cacheName, K id )ι->sp<V>
-	{
+	ẗ Cache::InstanceGetValue( str cacheName, K id )ι->sp<V>{
 		sp<V> pValue;
 		sl l{_cacheLock};
-		if( auto p = _cache.find( cacheName ); p!=_cache.end() )
-		{
-			if( var pMap = std::static_pointer_cast<flat_map<K,sp<V>>>(p->second); pMap )
-			{
+		if( auto p = _cache.find( cacheName ); p!=_cache.end() ){
+			if( var pMap = std::static_pointer_cast<flat_map<K,sp<V>>>(p->second); pMap ){
 				if( auto pItem = pMap->find( id ); pItem != pMap->end() )
 					pValue = pItem->second;
 			}
 		}
 		return pValue;
 	}
-	Ŧ Cache::InstanceSet( str name, sp<T> pValue )ι->	sp<T>
-	{
+
+	Ŧ Cache::InstanceSet( str name, sp<T> pValue )ι->	sp<T>{
 		ul l{_cacheLock};
-		if( !pValue )
-		{
+		if( !pValue ){
 			const bool erased = _cache.erase( name );
 			TRACE( "Cache::{} erased={}"sv, name, erased );
 		}
-		else
-		{
+		else{
 			_cache[name] = pValue;
 			TRACE( "Cache::{} set"sv, name );
 		}

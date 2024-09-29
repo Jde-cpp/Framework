@@ -6,7 +6,7 @@
 #define var const auto
 namespace Jde::DB{
 	static sp<LogTag> _logTag{ Logging::Tag("sql") };
-	Statement::Statement( string sql, const VectorPtr<object>& parameters, bool isStoredProc, SL sl ):
+	Statement::Statement( string sql, sp<vector<object>> parameters, bool isStoredProc, SL sl ):
 		Sql{ move(sql) },
 		Parameters{ parameters },
 		IsStoredProc{isStoredProc},
@@ -19,16 +19,14 @@ namespace Jde::DB{
 		IApplication::AddThread( _pThread );
 	}
 
-	void DBQueue::Shutdown()ι
-	{
+	void DBQueue::Shutdown( bool /*terminate*/ )ι{
 		_pThread->Interrupt();
 		while( !_stopped )
 			std::this_thread::yield();
 		//_queue.Push( sp<Statement>{} );
 	}
 
-	void DBQueue::Push( string sql, const VectorPtr<object>& parameters, bool isStoredProc, SL sl )ι
-	{
+	void DBQueue::Push( string sql, sp<vector<object>> parameters, bool isStoredProc, SL sl )ι{
 		if( _stopped )
 			return;
 		// if( !_stopped )

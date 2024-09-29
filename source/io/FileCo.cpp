@@ -92,13 +92,12 @@ namespace Jde::IO
 				_arg.Open();
 		}
 		catch( IOException& e ){
-			ExceptionPtr = e.Clone();
+			ExceptionPtr = e.Move();
 		}
 		return ExceptionPtr!=nullptr || cache;
 	}
-	
-	α DriveAwaitable::await_suspend( HCoroutine h )ι->void{
-		base::await_suspend( h );
-		_arg.Send( move(h) );
+
+	α DriveAwaitable::Suspend()ι->void{
+		_arg.Send( _h );
 	}
 }

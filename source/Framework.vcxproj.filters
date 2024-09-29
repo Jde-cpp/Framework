@@ -91,9 +91,6 @@
     <ClCompile Include="Str.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Log.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="App.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -127,20 +124,38 @@
     <ClCompile Include="coroutine\Lock.cpp">
       <Filter>Source\coroutine</Filter>
     </ClCompile>
-    <ClCompile Include="io\AsioContextThread.cpp">
-      <Filter>Source\io</Filter>
+    <ClCompile Include="threading\Execution.cpp">
+      <Filter>Source\threading</Filter>
     </ClCompile>
-    <ClCompile Include="io\Socket.cpp">
-      <Filter>Source\io</Filter>
+    <ClCompile Include="log\IExternalLogger.cpp">
+      <Filter>Source\Log</Filter>
     </ClCompile>
-    <ClCompile Include="io\proto\messages.pb.cc">
-      <Filter>Source\io\Proto</Filter>
+    <ClCompile Include="log\Log.cpp">
+      <Filter>Source\Log</Filter>
     </ClCompile>
-    <ClCompile Include="io\ServerSink.cpp">
-      <Filter>Source\io</Filter>
+    <ClCompile Include="log\LogTags.cpp">
+      <Filter>Source\Log</Filter>
     </ClCompile>
-    <ClCompile Include="io\ProtoClient.cpp">
-      <Filter>Source\io</Filter>
+    <ClCompile Include="log\Message.cpp">
+      <Filter>Source\Log</Filter>
+    </ClCompile>
+    <ClCompile Include="db\graphQL\FilterQL.cpp">
+      <Filter>Source\db\graphQL</Filter>
+    </ClCompile>
+    <ClCompile Include="db\graphQL\GraphQLHook.cpp">
+      <Filter>Source\db\graphQL</Filter>
+    </ClCompile>
+    <ClCompile Include="db\graphQL\Insert.cpp">
+      <Filter>Source\db\graphQL</Filter>
+    </ClCompile>
+    <ClCompile Include="db\graphQL\Introspection.cpp">
+      <Filter>Source\db\graphQL</Filter>
+    </ClCompile>
+    <ClCompile Include="db\graphQL\Purge.cpp">
+      <Filter>Source\db\graphQL</Filter>
+    </ClCompile>
+    <ClCompile Include="db\graphQL\TableQL.cpp">
+      <Filter>Source\db\graphQL</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -378,6 +393,18 @@
     <ClInclude Include="io\Socket.h">
       <Filter>Headers\io</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Public\jde\log\IExternalLogger.h">
+      <Filter>Headers\log</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Public\jde\log\Log.h">
+      <Filter>Headers\log</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Public\jde\log\LogTags.h">
+      <Filter>Headers\log</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Public\jde\log\Message.h">
+      <Filter>Headers\log</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Headers">
@@ -423,9 +450,6 @@
     <Filter Include="Headers\log\server">
       <UniqueIdentifier>{5ee3b262-ac37-4156-9ca4-5f5202dcd550}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source\io\Zip">
-      <UniqueIdentifier>{eb9d0ee5-c92f-4185-b4ed-04e8980aff2f}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Headers\log\server\proto">
       <UniqueIdentifier>{6fa39ae7-ece8-4b51-bf5c-4287e9329b72}</UniqueIdentifier>
     </Filter>
@@ -459,8 +483,11 @@
     <Filter Include="Headers\windows">
       <UniqueIdentifier>{be3130a9-4d16-49b7-aee1-d6dda54f6961}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source\io\Proto">
-      <UniqueIdentifier>{5bbd8d58-22c6-4063-bae9-7eb09becfca6}</UniqueIdentifier>
+    <Filter Include="Source\Log">
+      <UniqueIdentifier>{5194487e-f15a-422e-bce6-0fd76add18b4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\db\graphQL">
+      <UniqueIdentifier>{4e661d86-eb16-4490-9591-34843c461686}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

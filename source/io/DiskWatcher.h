@@ -114,7 +114,7 @@ namespace Jde::IO
 		β Remove( const fs::path& path )->void=0;
 		β Trash( const fs::path& path )->void=0;
 		β TrashDisposal( TimePoint latestDate )->void=0;
-		β Load( const IDirEntry& dirEntry )->VectorPtr<char> =0;
+		β Load( const IDirEntry& dirEntry )->sp<vector<char>> =0;
 		β Restore( sv name )ε->void=0;
 		β SoftLink( const fs::path& existingFile, const fs::path& newSymLink )ε->void=0;
 	};

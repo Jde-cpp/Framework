@@ -37,7 +37,7 @@ namespace Jde::DB{
 
 	Τ struct SelectAwait final: IAwait, TSelect<T>{
 		SelectAwait( sp<IDataSource> ds, string sql, CoRowΛ<T> fnctn, vector<object> params, SL sl )ι:IAwait{sl},TSelect<T>( *this, ds, move(sql), fnctn, move(params) ){}
-		α await_suspend( HCoroutine h )ι->void override{ IAwait::await_suspend( h ); TSelect<T>::Select( move(h) ); }
+		α Suspend()ι->void override{ TSelect<T>::Select( move(_h) ); }
 	};
 
 	Τ TSelect<T>::~TSelect(){};
@@ -70,7 +70,7 @@ namespace Jde::DB{
 	inline ICacheAwait::~ICacheAwait(){};
 	Τ struct SelectCacheAwait final: ICacheAwait, TSelect<T>{
 		SelectCacheAwait( sp<IDataSource> ds, string sql, string cache, CoRowΛ<T> fnctn, vector<object> params, SL sl ):ICacheAwait{cache,sl},TSelect<T>{ *this, ds, move(sql), fnctn, move(params) }{}
-		α await_suspend( HCoroutine h )ι->void override{ IAwait::await_suspend( h ); TSelect<T>::Select( move(h) ); }
+		α Suspend()ι->void override{ TSelect<T>::Select( _h ); }
 		α await_resume()ι->AwaitResult override;
 	};
 

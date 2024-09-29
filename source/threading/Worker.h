@@ -3,24 +3,19 @@
 #define WORKER_H
 #include <jde/TypeDefs.h>
 #include <jde/App.h>
-#include "./jthread.h"
 #include "./Mutex.h"
 #include "../collections/Queue.h"
 #include "InterruptibleThread.h"
 
 namespace Jde::Threading{
 	#define var const auto
-#ifdef __clang__
-	using Jde::stop_token;
-#else
 	using std::stop_token;
-#endif
 	/*handle signals, configuration*/
 	struct Γ IWorker : IShutdown, std::enable_shared_from_this<IWorker>{
 		IWorker( sv name )ι;
 		virtual ~IWorker()=0;
 		β Initialize()ι->void;
-		α Shutdown()ι->void override;
+		α Shutdown( bool terminate )ι->void override;
 		α HasThread()ι->bool{ return _pThread!=nullptr; }
 		β Run( stop_token st )ι->void;
 		sv NameInstance;
@@ -28,7 +23,7 @@ namespace Jde::Threading{
 		α StartThread()ι->void;
 	protected:
 		static sp<IWorker> _pInstance;
-		up<jthread> _pThread;
+		up<std::jthread> _pThread;
 		static std::atomic_flag _mutex;
 	};
 	struct Γ IPollWorker : IWorker, IPollster{
@@ -72,7 +67,7 @@ namespace Jde::Threading{
 		{
 			//pInstance = _pInstance = make_shared<T>();
 			//const bool addThreads = Settings::TryGet<uint8>( Jde::format("workers/{}/threads", T::Name) ).value_or( 0 );
-			_pInstance = IApplication::AddPollster<T>();
+			_pInstance = Process::AddPollster<T>();
 			////var pSettings = Settings::TryGetSubcontainer<Settings::Container>(  );
 			//if( addThreads )
 			//	_pInstance->StartThread();

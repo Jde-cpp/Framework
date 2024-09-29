@@ -1,9 +1,9 @@
-﻿#include <jde/coroutine/Task.h>
+﻿#include <jde/coroutine/TaskOld.h>
 #include "../threading/Thread.h"
 #include <nlohmann/json.hpp>
 
 namespace Jde::Coroutine{
-	static sp<LogTag> _logTag{ Logging::Tag("coroutine") };
+	constexpr ELogTags _tags{ ELogTags::Threads };
 
 	std::atomic<ClientHandle> _handleIndex{0};
 	α NextHandle()ι->Handle{return ++_handleIndex;}
@@ -14,65 +14,29 @@ namespace Jde::Coroutine{
 	std::atomic<ClientHandle> TaskPromiseHandle{0};
 	α NextTaskPromiseHandle()ι->Handle{ return ++TaskPromiseHandle; }
 
-	AwaitResult::~AwaitResult(){
-	}
 	α AwaitResult::CheckUninitialized()ι->void{
 		if( !Uninitialized() )
-			CRITICAL( "Uninitialized - index={}", _result.index() );
-	}
-	atomic<uint> TaskIndex{ 0 };
-/*	Task::Task()ι:i{++TaskIndex}
-	{
-		TRACE( "({:x}-{}) created", (uint)this, i );
-		if( i==7 )
-			BREAK;
-	}
-	Task::Task( Task&& x )ι:
-		_result{ move(x._result) }
-	{
-		i = ++TaskIndex;
-		TRACE( "({:x}-{}) moved ({:x})-{}", (uint)this, i, (uint)&x, x.i );
-	}
-	Task::Task( const Task& x )ι:
-		i{++TaskIndex}
-	{
-		TRACE( "({:x}-{}) copied ({:x})-{}", (uint)this, i, (uint)&x, x.i );
+			Critical( _tags, "Uninitialized - index={}", _result.index() );
 	}
 
-	Task::~Task()ι
-	{
-		TRACE( "({:x}-{}) removed", (uint)this, i );
-	}
-	*/
 	α Task::promise_type::unhandled_exception()ι->void{
 		try{
-			BREAK;
-			if( auto p = std::current_exception(); p )
-				std::rethrow_exception( p );
-			else
-				CRITICAL( "unhandled_exception - no exception"sv );
+			throw;
 		}
 		catch( CoException& e ){
 			e.Resume( *this );
 		}
 		catch( IException& e ){
-			//e.Log();
-			// if( _unhandledResume )
-			// {
-			// 	_pReturnObject->SetResult( move(e) );
-			// 	_unhandledResume.resume();
-			// }
-			// else
-				CRITICAL( "Jde::Task::promise_type::unhandled_exception - {}", e.what() );
+			Critical( _tags, "Jde::Task::promise_type::unhandled_exception - {}", e.what() );
 		}
 		catch( const nlohmann::json::exception& e ){
-			CRITICAL( "Jde::Task::promise_type::unhandled_exception - json exception - {}"sv, e.what() );
+			Critical( _tags, "Jde::Task::promise_type::unhandled_exception - json exception - {}", e.what() );
 		}
 		catch( const std::exception& e ){
-			CRITICAL( "Jde::Task::promise_type::unhandled_exception ->{}"sv, e.what() );
+			Critical( _tags, "Jde::Task::promise_type::unhandled_exception ->{}", e.what() );
 		}
 		catch( ... ){
-			CRITICAL( "Jde::Task::promise_type::unhandled_exception"sv );
+			Critical( _tags, "Jde::Task::promise_type::unhandled_exception" );
 		}
 	}
 }

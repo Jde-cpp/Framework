@@ -5,21 +5,17 @@
 #include <boost/core/noncopyable.hpp>
 #include "Thread.h"
 #include <jde/Assert.h>
-#include <jde/Log.h>
-#include <jde/coroutine/Task.h>
+#include <jde/log/Log.h>
+#include <jde/coroutine/TaskOld.h>
 #include "../coroutine/Awaitable.h"
 
 #define Φ Γ auto
-namespace Jde
-{
+namespace Jde{
 	enum class ELogLevel : int8;
-	struct AtomicGuard final : boost::noncopyable
-	{
-		AtomicGuard( std::atomic_flag& f )ι: _pValue{ &f }
-		{
-			while( f.test_and_set(std::memory_order_acquire) )
-			{
-            while( f.test(std::memory_order_relaxed) )
+	struct AtomicGuard final : boost::noncopyable{
+		AtomicGuard( std::atomic_flag& f )ι: _pValue{ &f }{
+			while( f.test_and_set(std::memory_order_acquire) ){
+        while( f.test(std::memory_order_relaxed) )
 					std::this_thread::yield();
 			}
 		}
@@ -30,21 +26,20 @@ namespace Jde
 		atomic_flag* _pValue;
 	};
 	struct CoLock; struct CoGuard;
-	class Γ LockAwait : public Coroutine::IAwait
-	{
-		using base=Coroutine::IAwait;
+	class Γ LockAwait : public IAwait{
+		using base=IAwait;
 	public:
-		LockAwait( CoLock& lock )ι:_lock{lock}{}
+		LockAwait( CoLock& lock )ι;
+		~LockAwait();
 		α await_ready()ι->bool override;
-		α await_suspend( HCoroutine h )ι->void override;
-		α await_resume()ι->AwaitResult override{ return _pGuard ? AwaitResult{move(_pGuard)} : base::await_resume(); }
+		α Suspend()ι->void override;
+		α await_resume()ι->AwaitResult override;
 	private:
 		CoLock& _lock;
 		up<CoGuard> _pGuard;
 	};
 
-	struct Γ CoLock
-	{
+	struct Γ CoLock{
 		α Lock(){ return LockAwait{*this}; }
 	private:
 		α TestAndSet()ι->up<CoGuard>;
@@ -56,8 +51,7 @@ namespace Jde
 		const bool _resumeOnPool{ false };
 		friend class LockAwait; friend struct CoGuard;
 	};
-	struct Γ CoGuard
-	{
+	struct Γ CoGuard{
 		~CoGuard();
 	private:
 		CoGuard( CoLock& lock )ι;

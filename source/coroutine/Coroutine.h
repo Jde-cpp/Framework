@@ -6,7 +6,6 @@
 #include "../Settings.h"
 #include <jde/App.h>
 #include "../collections/Queue.h"
-#include "../threading/jthread.h"
 #include "../threading/InterruptibleThread.h"
 
 namespace Jde::Threading{ struct InterruptibleThread; }
@@ -28,13 +27,13 @@ namespace Jde::Coroutine{
 		const Duration IdleLimit;
 		const Threading::ThreadParam ThreadParam;
 		optional<CoroutineParam> _param; mutex _paramMutex;
-		jthread _thread;
+		std::jthread _thread;
 	};
 
 	struct Γ CoroutinePool final: IShutdown{
 		~CoroutinePool(){ _pInstance=nullptr; }
-		Ω Resume( coroutine_handle<>&& h )ι->void;
-		α Shutdown()ι->void;
+		Ω Resume( coroutine_handle<> h )ι->void;
+		α Shutdown( bool terminate )ι->void;
 #define SETTINGS(T,n,dflt) optional<T> v; if( _pSettings ) v=_pSettings->TryGet<T>(n); return v.value_or(dflt)
 	private:
 		α InnerResume( CoroutineParam&& param )ι->void;

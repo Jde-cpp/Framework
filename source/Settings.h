@@ -15,6 +15,9 @@
 namespace Jde::Settings{
 	α Path()ι->fs::path;
 	Φ LogTag()ι->sp<Jde::LogTag>&;
+	Φ Env( sv path, SRCE )ι->optional<string>;
+	α Envɛ( sv path, SRCE )ε->string;
+
 	struct JsonNumber final{
 		using Variant=std::variant<double,_int,uint>;
 		JsonNumber( json j )ε;
@@ -65,7 +68,7 @@ namespace Jde::Settings{
 		optional<std::chrono::system_clock::duration> result;
 		if( strng.has_value() )
 			Try( [strng, &result](){ result = Chrono::ToDuration(*strng);} );
-		return  result;
+		return result;
 	}
 	$ Container::Get<ELogLevel>( sv path )Ι->optional<ELogLevel>{
 		optional<ELogLevel> level;
@@ -92,19 +95,15 @@ namespace Jde::Settings{
 
 	$ Container::Get<fs::path>( sv path )Ι->optional<fs::path>{
 		auto p = Get<string>( path );
-		if( var i{p ? p->find("$(") : string::npos}; i!=string::npos && i<p->size()-3 )
-		{
-			var end = p->find( ')', i );
-			var env = OSApp::EnvironmentVariable( p->substr(i+2, end-i-2), SRCE_CUR );
-			p = p->substr( 0, i )+env+p->substr( end+1 );
-		}
+		if( var i{p ? p->find("$(") : string::npos}; i!=string::npos )
+			p = Env( path );
 		return p ? optional<fs::path>(*p) : nullopt;
 	}
 
 	Ŧ Container::Get( sv path )Ι->optional<T>{
 		auto p = FindPath( path );
 		try{
-			return p ? optional<T>{ p->get<T>() } : nullopt;
+			return p && !p->is_null() ? optional<T>{ p->get<T>() } : nullopt;
 		}
 		catch( const nlohmann::detail::type_error& e ){
 			LOG_ONCE( ELogLevel::Debug, LogTag(), "({}) - {}", path, e.what() );
@@ -127,7 +126,7 @@ namespace Jde::Settings{
 	//Φ Set( sv path, path value )ι->void;
 
 	α Save( const json& j, sv what, SRCE )ε->void;
-	α Set( sv what, const Container::Variant& v, bool save=true, SRCE )ε->void;
+	Φ Set( sv what, const Container::Variant& v, bool save=true, SRCE )ε->void;
 
 	Ŧ TryArray( sv path, vector<T> dflt={} )ι{ return Global().TryArray<T>(path, dflt); }
 
@@ -168,25 +167,6 @@ namespace Jde::Settings{
 	Ξ TryMembers( sv path )ι->flat_map<string,Container>{ return Global().TryMembers( path ); }
 	$ Get<ELogLevel>( sv path )ι->optional<ELogLevel>{ return Global().Get<ELogLevel>( path ); }
 	Ξ ForEach( sv path, function<void(sv, const nlohmann::json& v)> f )ι->void{ return Global().ForEach(path, f); }
-
-	Ξ Env( sv path, SRCE )ι->optional<string>{
-		auto p = Global().Get( path );
-		if( p && p->starts_with("$(") && p->size()>3 )
-		{
-			p = OSApp::EnvironmentVariable( p->substr(2, p->size()-3), sl );
-			if( p->size()==0 )
-				p = nullopt;
-		}
-		return p;
-	}
-
-	Ξ Envɛ( sv path )ε->string{
-		auto p = Global().Get( path );
-		if( p && p->starts_with("$(") && p->size()>3 )
-			p = OSApp::EnvironmentVariable( p->substr(2, p->size()-3) );
-		if( !p ) throw Jde::Exception{ SRCE_CUR, Jde::ELogLevel::Debug, "{} not found", path }; //can't use THROW_IF
-		return *p;
-	}
 
 	Τ struct Item{
 		Item( sv path, T dflt ):

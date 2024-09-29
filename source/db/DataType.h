@@ -4,7 +4,7 @@ DISABLE_WARNINGS
 #include <nlohmann/json.hpp>
 ENABLE_WARNINGS
 #include <jde/Str.h>
-#include <jde/Log.h>
+#include <jde/log/Log.h>
 #include <jde/Assert.h>
 
 namespace Jde::DB
@@ -24,6 +24,7 @@ namespace Jde::DB
 
 	α ToObject( EType type, const nlohmann::json& j, sv memberName, SRCE )ε->object;
 	α ToJson( const object& obj, json& j )ι->void;
+	Ξ ToJson( const object& obj )ι->json{ json j; ToJson(obj,j); return j; };
 #define var const auto
 	Ξ ToUInt( const object& x )ι->uint
 	{

@@ -16,7 +16,7 @@ namespace Jde::DB{
 	struct IDataSource;
 
 	static sp<LogTag> _logTag{ Logging::Tag("sql") };
-
+	constexpr ELogTags _tags{ ELogTags::Sql };
 	α UniqueIndexName( const Index& index, ISchemaProc& dbSchema, bool uniqueName, const vector<Index>& indexes )ε->string;
 
 	string AbbrevName( sv schemaName ){
@@ -71,8 +71,12 @@ namespace Jde::DB{
 				for( auto& column : pTable->Columns ){
 					var& dbTable = pNameDBTable->second;
 					var pDBColumn = dbTable.FindColumn( column.Name ); if( !pDBColumn ){ ERR("Could not find db column {}.{}", tableName, column.Name); continue; }
-					if( pDBColumn->Default.empty() && column.Default.size() && column.Default!="$now" )
-						_pDataSource->TryExecute( _syntax.AddDefault(tableName, column.Name, column.Default) );
+					if( pDBColumn->Default.empty() && column.Default.size() && column.Default!="$now" ){
+						if( column.Type==DB::EType::Bit )
+							_pDataSource->TryExecute( _syntax.AddDefault(tableName, column.Name, column.Default=="true") );
+						else
+							_pDataSource->TryExecute( _syntax.AddDefault(tableName, column.Name, column.Default) );
+					}
 				}
 			}
 			else if( !pTable->IsView ){
@@ -100,6 +104,7 @@ namespace Jde::DB{
 			}
 		}
 		if( j.contains("$scripts") ){
+			var sqlPath = fs::path(Settings::Env("db/scriptDir").value_or(relativePath.string()));
 			for( var& nameObj : *j.find("$scripts") ){
 				auto name = fs::path{ nameObj.get<string>() };
 				var procName = name.stem();
@@ -107,21 +112,19 @@ namespace Jde::DB{
 					continue;
 				if( _syntax.ProcFileSuffix().size() )
 					name = name.parent_path()/( name.stem().string()+string{_syntax.ProcFileSuffix()}+name.extension().string() );
-				var path = relativePath/name; CHECK_PATH( path, SRCE_CUR );
+				var path = sqlPath/name; CHECK_PATH( path, SRCE_CUR );
 				var text = IO::FileUtilities::Load( path );
-				TRACE( "Executing '{}'"sv, path.string() );
+				Trace( _tags, "Executing '{}'", path.string() );
 				var queries = Str::Split<sv,iv>( text, "\ngo"_iv );
-				for( var& query : queries )
-				{
+				for( var& query : queries ){
 					ostringstream os;
-					for( uint i=0; i<query.size(); ++i )
-					{
+					for( uint i=0; i<query.size(); ++i ){
 						if( query[i]=='#' )
 							for( ; i<query.size() && query[i]!='\n'; ++i );
 						if( i<query.size() )
 							os.put( query[i] );
 					}
-					_pDataSource->Execute( os.str(), nullptr, nullptr, false );
+					_pDataSource->Execute( os.str(), nullptr, nullptr, false ); //TODONext - add views for app server.
 				}
 				INFO( "Finished '{}'"sv, path.string() );
 			}
@@ -137,7 +140,7 @@ namespace Jde::DB{
 				ostringstream osSelect{ "select count(*) from ", std::ios::ate }; osSelect << tableName << " where ";
 				vector<object> selectParams;
 				ostringstream osWhere;
-				var set = [&,&table=*pTable](){
+				var set = [&,&table=*pTable]() {
 					osWhere.str("");
 					for( var& keyColumn : table.SurrogateKeys ){
 						if( osWhere.tellp() != std::streampos(0) )
@@ -156,7 +159,9 @@ namespace Jde::DB{
 					if( !set() )
 						for( auto p = pTable->NaturalKeys.begin(); p!=pTable->NaturalKeys.end() && !set(); ++p );
 				}
-				RETHROW( "Could not set data for {}"sv, tableName );
+				catch( std::exception& e ){
+					throw Exception{ SRCE_CUR, move(e), "Could not set data for {}", tableName }; 
+				}
 				THROW_IF( selectParams.empty(), "Could not find keys in data for '{}'", tableName );
 				osSelect << osWhere.str();
 

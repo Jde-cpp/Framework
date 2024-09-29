@@ -1,25 +1,48 @@
 #pragma once
 
-#define SLOCK shared_lock<shared_mutex> l( Mutex );
-#define LOCK unique_lock<shared_mutex> l( Mutex );
-namespace Jde
-{
+#define SLOCK
+#define LOCK
+namespace Jde{
 	template<typename T>
-	class Vector : private vector<T>
-	{
-		typedef vector<T> base;
-	public:
-		Vector()noexcept:base{}{}
-		Vector( uint size )noexcept:base{}{ base::reserve(size); }
-		void clear()noexcept{ LOCK base::clear(); }
-		void push_back( const T& val )noexcept{ LOCK base::push_back( val ); }
-		void push_back( T&& val )noexcept{ LOCK base::push_back( move(val) ); }
-		uint size()const noexcept{ SLOCK return size( l ); }
-		uint size( shared_lock<shared_mutex>& l )const noexcept{ return base::size(); }
-		typename base::const_iterator begin( shared_lock<shared_mutex>& l )const noexcept{ return base::begin(); }
-		typename base::const_iterator end( shared_lock<shared_mutex>& l )const noexcept{ return base::end(); }
+	struct Vector : private vector<T>{
+		using base=vector<T>;
+		Vector()ι:base{}{}
+		Vector( uint size )ι:base{}{ base::reserve(size); }
+
+		α begin( sl& )Ι->typename base::const_iterator{ return base::begin(); }
+		α end( sl& )Ι->typename base::const_iterator{ return base::end(); }
+		α begin( ul& )ι->typename base::iterator{ return base::begin(); }
+		α end( ul& )ι->typename base::iterator{ return base::end(); }
+
+		α clear()ι{ ul _( Mutex ); base::clear(); }
+		α find( const T& x )ι->optional<T>{ sl l( Mutex ); auto p = std::ranges::find(Base(), x); return p==end(l) ? nullopt : optional<T>{ *p }; }
+		α erase( const T& x )ι->bool{ ul l( Mutex ); auto p = std::ranges::find(Base(), x); bool found = p!=end(l); base::erase(p); return found; }
+		α	erase( function<void(const T& p)> before )ι->void;
+		α	erase_if( function<bool(const T& p)> test )ι->void;
+
+		α push_back( const T& val )ι{ ul _( Mutex ); base::push_back( val ); }
+		α push_back( T&& val )ι{ ul _( Mutex ); base::push_back( move(val) ); }
+		α size()Ι->uint{ sl l( Mutex ); return size( l ); }
+		α size( sl& )Ι->uint{ return base::size(); }
+		α visit( function<void(const T& p)> f )ι->void;
+
 		mutable std::shared_mutex Mutex;
+		private:
+		α Base()ι->vector<T>&{ return (vector<T>&)*this; }
 	};
+
+	Ŧ	Vector<T>::erase( function<void(const T& p)> before )ι->void{
+		ul _( Mutex );
+		for( auto p = base::begin(); p!=base::end(); p=base::erase(p) )
+			before( *p );
+	}
+	Ŧ	Vector<T>::erase_if( function<bool(const T& p)> test )ι->void{
+		ul _( Mutex );
+		for( auto p=base::begin(); p!=base::end(); p = test( *p ) ? base::erase( p ) : std::next( p ) );
+	}
+	Ŧ	Vector<T>::visit( function<void(const T& p)> f )ι->void{
+		ul _( Mutex );
+		for_each( Base(), f );
+	}
 }
-#undef SLOCK
 #undef LOCK

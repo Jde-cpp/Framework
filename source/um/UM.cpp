@@ -8,6 +8,7 @@
 #include "../db/Database.h"
 #include "../db/GraphQL.h"
 #include "../db/Syntax.h"
+#include "../coroutine/Awaitable.h"
 
 #define var const auto
 namespace Jde{
@@ -57,7 +58,7 @@ namespace Jde{
 		ostringstream sql{ "select member_id, entity_id from um_groups g join um_entities e on g.member_id=e.id and e.deleted is null", std::ios::ate };
 		vector<DB::object> params;
 		if( userId ){
-			sql << " where user_id=?";
+			sql << " where user_id=?";//TODO - no user_id column
 			params.push_back( DB::object{userId} );
 		}
 		DB::DataSource().Select( sql.str(), [&](var& r){
@@ -94,13 +95,15 @@ namespace Jde{
 		catch( const std::exception& e ){//nlohmann::detail::parse_error
 			throw IOException{ path, e.what() };
 		}
-			auto& db = *pDataSource;
-		var sqlPath = _msvc && _debug ? path.parent_path().parent_path() : path.parent_path();
+		auto& db = *pDataSource;
+		auto sqlPath = Settings::Get<fs::path>( "db/scriptDir" ).value_or( "" );
+		if( sqlPath.empty() )
+			sqlPath = _msvc && _debug ? path.parent_path().parent_path() : path.parent_path();
 		var schema = db.SchemaProc()->CreateSchema( j, sqlPath );
 		AppendQLDBSchema( schema );
 		SetQLDataSource( pDataSource );
 
-		fs::path qlSchema{ Settings::Env("db/ql_schema").value_or("ql.json") };
+		fs::path qlSchema{ Settings::Env("db/qlSchema").value_or("ql.json") };
 		if( !fs::exists(qlSchema) )
 			qlSchema = _msvc && _debug ? "../config/meta.json" : IApplication::ApplicationDataFolder()/path.stem();
 		try{
@@ -142,14 +145,14 @@ namespace Jde{
 
 	α UM::ApplyMutation( const DB::MutationQL& m, UserPK id )ε->void{
 		if( m.JsonName=="user" ){
-			if( m.Type==DB::EMutationQL::Create || m.Type==DB::EMutationQL::Restore ){
+			if( m.Type==DB::EMutationQL::Create /*|| m.Type==DB::EMutationQL::Restore*/ ){
 				{ unique_lock l{ _userAccessMutex }; _userAccess.try_emplace( id ); }
-				if( m.Type==DB::EMutationQL::Restore ){
-					AssignUserGroups( id );
-					{ unique_lock l{ _userGroupMutex }; AssignUser( id, _userGroups[id] ); }
-				}
+				// if( m.Type==DB::EMutationQL::Restore ){
+				// 	AssignUserGroups( id );
+				// 	{ unique_lock l{ _userGroupMutex }; AssignUser( id, _userGroups[id] ); }
+				// }
 			}
-			else if( m.Type==DB::EMutationQL::Delete || m.Type==DB::EMutationQL::Purge ){
+			else if( /*m.Type==DB::EMutationQL::Delete ||*/ m.Type==DB::EMutationQL::Purge ){
 				{ unique_lock l{ _userAccessMutex }; _userAccess.erase( (UserPK)id ); }
 				{ unique_lock l{ _userGroupMutex }; _userGroups.erase( (UserPK)id ); }
 			}
@@ -215,7 +218,7 @@ namespace Jde{
 		if( j.find("connectionString")!=j.end() ){
 			string connectionString;
 			j.at("connectionString").get_to( connectionString );
-			settings.ConnectionString = OSApp::EnvironmentVariable( connectionString );
+			settings.ConnectionString = OSApp::EnvironmentVariable( connectionString ).value_or( "" );
 		}
 		if( j.find("libraryName")!=j.end() )
 			j.at("libraryName").get_to( settings.LibraryName );
@@ -225,14 +228,14 @@ namespace Jde{
 			settings.MetaDataPath = fs::path{ path };
 		}
 	}
-	α LoginTask( string&& loginName, uint providerId, string&& opcServer, HCoroutine h )ε->Task{
+	α LoginTask( string&& loginName, uint providerId, string&& opcServer, HCoroutine h )ι->Task{
 		var opcServerParam = opcServer.size() ? DB::object{opcServer} : DB::object{nullptr};
 		vector<DB::object> parameters = { move(loginName), providerId };
 		if( opcServer.size() )
 			parameters.push_back( opcServer );
-		var sql = format( "select e.id from um_entities e join um_users u on e.id=u.entity_id join um_providers p on p.id=e.provider_id where u.login_name=? and p.id=? and p.target{}", opcServer.size() ? "=?" : " is null" );
-		auto task = DB::ScalerCo<UserPK>( string{sql}, parameters );
+		var sql = Ƒ( "select e.id from um_entities e join um_users u on e.id=u.entity_id join um_providers p on p.id=e.provider_id where u.login_name=? and p.id=? and p.target{}", opcServer.size() ? "=?" : " is null" );
 		try{
+			auto task = DB::ScalerCo<UserPK>( string{sql}, parameters );
 			auto p = (co_await task).UP<UserPK>(); //gcc compile issue
 			auto userId = p ? *p : 0;
 			if( !userId ){
@@ -252,8 +255,41 @@ namespace Jde{
 		return AsyncAwait{ [l=move(loginName), providerId, o=move(opcServer)](HCoroutine h)mutable{ return LoginTask(move(l), providerId, move(o), move(h)); }, sl, "UM::Login" };
 	}
 }
-namespace Jde::UM
-{
+namespace Jde::UM{
+	LoginAwait::LoginAwait( vector<unsigned char> modulus, vector<unsigned char> exponent, string&& name, string&& target, string&& description, SL sl )ι:
+			base{sl}, _modulus{ move(modulus) }, _exponent{ move(exponent) }, _name{ move(name) }, _target{ move(target) }, _description{ move(description) }
+	{}
+
+	α LoginAwait::Suspend()ι->void{
+		LoginTask();
+	}
+
+	α LoginAwait::LoginTask()ε->Jde::Task{
+		auto modulusHex = Str::ToHex( (byte*)_modulus.data(), _modulus.size() );
+		try{
+			THROW_IF( modulusHex.size() > 1024, "modulus {} is too long. max length: {}", modulusHex.size(), 1024 );
+			uint32_t exponent{};
+			for( var i : _exponent )
+				exponent = (exponent<<8) | i;
+
+			vector<DB::object> parameters = { modulusHex, exponent, underlying(EProviderType::Key) };
+			var sql = "select e.id from um_entities e join um_users u on e.id=u.entity_id where u.modulus=? and u.exponent=? and e.provider_id=?";
+			auto task = DB::ScalerCo<UserPK>( string{sql}, parameters );
+			auto p = ( co_await task ).UP<UserPK>(); //gcc compile issue
+			auto userPK = p ? *p : 0;
+			if( !userPK ){
+				parameters.push_back( move(_name) );
+				parameters.push_back( move(_target) );
+				parameters.push_back( move(_description) );
+				DB::ExecuteProc( "um_user_insert_key(?,?,?,?,?,?)", move(parameters), [&userPK](var& row){userPK=row.GetUInt32(0);} );
+			}
+			Promise()->Resume( move(userPK), _h );
+		}
+		catch( IException& e ){
+			Promise()->ResumeWithError( move(e), _h );
+		}
+	}
+
 #pragma warning(disable:4100)
 	α IAuthorize::TestPurge( uint pk, UserPK userId, SL sl )ε->void{
 		THROW_IFSL( !CanPurge(pk, userId), "Access to purge record denied" );

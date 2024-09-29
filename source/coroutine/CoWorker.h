@@ -1,15 +1,15 @@
 ﻿#pragma once
 #include <jde/App.h>
-#include <jde/coroutine/Task.h>
+#include <jde/coroutine/TaskOld.h>
 #include "../threading/Thread.h"
+#include "../threading/InterruptibleThread.h"
 
-namespace Jde::Coroutine
-{
+namespace Jde::Coroutine{
+
 	typedef uint ClientHandle;
-	struct Γ CoWorker /*abstract*/: public IShutdown, std::enable_shared_from_this<CoWorker>
-	{
+	struct Γ CoWorker /*abstract*/: public IShutdown, std::enable_shared_from_this<CoWorker>{
 		CoWorker( sv name )ι:_name{name}{};
-		void Shutdown()ι override;
+		void Shutdown( bool terminate )ι override;
 		void Start()ι;
 	protected:
 		virtual void Process()ι=0;

@@ -1,10 +1,9 @@
-﻿namespace Jde::DB
-{
-	struct Syntax
-	{
+﻿namespace Jde::DB{
+	struct Syntax{
 		virtual ~Syntax()=default;
 
-		β AddDefault( sv tableName, sv columnName, sv columnDefault )Ι->string{ return Jde::format("alter table {} add default {} for {}", tableName, columnDefault, columnName); }
+		β AddDefault( sv tableName, sv columnName, sv dflt )Ι->string{ return Jde::format("alter table {} add default {} for {}", tableName, dflt, columnName); }
+		β AddDefault( sv tableName, sv columnName, bool dflt )Ι->string{ return Jde::format("alter table {} add default {} for {}", tableName, dflt ? 1 : 0, columnName); }
 		β AltDelimiter()Ι->sv{ return {}; }
 		β CatalogSelect()Ι->sv{ return "select db_name();"; }
 		β DateTimeSelect( sv columnName )Ι->string{ return string{ columnName }; }
@@ -24,9 +23,9 @@
 		β ZeroSequenceMode()Ι->sv{ return {}; }
 	};
 
-	struct MySqlSyntax final: Syntax
-	{
+	struct MySqlSyntax final: Syntax{
 		α AddDefault( sv tableName, sv columnName, sv columnDefault )Ι->string override{ return Jde::format("ALTER TABLE {} ALTER COLUMN {} SET DEFAULT {}", tableName, columnName, columnDefault); }
+		β AddDefault( sv tableName, sv columnName, bool dflt )Ι->string{ return Jde::format("alter table {} add default {} for {}", tableName, dflt, columnName); }
 		α AltDelimiter()Ι->sv override{ return "$$"sv; }
 		α DateTimeSelect( sv columnName )Ι->string override{ return Jde::format( "UNIX_TIMESTAMP(CONVERT_TZ({}, '+00:00', @@session.time_zone))", columnName ); }
 		α HasUnsigned()Ι->bool override{ return true; }
@@ -45,8 +44,7 @@
 		α ProcFileSuffix()Ι->sv override{ return ""; }
 	};
 
-	Ξ Syntax::Limit( str sql, uint limit )Ε->string
-	{
+	Ξ Syntax::Limit( str sql, uint limit )Ε->string{
 		if( sql.size()<7 )//mysql precludes using THROW, THROW_IF, CHECK
 			throw Exception{ SRCE_CUR, Jde::ELogLevel::Debug, "expecting sql length>7 - {}", sql };
 		return Jde::format("{} top {} {}", sql.substr(0,7), limit, sql.substr(7) );

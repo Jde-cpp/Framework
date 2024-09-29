@@ -45,13 +45,11 @@ namespace Jde::Threading
 			_pFlag->Set();
 		}
 	}
-	void InterruptibleThread::Join()
-	{
+	void InterruptibleThread::Join(){
 		if( _internalThread.joinable() )
 			_internalThread.join();
 	}
-	void InterruptibleThread::Shutdown()ι
-	{
+	void InterruptibleThread::Shutdown( bool /*terminate*/ )ι{
 		DBG( "{} - Shutdown", Name );
 		Interrupt();
 	};
