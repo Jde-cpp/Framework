@@ -1,6 +1,5 @@
 ﻿#include "Settings.h"
 #include <jde/App.h>
-//#include <fstream>
 #include <jde/io/File.h>
 #include <regex>
 

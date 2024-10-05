@@ -1,7 +1,7 @@
 {
     "configurations": [{
 			"name": "Linux",
-			"browse": { 
+			"browse": {
 				"path": [
 					"${workspaceFolder}",
 					"${env:REPO_DIR}/install/g++-13/asan/fmt/include/",
@@ -10,7 +10,7 @@
 					"${env:REPO_DIR}/install/g++-13/asan/spdlog/include/",
 					"${env:REPO_DIR}/json/include",
 					"${env:JDE_DIR}/Public"
-				], 
+				],
 				"limitSymbolsToIncludedHeaders": true },
 				"includePath": [
 					"/usr/include/c++/13",
@@ -20,7 +20,6 @@
 					"${env:REPO_DIR}/install/g++-13/asan/GTest/include/",
 					"${env:REPO_DIR}/install/g++-13/asan/protobuf/include/",
 					"${env:REPO_DIR}/install/g++-13/asan/spdlog/include/",
-					"${env:REPO_DIR}/json/include",
 					"${env:REPO_DIR}/json/include",
 					"${env:BOOST_ROOT}",
 					"${env:JDE_DIR}/Public"

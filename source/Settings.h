@@ -16,7 +16,7 @@ namespace Jde::Settings{
 	α Path()ι->fs::path;
 	Φ LogTag()ι->sp<Jde::LogTag>&;
 	Φ Env( sv path, SRCE )ι->optional<string>;
-	α Envɛ( sv path, SRCE )ε->string;
+	Φ Envɛ( sv path, SRCE )ε->string;
 
 	struct JsonNumber final{
 		using Variant=std::variant<double,_int,uint>;

@@ -1,4 +1,6 @@
-﻿namespace Jde::DB{
+﻿#pragma once
+
+namespace Jde::DB{
 	struct Syntax{
 		virtual ~Syntax()=default;
 

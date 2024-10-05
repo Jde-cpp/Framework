@@ -295,7 +295,7 @@ namespace Jde::DB
 		return pColumn==Columns.end() ? nullptr : &(*pColumn);
 	}
 
-	α Table::FindColumn( sv name, DB::Schema& schema )Ε->const Column&{
+	α Table::FindColumn( sv name, const DB::Schema& schema )Ε->const Column&{
 		auto pColumn = FindColumn( name );
 		if( var pExtendedFrom = pColumn ? nullptr : GetExtendedFromTable(schema); pExtendedFrom )
 			pColumn = pExtendedFrom->FindColumn( name );

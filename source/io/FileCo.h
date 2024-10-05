@@ -61,8 +61,7 @@ namespace Jde::IO
 		sp<Threading::IWorker> _pWorkerKeepAlive;
 	};
 
-	struct Γ DriveAwaitable final : IAwait
-	{
+	struct Γ DriveAwaitable final : IAwait{
 		using base=IAwait;
 		DriveAwaitable( fs::path path, bool vector, bool cache, SRCE )ι:base{ sl },_arg{ move(path), vector },_cache{cache}{}
 		DriveAwaitable( fs::path path, sp<vector<char>> data, SRCE )ι:base{ sl },_arg{ move(path), data },_cache{false}{}

@@ -5,14 +5,15 @@
 #include "Await.h"
 #include "Row.h"
 #include "SchemaProc.h"
+#include "types/Schema.h"
+#include "Syntax.h"
 
 
 #define DBLOG(sql,params) Jde::DB::Log( sql, params, sl )
-namespace Jde::DB
-{
+namespace Jde::DB{
+
 	namespace Types{ struct IRow; }
-	struct Γ IDataSource : std::enable_shared_from_this<IDataSource>
-	{
+	struct Γ IDataSource : std::enable_shared_from_this<IDataSource>{
 		virtual ~IDataSource(){}//warning
 		template<class K=uint,class V=string> α SelectEnum( sv tableName, SRCE )ι->SelectCacheAwait<flat_map<K,V>>{ return SelectMap<K,V>( Jde::format("select id, name from {}", tableName), string{tableName}, sl ); }
 		ẗ SelectEnumSync( sv tableName, SRCE )ε->sp<flat_map<K,V>>{ ASSERT(tableName.size()); return SFuture<flat_map<K,V>>( SelectEnum<K,V>( tableName, sl) ).get(); }
@@ -53,69 +54,58 @@ namespace Jde::DB
 
 		α CS()const ι->str{ return _connectionString; }
 		β SetConnectionString( string x )ι->void{ _connectionString = move(x); }
-
-		//bool Asynchronous{false};
-
+		α Schema()ι->const Schema&{ return _schema; }
+		α Syntax()ι->const Syntax&{ return _syntax; }
 	protected:
 		string _connectionString;
+		DB::Schema _schema;
+		DB::Syntax _syntax;
 	private:
 		β SelectCo( ISelect* pAwait, string sql, vector<object>&& params, SRCE )ι->up<IAwait> =0;
 		friend struct ISelect;
 	};
 #define var const auto
-	Ŧ IDataSource::TryScaler( string sql, vec<object> params, SL sl )ι->optional<T>
-	{
-		try
-		{
+	Ŧ IDataSource::TryScaler( string sql, vec<object> params, SL sl )ι->optional<T>{
+		try{
 			return Scaler<T>( move(sql), params, sl );
 		}
-		catch( IException& )
-		{
+		catch( IException& ){
 			return nullopt;
 		}
 	}
-	Ŧ IDataSource::Scaler( string sql, vec<object> params, SL sl )ε->optional<T>
-	{
+	Ŧ IDataSource::Scaler( string sql, vec<object> parameters, SL sl )ε->optional<T>{
 		optional<T> result;
 		Select( move(sql), [&result](const IRow& row){ result = row.Get<T>(0); }, params, sl );
 		return result;
 	}
 
-	Ŧ IDataSource::ScalerCo( string sql, vec<object> params, SL sl )ε->SelectAwait<T>
-	{
+	Ŧ IDataSource::ScalerCo( string sql, vec<object> params, SL sl )ε->SelectAwait<T>{
 		auto f = []( T& y, const IRow& r ){ y = r.Get<T>( 0 ); };
 		return SelectAwait<T>( shared_from_this(), move(sql), f, params, sl );
 	}
-	Ŧ IDataSource::SelectCo( string sql, vec<object> params, CoRowΛ<T> f, SL sl )ε->SelectAwait<T>
-	{
+	Ŧ IDataSource::SelectCo( string sql, vec<object> params, CoRowΛ<T> f, SL sl )ε->SelectAwait<T>{
 		//auto f = []( T& y, const IRow& r ){ y = r.Get<T>( 0 ); };
 		return SelectAwait<T>( shared_from_this(), move(sql), f, params, sl );
 	}
 
-	namespace zInternal
-	{
+	namespace zInternal{
 		ẗ ProcessMapRow( flat_map<K,V>& y, const IRow& row )ε{ y.emplace( row.Get<K>(0), row.Get<V>(1) ); }
 		Ŧ ProcessSetRow( flat_set<T>& y, const IRow& row )ε{ y.emplace( row.Get<T>(0) ); }
 	}
 
-	ẗ IDataSource::SelectMap( string sql, SL sl )ι->SelectAwait<flat_map<K,V>>
-	{
+	ẗ IDataSource::SelectMap( string sql, SL sl )ι->SelectAwait<flat_map<K,V>>{
 		return SelectAwait<flat_map<K,V>>( shared_from_this(), move(sql), zInternal::ProcessMapRow<K,V>, {}, sl );
 	}
-	ẗ IDataSource::SelectMap( string sql, string cacheName, SL sl )ι->SelectCacheAwait<flat_map<K,V>>
-	{
+	ẗ IDataSource::SelectMap( string sql, string cacheName, SL sl )ι->SelectCacheAwait<flat_map<K,V>>{
 		return SelectCacheAwait<flat_map<K,V>>( shared_from_this(), move(sql), move(cacheName), zInternal::ProcessMapRow<K,V>, {}, sl );
 	}
-	Ŧ IDataSource::SelectSet( string sql, vector<object>&& params, SL sl )ι->SelectAwait<flat_set<T>>
-	{
+	Ŧ IDataSource::SelectSet( string sql, vector<object>&& params, SL sl )ι->SelectAwait<flat_set<T>>{
 		return SelectAwait<flat_set<T>>( shared_from_this(), move(sql), zInternal::ProcessSetRow<T>, move(params), sl );
 	}
-	Ŧ IDataSource::SelectSet( string sql, vector<object>&& params, string cacheName, SL sl )ι->SelectCacheAwait<flat_set<T>>
-	{
+	Ŧ IDataSource::SelectSet( string sql, vector<object>&& params, string cacheName, SL sl )ι->SelectCacheAwait<flat_set<T>>{
 		return SelectCacheAwait<flat_set<T>>( shared_from_this(), move(sql), move(cacheName), zInternal::ProcessSetRow<T>, move(params), sl );
 	}
-	Ξ ISelect::SelectCo( string sql, vector<object>&& params, SL sl )ι->up<IAwait>
-	{
+	Ξ ISelect::SelectCo( string sql, vector<object>&& params, SL sl )ι->up<IAwait>{
 		return _ds->SelectCo( this, move(sql), move(params), sl );
 	}
 }

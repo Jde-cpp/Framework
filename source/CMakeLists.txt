@@ -10,7 +10,8 @@ project(Jde)
 include(compiler)
 
 if(MSVC)
-#	find_package(Protobuf CONFIG REQUIRED)
+#	find_package(Protob<<<<<<< Updated upstream
+uf CONFIG REQUIRED)
 	find_package(fmt)
 else()
 	link_directories( ${fmt_DIR}/../.. )
@@ -30,7 +31,6 @@ get_filename_component(thread_cpp ${CMAKE_CURRENT_SOURCE_DIR}/threading/Thread.c
 list(REMOVE_ITEM sources "${thread_cpp}")
 
 target_sources( ${CMAKE_PROJECT_NAME} PRIVATE ${sources} ${headers} )
-
 
 #######################################################
 if(MSVC)
