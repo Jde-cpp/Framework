@@ -1,5 +1,11 @@
 #include "jde/log/Message.h"
 
+namespace Jde{
+	const ELogLevel _breakLevel{ Settings::Get<ELogLevel>("logging/breakLevel").value_or(ELogLevel::Warning) };
+	ELogLevel Logging::BreakLevel()ι{ return _breakLevel; } //TODO:  https://stackoverflow.com/questions/3596781/how-to-detect-if-the-current-process-is-being-run-by-gdb
+}
+
+α Jde::CanBreak()ι->bool{ return _breakLevel>ELogLevel::Trace; }
 namespace Jde::Logging{
 	MessageBase::MessageBase( ELogLevel level, const source_location& sl )ι:
 		Fields{ EFields::File | EFields::FileId | EFields::Function | EFields::FunctionId | EFields::LineNumber },

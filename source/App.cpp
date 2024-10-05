@@ -40,7 +40,7 @@ namespace Jde{
 
 	flat_set<string> IApplication::BaseStartup( int argc, char** argv, sv appName, string serviceDescription/*, sv companyName*/ )ε{//no config file
 		{
-			ostringstream os;
+			std::ostringstream os;
 			os << "(" << OSApp::ProcessId() << ")";
 			for( auto i=0; i<argc; ++i )
 				os << argv[i] << " ";
@@ -172,8 +172,8 @@ namespace Jde{
 	α Process::Shutdown( int exitReason )ι->void{
 		bool terminate{ false }; //use case might be if non-terminate took too long
 		SetExitReason( exitReason, terminate );//Sets ShuttingDown should be called in OnExit handler
-		_shutdowns.erase( [terminate](auto& p){ 
-			p->Shutdown( terminate ); 
+		_shutdowns.erase( [terminate](auto& p){
+			p->Shutdown( terminate );
 		});
 		Information{ ELogTags::App | ELogTags::Shutdown, "[{}]Waiting for process to complete. exitReason: {}, terminate: {}, background threads: {}", OSApp::ProcessId(), _exitReason.value(), terminate, _backgroundThreads.size() };
 		while( _backgroundThreads.size() ){

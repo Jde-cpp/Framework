@@ -5,10 +5,10 @@
 
 namespace Jde{
 	constexpr std::array<sv,27> ELogTagStrings = {"none",
-		"app", "cache", "client", "dbDriver", "exception", "externalLogger", "graphQL", "http", "io",
-		"locks", "parsing", "pedantic", "read", "write", "scheduler", "server", "sessions",
-		"settings", "shutdown", "socket", "sql", "startup", "subscription", "test", "threads",
-		"users"
+		"app", "cache", "client", "exception", "externalLogger", "http", "io", "locks",
+		"parsing", "pedantic", "ql", "read", "scheduler", "server", "sessions", "settings",
+		"shutdown", "socket", "sql", "startup", "subscription", "test", "threads", "um",
+		"write"
 		};
 
 	up<vector<sp<LogTag>>> _availableTags;

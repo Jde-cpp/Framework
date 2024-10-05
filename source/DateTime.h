@@ -119,14 +119,14 @@ namespace Jde::Chrono{
 	//Ξ Display( time_t t, bool seconds=false, bool milli=false )ι->string{ return DateTime{t}.LocalDisplay(seconds, milli); }
 	Ξ Display( TP t, bool seconds=false, bool milli=false )ι->string{ return DateTime{t}.LocalDisplay(seconds, milli); }
 	Ξ TimeDisplay( time_t t ) ι->string{ return DateTime{t}.TimeDisplay(); }
-	
+
 	template<class To,class From>
 	α ToClock( typename From::time_point from )ι->typename To::time_point{ return To::now()-milliseconds{ duration_cast<milliseconds>(From::time_point::clock::now()-from) }; }
 }
 namespace Jde{
 	template<class T>
 	α Chrono::ToString( T d )ι->string{
-		ostringstream os;
+		std::ostringstream os;
 		os << 'P';
 		#define output(period,suffix) if( d>=period{1} || d<=period{-1} ){ os << duration_cast<period>(d).count() << suffix; d%=period{1}; }
 		if constexpr( _msvc ){

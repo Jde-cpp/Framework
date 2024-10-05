@@ -10,8 +10,7 @@ project(Jde)
 include(compiler)
 
 if(MSVC)
-#	find_package(Protob<<<<<<< Updated upstream
-uf CONFIG REQUIRED)
+	find_package(Protobuf CONFIG REQUIRED)
 	find_package(fmt)
 else()
 	link_directories( ${fmt_DIR}/../.. )
@@ -38,7 +37,7 @@ if(MSVC)
 	target_link_libraries( ${CMAKE_PROJECT_NAME} Version.lib )
 else()
 	target_link_libraries( ${CMAKE_PROJECT_NAME} debug libfmtd.a optimized libfmt.a )
-	target_link_libraries( ${CMAKE_PROJECT_NAME} libprotobuf.a libutf8_range.a libutf8_validity.a )
+	#target_link_libraries( ${CMAKE_PROJECT_NAME} libprotobuf.a libutf8_range.a libutf8_validity.a )
 endif()
 #######################################################
 target_precompile_headers(${CMAKE_PROJECT_NAME}

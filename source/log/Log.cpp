@@ -17,11 +17,7 @@ namespace Jde::Logging{
 	auto _pOnceMessages = mu<flat_map<uint,flat_set<string>>>(); std::shared_mutex OnceMessageMutex;
 	sp<LogTag> _statusTag = Logging::Tag( "status" );
 	static sp<LogTag> _logTag = Logging::Tag( "settings" );
-	const ELogLevel _breakLevel{ Settings::Get<ELogLevel>("logging/breakLevel").value_or(ELogLevel::Warning) };
-	ELogLevel BreakLevel()ι{ return _breakLevel; } //TODO:  https://stackoverflow.com/questions/3596781/how-to-detect-if-the-current-process-is-being-run-by-gdb
 }
-α Jde::CanBreak()ι->bool{ return Logging::_breakLevel>ELogLevel::Trace; }
-
 namespace Jde{
 	using spdlog::level::level_enum;
 	TimePoint _startTime = Clock::now(); //Logging::Proto::Status _status; mutex _statusMutex; TimePoint _lastStatusUpdate;

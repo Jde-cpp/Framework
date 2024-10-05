@@ -51,7 +51,7 @@ namespace Jde{
 		if( index==0 )
 			index = 1;
 		var elapsed = Elapsed();
-		ostringstream os;
+		std::ostringstream os;
 		string result;
 		if( force || elapsed-_previousProgressElapsed>_minimumToLog ){
 			os.imbue( std::locale("") );
