@@ -21,10 +21,12 @@ add_library( ${CMAKE_PROJECT_NAME} SHARED )
 
 file(GLOB sources *.cpp **/*.cpp **/**/*.cpp )
 file(GLOB headers   "**/*.h")
+set( newDir $ENV{JDE_DIR}/Public/libs/framework )
+set( osDir ${newDir}/process/os )
 if(MSVC)
-	list(APPEND sources ../../Windows/source/WindowsApp.cpp ../../Windows/source/WindowsDrive.cpp ../../Windows/source/WindowsSvc.cpp  ../../Windows/source/WindowsThread.cpp ../../Windows/source/WindowsUtilities.cpp  ../../Windows/source/WindowsWorker.cpp)
+	list(APPEND sources ${osDir}/windows/WindowsApp.cpp ${osDir}/windows/WindowsDrive.cpp ${osDir}/windows/WindowsSvc.cpp  ${osDir}/windows/WindowsThread.cpp ${osDir}/windows/WindowsUtilities.cpp  ${osDir}/windows/WindowsWorker.cpp)
 else()
-  list(APPEND sources ../../Linux/source/LinuxApp.cpp ../../Linux/source/LinuxDrive.cpp ../../Linux/source/LinuxTimezone.cpp  ../../Linux/source/LinuxThread.cpp)
+  list(APPEND sources ${osDir}/linux/LinuxApp.cpp ${osDir}/linux/LinuxDrive.cpp ${osDir}/linux/LinuxTimezone.cpp  ${osDir}/linux/LinuxThread.cpp)
 endif()
 get_filename_component(thread_cpp ${CMAKE_CURRENT_SOURCE_DIR}/threading/Thread.cpp ABSOLUTE)
 list(REMOVE_ITEM sources "${thread_cpp}")
@@ -42,17 +44,7 @@ endif()
 #######################################################
 target_precompile_headers(${CMAKE_PROJECT_NAME}
   PRIVATE
-	<functional>
-	<iostream>
-#	<boost/exception/diagnostic_information.hpp>
-	<boost/core/noncopyable.hpp>
-
-  <jde/TypeDefs.h>
-	<jde/Assert.h>
-	<jde/Exports.h>
-	<jde/log/Log.h>
-	<jde/Exception.h>
-	Settings.h
+  <jde/framework.h>
 )
 if( MSVC )
 	set( CMAKE_INSTALL_PREFIX $ENV{JDE_DIR}/installed )

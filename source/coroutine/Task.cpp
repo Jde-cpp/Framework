@@ -1,6 +1,5 @@
-﻿#include <jde/coroutine/TaskOld.h>
+﻿#include <jde/framework/coroutine/TaskOld.h>
 #include "../threading/Thread.h"
-#include <nlohmann/json.hpp>
 
 namespace Jde::Coroutine{
 	constexpr ELogTags _tags{ ELogTags::Threads };
@@ -28,9 +27,6 @@ namespace Jde::Coroutine{
 		}
 		catch( IException& e ){
 			Critical( _tags, "Jde::Task::promise_type::unhandled_exception - {}", e.what() );
-		}
-		catch( const nlohmann::json::exception& e ){
-			Critical( _tags, "Jde::Task::promise_type::unhandled_exception - json exception - {}", e.what() );
 		}
 		catch( const std::exception& e ){
 			Critical( _tags, "Jde::Task::promise_type::unhandled_exception ->{}", e.what() );

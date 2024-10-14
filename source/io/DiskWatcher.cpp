@@ -7,10 +7,9 @@
 #include <forward_list>
 #include <memory>
 
-#include <jde/Exception.h>
-#include <jde/io/File.h>
-#include <jde/App.h>
-#define var const auto
+#include <jde/framework/io/File.h>
+#include <jde/framework/process.h>
+#define let const auto
 
 namespace Jde::IO{
 
@@ -46,9 +45,9 @@ namespace Jde::IO{
 
 		try
 		{
-			auto add = [&]( var& subPath )
+			auto add = [&]( let& subPath )
 			{
-				var wd = ::inotify_add_watch( _fd, subPath.string().c_str(), (uint32_t)_events );
+				let wd = ::inotify_add_watch( _fd, subPath.string().c_str(), (uint32_t)_events );
 				THROW_IFX( wd < 0, IO_EX(subPath, ELogLevel::Error, "({})Could not init watch.", errno) );
 				_descriptors.emplace( wd, subPath );
 				TRACE( "inotify_add_watch on {}, returned {}"sv, subPath.c_str(), wd );
@@ -56,7 +55,7 @@ namespace Jde::IO{
 			add( _path );
 			// add recursive
 			// auto pDirs = FileUtilities::GetDirectories( _path );
-			// for( var& dir : *pDirs )
+			// for( let& dir : *pDirs )
 			// 	add( dir.path() );
 		}
 		catch( IOException& e )
@@ -80,10 +79,10 @@ namespace Jde::IO{
 		fds.events = POLLIN;
 		while( !Threading::GetThreadInterruptFlag().IsSet() )
 		{
-			var result = ::poll( &fds, 1, 5000 );
+			let result = ::poll( &fds, 1, 5000 );
 			if( result<0 )
 			{
-				var err = errno;
+				let err = errno;
 				if( err!=EINTR )
 				{
 					ERR( "poll returned {}."sv, err );
@@ -115,8 +114,8 @@ namespace Jde::IO{
 			constexpr uint BufferLength = (EventSize+16)*1024;
 			char buffer[BufferLength];
 
-			var length = read( _fd, buffer, BufferLength );
-			var err=errno;
+			let length = read( _fd, buffer, BufferLength );
+			let err=errno;
 			if( length==-1 && err!=EAGAIN )
 			{
 				if( err == EINTR && !isRetry )
@@ -139,8 +138,8 @@ namespace Jde::IO{
 					ERR( "Could not find OnChange interface for wd '{}'"sv, pEvent->wd );
 					continue;
 				}
-				var path = pDescriptorChange->second/name;
-				var event = NotifyEvent( *pEvent );
+				let path = pDescriptorChange->second/name;
+				let event = NotifyEvent( *pEvent );
 				if( Any(event.Mask & EDiskWatcherEvents::Modify) )
 					OnModify( path, event );
 				if( Any(event.Mask & EDiskWatcherEvents::MovedFrom) )
@@ -183,14 +182,14 @@ namespace Jde::IO{
 
 	DiskWatcher::~DiskWatcher()
 	{
-		for( var& descriptorOnChange : _descriptors )
+		for( let& descriptorOnChange : _descriptors )
 		{
-			var wd = descriptorOnChange.first;
-			var ret = inotify_rm_watch( _fd, wd );
+			let wd = descriptorOnChange.first;
+			let ret = inotify_rm_watch( _fd, wd );
 			if( ret )
 				ERR( "inotify_rm_watch( {}, {} ) returned '{}', continuing", _fd, wd, ret );
 		}
-		var ret = close( _fd );
+		let ret = close( _fd );
 		if( ret )
 			ERR( "close( {} ) returned '{}', continuing", _fd, ret );
 	}
@@ -202,7 +201,7 @@ namespace Jde::IO{
 		constexpr uint BufferLength = (EventSize+16)*1024;
 		char buffer[BufferLength];
 
-		var length = read( _fd, buffer, BufferLength );
+		let length = read( _fd, buffer, BufferLength );
 		if( !length )
 			THROW( IOException("BufferLength too small?") );
 		if( length < 0 )
@@ -222,13 +221,13 @@ namespace Jde::IO{
 			string name( pEvent->len ? (char*)&pEvent->name : "" );
 			DBG0( name );
 			TRACE( "DiskWatcher::read=>wd={}, mask={}, len={}, cookie={}, name={}", pEvent->wd, pEvent->mask, pEvent->len, pEvent->cookie, pEvent->len ? (char*)&pEvent->name : "" );
-			var event = NotifyEvent( *pEvent );
+			let event = NotifyEvent( *pEvent );
 			pNotifyEvents->push_front( event );
 			i += EventSize + pEvent->len;
 		}
 		auto sendEvents = [&]( sp<std::forward_list<NotifyEvent>> pEvents )
 		{
-			for( var& event : *pEvents )
+			for( let& event : *pEvents )
 			{
 				tuple<sp<IDriveChange>,fs::path>* pOnChangePath;
 				{
@@ -242,7 +241,7 @@ namespace Jde::IO{
 					pOnChangePath = &pDescriptorChange->second;
 				}
 				auto pOnChange = std::get<0>(*pOnChangePath);
-				var path = std::get<1>( *pOnChangePath );
+				let path = std::get<1>( *pOnChangePath );
 				if( Any(event.Mask & DiskWatcherEvents::Access) )
 					pOnChange->OnAccess( path, event );
 				if( Any(event.Mask & DiskWatcherEvents::Modify) )
@@ -291,7 +290,7 @@ namespace Jde::IO{
 		time.tv_sec = _interuptCheckSeconds;
 		time.tv_usec = 0;
 
-		var ret = select( _fd + 1, &rfds, nullptr, nullptr, &time );
+		let ret = select( _fd + 1, &rfds, nullptr, nullptr, &time );
 		if( ret < 0 )
 			ERR( "select returned '{}' , errno='{}'", ret, errno );
 		else if( ret && FD_ISSET(_fd, &rfds) )// not a timed out!

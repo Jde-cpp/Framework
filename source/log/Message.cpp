@@ -1,7 +1,8 @@
-#include "jde/log/Message.h"
+#include <jde/framework/log/Message.h>
+#include <jde/framework/settings.h>
 
 namespace Jde{
-	const ELogLevel _breakLevel{ Settings::Get<ELogLevel>("logging/breakLevel").value_or(ELogLevel::Warning) };
+	const ELogLevel _breakLevel{ Settings::FindEnum<ELogLevel>("logging/breakLevel", ToLogLevel).value_or(ELogLevel::Warning) };
 	ELogLevel Logging::BreakLevel()ι{ return _breakLevel; } //TODO:  https://stackoverflow.com/questions/3596781/how-to-detect-if-the-current-process-is-being-run-by-gdb
 }
 

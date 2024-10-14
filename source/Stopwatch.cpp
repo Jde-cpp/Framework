@@ -6,14 +6,13 @@
 #include <sstream>
 
 #include "DateTime.h"
-#include <jde/Exception.h>
 #include "math/MathUtilities.h"
-#include <jde/App.h>
-#define var const auto
+#include <jde/framework/process.h>
+#define let const auto
 
 namespace Jde{
 	using namespace std::chrono;
-	//static var _logTag{ Logging::Tag("stopwatch") };
+	//static let _logTag{ Logging::Tag("stopwatch") };
 	Stopwatch::SDuration Stopwatch::_minimumToLog = 1s;
 
 	Stopwatch::Stopwatch( sv what, ELogTags tags, bool started, SL sl )ι:
@@ -44,13 +43,13 @@ namespace Jde{
 
 	α Stopwatch::Elapsed()Ι->Stopwatch::SDuration{
 		auto end = steady_clock::now();
-		var asNano = duration_cast<SDuration>( end - _start - _elapsedPause );
+		let asNano = duration_cast<SDuration>( end - _start - _elapsedPause );
 		return asNano;
 	}
 	α Stopwatch::Progress( uint index, uint total, sv context, bool force/*=false*/ )Ι->string{
 		if( index==0 )
 			index = 1;
-		var elapsed = Elapsed();
+		let elapsed = Elapsed();
 		std::ostringstream os;
 		string result;
 		if( force || elapsed-_previousProgressElapsed>_minimumToLog ){
@@ -66,7 +65,7 @@ namespace Jde{
 
 			os << "  Seconds Spent:  " << std::setprecision(1) << FormatSeconds(elapsed);
 			if( total!=0 ){
-				var toGo = duration_cast<SDuration>( elapsed/percentComplete );
+				let toGo = duration_cast<SDuration>( elapsed/percentComplete );
 				os << "/" <<  FormatSeconds( toGo );
 			}
 			const double recordsPerSecond = double(index)/duration_cast<seconds>( elapsed ).count();
@@ -76,8 +75,8 @@ namespace Jde{
 				os << ".  seconds/record:" << std::setprecision(1) << 1/recordsPerSecond;
 			if( force || elapsed-_previousProgressElapsed>_minimumToLog ){
 				result = os.str();
-				for( var& child : _children ){
-					var& childElapsed = child.second;
+				for( let& child : _children ){
+					let& childElapsed = child.second;
 					os << "(" << child.first << "=" << FormatSeconds(childElapsed/index) << ")";
 				}
 				Trace{ _tags, "Progress={}", os.str() };
@@ -97,16 +96,16 @@ namespace Jde{
 	}
 
 	α Stopwatch::Finish( sv description )ι->void{
-		var elapsed = Elapsed();
+		let elapsed = Elapsed();
 		Pause();
 		if( _pParent  )
 			_pParent->_children.emplace( _what, nanoseconds(0) ).first->second += elapsed;
-		var delta = elapsed-_previousProgressElapsed;
+		let delta = elapsed-_previousProgressElapsed;
 		if( delta>_minimumToLog || _children.size()>0 )
 		{
 			_previousProgressElapsed = elapsed;
 			Output( description.size() ? description : _instance.size() ? _instance : _what, delta, _logMemory, _sl );
-			for( var& child : _children ){
+			for( let& child : _children ){
 				if( child.second>_minimumToLog )
 					Output( /*StopwatchTypes::Other,*/ child.first.c_str(), child.second, false, _sl );
 			}
@@ -120,7 +119,7 @@ namespace Jde{
 		if( seconds < 60.0 )
 			fmt = Jde::format( "{:.1f}"sv, seconds );
 		else{
-			var wholeSeconds = Round( seconds );
+			let wholeSeconds = Round( seconds );
 			if( wholeSeconds < 60*60 )
 				fmt = Jde::format( "{:0>2}:{:0>2}", (wholeSeconds/60), (wholeSeconds%60) );
 			else if( wholeSeconds < 60*60*24 )

@@ -1,7 +1,7 @@
 ﻿#include "Interrupt.h"
 #include "Thread.h"
 #include "InterruptibleThread.h"
-#define var const auto
+#define let const auto
 
 namespace Jde::Threading{
 	sp<Jde::LogTag> _logTag{ Logging::Tag("threads") };

@@ -1,15 +1,16 @@
-﻿#include <jde/thread/Execution.h>
+﻿#include <jde/framework/thread/Execution.h>
+#include <jde/framework/settings.h>
 #include <list>
 #include <boost/asio.hpp>
 #include "../threading/Thread.h"
-#include "../../../Framework/source/collections/Vector.h"
+#include <jde/framework/collections/Vector.h>
 
 //#include <boost/asio/cancellation_signal.hpp>
 
-#define var const auto
+#define let const auto
 namespace Jde{
 	namespace net = boost::asio;
-	const int _threadCount{ std::max( Settings::Get<int>( "workers/executor" ).value_or(std::thread::hardware_concurrency()), 1 ) };
+	const int _threadCount{ std::max( Settings::FindNumber<int>( "workers/executor" ).value_or(std::thread::hardware_concurrency()), 1 ) };
 	sp<net::io_context> _ioc = ms<net::io_context>( _threadCount );
 }
 α Jde::Executor()ι->sp<net::io_context>{ return _ioc; }

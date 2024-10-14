@@ -9,7 +9,7 @@ namespace Jde
 	using std::unordered_set;
 	using std::function;
 	#define LOCK unique_lock<shared_mutex> l(_mutex)
-	#define var const auto
+	#define let const auto
 	template<typename TKey>
 	struct UnorderedSet : private unordered_set<TKey>
 	{
@@ -17,7 +17,7 @@ namespace Jde
 		UnorderedSet()=default;
 		UnorderedSet( const unordered_set<TKey>& values )ι:base( values ){};
 		UnorderedSet( const UnorderedSet<TKey>& values )ι;
-		UnorderedSet& operator=( base&& x ){ LOCK; base::clear(); for( var& i : x)base::emplace(i); x.clear(); return *this; }
+		UnorderedSet& operator=( base&& x ){ LOCK; base::clear(); for( let& i : x)base::emplace(i); x.clear(); return *this; }
 		unordered_set<TKey> ToSet()Ι;
 		uint erase(const TKey& item)ι;
 		size_t EraseIf( function<bool(const TKey&)> func )ι;
@@ -104,7 +104,7 @@ namespace Jde
 			func( value );
 		return count;
 	}
-#undef var
+#undef let
 #undef LOCK
 }
 #endif

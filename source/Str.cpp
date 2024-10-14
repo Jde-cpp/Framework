@@ -1,4 +1,4 @@
-﻿#include <jde/Str.h>
+﻿#include <jde/framework/str.h>
 #include <algorithm>
 #include <functional>
 #include <boost/algorithm/hex.hpp>
@@ -6,7 +6,7 @@
 	#include "../../Windows/source/WindowsUtilities.h"
 #endif
 
-#define var const auto
+#define let const auto
 
 namespace Jde{
 	α Str::DecodeUri( sv x )ι->string{
@@ -31,7 +31,7 @@ namespace Jde{
 	α Str::Empty()ι->str{ return _empty; };
 
 	α Str::NextWord( sv x )ι->sv{
-		var p = NextWordLocation( x );
+		let p = NextWordLocation( x );
 		return p ? get<0>( *p ) : sv{};
 	}
 
@@ -62,7 +62,7 @@ namespace Jde{
 	α Str::ToString( sv format, vector<string> args )ι->string{
 		using ctx = fmt::format_context;
 		vector<fmt::basic_format_arg<ctx>> ctxArgs;
-		for( var& a : args )
+		for( let& a : args )
 			ctxArgs.push_back( fmt::detail::make_arg<ctx>(a) );
 		string y;
 		try{

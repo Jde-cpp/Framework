@@ -1,15 +1,28 @@
-﻿#include <jde/log/Log.h>
+﻿#include <jde/framework/log/Log.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #ifdef _MSC_VER
 	#include <crtdbg.h>
 	#include <spdlog/spdlog.h>
-//	#include <spdlog/fmt/ostr.h>
 	#include <spdlog/sinks/msvc_sink.h>
 #endif
 #include <boost/lexical_cast.hpp>
-#include "../Settings.h"
+#include <jde/framework/settings.h>
+#include <jde/framework/str.h>
 
-#define var const auto
+#define let const auto
+
+namespace Jde{
+	inline constexpr std::array<sv,7> ELogLevelStrings = { "Trace", "Debug", "Information", "Warning", "Error", "Critical", "None" };
+}
+
+α Jde::LogLevelStrings()ι->const std::array<sv,7>{ return ELogLevelStrings; }
+
+α Jde::ToString( ELogLevel l )ι->string{
+	return FromEnum( ELogLevelStrings, l );
+}
+α Jde::ToLogLevel( sv l )ι->ELogLevel{
+	return ToEnum<ELogLevel>( ELogLevelStrings, l ).value_or( ELogLevel::Error );
+}
 
 namespace Jde::Logging{
 	bool _logMemory{true};
@@ -18,6 +31,7 @@ namespace Jde::Logging{
 	sp<LogTag> _statusTag = Logging::Tag( "status" );
 	static sp<LogTag> _logTag = Logging::Tag( "settings" );
 }
+
 namespace Jde{
 	using spdlog::level::level_enum;
 	TimePoint _startTime = Clock::now(); //Logging::Proto::Status _status; mutex _statusMutex; TimePoint _lastStatusUpdate;
@@ -54,13 +68,13 @@ namespace Jde{
 
 	α LoadSinks()ι->vector<spdlog::sink_ptr>{
 		vector<spdlog::sink_ptr> sinks;
-		var sinkSettings = Settings::TryMembers( "logging" );
-		for( var& [name,sink] : sinkSettings ){
+		let& sinkSettings = Settings::FindDefaultObject( "logging/sinks" );
+		for( let& [name,sink] : sinkSettings ){
 			spdlog::sink_ptr pSink;
 			string additional;
-			string pattern = sink.Get<string>( "pattern" ).value_or("");
+			auto pattern =  Json::FindSV( sink, "pattern" );
 			if( name=="console" && IApplication::IsConsole() ){
-				if( pattern.empty() ){
+				if( !pattern ){
 					if constexpr( _debug ){
 #ifdef _MSC_VER
 							pattern = "\u001b]8;;file://%g\u001b\\%3!#-%3!l%$-%H:%M:%S.%e %v\u001b]8;;\u001b";
@@ -75,36 +89,38 @@ namespace Jde{
 				pSink = ms<spdlog::sinks::stdout_color_sink_mt>();
 			}
 			else if( name=="file" ){
-				auto pPath = sink.Get<fs::path>( "path" );
+				optional<fs::path> pPath;
+				if( auto p = Json::FindString(sink, "path"); p )
+					pPath = fs::path{ *p };
 #pragma warning(disable: 4127)
 				if( !_msvc && pPath && pPath->string().starts_with("/Jde-cpp") )
 					pPath = fs::path{ "~/."+pPath->string().substr(1) };
-				var markdown = sink.Get<bool>( "md" ).value_or( false );
-				var fileNameWithExt = Settings::FileStem()+( markdown ? ".md" : ".log" );
-				var path = pPath && !pPath->empty() ? *pPath/fileNameWithExt : OSApp::ApplicationDataFolder()/"logs"/fileNameWithExt;
-				var truncate = sink.Get<bool>( "truncate" ).value_or( true );
-				additional = Jde::format( " truncate='{}' path='{}'", truncate, path.string() );
+				let markdown = Json::FindBool(sink, "md" ).value_or( false );
+				let fileNameWithExt = Settings::FileStem()+( markdown ? ".md" : ".log" );
+				let path = pPath && !pPath->empty() ? *pPath/fileNameWithExt : OSApp::ApplicationDataFolder()/"logs"/fileNameWithExt;
+				let truncate = Json::FindBool( sink, "truncate" ).value_or( true );
+				additional = Ƒ( " truncate='{}' path='{}'", truncate, path.string() );
 				try{
 					pSink = ms<spdlog::sinks::basic_file_sink_mt>( path.string(), truncate );
 				}
 				catch( const spdlog::spdlog_ex& e ){
 					LogMemoryDetail( Logging::Message{"settings", ELogLevel::Error, "Could not create log:  ({}) path='{}' - {}"}, name, path.string(), e.what() );
-					std::cerr << Jde::format( "Could not create log:  ({}) path='{}' - {}", name, path.string(), path.string(), e.what() ) << std::endl;
+					std::cerr << Ƒ( "Could not create log:  ({}) path='{}' - {}", name, path.string(), path.string(), e.what() ) << std::endl;
 					continue;
 				}
-				if( pattern.empty() )
+				if( !pattern )
 					pattern = markdown ? "%^%3!l%$-%H:%M:%S.%e [%v](%g#L%#)\\" : "%^%3!l%$-%H:%M:%S.%e %-64@ %v";
 			}
 			else
 				continue;
-			pSink->set_pattern( pattern );
-			var level = sink.Get<ELogLevel>( "level" ).value_or( ELogLevel::Trace );
+			pSink->set_pattern( string{*pattern} );
+			let level = Json::FindEnum<ELogLevel>( sink, "level", ToLogLevel ).value_or( ELogLevel::Trace );
 			pSink->set_level( (level_enum)level );
-			//std::cout << Jde::format( "({})level='{}' pattern='{}'{}", name, ToString(level), pattern, additional ) << std::endl;
-			LogMemoryDetail( Logging::Message{"settings", ELogLevel::Information, "({})level='{}' pattern='{}'{}"}, name, ToString(level), pattern, additional );
+			//std::cout << Ƒ( "({})level='{}' pattern='{}'{}", name, ToString(level), pattern, additional ) << std::endl;
+			LogMemoryDetail( Logging::Message{"settings", ELogLevel::Information, "({})level='{}' pattern='{}'{}"}, name, ToString(level), *pattern, additional );
 			sinks.push_back( pSink );
 		}
-		Logging::_logMemory = Settings::Get<bool>("logging/memory").value_or( false );
+		Logging::_logMemory = Settings::FindBool("logging/memory").value_or( false );
 		return sinks;
 	}
 	vector<spdlog::sink_ptr> _sinks = LoadSinks();
@@ -129,17 +145,17 @@ namespace Jde{
 	α Logging::Initialize()ι->void{
 		//_status.set_starttime( (google::protobuf::uint32)Clock::to_time_t(_startTime) );
 
-		var flushOn = Settings::Get<ELogLevel>( "logging/flushOn" ).value_or( _debug ? ELogLevel::Debug : ELogLevel::Information );
+		let flushOn = Settings::FindEnum<ELogLevel>( "logging/flushOn", ToLogLevel ).value_or( _debug ? ELogLevel::Debug : ELogLevel::Information );
 		_logger.flush_on( (level_enum)flushOn );
 		AddFileTags();
 
-		var minSinkLevel = std::accumulate( _sinks.begin(), _sinks.end(), ELogLevel::Critical, [](ELogLevel min, auto& p){ return std::min((ELogLevel)p->level(), min);} );
+		let minSinkLevel = std::accumulate( _sinks.begin(), _sinks.end(), ELogLevel::Critical, [](ELogLevel min, auto& p){ return std::min((ELogLevel)p->level(), min);} );
 		_logger.set_level( (level_enum)minSinkLevel );
 		if( _pMemoryLog ){
-			for( var& m : *_pMemoryLog ){
+			for( let& m : *_pMemoryLog ){
 				if( !ShouldLog(m) )
 					continue;
-				var message = Str::ToString( m.MessageView, m.Args );
+				let message = Str::ToString( m.MessageView, m.Args );
 				if( _sinks.size() )
 					_logger.log( spdlog::source_loc{m.File,(int)m.LineNumber,m.Function}, (level_enum)m.Level, message );
 				else
@@ -153,7 +169,6 @@ namespace Jde{
 			if( !_logMemory )
 				ClearMemoryLog();
 		}
-		INFO( "settings path={}", Settings::Path().string() );
 		INFO( "log minLevel='{}' flushOn='{}'", ELogLevelStrings[(int8)minSinkLevel], ELogLevelStrings[(uint8)flushOn] );//TODO add flushon to Server
 	}
 
@@ -175,9 +190,9 @@ namespace Jde{
 	}*/
 	α Logging::SetLogLevel( ELogLevel client, ELogLevel external )ι->void{
 		if( _logger.level()!=(level_enum)client ){
-			INFO( "Setting log level from '{}' to '{}'", Str::FromEnum(ELogLevelStrings, _logger.level()), Str::FromEnum(ELogLevelStrings, client) );
-			Settings::Set( "logging/console/level", string{ToString(client)}, false );
-			Settings::Set( "logging/file/level", string{ToString(client)} );
+			Information{ ELogTags::App, "Setting log level from '{}' to '{}'", ToString((ELogLevel)_logger.level()), ToString(client) };
+			Settings::Set( "logging/console/level", jvalue{ToString(client)}, false );
+			Settings::Set( "logging/file/level", jvalue{ToString(client)} );
 			_logger.set_level( (level_enum)client );
 		}
 		External::SetMinLevel( external );
@@ -187,10 +202,10 @@ namespace Jde{
 		{
 			lg _{_statusMutex};
 			_status.clear_details();
-			for( var& value : values )
+			for( let& value : values )
 				_status.add_details( value );
 		}
-		var now = Clock::now();
+		let now = Clock::now();
 		if( _lastStatusUpdate+10s<now )
 			SendStatus();
 	}
@@ -221,7 +236,7 @@ namespace Jde{
 		sl l{ Logging::MemoryLogMutex };
 		ASSERT( Logging::_pMemoryLog );
 		vector<Logging::ExternalMessage>  results;
-		for_each( Logging::_pMemoryLog->begin(), Logging::_pMemoryLog->end(), [messageId,&results](var& msg){if( msg.MessageId==messageId) results.push_back(msg);} );
+		for_each( Logging::_pMemoryLog->begin(), Logging::_pMemoryLog->end(), [messageId,&results](let& msg){if( msg.MessageId==messageId) results.push_back(msg);} );
 		return results;
 	}
 /*	α Logging::Log( const Logging::ILogEntry& m )ι->void{
@@ -242,7 +257,7 @@ namespace Jde{
 		catch( const fmt::format_error& e ){
 			critical( "FormatException message:'{}', file:'{}', line:{}, error:'{}'", m.Format(), m.File(), m.LineNumber(), e.what() );
 		}
-		var logServer{ (m.Tags() & ELogTags::ExternalLogger)!=ELogTags::None };
+		let logServer{ (m.Tags() & ELogTags::ExternalLogger)!=ELogTags::None };
 		if( logServer || LogMemory() ){
 			//vector<string> values; values.reserve( sizeof...(args) );
 			//ToVec::Append( values, args... );

@@ -43,18 +43,18 @@ namespace Jde::Math
 		T Y{0.0};
 	};
 
-#define var const auto
+#define let const auto
 	Ŧ Statistics( const T& values, bool calcVariance=true )ι->StatResult<typename T::value_type>
 	{
 		typedef typename T::value_type TValue;
-		var size = values.size();
+		let size = values.size();
 		//ASSERT( size>0 );
 		TValue sum{};
 		TValue min{ std::numeric_limits<TValue>::max() };
 		TValue max{ std::numeric_limits<TValue>::min() };
 		TValue average{};
 		TValue variance{};
-		for( var& value : values )
+		for( let& value : values )
 		{
 			sum += value;
 			min = std::min( min, value );
@@ -67,7 +67,7 @@ namespace Jde::Math
 			{
 				auto varianceFunction = [&average, &size]( double accumulator, const double& val )
 				{
-					var diff = val - average;
+					let diff = val - average;
 					return accumulator + diff*diff / (size - 1);//sample?
 				};
 				double v2 = std::accumulate( values.begin(), values.end(), 0.0, varianceFunction );
@@ -76,5 +76,5 @@ namespace Jde::Math
 		}
 		return StatResult<TValue>{ average, variance, min, max };
 	}
-#undef var
+#undef let
 }

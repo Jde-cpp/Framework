@@ -2,10 +2,8 @@
 #include <condition_variable>
 #include <deque>
 #include <shared_mutex>
-#include <jde/Exception.h>
 
-namespace Jde::Threading
-{
+namespace Jde::Threading{
 	//single thread pool. TODO get rid of.
 	template<class TArgs>
 	class ReusableThread /*: public std::enable_shared_from_this<ReusableThread<TArgs>>*/

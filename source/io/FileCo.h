@@ -1,7 +1,7 @@
 ﻿#pragma once
 #ifndef FILECO_H
 #define FILECO_H
-#include <jde/coroutine/Task.h>
+#include <jde/framework/coroutine/Task.h>
 #include "../threading/Worker.h"
 #ifdef _MSC_VER
 	#include "../../../Windows/source/WindowsHandle.h"

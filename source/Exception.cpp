@@ -1,13 +1,11 @@
-﻿#include <jde/Exception.h>
+﻿#include <jde/framework/exceptions/Exception.h>
 #include <iostream>
 #include <spdlog/spdlog.h>
 #include <spdlog/fmt/ostr.h>
 #include <boost/system/error_code.hpp>
 
-#include <jde/log/Log.h>
-//#include "io/ServerSink.h"
-#include <jde/TypeDefs.h>
-#define var const auto
+#include <jde/framework/str.h>
+#define let const auto
 
 namespace Jde{
 	up<IException> _empty;
@@ -59,9 +57,6 @@ namespace Jde{
 		catch( IException& e ){
 			y = e.Move();
 		}
-		catch( const nlohmann::json::exception& e ){
-			y = mu<Exception>( Ƒ("nlohmann::json::exception - {}", e.what()), ELogLevel::Error, sl );
-		}
 		catch( const std::exception& e ){
 			y = mu<Exception>( Ƒ("std::exception - {}", e.what()), ELogLevel::Critical, sl );
 		}
@@ -80,12 +75,12 @@ namespace Jde{
 #endif
 	}
 	α IException::Log()Ι->void{
-		var level = Level();
+		let level = Level();
 		if( level==ELogLevel::NoLog || (_pTag && level<MinLevel(ToLogTags(_pTag->Id))) )
 			return;
-		var& sl = _stack.size() ? _stack.front() : SRCE_CUR;
+		let& sl = _stack.size() ? _stack.front() : SRCE_CUR;
 		const string fileName{ strlen(sl.file_name()) ? FileName(sl.file_name()) : "{Unknown}\0"sv };
-		var functionName = strlen(sl.file_name()) ? sl.function_name() : "{Unknown}\0";
+		let functionName = strlen(sl.file_name()) ? sl.function_name() : "{Unknown}\0";
 		if( auto p = Logging::Default(); p )
 			p->log( spdlog::source_loc{fileName.c_str(), (int)sl.line(), functionName}, (spdlog::level::level_enum)level, what() );
 		if( Logging::External::Size() )
@@ -139,9 +134,9 @@ namespace Jde{
 	{}
 
 	α CodeException::ToString( const std::error_code& errorCode )ι->string{
-		var value = errorCode.value();
-		var& category = errorCode.category();
-		var message = errorCode.message();
+		let value = errorCode.value();
+		let& category = errorCode.category();
+		let message = errorCode.message();
 		return Ƒ( "({}){} - {})", value, category.name(), message );
 	}
 

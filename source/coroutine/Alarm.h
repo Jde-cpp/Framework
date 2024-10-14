@@ -1,6 +1,5 @@
 ﻿#pragma once
-#include <jde/Exports.h>
-#include <jde/coroutine/Task.h>
+#include <jde/framework/coroutine/Task.h>
 #include "../threading/Worker.h"
 #include "Coroutine.h"
 #include "Awaitable.h"

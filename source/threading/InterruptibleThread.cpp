@@ -1,6 +1,6 @@
 ﻿#include "InterruptibleThread.h"
 
-#define var const auto
+#define let const auto
 namespace Jde::Threading
 {
 	static sp<Jde::LogTag> _logTag{ Logging::Tag("threads") };

@@ -2,16 +2,16 @@
 #include "../Cache.h"
 #include <signal.h>
 
-#define var const auto
+#define let const auto
 namespace Jde::IO
 {
 	static sp<LogTag> _logTag{ Logging::Tag("io") };
 	α IFileChunkArg::Handle()ι->HFile&{ return _fileIOArg.Handle; }
 	uint32 _chunkSize=0;
-	α DriveWorker::ChunkSize()ι->uint32{ return _chunkSize==0 ? (_chunkSize=Settings::Get<uint32>("workers/drive/chunkSize").value_or(1 << 19)) : _chunkSize; }
+	α DriveWorker::ChunkSize()ι->uint32{ return _chunkSize==0 ? (_chunkSize=Settings::FindNumber<uint32>("workers/drive/chunkSize").value_or(1 << 19)) : _chunkSize; }
 
 	uint8 _threadSize=0;
-	α DriveWorker::ThreadSize()ι->uint8{ return _threadSize==0 ? (_threadSize=Settings::Get<uint8>("workers/drive/threadSize").value_or(5)) : _threadSize; }
+	α DriveWorker::ThreadSize()ι->uint8{ return _threadSize==0 ? (_threadSize=Settings::FindNumber<uint8>("workers/drive/threadSize").value_or(5)) : _threadSize; }
 
 	void DriveWorker::Initialize()ι{
 		IWorker::Initialize();
@@ -75,7 +75,7 @@ namespace Jde::IO
 		bool cache = false;
 		try
 		{
-			var path = _arg.Path.string();
+			let path = _arg.Path.string();
 			if( auto p = _cache ? Cache::Get<sp<void>>(path) : sp<void>{}; p ){//TODO lock the file
 				TRACE( "({})Open from cache", path );
 				cache = true;

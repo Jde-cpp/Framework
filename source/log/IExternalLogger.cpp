@@ -1,4 +1,4 @@
-#include "jde/log/IExternalLogger.h"
+#include "jde/framework/log/IExternalLogger.h"
 
 namespace Jde::Logging{
 	auto _logTag{ Tag(ELogTags::Settings) };

@@ -13,7 +13,7 @@ namespace Jde::IO
 
 	void DiskMirror::OnChange( path path )noexcept
 	{
-		var tarPath = GetRootTar( path );
+		let tarPath = GetRootTar( path );
 		if( tarPath!=path )
 		{
 			_changes.emplace( tarPath, std::chrono::steady_clock::now() );
@@ -22,9 +22,9 @@ namespace Jde::IO
 
 	void DiskMirror::OnTimeout()noexcept
 	{
-		var updateTime = std::chrono::steady_clock::now()-_waitTime;
+		let updateTime = std::chrono::steady_clock::now()-_waitTime;
 		//TODO - get waitTime from config
-		//var done = TODO
+		//let done = TODO
 	}
 	void DiskMirror::OnAwake()noexcept
 	{

@@ -6,9 +6,8 @@
 #include <memory>
 #include <mutex>
 #include <condition_variable>
-#include <jde/TypeDefs.h>
 
-#define var const auto
+#define let const auto
 namespace Jde
 {
 	template<typename T>
@@ -186,8 +185,8 @@ namespace Jde
 	optional<T> QueueValue<T>::TryPop()ι
 	{
 		std::lock_guard<std::mutex> lk( _mtx );
-		var empty = _queue.empty();
-		var value = empty ? optional<T>{} : _queue.front();
+		let empty = _queue.empty();
+		let value = empty ? optional<T>{} : _queue.front();
 		if( !empty )
 			_queue.pop();
 		return value;
@@ -245,7 +244,7 @@ namespace Jde
 	optional<T> QueueMove<T>::Pop()ι
 	{
 		ul _(_mtx);
-		var hasSize = !_queue.empty();
+		let hasSize = !_queue.empty();
 		optional<T> p = hasSize ? optional<T>{ move(_queue.front()) } : std::nullopt;
 		if( p )
 			_queue.pop();
@@ -279,5 +278,5 @@ namespace Jde
 		return result;
 	}
 }
-#undef var
+#undef let
 #endif

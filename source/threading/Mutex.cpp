@@ -1,6 +1,6 @@
 ﻿#include "Mutex.h"
 #include <boost/container/flat_map.hpp>
-#define var const auto
+#define let const auto
 namespace Jde
 {
 	static const sp<LogTag> _logTag = Logging::Tag( "locks" );
@@ -24,8 +24,8 @@ namespace Jde
 		return !!_pGuard;
 	}
 
-	α LockAwait::await_resume()ι->AwaitResult{ 
-		return _pGuard ? AwaitResult{move(_pGuard)} : base::await_resume(); 
+	α LockAwait::await_resume()ι->AwaitResult{
+		return _pGuard ? AwaitResult{move(_pGuard)} : base::await_resume();
 	}
 
 	α LockAwait::Suspend()ι->void{

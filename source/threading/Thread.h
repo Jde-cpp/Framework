@@ -1,7 +1,6 @@
 ﻿#pragma once
 #include <string_view>
 #include <shared_mutex>
-#include <jde/log/Log.h>
 
 namespace Jde{ enum class ELogLevel : int8; }
 namespace Jde::Threading

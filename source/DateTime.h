@@ -2,8 +2,6 @@
 #ifndef DATE_TIME_H //gcc precompiled headers
 #define DATE_TIME_H
 #include <chrono>
-#include <jde/TypeDefs.h>
-#include <jde/Exports.h>
 
 namespace Jde::Chrono{
 	using namespace std::chrono;
@@ -88,12 +86,12 @@ namespace Jde{
 	Ξ DateDisplay( TimePoint time )ι->string{ return DateTime{time}.DateDisplay(); }
 	Ξ DateDisplay( DayIndex day )ι->string{ return DateTime{Chrono::FromDays(day)}.DateDisplay(); }
 }
-#define var const auto
+#define let const auto
 namespace Jde::Timezone{
 	Γ Duration GetGmtOffset( sv name, TimePoint utc, SRCE )ε;
 	Γ Duration TryGetGmtOffset( sv name, TimePoint utc, SRCE )ι;
 	Γ Duration EasternTimezoneDifference( TimePoint time, SRCE )ε;
-	Ξ EasternTimeNow(SRCE)ε->TimePoint{ var now=Clock::now(); return now+EasternTimezoneDifference(now, sl); };
+	Ξ EasternTimeNow(SRCE)ε->TimePoint{ let now=Clock::now(); return now+EasternTimezoneDifference(now, sl); };
 }
 
 namespace Jde::TimeSpan{
@@ -162,6 +160,6 @@ namespace Jde{
 		return os.str();
 	}
 }
-#undef var
+#undef let
 #undef output
 #endif

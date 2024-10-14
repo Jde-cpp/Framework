@@ -1,14 +1,12 @@
 ﻿#pragma once
-#include <jde/App.h>
-#include <jde/log/Log.h>
-#include <jde/Str.h>
-#include <jde/Exports.h>
-#include "Settings.h"
+#include <jde/framework/process.h>
+#include <jde/framework/str.h>
+#include <jde/framework/settings.h>
 #include "collections/Collections.h"
 
 namespace Jde
 {
-#define var const auto
+#define let const auto
 #define Φ Γ Ω
 	struct Cache2{
 		Φ Has( str id )ι->bool;
@@ -52,7 +50,7 @@ namespace Jde
 	Ŧ Cache2::Set( str id, sp<T> p )ι->sp<T>{
 		ul l{_cacheLock};
 		if( !p ){
-			var erased = _cache.erase( id );
+			let erased = _cache.erase( id );
 			TRACE( "Cache::{} erased={}"sv, id, erased );
 		}
 		else{
@@ -65,7 +63,7 @@ namespace Jde
 
 	struct Cache final{
 		Ω Has( str name )ι{ return Instance().InstanceHas( name ); }
-		Ω Duration( str /*name*/ )ι{ return Settings::Get<Jde::Duration>( "cache/default/duration" ).value_or( Duration::max() ); }
+		Ω Duration( str /*name*/ )ι{ return Settings::FindDuration( "cache/default/duration" ).value_or( Duration::max() ); }
 		Ṫ Emplace( str name )ι->sp<T>{ return Instance().InstanceEmplace<T>( name ); }
 		Ṫ Get( str name )ι{ return Instance().InstanceGet<T>(name); }
 		Φ Double( string name )ι->double;
@@ -104,7 +102,7 @@ namespace Jde
 		sp<V> pValue;
 		sl l{_cacheLock};
 		if( auto p = _cache.find( cacheName ); p!=_cache.end() ){
-			if( var pMap = std::static_pointer_cast<flat_map<K,sp<V>>>(p->second); pMap ){
+			if( let pMap = std::static_pointer_cast<flat_map<K,sp<V>>>(p->second); pMap ){
 				if( auto pItem = pMap->find( id ); pItem != pMap->end() )
 					pValue = pItem->second;
 			}
@@ -116,7 +114,7 @@ namespace Jde
 		sp<V> pValue;
 		sl l{_cacheLock};
 		if( auto p = _cache.find( cacheName ); p!=_cache.end() ){
-			if( var pMap = std::static_pointer_cast<flat_map<K,sp<V>>>(p->second); pMap ){
+			if( let pMap = std::static_pointer_cast<flat_map<K,sp<V>>>(p->second); pMap ){
 				if( auto pItem = pMap->find( id ); pItem != pMap->end() )
 					pValue = pItem->second;
 			}
@@ -136,7 +134,7 @@ namespace Jde
 		}
 		return pValue;
 	}
-#undef var
+#undef let
 #undef Φ
 #undef _logTag
 }

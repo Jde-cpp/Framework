@@ -6,8 +6,6 @@
 #include <functional>
 #include <mutex>
 #include <thread>
-#include <jde/TypeDefs.h>
-#include <jde/Exports.h>
 
 namespace Jde::Threading{
 	struct InterruptibleThread;

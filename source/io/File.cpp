@@ -1,4 +1,4 @@
-﻿#include <jde/io/File.h>
+﻿#include <jde/framework/io/File.h>
 
 #include <cmath>
 #include <fstream>
@@ -7,11 +7,11 @@
 #include <unordered_set>
 #include <spdlog/fmt/ostr.h>
 #include "../Stopwatch.h"
-#include <jde/Str.h>
-#define var const auto
+#include <jde/framework/str.h>
+#define let const auto
 
 namespace Jde{
-	static var& _logTag{ Logging::Tag("io") };
+	static let& _logTag{ Logging::Tag("io") };
 	α IO::LogTag()ι->sp<Jde::LogTag>{ return _logTag; }
 
 	α IO::FileSize( const fs::path& path )ε->uint
@@ -61,7 +61,7 @@ namespace Jde::IO::FileUtilities
 {
 	α ForEachItem( const fs::path& path, std::function<void(const fs::directory_entry&)> function )ε->void//__fs::filesystem::filesystem_error
 	{
-		for( var& dirEntry : fs::directory_iterator(path) )
+		for( let& dirEntry : fs::directory_iterator(path) )
 			function( dirEntry );
 	}
 
@@ -130,7 +130,7 @@ namespace Jde::IO::FileUtilities
 	}
 	up<vector<char>> Compression::LoadBinary( const fs::path& uncompressed, const fs::path& compressed, bool setPermissions, bool leaveUncompressed )ε
 	{
-		var compressedPath = compressed.string().size() ? compressed : uncompressed;
+		let compressedPath = compressed.string().size() ? compressed : uncompressed;
 		Extract( compressedPath );
 		fs::path uncompressedFile = uncompressed;
 		if( uncompressedFile.extension()==Extension() )
@@ -147,7 +147,7 @@ namespace Jde::IO::FileUtilities
 	}
 	fs::path Compression::Compress( const fs::path& path, bool deleteAfter )ε
 	{
-		var command = CompressCommand( path );
+		let command = CompressCommand( path );
 		THROW_IF( system(command.c_str())==-1, "{} failed.", command );
 		if( deleteAfter && !CompressAutoDeletes() )
 		{
@@ -167,7 +167,7 @@ namespace Jde::IO::FileUtilities
 		auto command = ExtractCommand( compressedFile, destination );// -y -bsp0 -bso0
 		THROW_IFX( system(command.c_str())==-1, IO_EX(path, ELogLevel::Error, "{} failed.", command) );
 	}
-*/	
+*/
 }
 namespace Jde::IO
 {
@@ -260,7 +260,7 @@ namespace Jde::IO
 	α FileUtilities::Replace( const fs::path& source, const fs::path& destination, const flat_map<string,string>& replacements )ε->void
 	{
 		auto sourceContent = Load( source );
-		for( var& [search,replacement] : replacements )
+		for( let& [search,replacement] : replacements )
 			sourceContent = Str::Replace( sourceContent, search, replacement );
 		Save( destination, sourceContent );
 	}
@@ -269,8 +269,8 @@ namespace Jde
 {
 	α IO::ForEachLine( const fs::path& path, function<void(const vector<double>&, uint lineIndex)> function, const flat_set<uint>& columnIndexes_, const uint maxLines/*=std::numeric_limits<uint>::max()*/, const uint startLine/*=0*/, const uint /*chunkSize=1073741824*/, uint maxColumnCount/*=1500*/, Stopwatch* /*sw=nullptr*/, double emptyValue/*=0.0*/ )->uint
 	{
-		var pBuffer = FileUtilities::LoadBinary( path );
-		var& buffer = *pBuffer;
+		let pBuffer = FileUtilities::LoadBinary( path );
+		let& buffer = *pBuffer;
 		vector<uint_fast8_t> columnIndexes;
 		for( uint i=0, index=0; columnIndexes_.size() && i<maxColumnCount; ++i )
 			columnIndexes.push_back( columnIndexes_.find(index++)!=columnIndexes_.end() ? uint_fast8_t(1) : uint_fast8_t(0) );
@@ -291,7 +291,7 @@ namespace Jde
 					for( ; *p!=',' && *p!='\n' && *p!='\r'; ++p );
 				else
 				{
-					var empty = *p==',' || *p=='\n';
+					let empty = *p==',' || *p=='\n';
 					double value = empty ? emptyValue : 0.0;
 					if( !empty )
 					{
@@ -342,7 +342,7 @@ namespace Jde
 		{
 			auto tokens = Str::Split( line );
 			int iToken=0;
-			for( var& token : tokens )
+			for( let& token : tokens )
 			{
 				if( (!notColumns && std::find( columnNamesToFetch.begin(), columnNamesToFetch.end(), token)!=columnNamesToFetch.end())
 					|| (notColumns && std::find( columnNamesToFetch.begin(), columnNamesToFetch.end(), token)==columnNamesToFetch.end()) )

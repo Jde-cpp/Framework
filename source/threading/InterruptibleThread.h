@@ -3,9 +3,8 @@
 #define INTERRUPTIBLE_THREAD
 //adapted from https://livebook.manning.com/#!/book/c-plus-plus-concurrency-in-action-second-edition/chapter-9/v-7/1
 #include <future>
-#include <jde/Exception.h>
 #include "Thread.h"
-#include <jde/App.h>
+#include <jde/framework/process.h>
 
 namespace Jde::Threading{  //TODO Reflection remove Threading from public items. move to jthread
 #define ω Γ static auto

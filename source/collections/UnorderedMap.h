@@ -6,10 +6,9 @@
 #include <forward_list>
 #include <shared_mutex>
 #include <functional>
-#include <jde/TypeDefs.h>
 
 #define LOCK unique_lock<shared_mutex> l(_mutex)
-#define var const auto
+#define let const auto
 namespace Jde
 {
 	using std::unordered_map;
@@ -69,7 +68,7 @@ namespace Jde::Collections
 		LOCK;
 		base::clear();
 		unique_lock<shared_mutex> l2{ x._mutex };
-		for( var& i : x )
+		for( let& i : x )
 			base::emplace( i.first, i.second );
 		((base&)x).clear();
 		return *this;
@@ -258,5 +257,5 @@ namespace Jde::Collections
 	}
 }
 #undef LOCK
-#undef var
+#undef let
 #endif

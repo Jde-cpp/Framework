@@ -8,9 +8,9 @@
 #include <google/protobuf/timestamp.pb.h>
 #pragma warning(pop)
 //#include "proto/messages.pb.h"
-#include <jde/io/File.h>
+#include <jde/framework/io/File.h>
 
-#define var const auto
+#define let const auto
 namespace Jde::IO::Proto{
 	Ŧ Load( const fs::path& path, SRCE )ε->up<T>;
 	Ŧ TryLoad( const fs::path& path, SRCE )ι->up<T>;
@@ -46,17 +46,17 @@ namespace Jde::IO
 
 	Ξ Proto::SizePrefixed( const google::protobuf::MessageLite&& m )ι->tuple<up<google::protobuf::uint8[]>,uint>{
 		const uint32_t length = (uint32_t)m.ByteSizeLong();
-		var size = length+4;
+		let size = length+4;
 		up<google::protobuf::uint8[]> pData{ new google::protobuf::uint8[size] };
 		auto pDestination = pData.get();
 		const char* pLength = reinterpret_cast<const char*>( &length )+3;
 		for( auto i=0; i<4; ++i )
 			*pDestination++ = *pLength--;
-		var result = m.SerializeToArray( pDestination, (int)length ); LOG_IFT( !result, ELogLevel::Critical, IO::LogTag(), "Could not serialize to an array:{:x}", result );
+		let result = m.SerializeToArray( pDestination, (int)length ); LOG_IFT( !result, ELogLevel::Critical, IO::LogTag(), "Could not serialize to an array:{:x}", result );
 		return make_tuple( move(pData), size );
 	}
 	Ξ Proto::Save( const google::protobuf::MessageLite& msg, fs::path path, SRCE )ε->void{
-		var p = ms<string>();
+		let p = ms<string>();
 		msg.SerializeToString( p.get() );
 		FileUtilities::Save( move(path), p, sl );
 	}
@@ -119,8 +119,8 @@ namespace Jde::IO
 
 	Ξ Proto::ToTimestamp( TimePoint t )ι->google::protobuf::Timestamp{
 		google::protobuf::Timestamp proto;
-		var seconds = Clock::to_time_t( t );
-		var nanos = std::chrono::duration_cast<std::chrono::nanoseconds>( t-TimePoint{} )-std::chrono::duration_cast<std::chrono::nanoseconds>( std::chrono::seconds(seconds) );
+		let seconds = Clock::to_time_t( t );
+		let nanos = std::chrono::duration_cast<std::chrono::nanoseconds>( t-TimePoint{} )-std::chrono::duration_cast<std::chrono::nanoseconds>( std::chrono::seconds(seconds) );
 		proto.set_seconds( seconds );
 		proto.set_nanos( (int)nanos.count() );
 		return proto;
@@ -138,5 +138,5 @@ namespace Jde::IO
 //	std::chrono::time_point<std::chrono::system_clock,std::chrono::duration<__int64,std::nano>>
 //	std::chrono::time_point<std::chrono::system_clock,std::chrono::duration<std::chrono::system_clock::rep,std::chrono::system_clock::period>>
 }
-#undef var
+#undef let
 #endif

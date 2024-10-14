@@ -3,8 +3,8 @@
 #define COROUTINE_H
 #include <list>
 #include "../threading/Thread.h"
-#include "../Settings.h"
-#include <jde/App.h>
+#include <jde/framework/settings.h>
+#include <jde/framework/process.h>
 #include "../collections/Queue.h"
 #include "../threading/InterruptibleThread.h"
 
@@ -46,13 +46,13 @@ namespace Jde::Coroutine{
 		up<QueueMove<CoroutineParam>> _pQueue;
 		static sp<CoroutinePool> _pInstance;
 
-		static Settings::Item<uint16> MaxThreadCount;
-		static Settings::Item<Duration> WakeDuration;
-		static Settings::Item<Duration> ThreadDuration;
-		static Settings::Item<Duration> PoolIdleThreshold;
+		static uint16 MaxThreadCount;
+		static Duration WakeDuration;
+		static Duration ThreadDuration;
+		static Duration PoolIdleThreshold;
 
 		static constexpr sv Name{ "CoroutinePool" };
-		static sp<Settings::Container> _pSettings;
+		static jobject _settings;
 		friend CoroutineTests;
 	};
 }

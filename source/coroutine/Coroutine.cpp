@@ -1,10 +1,12 @@
 ﻿#include "Coroutine.h"
 #include "../threading/InterruptibleThread.h"
-#define var const auto
+#include "../DateTime.h"
+
+#define let const auto
 
 using namespace std::chrono;
-namespace Jde::Coroutine
-{
+namespace Jde::Coroutine{
+
 	std::shared_mutex CoroutinePool::_mtx;
 	static ELogTags _tag{ ELogTags::Threads };
 
@@ -16,13 +18,13 @@ namespace Jde::Coroutine
 		_param{ move(param) },
 		_thread{ [this]( std::stop_token stoken ){
 			Threading::SetThreadDscrptn( Jde::format("({})CoroutineThread", ThreadParam.AppHandle) );
-			var index = INDEX++;
+			let index = INDEX++;
 			auto timeout = Clock::now()+IdleLimit;
 			while( !stoken.stop_requested() ){
 				{
 					unique_lock l{ _paramMutex };
 					if( !_param ){
-						var now = Clock::now();
+						let now = Clock::now();
 						if( timeout>now )
 							std::this_thread::yield();
 						else{
@@ -68,11 +70,10 @@ namespace Jde::Coroutine
 		return result;
 	}
 
-	Settings::Item<uint16> CoroutinePool::MaxThreadCount{ "coroutinePool/maxThreadCount", 100 };
-	Settings::Item<Duration> CoroutinePool::WakeDuration{ "coroutinePool/wakeDuration", 5s };
-	Settings::Item<Duration> CoroutinePool::ThreadDuration{ "coroutinePool/threadDuration", 1s };
-	Settings::Item<Duration> CoroutinePool::PoolIdleThreshold{ "coroutinePool/poolIdleThreshold", 1s };
-
+	uint16 CoroutinePool::MaxThreadCount{ Settings::FindNumber<uint16>("coroutinePool/maxThreadCount").value_or(100) };
+	Duration CoroutinePool::WakeDuration{ Settings::FindDuration("coroutinePool/wakeDuration").value_or(5s) };
+	Duration CoroutinePool::ThreadDuration{ Settings::FindDuration("coroutinePool/threadDuration").value_or(1s) };
+	Duration CoroutinePool::PoolIdleThreshold{ Settings::FindDuration("coroutinePool/poolIdleThreshold").value_or(1s) };
 
 	α CoroutinePool::Shutdown( bool /*terminate*/ )ι->void{
 		if( _pThread ){

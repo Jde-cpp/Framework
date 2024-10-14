@@ -1,10 +1,10 @@
 ﻿#include "Lock.h"
 #include "../threading/Mutex.h"
 
-#define var const auto
+#define let const auto
 namespace Jde
 {
-	static var& _logTag{ Logging::Tag("locks") };
+	static let& _logTag{ Logging::Tag("locks") };
 	flat_map<string,std::deque<std::variant<LockKeyAwait*,coroutine_handle<>>>> _coLocks; std::atomic_flag _coLocksLock;
 	α LockWrapperAwait::TryLock( string key, bool /*shared*/ )ι->up<CoLockGuard>{
 		AtomicGuard l( _coLocksLock );
@@ -21,7 +21,7 @@ namespace Jde
 		AtomicGuard l( _coLocksLock );
 		auto& locks = _coLocks.try_emplace( Key ).first->second;
 		locks.push_back( this );
-		var ready = locks.size()==1;
+		let ready = locks.size()==1;
 		TRACE( "({})LockKeyAwait::await_ready={} size={}", Key, ready, locks.size() );
 		return locks.size()==1;
 	}

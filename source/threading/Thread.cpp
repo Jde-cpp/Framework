@@ -3,7 +3,7 @@
 #include <atomic>
 #include <sstream>
 
-#define var const auto
+#define let const auto
 
 namespace Jde{
 	namespace Threading{

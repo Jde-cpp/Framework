@@ -1,15 +1,15 @@
-﻿#include <jde/App.h>
+﻿#include <jde/framework/process.h>
 #include <signal.h>
 #include <sys/types.h>
 #include <stdexcept>
 
 #include "Cache.h"
-#include <jde/io/File.h>
-#include "Settings.h"
+#include <jde/framework/io/File.h>
+#include <jde/framework/settings.h>
 #include "threading/InterruptibleThread.h"
-#include "collections/Vector.h"
+#include <jde/framework/collections/Vector.h>
 
-#define var const auto
+#define let const auto
 
 namespace Jde{
 	static sp<LogTag> _logTag = Logging::Tag( "app" );
@@ -149,7 +149,7 @@ namespace Jde{
 					AtomicGuard l2{ _activeWorkersMutex };
 					auto p = i<_activeWorkers.size() ? _activeWorkers[i] : nullptr; if( !p ) break;
 					l2.unlock();
-					if( var pWorkerProcessed = p->Poll();  pWorkerProcessed )
+					if( let pWorkerProcessed = p->Poll();  pWorkerProcessed )
 						processed = *pWorkerProcessed || processed;
 					else
 						RemoveActiveWorker( p );
@@ -177,7 +177,7 @@ namespace Jde{
 		});
 		Information{ ELogTags::App | ELogTags::Shutdown, "[{}]Waiting for process to complete. exitReason: {}, terminate: {}, background threads: {}", OSApp::ProcessId(), _exitReason.value(), terminate, _backgroundThreads.size() };
 		while( _backgroundThreads.size() ){
-			_backgroundThreads.erase_if( [](var& p)->bool {
+			_backgroundThreads.erase_if( [](let& p)->bool {
 				auto done = p->IsDone();
 				if( done )
 					p->Join();
@@ -190,7 +190,7 @@ namespace Jde{
 		Debug{ ELogTags::App | ELogTags::Shutdown, "Background threads removed" };
 
 		if( _pShutdownFunctions )
-			for_each( *_pShutdownFunctions, [=](var& shutdown){ shutdown( terminate ); } );
+			for_each( *_pShutdownFunctions, [=](let& shutdown){ shutdown( terminate ); } );
 		Debug{ ELogTags::App | ELogTags::Shutdown, "Shutdown functions removed" };
 		_rawShutdowns.erase( [=](auto& p){ p->Shutdown( terminate );} );
 		Debug{ ELogTags::App | ELogTags::Shutdown, "Raw functions removed" };
@@ -204,7 +204,7 @@ namespace Jde{
 
 	α IApplication::RemoveThread( sv name )ι->sp<Threading::InterruptibleThread>{
 		sp<Threading::InterruptibleThread> pThread;
-		_backgroundThreads.erase_if( [name,&pThread](var& p){
+		_backgroundThreads.erase_if( [name,&pThread](let& p){
 			bool equal = p->Name==name;
 			if( equal )
 				pThread = p;

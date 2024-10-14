@@ -4,9 +4,8 @@
 #include <shared_mutex>
 #include <boost/core/noncopyable.hpp>
 #include "Thread.h"
-#include <jde/Assert.h>
-#include <jde/log/Log.h>
-#include <jde/coroutine/TaskOld.h>
+
+#include <jde/framework/coroutine/TaskOld.h>
 #include "../coroutine/Awaitable.h"
 
 #define Φ Γ auto
