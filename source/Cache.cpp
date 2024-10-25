@@ -9,8 +9,8 @@ namespace Jde
 	α Cache2::Has( str id )ι->bool{ sl _{_cacheLock}; return _cache.find( id )!=_cache.end(); }
 	α Cache2::Duration( str id )ι->Jde::Duration
 	{
-		return Settings::FindDuration( Jde::format("cache/{}/duration",id) ).value_or(
-			Settings::FindDuration( "cache/default/duration" ).value_or( Jde::Duration::max() ));
+		return Settings::FindDuration( Jde::format("/cache/{}/duration",id) ).value_or(
+			Settings::FindDuration( "/cache/default/duration" ).value_or( Jde::Duration::max() ));
 	}
 
 	α Cache2::Double( str id )ι->double

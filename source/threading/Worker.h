@@ -65,7 +65,7 @@ namespace Jde::Threading{
 		if( !_pInstance || !_pInstance->HasThread() )
 		{
 			//pInstance = _pInstance = make_shared<T>();
-			//const bool addThreads = Settings::TryGet<uint8>( Jde::format("workers/{}/threads", T::Name) ).value_or( 0 );
+			//const bool addThreads = Settings::TryGet<uint8>( Jde::format("/workers/{}/threads", T::Name) ).value_or( 0 );
 			_pInstance = Process::AddPollster<T>();
 			////let pSettings = Settings::TryGetSubcontainer<Settings::Container>(  );
 			//if( addThreads )

@@ -28,7 +28,7 @@ distribution.
 #include <cstdarg>
 #include <fstream>
 #include <jde/framework/io/Parser.h>
-#include <jde/framework/io/File.h>
+#include <jde/framework/io/file.h>
 #include <jde/framework/settings.h>
 
 using namespace std::literals::string_view_literals;
@@ -411,7 +411,7 @@ namespace Jde
 						for( size_t i=0; !equal && i<openTags.size(); ++i )
 							TRACE( "[{}][{}]{}", openTags[i].Line, openTags[i].Index, openTags[i].Tag );
 						let newXml = string{ parser.Text.substr(0, startTag.Index) }+string{"/"}+string{ parser.Text.substr(startTag.Index) };
-						if( Settings::FindBool("xml/closeLog").value_or(false) ){
+						if( Settings::FindBool("/xml/closeLog").value_or(false) ){
 							TRACE( "({})start = [{}]'{}', end= [{}]'{}'", parser.Line(), startTag.Index, ToStr(startTag.Tag), parser.Index(), ToSV(endTag) );
 							TRACE( "old = '{}'", parser.Text.substr(startTag.Index-70, 100) );
 							TRACE( "new = '{}'", newXml.substr(startTag.Index-70, 100) );
@@ -2315,7 +2315,7 @@ XMLDocument::XMLDocument( std::string_view value, bool insensitive, bool fix, Jd
 	XMLDocument{ true, PRESERVE_WHITESPACE, insensitive, fix }
 {
 	if( Parse(value.data(), value.size()) ){
-		if( let p = Settings::FindString( "xml/errorFile" ); p ){
+		if( let p = Settings::FindString( "/xml/errorFile" ); p ){
 			std::ofstream os{ *p, std::ios::binary };
 			os << value;
 			Logging::Log( Logging::MessageBase{ELogLevel::Error, ErrorStr(), p->c_str(), "XMLDocument::XMLDocument", (uint_least32_t)_errorLineNum}, _logTag );

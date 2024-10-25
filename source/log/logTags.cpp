@@ -1,4 +1,4 @@
-#include <jde/framework/log/LogTags.h>
+#include <jde/framework/log/logTags.h>
 #include <jde/framework/log/IExternalLogger.h>
 #include <jde/framework/settings.h>
 #include <jde/framework/str.h>
@@ -19,7 +19,7 @@ namespace Jde{
 	function<optional<ELogTags>(sv)> _parser;
 	α DefaultLogLevel()ι->ELogLevel{
 		if( !_defaultFileLogLevel ) //may not be set when tags are initialized.
-			_defaultFileLogLevel = Settings::FindEnum<ELogLevel>( "logging/defaultLevel", ToLogLevel ).value_or( ELogLevel::Information );
+			_defaultFileLogLevel = Settings::FindEnum<ELogLevel>( "/logging/defaultLevel", ToLogLevel ).value_or( ELogLevel::Information );
 		return *_defaultFileLogLevel;
 	}
 
@@ -87,7 +87,7 @@ namespace Jde{
 	α Logging::AddTags( vector<LogTag>& sinkTags, sv path )ι->void{
 		uint i=0;
 		for( let& level : LogLevelStrings() ){
-			let levelTags = Settings::FindDefaultArray( Ƒ("{}/{}", path, level) );
+			let levelTags = Settings::FindDefaultArray( Ƒ("/{}/{}", path, Str::ToLower(level)) );
 			vector<string> tagIds;
 			for( let& v : levelTags ){
 				if( let name = v.is_string() ? v.get_string() : sv{}; !name.empty() ){

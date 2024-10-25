@@ -1,4 +1,4 @@
-﻿#include <jde/framework/log/Log.h>
+﻿#include <jde/framework/log/log.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #ifdef _MSC_VER
 	#include <crtdbg.h>
@@ -28,8 +28,8 @@ namespace Jde::Logging{
 	bool _logMemory{true};
 	up<vector<Logging::ExternalMessage>> _pMemoryLog; shared_mutex MemoryLogMutex;//TODO make external logger.
 	auto _pOnceMessages = mu<flat_map<uint,flat_set<string>>>(); std::shared_mutex OnceMessageMutex;
-	sp<LogTag> _statusTag = Logging::Tag( "status" );
 	static sp<LogTag> _logTag = Logging::Tag( "settings" );
+	constexpr ELogTags _tags{ ELogTags::Settings };
 }
 
 namespace Jde{
@@ -68,7 +68,7 @@ namespace Jde{
 
 	α LoadSinks()ι->vector<spdlog::sink_ptr>{
 		vector<spdlog::sink_ptr> sinks;
-		let& sinkSettings = Settings::FindDefaultObject( "logging/sinks" );
+		let& sinkSettings = Settings::FindDefaultObject( "/logging/sinks" );
 		for( let& [name,sink] : sinkSettings ){
 			spdlog::sink_ptr pSink;
 			string additional;
@@ -120,7 +120,7 @@ namespace Jde{
 			LogMemoryDetail( Logging::Message{"settings", ELogLevel::Information, "({})level='{}' pattern='{}'{}"}, name, ToString(level), *pattern, additional );
 			sinks.push_back( pSink );
 		}
-		Logging::_logMemory = Settings::FindBool("logging/memory").value_or( false );
+		Logging::_logMemory = Settings::FindBool("/logging/memory").value_or( false );
 		return sinks;
 	}
 	vector<spdlog::sink_ptr> _sinks = LoadSinks();
@@ -141,11 +141,12 @@ namespace Jde{
 		else
 			delete pLogger;
 	}*/
-
+	bool _initialized{};
+	α Logging::Initialized()ι->bool{ return _initialized; }
 	α Logging::Initialize()ι->void{
 		//_status.set_starttime( (google::protobuf::uint32)Clock::to_time_t(_startTime) );
 
-		let flushOn = Settings::FindEnum<ELogLevel>( "logging/flushOn", ToLogLevel ).value_or( _debug ? ELogLevel::Debug : ELogLevel::Information );
+		let flushOn = Settings::FindEnum<ELogLevel>( "/logging/flushOn", ToLogLevel ).value_or( _debug ? ELogLevel::Debug : ELogLevel::Information );
 		_logger.flush_on( (level_enum)flushOn );
 		AddFileTags();
 
@@ -169,7 +170,8 @@ namespace Jde{
 			if( !_logMemory )
 				ClearMemoryLog();
 		}
-		INFO( "log minLevel='{}' flushOn='{}'", ELogLevelStrings[(int8)minSinkLevel], ELogLevelStrings[(uint8)flushOn] );//TODO add flushon to Server
+		_initialized = true;
+		Information{ _tags, "log minLevel='{}' flushOn='{}'", ELogLevelStrings[(int8)minSinkLevel], ELogLevelStrings[(uint8)flushOn] };//TODO add flushon to Server
 	}
 
 
@@ -190,9 +192,9 @@ namespace Jde{
 	}*/
 	α Logging::SetLogLevel( ELogLevel client, ELogLevel external )ι->void{
 		if( _logger.level()!=(level_enum)client ){
-			Information{ ELogTags::App, "Setting log level from '{}' to '{}'", ToString((ELogLevel)_logger.level()), ToString(client) };
-			Settings::Set( "logging/console/level", jvalue{ToString(client)}, false );
-			Settings::Set( "logging/file/level", jvalue{ToString(client)} );
+			Information{ _tags, "Setting log level from '{}' to '{}'", ToString((ELogLevel)_logger.level()), ToString(client) };
+			Settings::Set( "/logging/console/level", jvalue{ToString(client)} );
+			Settings::Set( "/logging/file/level", jvalue{ToString(client)} );
 			_logger.set_level( (level_enum)client );
 		}
 		External::SetMinLevel( external );

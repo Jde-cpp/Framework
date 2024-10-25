@@ -12,7 +12,7 @@ namespace Jde::Threading{
 	std::atomic_flag IWorker::_mutex;
 	IWorker::IWorker( sv name )ι:
 		NameInstance{ name },
-		ThreadCount{ Settings::FindNumber<uint8>(Ƒ("workers/{}/threads", name)).value_or(0) }
+		ThreadCount{ Settings::FindNumber<uint8>(Ƒ("/workers/{}/threads", name)).value_or(0) }
 	{}
 
 	IWorker::~IWorker(){}//abstract
@@ -61,7 +61,7 @@ namespace Jde::Threading{
 	{
 		Threading::SetThreadDscrptn( NameInstance );
 		sp<IWorker> pKeepAlive;
-		let keepAlive = Settings::FindDuration( "WorkerkeepAlive" ).value_or( 5s );
+		let keepAlive = Settings::FindDuration( "/WorkerkeepAlive" ).value_or( 5s );
 		TRACE( "({})Starting Thread", NameInstance );
 		_lastRequest = Clock::now();
 		while( !st.stop_requested() )

@@ -4,7 +4,7 @@
 #include <stdexcept>
 
 #include "Cache.h"
-#include <jde/framework/io/File.h>
+#include <jde/framework/io/file.h>
 #include <jde/framework/settings.h>
 #include "threading/InterruptibleThread.h"
 #include <jde/framework/collections/Vector.h>

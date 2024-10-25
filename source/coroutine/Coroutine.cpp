@@ -70,10 +70,10 @@ namespace Jde::Coroutine{
 		return result;
 	}
 
-	uint16 CoroutinePool::MaxThreadCount{ Settings::FindNumber<uint16>("coroutinePool/maxThreadCount").value_or(100) };
-	Duration CoroutinePool::WakeDuration{ Settings::FindDuration("coroutinePool/wakeDuration").value_or(5s) };
-	Duration CoroutinePool::ThreadDuration{ Settings::FindDuration("coroutinePool/threadDuration").value_or(1s) };
-	Duration CoroutinePool::PoolIdleThreshold{ Settings::FindDuration("coroutinePool/poolIdleThreshold").value_or(1s) };
+	uint16 CoroutinePool::MaxThreadCount{ Settings::FindNumber<uint16>("/coroutinePool/maxThreadCount").value_or(100) };
+	Duration CoroutinePool::WakeDuration{ Settings::FindDuration("/coroutinePool/wakeDuration").value_or(5s) };
+	Duration CoroutinePool::ThreadDuration{ Settings::FindDuration("/coroutinePool/threadDuration").value_or(1s) };
+	Duration CoroutinePool::PoolIdleThreshold{ Settings::FindDuration("/coroutinePool/poolIdleThreshold").value_or(1s) };
 
 	α CoroutinePool::Shutdown( bool /*terminate*/ )ι->void{
 		if( _pThread ){

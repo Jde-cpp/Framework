@@ -81,10 +81,12 @@ namespace Jde{
 		let& sl = _stack.size() ? _stack.front() : SRCE_CUR;
 		const string fileName{ strlen(sl.file_name()) ? FileName(sl.file_name()) : "{Unknown}\0"sv };
 		let functionName = strlen(sl.file_name()) ? sl.function_name() : "{Unknown}\0";
-		if( auto p = Logging::Default(); p )
-			p->log( spdlog::source_loc{fileName.c_str(), (int)sl.line(), functionName}, (spdlog::level::level_enum)level, what() );
-		if( Logging::External::Size() )
-			Logging::External::Log( Logging::ExternalMessage{Logging::Message{level, what(), sl}, vector<string>{_args}} );
+		if( Logging::Initialized() ){
+			if( auto p = Logging::Default(); p )
+				p->log( spdlog::source_loc{fileName.c_str(), (int)sl.line(), functionName}, (spdlog::level::level_enum)level, what() );
+			if( Logging::External::Size() )
+				Logging::External::Log( Logging::ExternalMessage{Logging::Message{level, what(), sl}, vector<string>{_args}} );
+		}
 		if( Logging::LogMemory() ){
 			if( _format.size() )
 				Logging::LogMemory( Logging::Message{level, string{_format}, sl}, vector<string>{_args} );

@@ -63,7 +63,7 @@ namespace Jde
 
 	struct Cache final{
 		Ω Has( str name )ι{ return Instance().InstanceHas( name ); }
-		Ω Duration( str /*name*/ )ι{ return Settings::FindDuration( "cache/default/duration" ).value_or( Duration::max() ); }
+		Ω Duration( str /*name*/ )ι{ return Settings::FindDuration( "/cache/default/duration" ).value_or( Duration::max() ); }
 		Ṫ Emplace( str name )ι->sp<T>{ return Instance().InstanceEmplace<T>( name ); }
 		Ṫ Get( str name )ι{ return Instance().InstanceGet<T>(name); }
 		Φ Double( string name )ι->double;
