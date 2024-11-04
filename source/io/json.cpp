@@ -15,71 +15,42 @@ namespace Jde{
 		THROW_IFSL( !success, "Failed to evaluate '{}'.  {}", path.string(), vm.lastError() );
 		return Parse( j, sl );
 	}
-	
-	α Json::Parse( sv json, SL sl )ε->jobject{ 
+
+	α Json::Parse( sv json, SL sl )ε->jobject{
 		std::error_code ec;
 		auto value = boost::json::parse( json, ec );
 		if( ec )
 			throw CodeException{ ec, ELogTags::Parsing, Ƒ("Failed to parse '{}'.", json), ELogLevel::Debug, sl };
-		return AsObject( value ); 
+		return AsObject( value );
 	}
 
-	α Json::AsArray( const jvalue& j, SL sl )ε->const jarray&{
-		auto y = j.try_as_array();
+	α Json::AsArray( const jvalue& v, SL sl )ε->const jarray&{
+		auto y = v.try_as_array();
 		if( !y )
-			throw CodeException{ y.error(), ELogTags::Parsing, Ƒ("'{}', is not an array but is a '{}'.", serialize(j), Kind(j.kind())), ELogLevel::Debug, sl };
+			throw CodeException{ y.error(), ELogTags::Parsing, Ƒ("'{}', is not an array but is a '{}'.", serialize(v), Kind(v.kind())), ELogLevel::Debug, sl };
 		return *y;
 	}
 
-	α Json::AsArray( const jobject& j, sv key, SL sl )ε->const jarray&{
-		let& y = j.try_at( key );
+	α Json::AsArray( const jobject& o, sv key, SL sl )ε->const jarray&{
+		let& y = o.try_at( key );
 		if( !y )
-			throw CodeException{ y.error(), ELogTags::Parsing, Ƒ("Key '{}' not found in {}.", key, serialize(j)), ELogLevel::Debug, sl };
+			throw CodeException{ y.error(), ELogTags::Parsing, Ƒ("Key '{}' not found in {}.", key, serialize(o)), ELogLevel::Debug, sl };
 		return AsArray( *y, sl );
 	}
+	α Json::AsArrayPath( const jobject& o, sv path, SL sl )ε->const jarray&{
+		let& v = AsValue( o, path, sl );
+		return AsArray( v, sl );
+	}
 
-	α Json::AsObject( const jvalue& j, SL sl )ε->const jobject&{
-		let y = j.try_as_object();
+	α Json::AsObject( const jvalue& v, SL sl )ε->const jobject&{
+		let y = v.try_as_object();
 		if( !y )
-			throw CodeException{ y.error(), ELogTags::Parsing, Ƒ("'{}', is not an object but is a '{}'.", serialize(j), Kind(j.kind())), ELogLevel::Debug, sl };
+			throw CodeException{ y.error(), ELogTags::Parsing, Ƒ("'{}', is not an object but is a '{}'.", serialize(v), Kind(v.kind())), ELogLevel::Debug, sl };
 		return *y;
 	}
-	α Json::AsObject( const jvalue& j, sv path, SL sl )ε->const jobject&{
-		auto p = FindValuePtr( j, path ); THROW_IFSL( !p, "Path '{}' not found.", path );
+	α Json::AsObject( const jvalue& v, sv path, SL sl )ε->const jobject&{
+		auto p = FindValuePtr( v, path ); THROW_IFSL( !p, "Path '{}' not found.", path );
 		return AsObject( *p, sl );
-	}
-	α AsSV( const jobject& j, sv key, SL sl )ε->sv{
-		let& y = j.try_at( key );
-		if( !y )
-			throw CodeException{ y.error(), ELogTags::Parsing, Ƒ("Key '{}' not found in {}.", key, serialize(j)), ELogLevel::Debug, sl };
-		if( !y->is_string() )
-			throw CodeException{ y.error(), ELogTags::Parsing, Ƒ("Key '{}' not a string {}.", key, serialize(j)), ELogLevel::Debug, sl };
-		return y->get_string();
-	}
-
-	α Json::AsValue( const jobject& o, sv path, SL sl )ε->const jvalue&{ 
-		auto p = FindValue( o, path ); THROW_IFSL( !p, "Path '{}' not found in '{}'.", path, serialize(o) );
-		return *p;
-	}
-	α Json::AsSV( const jobject& j, sv key, SL sl )ε->sv{
-		auto p = FindSV( j, key );
-		THROW_IFSL( !p, "Key '{}' not found in '{}'.", key, serialize(j) );
-		return *p;
-	}
-
-	α Json::FindValue( const jobject& j, sv path )ι->const jvalue*{
-		auto keys = Str::Split( path, '/' );
-		const jobject* jobj = &j;
-		for( uint i=0; jobj && i<keys.size(); ++i ){
-			if( i==keys.size()-1 ){
-				auto p = jobj->if_contains( keys[i] );
-				return p;
-			}
-			else 
-				jobj = FindObject( *jobj, keys[i] );
-		}
-		//throw Exception{ sl, ELogLevel::Debug, "Path '{}' not found in '{}'", path, serialize(j) };
-		return nullptr;
 	}
 	α Json::AsObject( const jobject& o, sv key, SL sl )ε->const jobject&{
 		let& y = o.try_at( key );
@@ -87,19 +58,61 @@ namespace Jde{
 			throw CodeException{ y.error(), ELogTags::Parsing, Ƒ("Key '{}' not found in {}.", key, serialize(o)), ELogLevel::Debug, sl };
 		return AsObject( *y, sl );
 	}
+	α Json::AsObjectPath( const jobject& o, sv path, SL sl )ε->const jobject&{
+		let& v = FindValue( o, path );
+		THROW_IF( !v || !v->is_object(), "object '{}' not found in '{}'.", path, serialize(o) );
+		return v->get_object();
+	}
 
+	α Json::FindDefaultObjectPath( const jobject& o, sv path )ι->const jobject&{
+		let& v = FindValue( o, path );
+		return v && v->is_object() ? v->get_object() : _emptyObject;
+	}
 
-	α Json::FindArray( const jvalue& v, sv path )ι->const jarray*{ 
-		auto value = v.try_at_pointer( path ); 
-		return value ? value->if_array() : nullptr; 
-	}	
+	α Json::AsValue( const jobject& o, sv path, SL sl )ε->const jvalue&{
+		auto p = FindValue( o, path ); THROW_IFSL( !p, "Path '{}' not found in '{}'.", path, serialize(o) );
+		return *p;
+	}
+	α Json::AsSV( const jobject& o, sv key, SL sl )ε->sv{
+		auto p = FindSV( o, key );
+		THROW_IFSL( !p, "Key '{}' not found in '{}'.", key, serialize(o) );
+		return *p;
+	}
+	α Json::FindString( const jobject& o, sv key )ι->optional<string>{
+		let y = FindSV( o, key );
+		return y ? string{ *y } : optional<string>{};
+	}
+	α Json::FindSVPath( const jobject& o, sv path )ι->optional<sv>{
+		auto p = FindValue( o, path );
+		return p && p->is_string() ? p->get_string() : optional<sv>{};
+	}
+
+	α Json::FindValue( const jobject& o, sv path )ι->const jvalue*{
+		auto keys = Str::Split( path, '/' );
+		const jobject* jobj = &o;
+		for( uint i=0; jobj && i<keys.size(); ++i ){
+			if( i==keys.size()-1 ){
+				auto p = jobj->if_contains( keys[i] );
+				return p;
+			}
+			else
+				jobj = FindObject( *jobj, keys[i] );
+		}
+		//throw Exception{ sl, ELogLevel::Debug, "Path '{}' not found in '{}'", path, serialize(o) };
+		return nullptr;
+	}
+
+	α Json::FindArray( const jvalue& v, sv path )ι->const jarray*{
+		auto value = v.try_at_pointer( path );
+		return value ? value->if_array() : nullptr;
+	}
 	α Json::FindArray( const jobject& o, sv key )ι->const jarray*{
 		let& value = o.try_at( key );
 		return value ? value->if_array() : nullptr;
 	}
-	α Json::FindDefaultArray( const jvalue& v, sv path )ι->const jarray&{ 
-		auto p = FindArray( v, path ); 
-		return p ? *p : _emptyArray; 
+	α Json::FindDefaultArray( const jvalue& v, sv path )ι->const jarray&{
+		auto p = FindArray( v, path );
+		return p ? *p : _emptyArray;
 	}
 	α Json::FindDefaultArray( const jobject& o, sv key )ι->const jarray&{
 		let y = FindArray( o, key );
@@ -109,9 +122,9 @@ namespace Jde{
 		let value = o.if_contains( key );
 		return value && value->is_bool() ? value->get_bool() : optional<bool>{};
 	}
-	α Json::FindDefaultObject( const jvalue& v, sv path )ι->const jobject&{ 
-		auto p = Json::FindObject(v, path); 
-		return p ? *p : _emptyObject; 
+	α Json::FindDefaultObject( const jvalue& v, sv path )ι->const jobject&{
+		auto p = Json::FindObject(v, path);
+		return p ? *p : _emptyObject;
 	};
 
 	α Json::Kind( boost::json::kind kind )ι->string{

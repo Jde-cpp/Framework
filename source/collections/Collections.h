@@ -1,4 +1,6 @@
 ﻿#pragma once
+#ifndef COLLECTIONS_H
+#define COLLECTIONS_H
 #include <algorithm>
 #include <forward_list>
 #include <sstream>
@@ -6,9 +8,13 @@
 
 #define let const auto
 namespace Jde{
-	Ŧ Find( const T& collection, typename T::key_type key )ι->typename T::mapped_type{
+	Ŧ FindDefault( const T& collection, typename T::key_type key )ι->typename T::mapped_type{
 		auto pItem = collection.find( key );
 		return pItem==collection.end() ? typename T::mapped_type{} : pItem->second;
+	}
+	Ŧ Find( const T& map, typename T::key_type key )ι->typename std::optional<typename T::mapped_type>{
+		auto p = map.find( key );
+		return p==map.end() ? std::optional<typename T::mapped_type>{} : p->second;
 	}
 
 	Ŧ FindKey( const T& collection, const typename T::mapped_type& value )ι->optional<typename T::key_type>{
@@ -213,3 +219,4 @@ namespace Jde::Collections{
 	}
 }
 #undef let
+#endif

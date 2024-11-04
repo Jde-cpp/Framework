@@ -1,4 +1,6 @@
 ﻿#pragma once
+#ifndef CACHE_H
+#define CACHE_H
 #include <jde/framework/process.h>
 #include <jde/framework/str.h>
 #include <jde/framework/settings.h>
@@ -138,3 +140,4 @@ namespace Jde
 #undef Φ
 #undef _logTag
 }
+#endif
