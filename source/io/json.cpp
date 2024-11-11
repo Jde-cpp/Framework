@@ -78,6 +78,11 @@ namespace Jde{
 		THROW_IFSL( !p, "Key '{}' not found in '{}'.", key, serialize(o) );
 		return *p;
 	}
+	α Json::AsSVPath( const jobject& o, sv path, SL sl )ε->sv{
+		auto p = FindSVPath( o, path );
+		THROW_IFSL( !p, "Path '{}' not found in '{}'.", path, serialize(o) );
+		return *p;
+	}
 	α Json::FindString( const jobject& o, sv key )ι->optional<string>{
 		let y = FindSV( o, key );
 		return y ? string{ *y } : optional<string>{};

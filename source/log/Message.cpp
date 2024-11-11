@@ -8,7 +8,7 @@ namespace Jde{
 
 α Jde::CanBreak()ι->bool{ return _breakLevel>ELogLevel::Trace; }
 namespace Jde::Logging{
-	MessageBase::MessageBase( ELogLevel level, const source_location& sl )ι:
+	MessageBase::MessageBase( ELogLevel level, SL sl )ι:
 		Fields{ EFields::File | EFields::FileId | EFields::Function | EFields::FunctionId | EFields::LineNumber },
 		Level{ level },
 		MessageId{ 0 },//{},
@@ -50,7 +50,7 @@ namespace Jde::Logging{
 		File = _fileName.c_str();
 	}
 
-	Message::Message( ELogLevel level, string message, const source_location& sl )ι:
+	Message::Message( ELogLevel level, string message, SL sl )ι:
 		MessageBase( level, sl ),
 		_pMessage{ mu<string>(move(message)) },
 		_fileName{ FileName(sl.file_name()) }{
@@ -59,7 +59,7 @@ namespace Jde::Logging{
 		MessageId = Calc32RunTime( MessageView );
 	}
 
-	Message::Message( sv tag, ELogLevel level, string message, const source_location& sl )ι:
+	Message::Message( sv tag, ELogLevel level, string message, SL sl )ι:
 		MessageBase( level, sl ),
 		Tag{ tag },
 		_pMessage{ mu<string>(move(message)) },
