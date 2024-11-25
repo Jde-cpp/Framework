@@ -2,6 +2,7 @@
 #include <jde/framework/io/file.h>
 #include <libjsonnet++.h>
 #include <jde/framework/str.h>
+#include "../DateTime.h"
 
 #define let const auto
 namespace Jde{
@@ -64,11 +65,14 @@ namespace Jde{
 		return v->get_object();
 	}
 
-	α Json::FindDefaultObjectPath( const jobject& o, sv path )ι->const jobject&{
-		let& v = FindValue( o, path );
+	α Json::FindDefaultObject( const jobject& o, sv key )ι->const jobject&{
+		let v = o.if_contains( key );
 		return v && v->is_object() ? v->get_object() : _emptyObject;
 	}
-
+	α Json::FindDefaultObjectPath( const jobject& o, sv path )ι->const jobject&{
+		let v = FindValue( o, path );
+		return v && v->is_object() ? v->get_object() : _emptyObject;
+	}
 	α Json::AsValue( const jobject& o, sv path, SL sl )ε->const jvalue&{
 		auto p = FindValue( o, path ); THROW_IFSL( !p, "Path '{}' not found in '{}'.", path, serialize(o) );
 		return *p;
@@ -87,6 +91,12 @@ namespace Jde{
 		let y = FindSV( o, key );
 		return y ? string{ *y } : optional<string>{};
 	}
+	α Json::FindTimePoint( const jobject& o, sv key )ι->optional<TimePoint>{
+		if( let tp = FindSV( o, key ); tp.has_value() )
+			return Chrono::to_timepoint( *tp );
+		return optional<TimePoint>{};
+	}
+
 	α Json::FindSVPath( const jobject& o, sv path )ι->optional<sv>{
 		auto p = FindValue( o, path );
 		return p && p->is_string() ? p->get_string() : optional<sv>{};
