@@ -64,6 +64,10 @@ namespace Jde{
 		THROW_IF( !v || !v->is_object(), "object '{}' not found in '{}'.", path, serialize(o) );
 		return v->get_object();
 	}
+	α Json::AsTimePointOpt( const jobject& o, sv key )ι->optional<TimePoint>{
+		THROW_IF( !o.contains(key), "['{}'] timepoint not found in '{}'.", key, serialize(o) );
+		return FindTimePoint( o, key );
+	}
 
 	α Json::FindDefaultObject( const jobject& o, sv key )ι->const jobject&{
 		let v = o.if_contains( key );
@@ -92,9 +96,8 @@ namespace Jde{
 		return y ? string{ *y } : optional<string>{};
 	}
 	α Json::FindTimePoint( const jobject& o, sv key )ι->optional<TimePoint>{
-		if( let tp = FindSV( o, key ); tp.has_value() )
-			return Chrono::to_timepoint( *tp );
-		return optional<TimePoint>{};
+		let tp = FindSV( o, key );
+		return tp.has_value() ? Chrono::to_timepoint( *tp ) : optional<TimePoint>{};
 	}
 
 	α Json::FindSVPath( const jobject& o, sv path )ι->optional<sv>{
