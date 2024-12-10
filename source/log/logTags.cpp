@@ -172,8 +172,11 @@ using enum Jde::ELogLevel;
 	if( !settings.cvisit(tags, [&](let& kv){min = kv.second;}) ){
 		for( uint i=1; i<sizeof(ELogTags)*8; ++i ){
 			let flag = (ELogTags)( 1ul<<(i-1) );
-			if( !empty(tags & flag) )
-				settings.cvisit( flag, [&](let& kv){min = min ? Min(*min, kv.second) : kv.second;} );
+			if( !empty(tags & flag) ){
+				settings.cvisit( flag, [&](let& kv){
+					min = min ? Min(*min, kv.second) : kv.second;
+				});
+			}
 		}
 	}
 	return min;

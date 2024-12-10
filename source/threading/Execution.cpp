@@ -11,9 +11,13 @@
 namespace Jde{
 	namespace net = boost::asio;
 	const int _threadCount{ std::max( Settings::FindNumber<int>( "/workers/executor" ).value_or(std::thread::hardware_concurrency()), 1 ) };
-	sp<net::io_context> _ioc = ms<net::io_context>( _threadCount );
+	sp<net::io_context> _ioc;
 }
-α Jde::Executor()ι->sp<net::io_context>{ return _ioc; }
+α Jde::Executor()ι->sp<net::io_context>{
+	if( !_ioc )
+		_ioc = ms<net::io_context>( _threadCount );
+	return _ioc;
+}
 
 namespace Jde{
 	static up<Vector<IShutdown*>> _shutdowns;
@@ -28,12 +32,14 @@ namespace Jde{
 		α Slot()ι->net::cancellation_slot;
 		α Signal()ι->sp<net::cancellation_signal>;
 		α Add( sp<net::cancellation_signal> s )ι->void{ lg _(_mtx); _sigs.push_back( s ); }
+		α Clear()ι->void{ lg _(_mtx); _sigs.clear(); }
+		α Size()ι->uint{ lg _(_mtx); return _sigs.size(); }
 	private:
 		std::list<sp<net::cancellation_signal>> _sigs;
 		mutex _mtx;
 	};
 	CancellationSignals _cancelSignals;
-	α Execution::AddCancelSignal( sp<net::cancellation_signal> s )ι->void{ return _cancelSignals.Add( s ); }
+	α Execution::AddCancelSignal( sp<net::cancellation_signal> s )ι->void{ _cancelSignals.Add( s ); }
 
 	α CancelSignals()->CancellationSignals&{ return _cancelSignals; }
 
@@ -44,43 +50,18 @@ namespace Jde{
 			Information( ELogTags::App, "Created executor threadCount: {}.", _threadCount );
 			Process::AddShutdown( this );
 		}
-		~ExecutorContext()ι{ if( !Process::Finalizing() ) Process::RemoveShutdown( this ); }
-		α Shutdown( bool terminate )ι->void override{
-			Debug( ELogTags::App, "Executor Shutdown: instances: {}.", _ioc.use_count() );
-			_shutdowns->erase( [=](auto p){ p->Shutdown( terminate ); } );
-			if( _ioc && terminate )
-				_ioc->stop(); // Stop the `io_context`. This will cause `run()` to return immediately, eventually destroying the `io_context` and all of the sockets in it.
-			else
-				_cancelSignals.Emit( net::cancellation_type::all );
-
-			//Process::RemoveShutdown( this ); deadlock
-		}
+		~ExecutorContext()ι{ if( !Process::Finalizing() ) Process::RemoveShutdown( this ); _cancelSignals.Clear(); }
+		α Shutdown( bool terminate )ι->void override;
 		Ω Started()ι->bool{ return _started.test(); }
 		Ω Ioc()ι->sp<net::io_context>{ return _ioc; }
 	private:
-		Ω Execute()ι->void{
-			Threading::SetThreadDscrptn( "Ex[0]" );
-			std::vector<std::jthread> v; v.reserve( _threadCount - 1 );
-			for( auto i = _threadCount - 1; i > 0; --i )
-				v.emplace_back( [=]{ Threading::SetThreadDscrptn( Ƒ("Ex[{}]", i) ); _ioc->run(); } );
-			Trace( ELogTags::App, "Executor Started: instances: {}.", _ioc.use_count() );
-			_started.test_and_set();
-			_started.notify_all();
-			_ioc->run();
-			_shutdowns->erase( [=](auto p){ p->Shutdown( false ); } );
-			Information( ELogTags::App, "Executor Stopped: instances: {}.", _ioc.use_count() );
-			_started.clear();
-			for( auto& t : v )// (If we get here, it means we got a SIGINT or SIGTERM)
-				t.join();
-			Debug( ELogTags::App, "Removing Executor remaining instances: {}.", _ioc.use_count()-1 );
-			_ioc.reset();
-		}
+		Ω Execute()ι->void;
 		std::jthread _thread;
 		static atomic_flag _started;
 	};
-	atomic_flag ExecutorContext::_started{};
 	up<ExecutorContext> _pExecutorContext;
-	α Execution::Run()->void{ if( !_pExecutorContext ) _pExecutorContext = mu<ExecutorContext>(); }
+	atomic_flag ExecutorContext::_started{};
+	α Execution::Run()->void{ if( !ExecutorContext::Started() ) _pExecutorContext = mu<ExecutorContext>(); }
 
 	α CancellationSignals::Emit( net::cancellation_type ct )ι->void{
 		lg _(_mtx);
@@ -95,4 +76,34 @@ namespace Jde{
 		auto p = find_if( _sigs, [](auto& sig){ return !sig->slot().has_handler();} );
 		return p == _sigs.end() ? _sigs.emplace_back( ms<net::cancellation_signal>() ) : *p;
 	}
+	α ExecutorContext::Shutdown( bool terminate )ι->void{
+		Debug( ELogTags::App, "Executor Shutdown: instances: {}.", _ioc.use_count() );
+		_shutdowns->erase( [=](auto p){ p->Shutdown( terminate ); } );
+		if( _ioc && terminate )
+			_ioc->stop(); // Stop the `io_context`. This will cause `run()` to return immediately, eventually destroying the `io_context` and all of the sockets in it.
+		else
+			_cancelSignals.Emit( net::cancellation_type::all );
+
+		//Process::RemoveShutdown( this ); deadlock
+	}
+	α ExecutorContext::Execute()ι->void{
+		Threading::SetThreadDscrptn( "Ex[0]" );
+		std::vector<std::jthread> v; v.reserve( _threadCount - 1 );
+		for( auto i = _threadCount - 1; i > 0; --i )
+			v.emplace_back( [=]{ Threading::SetThreadDscrptn( Ƒ("Ex[{}]", i) ); _ioc->run(); } );
+		Trace( ELogTags::App, "Executor Started: instances: {}.", _ioc.use_count() );
+		_started.test_and_set();
+		_started.notify_all();
+		_ioc->run();
+		_shutdowns->erase( [=](auto p){ p->Shutdown( false ); } );
+		Information( ELogTags::App, "Executor Stopped: instances: {}.", _ioc.use_count() );
+		_started.clear();
+		for( auto& t : v )// (If we get here, it means we got a SIGINT or SIGTERM)
+			t.join();
+		Debug( ELogTags::App, "Removing Executor remaining instances: {}.", _ioc.use_count()-1 );
+		_ioc.reset(); //need to clear out client connections.
+		_cancelSignals.Clear();
+		_started.clear();
+	}
+
 }

@@ -234,11 +234,15 @@ namespace Jde{
 		unique_lock l{ Logging::MemoryLogMutex };
 		Logging::_pMemoryLog = Logging::_logMemory ? mu<vector<Logging::ExternalMessage>>() : nullptr;
 	}
-	vector<Logging::ExternalMessage> FindMemoryLog( uint32 messageId )ι{
+
+	α FindMemoryLog( uint32 messageId )ι->vector<Logging::ExternalMessage>{
+		return FindMemoryLog( [messageId](let& msg){ return msg.MessageId==messageId;} );
+	}
+	α FindMemoryLog( function<bool(const Logging::ExternalMessage&)> f )ι->vector<Logging::ExternalMessage>{
 		sl l{ Logging::MemoryLogMutex };
 		ASSERT( Logging::_pMemoryLog );
-		vector<Logging::ExternalMessage>  results;
-		for_each( Logging::_pMemoryLog->begin(), Logging::_pMemoryLog->end(), [messageId,&results](let& msg){if( msg.MessageId==messageId) results.push_back(msg);} );
+		vector<Logging::ExternalMessage> results;
+		for_each( *Logging::_pMemoryLog, [&](let& msg){if( f(msg) ) results.push_back(msg);} );
 		return results;
 	}
 /*	α Logging::Log( const Logging::ILogEntry& m )ι->void{

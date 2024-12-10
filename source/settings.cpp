@@ -11,10 +11,10 @@
 namespace Jde{
 	constexpr ELogTags _tags{ ELogTags::Settings };
 	up<jvalue> _settings; //up so doesn't get initialized 2x.
-	α Settings::Value()ι->const jvalue&{ 
+	α Settings::Value()ι->const jvalue&{
 		if( !_settings )
 			Load();
-		return *_settings; 
+		return *_settings;
 	}
 
 	α Settings::FindDuration( sv path )ι->optional<Duration>{
@@ -103,8 +103,21 @@ namespace Jde{
 	α Settings::Set( sv path, jvalue v, SL sl )ε->jvalue*{
 		ASSERT( _settings );
 		boost::system::error_code ec;
-		auto y = _settings->set_at_pointer( path, move(v), ec );
-		THROW_IFSL( ec, "Could not set '{}' to '{}'", path, serialize(v) );
+		let y = _settings->set_at_pointer( path, move(v), ec );
+		if( ec ){
+			let parts = Str::Split( path, '/' );
+			auto& object = _settings->get_object();
+			for( uint i=0; i<(parts.size() ? parts.size()-1 : 0); ++i ){
+				if( auto p = object.find(parts[i]); p!=object.end() ){
+					THROW_IF( !p->value().is_object(), "Could not set '{}' to '{}'", path, serialize(v) );
+					object = p->value().get_object();
+				}
+				else
+					object = object.emplace( parts[i], jobject{} ).first->value().get_object();
+			}
+			//let x = serialize(*_settings);
+			object.emplace( parts.back(), move(v) );
+		}
 		return y;
 	}
 }
