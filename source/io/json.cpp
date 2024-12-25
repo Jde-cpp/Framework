@@ -8,6 +8,16 @@
 namespace Jde{
 	jarray _emptyArray;
 	jobject _emptyObject;
+
+	α Json::FromValue( jvalue&& v, function<void(jobject&& o)> op )ε->void{
+		if( v.is_object() )
+			op( move(v.get_object()) );
+		else if( v.is_array() ){
+			for( auto&& value : v.get_array() )
+				op( move(value.get_object()) );
+		}
+	}
+
 	α Json::ReadJsonNet( fs::path path, SL sl )ε->jobject{
 		jsonnet::Jsonnet vm;
 		vm.init();
@@ -23,6 +33,14 @@ namespace Jde{
 		if( ec )
 			throw CodeException{ ec, ELogTags::Parsing, Ƒ("Failed to parse '{}'.", json), ELogLevel::Debug, sl };
 		return AsObject( value );
+	}
+
+	α Json::ParseValue( string&& json, SL sl )ε->jvalue{
+		std::error_code ec;
+		auto value = boost::json::parse( json, ec );
+		if( ec )
+			throw CodeException{ ec, ELogTags::Parsing, Ƒ("Failed to parse '{}'.", json), ELogLevel::Debug, sl };
+		return value;
 	}
 
 	α Json::AsArray( const jvalue& v, SL sl )ε->const jarray&{
@@ -50,7 +68,7 @@ namespace Jde{
 		return *y;
 	}
 	α Json::AsObject( const jvalue& v, sv path, SL sl )ε->const jobject&{
-		auto p = FindValuePtr( v, path ); THROW_IFSL( !p, "Path '{}' not found.", path );
+		auto p = FindValuePtr( v, path ); THROW_IFSL( !p, "Path '{}' not found in '{}'", path, serialize(v) );
 		return AsObject( *p, sl );
 	}
 	α Json::AsObject( const jobject& o, sv key, SL sl )ε->const jobject&{
@@ -149,14 +167,14 @@ namespace Jde{
 		string y;
 		switch( kind ){
 			using enum boost::json::kind;
-			case null: y = "null";
-			case string: y = "string";
-			case bool_: y = "bool";
-			case int64: y = "int";
-			case uint64: y = "uint";
-			case double_: y = "double";
-			case object: y = "object";
-			case array: y = "array";
+			case null: y = "null"; break;
+			case string: y = "string"; break;
+			case bool_: y = "bool"; break;
+			case int64: y = "int"; break;
+			case uint64: y = "uint"; break;
+			case double_: y = "double"; break;
+			case object: y = "object"; break;
+			case array: y = "array"; break;
 			default: y = "unknown";
 		}
 		return y;
