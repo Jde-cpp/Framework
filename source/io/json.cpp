@@ -9,13 +9,21 @@ namespace Jde{
 	jarray _emptyArray;
 	jobject _emptyObject;
 
-	α Json::FromValue( jvalue&& v, function<void(jobject&& o)> op )ε->void{
+	α Json::Visit( jvalue&& v, function<void(jobject&& o)> op )ε->void{
 		if( v.is_object() )
 			op( move(v.get_object()) );
 		else if( v.is_array() ){
 			for( auto&& value : v.get_array() )
 				op( move(value.get_object()) );
 		}
+	}
+	α Json::Visit( const jvalue& v, function<void(const jvalue& o)> op )ε->void{
+		if( v.is_array() ){
+			for( let& value : v.get_array() )
+				op( value );
+		}
+		else
+			op( v );
 	}
 
 	α Json::ReadJsonNet( fs::path path, SL sl )ε->jobject{
@@ -186,6 +194,24 @@ namespace Jde{
 		if( let array = y || !container.is_array() ? nullptr : &container.get_array(); array ){
 			for( auto p = array->begin(); !y && p!=array->end(); ++p )
 				y = p->is_primitive() && container==*p ? &*p : nullptr;
+		}
+		return y;
+	}
+	α Json::Combine( const jobject& a, const jobject& b )ι->jobject{
+		jobject y = a;
+		for( let& [key,bValue] : b ){
+			if( auto yValue = y.if_contains(key); yValue ){
+				if( let yObject = bValue.is_object() && yValue->is_object() ? &yValue->get_object() : nullptr; yObject )
+					y[key] = Combine( *yObject, bValue.get_object() );
+				else if( let yArray = yValue->is_array() && bValue.is_array() ? &yValue->get_array() : nullptr; yArray ){
+					for( let& item : bValue.get_array() ){
+						if( find_if( *yArray, [&](const jvalue& v){return v==item;})==yArray->end() )
+							yArray->emplace_back( item );
+					}
+				}
+			}
+			else
+				y[key] = bValue;
 		}
 		return y;
 	}
