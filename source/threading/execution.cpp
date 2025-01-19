@@ -35,7 +35,8 @@ namespace Jde{
 		α Clear()ι->void{ lg _(_mtx); _sigs.clear(); }
 		α Size()ι->uint{ lg _(_mtx); return _sigs.size(); }
 	private:
-		std::list<sp<net::cancellation_signal>> _sigs;
+		//std::list<sp<net::cancellation_signal>> _sigs;
+		vector<sp<net::cancellation_signal>> _sigs;
 		mutex _mtx;
 	};
 	CancellationSignals _cancelSignals;
@@ -65,8 +66,10 @@ namespace Jde{
 
 	α CancellationSignals::Emit( net::cancellation_type ct )ι->void{
 		lg _(_mtx);
-		for( auto & sig : _sigs )
-			sig->emit( ct );
+		for( uint i=0; i<_sigs.size(); ++i ){
+			Trace{ ELogTags::App, "Emitting cancellation signal {}.", i };
+			_sigs[i]->emit( ct );
+		}
 	}
 	α CancellationSignals::Slot()ι->net::cancellation_slot{
 		return Signal()->slot();
