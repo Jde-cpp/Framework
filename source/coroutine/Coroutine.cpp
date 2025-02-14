@@ -17,7 +17,7 @@ namespace Jde::Coroutine{
 		ThreadParam{ name, Threading::BumpThreadHandle() },
 		_param{ move(param) },
 		_thread{ [this]( std::stop_token stoken ){
-			Threading::SetThreadDscrptn( Jde::format("({})CoroutineThread", ThreadParam.AppHandle) );
+			Threading::SetThreadDscrptn( Jde::format("({:x})Co", ThreadParam.AppHandle) );
 			let index = INDEX++;
 			auto timeout = Clock::now()+IdleLimit;
 			while( !stoken.stop_requested() ){
