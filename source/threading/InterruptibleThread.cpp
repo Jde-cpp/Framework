@@ -1,9 +1,8 @@
 ﻿#include "InterruptibleThread.h"
 
 #define let const auto
-namespace Jde::Threading
-{
-	static sp<Jde::LogTag> _logTag{ Logging::Tag("threads") };
+namespace Jde::Threading{
+	constexpr ELogTags _tags = ELogTags::Threads;
 
 	thread_local InterruptFlag ThreadInterruptFlag;
 	InterruptFlag& GetThreadInterruptFlag()ι{return ThreadInterruptFlag;}
@@ -41,7 +40,7 @@ namespace Jde::Threading
 	{
 		if( _pFlag && !_pFlag->IsSet() )
 		{
-			DBG( "{} - Interrupt _pFlag={}", Name, _pFlag!=nullptr );
+			Debug( _tags, "{} - Interrupt _pFlag={}", Name, _pFlag!=nullptr );
 			_pFlag->Set();
 		}
 	}
@@ -50,7 +49,7 @@ namespace Jde::Threading
 			_internalThread.join();
 	}
 	void InterruptibleThread::Shutdown( bool /*terminate*/ )ι{
-		DBG( "{} - Shutdown", Name );
+		Debug( _tags, "{} - Shutdown", Name );
 		Interrupt();
 	};
 }

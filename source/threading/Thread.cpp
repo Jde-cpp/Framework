@@ -8,8 +8,6 @@
 namespace Jde{
 	namespace Threading{
 		thread_local uint ThreadId{0};
-		static sp<Jde::LogTag> _logTag{ Logging::Tag("threads") };
-		α LogTag()ι->sp<Jde::LogTag>{ return _logTag;}
 	}
 	constexpr uint NameLength = 256;
 	thread_local char ThreadName[NameLength]={0};//string shows up as memory leak

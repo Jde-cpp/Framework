@@ -40,7 +40,7 @@ namespace Jde::Xml
 }
 
 namespace Jde{
-	static let _logTag{ Logging::Tag("xml") };
+	constexpr ELogTags _tags{ ELogTags::Parsing };
 	using namespace Jde::Xml::XMLUtil;
 	//const char* writeBoolTrue;
 	//const char* writeBoolFalse;
@@ -393,12 +393,12 @@ namespace Jde
 				if( !haveOpenTag )//<html></div></html>
 				{
 					for( size_t i=0; !equal && i<openTags.size(); ++i )
-						TRACE( "[{}][{}]{}", openTags[i].Line, openTags[i].Index, openTags[i].Tag );
+						Trace( _tags, "[{}][{}]{}", openTags[i].Line, openTags[i].Index, openTags[i].Tag );
 					let endIndex = parser.Index()-tag.size()-2;
 					let newXml = string{ parser.Text.substr(0, endIndex) }+Jde::format( "<{}>", ToSV(endTag) )+string{ parser.Text.substr(endIndex) };
 
-					TRACE( "[{}]({})noopentag = '{}|||{}", parser.Line(), ToSV(endTag), parser.Text.substr(parser.Index()-120, 120), parser.Text.substr(parser.Index(), 30) );
-					TRACE( "new = '{}", newXml.substr(parser.Index()-120, 150) );
+					Trace( _tags, "[{}]({})noopentag = '{}|||{}", parser.Line(), ToSV(endTag), parser.Text.substr(parser.Index()-120, 120), parser.Text.substr(parser.Index(), 30) );
+					Trace( _tags, "new = '{}", newXml.substr(parser.Index()-120, 150) );
 					result = Close( Parser{newXml, &parser, parser.Index()}, openTags );
 					break;
 				}
@@ -409,12 +409,12 @@ namespace Jde
 					if( !equal )
 					{
 						for( size_t i=0; !equal && i<openTags.size(); ++i )
-							TRACE( "[{}][{}]{}", openTags[i].Line, openTags[i].Index, openTags[i].Tag );
+							Trace( _tags, "[{}][{}]{}", openTags[i].Line, openTags[i].Index, openTags[i].Tag );
 						let newXml = string{ parser.Text.substr(0, startTag.Index) }+string{"/"}+string{ parser.Text.substr(startTag.Index) };
 						if( Settings::FindBool("/xml/closeLog").value_or(false) ){
-							TRACE( "({})start = [{}]'{}', end= [{}]'{}'", parser.Line(), startTag.Index, ToStr(startTag.Tag), parser.Index(), ToSV(endTag) );
-							TRACE( "old = '{}'", parser.Text.substr(startTag.Index-70, 100) );
-							TRACE( "new = '{}'", newXml.substr(startTag.Index-70, 100) );
+							Trace( _tags, "({})start = [{}]'{}', end= [{}]'{}'", parser.Line(), startTag.Index, ToStr(startTag.Tag), parser.Index(), ToSV(endTag) );
+							Trace( _tags, "old = '{}'", parser.Text.substr(startTag.Index-70, 100) );
+							Trace( _tags, "new = '{}'", newXml.substr(startTag.Index-70, 100) );
 						}
 						parser.SetText( newXml, startTag.Index+2, startTag.Line );
 					}
@@ -433,8 +433,8 @@ namespace Jde
 						let endIndex = parser.Index()-1;
 						let newXml = string{ parser.Text.substr(0, parser.Index()-1) }+"/>"+string{ parser.Text.substr(endIndex) };
 
-						TRACE( "[{}]({})noclosetag = '{}|||{}", parser.Line(), ToSV(tag), parser.Text.substr(parser.Index()-120, 120), parser.Text.substr(parser.Index(), 30) );
-						TRACE( "new = '{}", newXml.substr(parser.Index()-120, 150) );
+						Trace( _tags, "[{}]({})noclosetag = '{}|||{}", parser.Line(), ToSV(tag), parser.Text.substr(parser.Index()-120, 120), parser.Text.substr(parser.Index(), 30) );
+						Trace( _tags, "new = '{}", newXml.substr(parser.Index()-120, 150) );
 						result = Close( Parser{newXml, &parser, endIndex}, openTags );
 						break;
 					}
@@ -447,8 +447,8 @@ namespace Jde
 						if( tag=="hr" || tag=="br" ) //https://www.w3.org/TR/html401/index/elements.html
 						{
 							let newXml = string{ parser.Text.substr(0, i) }+string{"/"}+string{ parser.Text.substr(i) };
-							TRACE( "old = '{}'", parser.Text.substr(i-70, 100) );
-							TRACE( "new = '{}'", newXml.substr(i-70, 100) );
+							Trace( _tags, "old = '{}'", parser.Text.substr(i-70, 100) );
+							Trace( _tags, "new = '{}'", newXml.substr(i-70, 100) );
 							ASSERT( newXml[i+1]=='>' );
 							parser.SetText( newXml, i+1, parser.Line() );
 						}
@@ -456,8 +456,8 @@ namespace Jde
 						{
 							let start = i-next.size()-closing.size()+tag.size()+1;
 							let newXml = string{ parser.Text.substr(0, start) }+string{"/>"}+string{ parser.Text.substr(start) };
-							TRACE( "old = '{}'", parser.Text.substr(i-70, 100) );
-							TRACE( "new = '{}'", newXml.substr(i-70, 100) );
+							Trace( _tags, "old = '{}'", parser.Text.substr(i-70, 100) );
+							Trace( _tags, "new = '{}'", newXml.substr(i-70, 100) );
 							parser.SetText( newXml, i+1, parser.Line() );
 						}
 						else
@@ -2318,7 +2318,7 @@ XMLDocument::XMLDocument( std::string_view value, bool insensitive, bool fix, Jd
 		if( let p = Settings::FindString( "/xml/errorFile" ); p ){
 			std::ofstream os{ *p, std::ios::binary };
 			os << value;
-			Logging::Log( Logging::MessageBase{ELogLevel::Error, ErrorStr(), p->c_str(), "XMLDocument::XMLDocument", (uint_least32_t)_errorLineNum}, _logTag );
+			//Logging::Log( Logging::MessageBase{ELogLevel::Error, ErrorStr(), p->c_str(), "XMLDocument::XMLDocument", (uint_least32_t)_errorLineNum}, _logTag );
 			BREAK;
 		}
 		throw Jde::Exception{ sl, Jde::ELogLevel::Debug, "Could not parse '{}' - '{}'", value.substr(0, 100), ErrorStr() };
@@ -2822,7 +2822,7 @@ start:
 	if( pElement )
 	{
 		//DEBUG_IF( pThis->Value()=="body" );
-		DBG( "[{}]{}", pThis->GetLineNum(), pThis->Value() );
+		Debug( _tags, "[{}]{}", pThis->GetLineNum(), pThis->Value() );
 		tags2.push_back( make_tuple(pThis->GetLineNum(), String(pThis->Value<iv>())) );
 		tags.push_back( string{pThis->Value()} );
 	}
@@ -2881,7 +2881,7 @@ start:
 	{
 		tags.pop_back();
 		tags2.pop_back();
-		DBG( "~[{}]{}", pThis->GetLineNum(), pThis->Value() );
+		Debug( _tags, "~[{}]{}", pThis->GetLineNum(), pThis->Value() );
 	}
 	if( const XMLNode* n{pThis->NextSibling()}; !y && n )//<divs>
 	{

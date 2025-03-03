@@ -23,22 +23,36 @@ namespace Jde{
 		return y;
 	}
 
-	α Settings::FindString( sv path )ι->optional<string>{
-		auto setting = Json::FindString( Value(), path );
-		if( setting ){
-			std::regex regex( "\\$\\((.+?)\\)" );
-			for(;;){
-				auto begin = std::sregex_iterator( setting->begin(), setting->end(), regex );
-				if( begin==std::sregex_iterator() )
-					break;
-				std::smatch b = *begin;
-				let match = begin->str();
-				let group = match.substr( 2, match.size()-3 );
-				let env = OSApp::EnvironmentVariable( group ).value_or( "" );
-				setting = Str::Replace( *setting, match, env );
-			}
+	Ω expandEnvVariable( string setting )ι->string{
+		std::regex regex( "\\$\\((.+?)\\)" );
+		for(;;){
+			auto begin = std::sregex_iterator( setting.begin(), setting.end(), regex );
+			if( begin==std::sregex_iterator() )
+				break;
+			std::smatch b = *begin;
+			let match = begin->str();
+			let group = match.substr( 2, match.size()-3 );
+			let env = OSApp::EnvironmentVariable( group ).value_or( "" );
+			setting = Str::Replace( setting, match, env );
 		}
 		return setting;
+	}
+	α Settings::FindString( sv path )ι->optional<string>{
+		auto setting = Json::FindString( Value(), path );
+		if( setting )
+			setting = expandEnvVariable( *setting );
+		return setting;
+	}
+
+	α Settings::FindStringArray( sv path )ι->vector<string>{
+		vector<string> y;
+		if( let jarray = Json::FindArray(Value(), path); jarray ){
+			for( let& s : *jarray ){
+				if( s.is_string() )
+					y.push_back( expandEnvVariable(string{s.get_string()}) );
+			}
+		}
+		return y;
 	}
 
 	α Settings::FileStem()ι->string{
@@ -54,7 +68,11 @@ namespace Jde{
 	α Path()ι->fs::path{
 		static fs::path _path;
 		let fileName = fs::path{ Ƒ("{}.jsonnet", Settings::FileStem()) };
+
 		vector<fs::path> paths{ fileName, fs::path{"../config"}/fileName, fs::path{"config"}/fileName };
+		if( let cli = Process::FindArg("-settings"); cli )
+			paths = { fs::path{*cli} };
+
 		auto p = find_if( paths, []( let& path ){return fs::exists(path);} );
 		_path = p!=paths.end() ? *p : OSApp::ApplicationDataFolder()/fileName;
 		Information{ _tags, "settings path={}", _path.string() };
@@ -85,7 +103,6 @@ namespace Jde{
 	α Settings::Load()ι->void{
 		let settingsPath = Path();
 		try{
-			LOG_MEMORY( {}, ELogLevel::Information, "current_path={}", std::filesystem::current_path() );
 			if( !fs::exists(settingsPath) )
 				throw std::runtime_error{ Ƒ("file does not exist: '{}'", settingsPath.string()) };
 			_settings = mu<jvalue>( Json::ReadJsonNet(settingsPath) );
@@ -94,9 +111,9 @@ namespace Jde{
 			LOG_MEMORY( {}, ELogLevel::Information, "Settings path={}", settingsPath.string() );
 		}
 		catch( const std::exception& e ){
-			BREAK;
-			_settings = mu<jvalue>( e.what() );
+			_settings = mu<jvalue>( jobject{{"error", e.what()}} );
 			LOG_MEMORY( {}, ELogLevel::Critical, "({})Could not load settings - {}", settingsPath.string(), e.what() );
+			BREAK;
 		}
 	}
 	α Settings::Set( sv path, jvalue v, SL sl )ε->jvalue*{

@@ -31,7 +31,7 @@ namespace Jde::Coroutine{
 	};
 
 	struct Γ CoroutinePool final: IShutdown{
-		~CoroutinePool(){ _pInstance=nullptr; }
+		CoroutinePool()ι;
 		Ω Resume( coroutine_handle<> h )ι->void;
 		α Shutdown( bool terminate )ι->void;
 #define SETTINGS(T,n,dflt) optional<T> v; if( _pSettings ) v=_pSettings->TryGet<T>(n); return v.value_or(dflt)
@@ -44,15 +44,14 @@ namespace Jde::Coroutine{
 		std::list<ResumeThread> _threads;
 		up<Threading::InterruptibleThread> _pThread;
 		up<QueueMove<CoroutineParam>> _pQueue;
-		static sp<CoroutinePool> _pInstance;
 
-		static uint16 MaxThreadCount;
-		static Duration WakeDuration;
-		static Duration ThreadDuration;
-		static Duration PoolIdleThreshold;
+		uint16 _maxThreadCount;
+		Duration _wakeDuration;
+		Duration _threadDuration;
+		Duration _poolIdleThreshold;
 
 		static constexpr sv Name{ "CoroutinePool" };
-		static jobject _settings;
+		//static jobject _settings;
 		friend CoroutineTests;
 	};
 }

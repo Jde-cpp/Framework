@@ -28,7 +28,6 @@ namespace Jde::Logging{
 	bool _logMemory{true};
 	up<vector<Logging::ExternalMessage>> _pMemoryLog; shared_mutex MemoryLogMutex;//TODO make external logger.
 	auto _pOnceMessages = mu<flat_map<uint,flat_set<string>>>(); std::shared_mutex OnceMessageMutex;
-	static sp<LogTag> _logTag = Logging::Tag( "settings" );
 	constexpr ELogTags _tags{ ELogTags::Settings };
 }
 
@@ -38,7 +37,7 @@ namespace Jde{
 	TimePoint Logging::StartTime()ι{ return _startTime;}
 
 	α Logging::DestroyLogger()->void{
-		TRACE( "Destroying Logger"sv );
+		Trace( ELogTags::App, "Destroying Logger" );
 		Logging::_pOnceMessages = nullptr;
 		{
 			unique_lock l{ MemoryLogMutex };
@@ -123,20 +122,30 @@ namespace Jde{
 		Logging::_logMemory = Settings::FindBool("/logging/memory").value_or( false );
 		return sinks;
 	}
-	vector<spdlog::sink_ptr> _sinks = LoadSinks();
+
+	optional<vector<spdlog::sink_ptr>> _sinks;
+	α Sinks()->const vector<spdlog::sink_ptr>&{
+		if( !_sinks )
+			_sinks = LoadSinks();
+		return *_sinks;
+	}
 
 	void OnCloseLogger( spdlog::logger* pLogger )ι;
-	//using LoggerPtr = up<spdlog::logger, decltype(&Jde::OnCloseLogger)>;
-	//auto _logger = LoggerPtr{ new spdlog::logger{"my_logger", _sinks.begin(), _sinks.end()}, Jde::OnCloseLogger };
-	spdlog::logger _logger{ "my_logger", _sinks.begin(), _sinks.end() };
-	α Logging::ClientMinLevel()ι->ELogLevel{ return (ELogLevel)_logger.level(); }
+	optional<spdlog::logger> _logger2;
+	α SpdLog()->spdlog::logger&{
+		if( !_logger2 )
+			_logger2 = { "my_logger", Sinks().begin(), Sinks().end() };
+		return *_logger2;
+	}
+
+	α Logging::ClientMinLevel()ι->ELogLevel{ return (ELogLevel)SpdLog().level(); }
 
 /*	void OnCloseLogger( spdlog::logger* pLogger )ι{
 		static bool firstPass{ true };
 		if( firstPass ){
 			firstPass = false;
 			INFOT( Logging::_logTag, "Closing logger '{}'", pLogger->name() );
-			_logger.reset();//zero out during destruction.
+			SpdLog().reset();//zero out during destruction.
 		}
 		else
 			delete pLogger;
@@ -147,18 +156,18 @@ namespace Jde{
 		//_status.set_starttime( (google::protobuf::uint32)Clock::to_time_t(_startTime) );
 
 		let flushOn = Settings::FindEnum<ELogLevel>( "/logging/flushOn", ToLogLevel ).value_or( _debug ? ELogLevel::Debug : ELogLevel::Information );
-		_logger.flush_on( (level_enum)flushOn );
+		SpdLog().flush_on( (level_enum)flushOn );
 		AddFileTags();
 
-		let minSinkLevel = std::accumulate( _sinks.begin(), _sinks.end(), ELogLevel::Critical, [](ELogLevel min, auto& p){ return std::min((ELogLevel)p->level(), min);} );
-		_logger.set_level( (level_enum)minSinkLevel );
+		let minSinkLevel = std::accumulate( Sinks().begin(), Sinks().end(), ELogLevel::Critical, [](ELogLevel min, auto& p){ return std::min((ELogLevel)p->level(), min);} );
+		SpdLog().set_level( (level_enum)minSinkLevel );
 		if( _pMemoryLog ){
 			for( let& m : *_pMemoryLog ){
 				if( !ShouldLog(m) )
 					continue;
 				let message = Str::ToString( m.MessageView, m.Args );
-				if( _sinks.size() )
-					_logger.log( spdlog::source_loc{m.File,(int)m.LineNumber,m.Function}, (level_enum)m.Level, message );
+				if( Sinks().size() )
+				SpdLog().log( spdlog::source_loc{m.File,(int)m.LineNumber,m.Function}, (level_enum)m.Level, message );
 				else
 					std::cerr << message << std::endl;
 				//no use case for loggers being initialized before this.
@@ -191,11 +200,11 @@ namespace Jde{
 		_lastStatusUpdate = Clock::now();
 	}*/
 	α Logging::SetLogLevel( ELogLevel client, ELogLevel external )ι->void{
-		if( _logger.level()!=(level_enum)client ){
-			Information{ _tags, "Setting log level from '{}' to '{}'", ToString((ELogLevel)_logger.level()), ToString(client) };
+		if( SpdLog().level()!=(level_enum)client ){
+			Information{ _tags, "Setting log level from '{}' to '{}'", ToString((ELogLevel)SpdLog().level()), ToString(client) };
 			Settings::Set( "/logging/console/level", jvalue{ToString(client)} );
 			Settings::Set( "/logging/file/level", jvalue{ToString(client)} );
-			_logger.set_level( (level_enum)client );
+			SpdLog().set_level( (level_enum)client );
 		}
 		External::SetMinLevel( external );
 	}
@@ -228,7 +237,7 @@ namespace Jde{
 			Log( move(m), tag, true );
 	}
 
-	spdlog::logger* Logging::Default()ι{ return &_logger; }
+	spdlog::logger* Logging::Default()ι{ return &SpdLog(); }
 
 	α ClearMemoryLog()ι->void{
 		unique_lock l{ Logging::MemoryLogMutex };

@@ -2,6 +2,8 @@
 #include <algorithm>
 #include <functional>
 #include <boost/algorithm/hex.hpp>
+#include <fmt/args.h>
+
 #ifdef _MSC_VER
 	#include "../../Windows/source/WindowsUtilities.h"
 #endif
@@ -60,18 +62,9 @@ namespace Jde{
 	α Str::ToUpper( sv source )ι->string{ return Transform( source, ::toupper ); }
 
 	α Str::ToString( sv format, vector<string> args )ι->string{
-		using ctx = fmt::format_context;
-		vector<fmt::basic_format_arg<ctx>> ctxArgs;
-		for( let& a : args )
-			ctxArgs.push_back( fmt::detail::make_arg<ctx>(a) );
-		string y;
-		try{
-			y = fmt::vformat( format, fmt::basic_format_args<ctx>{ctxArgs.data(), (int)ctxArgs.size()} );
-		}
-		catch( const fmt::format_error& e ){
-			BREAK;
-			y = Jde::format( "format error format='{}' - {}", format, e.what() );
-		}
-		return y;
+    fmt::dynamic_format_arg_store<fmt::format_context> store;
+		for( auto&& arg : args )
+			store.push_back( move(arg) );
+    return fmt::vformat(format, store);
 	}
 }

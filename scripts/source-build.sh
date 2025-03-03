@@ -31,12 +31,17 @@ if windows; then
 fi;
 
 function buildLibrary {
-	LIB=$1;
+	gitPath=$1;
 	CXX_FLAGS=$2;
+	if [[ ! -z "$CXX_FLAGS" ]]; then export CMAKE_CXX_FLAGS=-DCMAKE_CXX_FLAGS="$CXX_FLAGS"; fi;
 	ARGS=$3;
 	GIT_DIR=$4;
+	LIB=basename $gitPath .git
 	if [[ -z "$GIT_DIR" ]]; then GIT_DIR=$LIB; fi;
-	if [[ ! -z "$CXX_FLAGS" ]]; then export CMAKE_CXX_FLAGS=-DCMAKE_CXX_FLAGS="$CXX_FLAGS"; fi;
+	if [ ! -d $REPO_DIR/$GIT_DIR ]; then
+		git clone https://github.com/$gitPath;
+	fi;
+
 	cls;
 	echo $REPO_DIR/$GIT_DIR;
 	cd $REPO_DIR/$GIT_DIR;

@@ -12,7 +12,6 @@
 
 namespace Jde{
 	using namespace std::chrono;
-	//static let _logTag{ Logging::Tag("stopwatch") };
 	Stopwatch::SDuration Stopwatch::_minimumToLog = 1s;
 
 	Stopwatch::Stopwatch( sv what, ELogTags tags, bool started, SL sl )ι:

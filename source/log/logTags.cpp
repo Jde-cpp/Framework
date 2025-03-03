@@ -12,7 +12,7 @@ namespace Jde{
 		"write"
 		};
 
-	up<vector<sp<LogTag>>> _availableTags;
+	vector<sp<LogTag>> _availableTags;
 	vector<LogTag> _fileTags;
 	concurrent_flat_map<ELogTags,ELogLevel> _fileLogLevels;
 	optional<ELogLevel> _defaultFileLogLevel;
@@ -30,10 +30,8 @@ namespace Jde{
 		return y;
 	}
 	α Logging::Tag( sv tag )ι->sp<LogTag>{
-		if( !_availableTags )
-			_availableTags = mu<vector<sp<LogTag>>>();
-		auto iter = find_if( *_availableTags, [&](let& x){return x->Id==tag;} );
-		return iter==_availableTags->end() ? _availableTags->emplace_back( ms<LogTag>(LogTag{string{tag}, DefaultLogLevel()}) ) : *iter;
+		auto iter = find_if( _availableTags, [&](let& x){return x->Id==tag;} );
+		return iter==_availableTags.end() ? _availableTags.emplace_back( ms<LogTag>(LogTag{string{tag}, DefaultLogLevel()}) ) : *iter;
 	}
 	α Logging::Tag( ELogTags tag )ι->sp<LogTag>{
 		return Tag( ToString(tag) );//TODO handle multiple. socket.client.read
@@ -44,12 +42,12 @@ namespace Jde{
 		let log{ tag[0]!='_' };
 		let tagName = log ? tag : tag.substr(1);
 		sp<LogTag> globalTag;
-		auto pglobalTag = find_if( *_availableTags, [&](let& x){return x->Id==tagName;} );
-		if( pglobalTag==_availableTags->end() )
-			globalTag = _availableTags->emplace_back( ms<LogTag>( string{tagName}, configLevel ) );
+		auto pglobalTag = find_if( _availableTags, [&](let& x){return x->Id==tagName;} );
+		if( pglobalTag==_availableTags.end() )
+			globalTag = _availableTags.emplace_back( ms<LogTag>( string{tagName}, configLevel ) );
 		 else
 		 	globalTag = *pglobalTag;
-/*		if( globalTag==_availableTags->end() ){
+/*		if( globalTag==_availableTags.end() ){
 			LOG_MEMORY( "settings", ELogLevel::Error, "unknown tag '{}'", tagName );
 			static auto showed{ false };
 			if( !showed ){
@@ -156,7 +154,7 @@ namespace Jde{
 }
 
 α Jde::FileMinLevel( ELogTags tags )ι->ELogLevel{
-	return Min( tags, _fileLogLevels ).value_or( *_defaultFileLogLevel );
+	return Min( tags, _fileLogLevels ).value_or( DefaultLogLevel() );
 }
 
 using enum Jde::ELogLevel;

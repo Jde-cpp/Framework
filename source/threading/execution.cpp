@@ -10,12 +10,12 @@
 #define let const auto
 namespace Jde{
 	namespace net = boost::asio;
-	const int _threadCount{ std::max( Settings::FindNumber<int>( "/workers/executor" ).value_or(std::thread::hardware_concurrency()), 1 ) };
+	α ThreadCount()ι->int{ return std::max(Settings::FindNumber<int>( "/workers/executor" ).value_or(std::thread::hardware_concurrency()), 1); }
 	sp<net::io_context> _ioc;
 }
 α Jde::Executor()ι->sp<net::io_context>{
 	if( !_ioc )
-		_ioc = ms<net::io_context>( _threadCount );
+		_ioc = ms<net::io_context>( ThreadCount() );
 	return _ioc;
 }
 
@@ -48,7 +48,7 @@ namespace Jde{
 		ExecutorContext()ι:
 			_thread{ [&](){Execute();} }{
 			_started.wait( false );
-			Information( ELogTags::App, "Created executor threadCount: {}.", _threadCount );
+			Information( ELogTags::App, "Created executor threadCount: {}.", ThreadCount() );
 			Process::AddShutdown( this );
 		}
 		~ExecutorContext()ι{ if( !Process::Finalizing() ) Process::RemoveShutdown( this ); _cancelSignals.Clear(); }
@@ -91,8 +91,8 @@ namespace Jde{
 	}
 	α ExecutorContext::Execute()ι->void{
 		Threading::SetThreadDscrptn( "Ex[0]" );
-		std::vector<std::jthread> v; v.reserve( _threadCount - 1 );
-		for( auto i = _threadCount - 1; i > 0; --i )
+		std::vector<std::jthread> v; v.reserve( ThreadCount() - 1 );
+		for( auto i = ThreadCount() - 1; i > 0; --i )
 			v.emplace_back( [=]{ Threading::SetThreadDscrptn( Ƒ("Ex[{}]", i) ); _ioc->run(); } );
 		Trace( ELogTags::App, "Executor Started: instances: {}.", _ioc.use_count() );
 		_started.test_and_set();

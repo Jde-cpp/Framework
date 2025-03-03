@@ -34,8 +34,7 @@ namespace Jde
 		return r.second;
 	}
 
-	static sp<LogTag> _logTag{ Logging::Tag("cache") };
-	α Cache::LogTag()ι->sp<Jde::LogTag>{ return _logTag; }
+	constexpr ELogTags _tags = ELogTags::Cache;
 	Cache _instance;
 	α Cache::Instance()ι->Cache&{ return _instance; }
 
@@ -47,7 +46,7 @@ namespace Jde
 		if( erased )
 		{
 			_cache.erase( p );
-			TRACE( "Cache::{} erased={}"sv, name, erased );
+			Trace( _tags, "Cache::{} erased={}"sv, name, erased );
 		}
 		return erased;
 	}

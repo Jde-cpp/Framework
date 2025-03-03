@@ -2,11 +2,15 @@
 #include <jde/framework/settings.h>
 
 namespace Jde{
-	const ELogLevel _breakLevel{ Settings::FindEnum<ELogLevel>("/logging/breakLevel", ToLogLevel).value_or(ELogLevel::Warning) };
-	ELogLevel Logging::BreakLevel()ι{ return _breakLevel; } //TODO:  https://stackoverflow.com/questions/3596781/how-to-detect-if-the-current-process-is-being-run-by-gdb
+	optional<ELogLevel> _breakLevel;
+	α Logging::BreakLevel()ι->ELogLevel{
+		if( !_breakLevel )
+			_breakLevel = Settings::FindEnum<ELogLevel>( "/logging/breakLevel", ToLogLevel ).value_or( ELogLevel::Warning );
+		return *_breakLevel;
+	}
 }
 
-α Jde::CanBreak()ι->bool{ return _breakLevel>ELogLevel::Trace; }
+α Jde::CanBreak()ι->bool{ return Process::IsDebuggerPresent(); }
 namespace Jde::Logging{
 	MessageBase::MessageBase( ELogLevel level, SL sl )ι:
 		Fields{ EFields::File | EFields::FileId | EFields::Function | EFields::FunctionId | EFields::LineNumber },

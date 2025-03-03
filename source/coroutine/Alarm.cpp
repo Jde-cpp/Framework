@@ -5,7 +5,12 @@
 
 namespace Jde::Threading{
 	constexpr ELogTags _tags{ ELogTags::Scheduler };
-	Alarm _instance;
+	up<Alarm> _instance;
+	α Instance()ι->Alarm&{
+		if( !_instance )
+			_instance = mu<Alarm>();
+		return *_instance;
+	}
 	flat_multimap<TimePoint,tuple<Handle,HCoroutine,std::source_location>> _coroutines; mutex _coroutineMutex;
 	std::condition_variable _cv; mutex _mtx;
 
@@ -18,7 +23,7 @@ namespace Jde::Threading{
 			lg _{_coroutineMutex};
 			_coroutines.emplace( t, make_tuple(myHandle, h, sl) );
 		}
-		_instance.WakeUp();
+		Instance().WakeUp();
 		Trace( sl, _tags, "({})Alarm::Add({})", myHandle, Chrono::ToString(Clock::now()-t) );
 		if( t-Clock::now()<WakeDuration ){
 			lg lk( _mtx );

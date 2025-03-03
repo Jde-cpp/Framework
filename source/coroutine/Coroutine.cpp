@@ -10,8 +10,19 @@ namespace Jde::Coroutine{
 	std::shared_mutex CoroutinePool::_mtx;
 	static ELogTags _tag{ ELogTags::Threads };
 
-	sp<CoroutinePool> CoroutinePool::_pInstance;
+	up<CoroutinePool> _instance;
 	std::atomic<uint> INDEX=0;
+	CoroutinePool::CoroutinePool()ι:
+		_maxThreadCount{ Settings::FindNumber<uint16>("/coroutinePool/maxThreadCount").value_or(100) },
+		_wakeDuration{ Settings::FindDuration("/coroutinePool/wakeDuration").value_or(5s) },
+		_threadDuration{ Settings::FindDuration("/coroutinePool/threadDuration").value_or(1s) },
+		_poolIdleThreshold{ Settings::FindDuration("/coroutinePool/poolIdleThreshold").value_or(1s) }{
+		Information( _tag, "MaxThreadCount={}, WakeDuration={} ThreadDuration={}, PoolIdleThreshold={}", _maxThreadCount, Chrono::ToString<Duration>(_wakeDuration), Chrono::ToString<Duration>(_threadDuration), Chrono::ToString<Duration>(_poolIdleThreshold) );
+		Process::AddShutdownFunction( []( bool terminating ){
+			_instance->Shutdown( terminating );
+			_instance = nullptr;
+		});
+	}
 	ResumeThread::ResumeThread( str name, Duration idleLimit, CoroutineParam&& param )ι:
 		IdleLimit{idleLimit},
 		ThreadParam{ name, Threading::BumpThreadHandle() },
@@ -70,11 +81,6 @@ namespace Jde::Coroutine{
 		return result;
 	}
 
-	uint16 CoroutinePool::MaxThreadCount{ Settings::FindNumber<uint16>("/coroutinePool/maxThreadCount").value_or(100) };
-	Duration CoroutinePool::WakeDuration{ Settings::FindDuration("/coroutinePool/wakeDuration").value_or(5s) };
-	Duration CoroutinePool::ThreadDuration{ Settings::FindDuration("/coroutinePool/threadDuration").value_or(1s) };
-	Duration CoroutinePool::PoolIdleThreshold{ Settings::FindDuration("/coroutinePool/poolIdleThreshold").value_or(1s) };
-
 	α CoroutinePool::Shutdown( bool /*terminate*/ )ι->void{
 		if( _pThread ){
 			_pThread->Interrupt();
@@ -83,19 +89,12 @@ namespace Jde::Coroutine{
 	}
 
 	α CoroutinePool::Resume( coroutine_handle<> h )ι->void{
-		// if( Process::ShuttingDown() ){  Is this needed?
-		// 	DBG( "Can't resume, shutting down."sv );
-		// 	return;
-		// }
 		{
 			unique_lock l{ _mtx };
-			if( !_pInstance ){
-				Information( _tag, "MaxThreadCount={}, WakeDuration={} ThreadDuration={}, PoolIdleThreshold={}", (uint16)MaxThreadCount, Chrono::ToString<Duration>(WakeDuration), Chrono::ToString<Duration>(ThreadDuration), Chrono::ToString<Duration>(PoolIdleThreshold) );
-				_pInstance = ms<CoroutinePool>();
-				Process::AddShutdown( _pInstance );
-			}
+			if( !_instance )
+				_instance = mu<CoroutinePool>();
 		}
-		_pInstance->InnerResume( CoroutineParam{h} );
+		_instance->InnerResume( CoroutineParam{h} );
 	}
 
 	α CoroutinePool::InnerResume( CoroutineParam&& param )ι->void{
@@ -119,8 +118,8 @@ namespace Jde::Coroutine{
 				pResult = p->CheckIfReady( move(*pResult) );
 		}
 		if( pResult ){
-			if( _threads.size()<MaxThreadCount ){
-				_threads.emplace_back( Jde::format("CoroutinePool[{}]", _threads.size()), PoolIdleThreshold, move(*pResult) );
+			if( _threads.size()<_maxThreadCount ){
+				_threads.emplace_back( Jde::format("CoroutinePool[{}]", _threads.size()), _poolIdleThreshold, move(*pResult) );
 				pResult = {};
 			}
 			else if( !_pQueue ){
@@ -137,11 +136,11 @@ namespace Jde::Coroutine{
 	α CoroutinePool::Run()ι->void{
 		Threading::SetThreadInfo( Threading::ThreadParam{ string{Name}, (uint)Threading::EThread::CoroutinePool} );
 		Trace( _tag, "{} - Starting", Name );
-		TimePoint quitTime = Clock::now()+(Duration)ThreadDuration;
+		TimePoint quitTime = Clock::now()+(Duration)_threadDuration;
 		while( !Threading::GetThreadInterruptFlag().IsSet() ||  !_pQueue->empty() ){
-			for( auto h = _pQueue->TryPop( WakeDuration ); h; ){
+			for( auto h = _pQueue->TryPop( _wakeDuration ); h; ){
 				h = StartThread( move(h.value()) );
-				quitTime = Clock::now()+(Duration)ThreadDuration;
+				quitTime = Clock::now()+(Duration)_threadDuration;
 			}
 			if( quitTime<Clock::now() ){
 				unique_lock l{ _mtx };

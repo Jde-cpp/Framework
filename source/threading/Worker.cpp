@@ -62,7 +62,7 @@ namespace Jde::Threading{
 		Threading::SetThreadDscrptn( NameInstance );
 		sp<IWorker> pKeepAlive;
 		let keepAlive = Settings::FindDuration( "/WorkerkeepAlive" ).value_or( 5s );
-		TRACE( "({})Starting Thread", NameInstance );
+		Trace( ELogTags::Threads, "({})Starting Thread", NameInstance );
 		_lastRequest = Clock::now();
 		while( !st.stop_requested() )
 		{
@@ -79,6 +79,6 @@ namespace Jde::Threading{
 			else
 				std::this_thread::yield();
 		}
-		TRACE( "({})Ending Thread", NameInstance );
+		Trace( ELogTags::Threads, "({})Ending Thread", NameInstance );
 	}
 }

@@ -1,19 +1,18 @@
 ﻿#include "Mutex.h"
 #include <boost/container/flat_map.hpp>
 #define let const auto
-namespace Jde
-{
-	static const sp<LogTag> _logTag = Logging::Tag( "locks" );
+namespace Jde{
+	constexpr ELogTags _tags = ELogTags::Locks;
 
 	CoGuard::CoGuard( CoLock& lock )ι:
 		_lock{lock}
 	{
-		TRACE( "CoGuard" );
+		Trace( _tags, "CoGuard" );
 	}
 
 	CoGuard::~CoGuard()
 	{
-		TRACE( "~CoGuard" );
+		Trace( _tags, "~CoGuard" );
 		_lock.Clear();
 	}
 	LockAwait::LockAwait( CoLock& lock )ι:_lock{lock}{}
@@ -76,7 +75,7 @@ namespace Jde::Threading
 		for( auto pExisting = _mutexes.begin(); pExisting != _mutexes.end();  )
 			pExisting = pExisting->first!=key && pExisting->second.use_count()==1 && pExisting->second->try_lock() ? _mutexes.erase( pExisting ) : std::next( pExisting );
 		l.unlock();
-		TRACE( "UniqueLock( '{}' )", key );
+		Trace( _tags, "UniqueLock( '{}' )", key );
 		return unique_lock{ *pKeyMutex };
 	}
 }

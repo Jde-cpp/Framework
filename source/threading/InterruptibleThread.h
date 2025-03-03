@@ -51,11 +51,11 @@ namespace Jde::Threading{  //TODO Reflection remove Threading from public items.
 		std::promise<InterruptFlag*> promise;
 		_internalThread = std::thread( [f,&promise, name=move(name_)]
 		{
-			TRACE( "~InterruptibleThread::f({})", name );
+			Trace( ELogTags::Threads, "~InterruptibleThread::f({})", name );
 			promise.set_value( &GetThreadInterruptFlag() );
 			SetThreadDscrptn( name );
 			f();
-			TRACE( "~InterruptibleThread::f({})", name );
+			Trace( ELogTags::Threads, "~InterruptibleThread::f({})", name );
 			GetThreadInterruptFlag().SetIsDone();
 		});
 		_pFlag = promise.get_future().get();

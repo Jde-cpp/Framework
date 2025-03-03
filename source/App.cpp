@@ -12,7 +12,7 @@
 #define let const auto
 
 namespace Jde{
-	static sp<LogTag> _logTag = Logging::Tag( "app" );
+	constexpr ELogTags _tags = ELogTags::App;
 
 	sp<IApplication> _pInstance;
 	α IApplication::SetInstance( sp<IApplication> app )ι->void{ _pInstance = app; }
@@ -44,7 +44,8 @@ namespace Jde{
 			os << "(" << OSApp::ProcessId() << ")";
 			for( auto i=0; i<argc; ++i )
 				os << argv[i] << " ";
-			Logging::Default()->log( spdlog::source_loc{FileName(SRCE_CUR.file_name()).c_str(),SRCE_CUR.line(),SRCE_CUR.function_name()}, (spdlog::level::level_enum)ELogLevel::Information, os.str() ); //TODO add cwd.
+			os << ";cwd=" << fs::current_path().string();
+			Logging::Default()->log( spdlog::source_loc{FileName(SRCE_CUR.file_name()).c_str(),SRCE_CUR.line(),SRCE_CUR.function_name()}, (spdlog::level::level_enum)ELogLevel::Information, os.str() );
 		}
 		_applicationName = appName;
 
@@ -163,7 +164,7 @@ namespace Jde{
 				OSApp::Pause();
 			}
 		}
-		INFO( "Pause returned = {}.", _exitReason ? std::to_string(_exitReason.value()) : "null" );
+		Information{ _tags, "Pause returned = {}.", _exitReason ? std::to_string(_exitReason.value()) : "null" };
 		_backgroundThreads.visit( [](auto&& p){ p->Interrupt(); } );
 		Process::Shutdown( _exitReason.value_or(-1) );
 		return _exitReason.value_or( -1 );
@@ -198,7 +199,7 @@ namespace Jde{
 		_finalizing = true;
 	}
 	α IApplication::AddThread( sp<Threading::InterruptibleThread> pThread )ι->void{
-		TRACE( "Adding Backgound thread" );
+		Trace{ _tags, "Adding Backgound thread" };
 		_backgroundThreads.push_back( pThread );
 	}
 
@@ -228,6 +229,6 @@ namespace Jde{
 		return ProgramDataFolder()/OSApp::CompanyRootDir()/OSApp::ProductName();
 	}
 	α IApplication::IsConsole()ι->bool{
-		return OSApp::Args().find( "-c" )!=OSApp::Args().end();
+		return Process::FindArg( "-c" ).has_value();
 	}
 }

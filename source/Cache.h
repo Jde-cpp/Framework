@@ -23,7 +23,6 @@ namespace Jde
 		template<class K,class V> static α GetValue( str n, K id )ι->sp<V>;
 	private:
 		static std::map<string,sp<void>> _cache; static  shared_mutex _cacheLock;
-		Φ LogTag()ι->sp<LogTag>;
 	};
 
 	Ŧ Cache2::Emplace( str id )ι->sp<T>{
@@ -48,16 +47,15 @@ namespace Jde
 		return p==_cache.end() ? sp<T>{} : std::static_pointer_cast<T>( p->second );
 	}
 
-#define _logTag LogTag()
 	Ŧ Cache2::Set( str id, sp<T> p )ι->sp<T>{
 		ul l{_cacheLock};
 		if( !p ){
 			let erased = _cache.erase( id );
-			TRACE( "Cache::{} erased={}"sv, id, erased );
+			Trace( ELogTags::Cache, "Cache::{} erased={}"sv, id, erased );
 		}
 		else{
 			_cache[id] = p;
-			TRACE( "Cache::{} set"sv, id );
+			Trace( ELogTags::Cache, "Cache::{} set"sv, id );
 		}
 		return p;
 	}
@@ -128,16 +126,15 @@ namespace Jde
 		ul l{_cacheLock};
 		if( !pValue ){
 			const bool erased = _cache.erase( name );
-			TRACE( "Cache::{} erased={}"sv, name, erased );
+			Trace( ELogTags::Cache, "Cache::{} erased={}"sv, name, erased );
 		}
 		else{
 			_cache[name] = pValue;
-			TRACE( "Cache::{} set"sv, name );
+			Trace( ELogTags::Cache, "Cache::{} set"sv, name );
 		}
 		return pValue;
 	}
 #undef let
 #undef Φ
-#undef _logTag
 }
 #endif
