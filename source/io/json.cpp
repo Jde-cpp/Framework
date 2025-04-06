@@ -26,6 +26,19 @@ namespace Jde{
 			op( v );
 	}
 
+	α Json::Visit( jvalue& v, function<void(jobject& o)> op )ε->void{
+		if( v.is_array() ){
+			for( auto& value : v.get_array() ){
+				THROW_IF( !value.is_object(), "Expected object but found '{}'.", Kind(value.kind()) );
+				op( value.get_object() );
+			}
+		}
+		else{
+			THROW_IF( !v.is_object(), "Expected object but found '{}'.", Kind(v.kind()) );
+			op( v.get_object() );
+		}
+	}
+
 	α Json::ReadJsonNet( fs::path path, SL sl )ε->jobject{
 		jsonnet::Jsonnet vm;
 		vm.init();

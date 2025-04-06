@@ -24,8 +24,7 @@ list(REMOVE_ITEM sources "${thread_cpp}")
 target_sources( ${targetName} PRIVATE ${sources} ${headers} )
 
 target_link_libraries( ${targetName} fmt::fmt )
-
-target_link_libraries( ${targetName} jsonnet++ )
+target_link_libraries( ${targetName} jsonnet++ jsonnet )
 
 target_precompile_headers( ${targetName}
   PUBLIC
