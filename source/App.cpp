@@ -38,7 +38,7 @@ namespace Jde{
 	const TimePoint _start=Clock::now();
 	α IApplication::StartTime()ι->TimePoint{ return _start; }
 
-	flat_set<string> IApplication::BaseStartup( int argc, char** argv, sv appName, string serviceDescription/*, sv companyName*/ )ε{//no config file
+	flat_set<string> IApplication::BaseStartup( int argc, char** argv, sv appName, string serviceDescription, optional<bool> console )ε{//no config file
 		{
 			std::ostringstream os;
 			os << "(" << OSApp::ProcessId() << ")";
@@ -49,13 +49,13 @@ namespace Jde{
 		}
 		_applicationName = appName;
 
-		bool console = false;
+		auto isConsole = console ? *console : false;
 		const string arg0{ argv[0] };
 		bool terminate = !_debug;
 		flat_set<string> values;
 		for( int i=1; i<argc; ++i ){
-			if( string(argv[i])=="-c" )
-				console = true;
+			if( string(argv[i])=="-c" && !console )
+				isConsole = true;
 			else if( string(argv[i])=="-t" )
 				terminate = !terminate;
 			else if( string(argv[i])=="-install" ){
@@ -71,7 +71,7 @@ namespace Jde{
 		}
 		if( terminate )
 			std::set_terminate( OnTerminate );
-		if( console )
+		if( isConsole )
 			SetConsoleTitle( appName );
 		else
 			AsService();

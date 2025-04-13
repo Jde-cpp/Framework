@@ -9,6 +9,26 @@ namespace Jde{
 	jarray _emptyArray;
 	jobject _emptyObject;
 
+	α Json::AddOrAssign( jvalue& objOrArray, jvalue&& item, SL sl )ε->void{
+		if( objOrArray.is_array() )
+			objOrArray.get_array().push_back( move(item) );
+		else if( objOrArray.is_object() )
+			objOrArray = move(item);
+		else
+			throw Exception{ SRCE_CUR, "'{}' is not an array or object.", Kind(objOrArray.kind()) };
+	}
+	α Json::Visit( const jvalue& v, function<void(sv s)> op )ε->void{
+		if( v.is_array() ){
+			for( auto& value : v.get_array() ){
+				THROW_IF( !value.is_string(), "Expected string but found '{}'.", Kind(value.kind()) );
+				op( value.get_string() );
+			}
+		}
+		else{
+			THROW_IF( !v.is_string(), "Expected string but found '{}'.", Kind(v.kind()) );
+			op( v.get_string() );
+		}
+	}
 	α Json::Visit( jvalue&& v, function<void(jobject&& o)> op )ε->void{
 		if( v.is_object() )
 			op( move(v.get_object()) );
