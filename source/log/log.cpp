@@ -88,16 +88,17 @@ namespace Jde{
 				pSink = ms<spdlog::sinks::stdout_color_sink_mt>();
 			}
 			else if( name=="file" ){
+				std::cout << "file sink:" << serialize(sink) << std::endl;
 				optional<fs::path> pPath;
-				if( auto p = Json::FindString(sink, "path"); p )
+				if( auto p = Json::FindString(sink, "/path"); p )
 					pPath = fs::path{ *p };
 #pragma warning(disable: 4127)
 				if( !_msvc && pPath && pPath->string().starts_with("/Jde-cpp") )
 					pPath = fs::path{ "~/."+pPath->string().substr(1) };
-				let markdown = Json::FindBool(sink, "md" ).value_or( false );
+				let markdown = Json::FindBool(sink, "/md" ).value_or( false );
 				let fileNameWithExt = Settings::FileStem()+( markdown ? ".md" : ".log" );
 				let path = pPath && !pPath->empty() ? *pPath/fileNameWithExt : OSApp::ApplicationDataFolder()/"logs"/fileNameWithExt;
-				let truncate = Json::FindBool( sink, "truncate" ).value_or( true );
+				let truncate = Json::FindBool( sink, "/truncate" ).value_or( true );
 				additional = Ƒ( " truncate='{}' path='{}'", truncate, path.string() );
 				try{
 					pSink = ms<spdlog::sinks::basic_file_sink_mt>( path.string(), truncate );
@@ -113,7 +114,7 @@ namespace Jde{
 			else
 				continue;
 			pSink->set_pattern( string{*pattern} );
-			let level = Json::FindEnum<ELogLevel>( sink, "level", ToLogLevel ).value_or( ELogLevel::Trace );
+			let level = Json::FindEnum<ELogLevel>( sink, "/level", ToLogLevel ).value_or( ELogLevel::Trace );
 			pSink->set_level( (level_enum)level );
 			//std::cout << Ƒ( "({})level='{}' pattern='{}'{}", name, ToString(level), pattern, additional ) << std::endl;
 			LogMemoryDetail( Logging::Message{"settings", ELogLevel::Information, "({})level='{}' pattern='{}'{}"}, name, ToString(level), *pattern, additional );
