@@ -76,6 +76,7 @@ namespace Jde{
 		auto p = find_if( paths, []( let& path ){return fs::exists(path);} );
 		_path = p!=paths.end() ? *p : OSApp::ApplicationDataFolder()/fileName;
 		Information{ _tags, "settings path={}", _path.string() };
+		std::cout << "settings path=" << _path.string() << std::endl;
 		return _path;
 	}
 	α SetEnv( jobject& j )->void{
@@ -90,7 +91,16 @@ namespace Jde{
 					std::smatch b = *begin;
 					let match = begin->str();
 					let group = match.substr( 2, match.size()-3 );
-					let env = OSApp::EnvironmentVariable( group ).value_or( "" );
+					auto env = OSApp::EnvironmentVariable( group ).value_or( "" );
+					if( env.empty() && group=="JDE_BUILD_TYPE" ){
+						if( _debug )
+							env = "Debug";
+						else
+							env = "relWithDebInfo";
+					}
+					if( env.empty() )
+						Warning{ _tags, "Environment variable '{}' not found", group };
+
 					setting = Str::Replace( setting, match, env );
 				}
 				value = setting;

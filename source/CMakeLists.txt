@@ -23,8 +23,8 @@ get_filename_component(thread_cpp ${CMAKE_CURRENT_SOURCE_DIR}/threading/Thread.c
 list(REMOVE_ITEM sources "${thread_cpp}")
 target_sources( ${targetName} PRIVATE ${sources} ${headers} )
 
-target_link_libraries( ${targetName} fmt::fmt )
-target_link_libraries( ${targetName} jsonnet++ jsonnet )
+target_link_libraries( ${targetName} PUBLIC fmt::fmt )
+target_link_libraries( ${targetName} PRIVATE jsonnet++ jsonnet )
 
 target_precompile_headers( ${targetName}
   PUBLIC
