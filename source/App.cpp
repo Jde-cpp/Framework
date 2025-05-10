@@ -22,6 +22,11 @@ namespace Jde{
 	string _applicationName;
 	α Process::ApplicationName()ι->const string&{ return _applicationName; }
 
+	bool _isConsole{};
+	α Process::SetConsole( bool value )ι->void{ _isConsole=value;}
+	α Process::IsConsole()ι->bool{ return _isConsole; }
+
+
 	Vector<sp<Threading::InterruptibleThread>> _backgroundThreads;
 	function<void()> OnExit;
 }
@@ -39,6 +44,8 @@ namespace Jde{
 	α IApplication::StartTime()ι->TimePoint{ return _start; }
 
 	flat_set<string> IApplication::BaseStartup( int argc, char** argv, sv appName, string serviceDescription, optional<bool> console )ε{//no config file
+		auto isConsole = console ? *console : Process::FindArg( "-c" ).has_value();
+		Process::SetConsole( isConsole );
 		{
 			std::ostringstream os;
 			os << "(" << OSApp::ProcessId() << ")";
@@ -48,8 +55,6 @@ namespace Jde{
 			Logging::Default()->log( spdlog::source_loc{FileName(SRCE_CUR.file_name()).c_str(),SRCE_CUR.line(),SRCE_CUR.function_name()}, (spdlog::level::level_enum)ELogLevel::Information, os.str() );
 		}
 		_applicationName = appName;
-
-		auto isConsole = console ? *console : false;
 		const string arg0{ argv[0] };
 		bool terminate = !_debug;
 		flat_set<string> values;
@@ -227,8 +232,5 @@ namespace Jde{
 	}
 	α IApplication::ApplicationDataFolder()ι->fs::path{
 		return ProgramDataFolder()/OSApp::CompanyRootDir()/OSApp::ProductName();
-	}
-	α IApplication::IsConsole()ι->bool{
-		return Process::FindArg( "-c" ).has_value();
 	}
 }

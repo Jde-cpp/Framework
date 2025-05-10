@@ -103,10 +103,14 @@ namespace Jde{
 	}
 
 	α Json::AsObject( const jvalue& v, SL sl )ε->const jobject&{
-		let y = v.try_as_object();
-		if( !y )
+		if( !v.is_object() ){
+			let y = v.try_as_object();
+			std::error_code ec = y.error();
+			auto code = ec.value();
+			auto message = ec.message();
 			throw CodeException{ y.error(), ELogTags::Parsing, Ƒ("'{}', is not an object but is a '{}'.", serialize(v), Kind(v.kind())), ELogLevel::Debug, sl };
-		return *y;
+		}
+		return v.get_object();
 	}
 	α Json::AsObject( const jvalue& v, sv path, SL sl )ε->const jobject&{
 		auto p = FindValuePtr( v, path ); THROW_IFSL( !p, "Path '{}' not found in '{}'", path, serialize(v) );

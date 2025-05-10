@@ -31,7 +31,7 @@ namespace Jde::Logging{
 		MessageView{ message },
 		FileId{ Calc32RunTime(FileName(file)) },
 		File{ file },
-		FunctionId{ Calc32RunTime(function) },
+		FunctionId{ function ? Calc32RunTime(function) : 0 },
 		Function{ function },
 		LineNumber{ line }
 	{}

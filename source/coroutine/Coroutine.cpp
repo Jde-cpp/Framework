@@ -35,8 +35,7 @@ namespace Jde::Coroutine{
 				{
 					unique_lock l{ _paramMutex };
 					if( !_param ){
-						let now = Clock::now();
-						if( timeout>now )
+						if( timeout>Clock::now() )
 							std::this_thread::yield();
 						else{
 							Trace( _tag, "({})CoroutineThread Stopping", index );

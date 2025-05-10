@@ -72,7 +72,7 @@ namespace Jde{
 			spdlog::sink_ptr pSink;
 			string additional;
 			auto pattern =  Json::FindSV( sink, "pattern" );
-			if( name=="console" && IApplication::IsConsole() ){
+			if( name=="console" && Process::IsConsole() ){
 				if( !pattern ){
 					if constexpr( _debug ){
 #ifdef _MSC_VER

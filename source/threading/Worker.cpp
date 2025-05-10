@@ -2,8 +2,6 @@
 #include "Thread.h"
 #include "InterruptibleThread.h"
 #include "../io/FileCo.h"
-//#include <signal.h>
-//#include "../../../Linux/source/LinuxDrive.h"
 
 #define let const auto
 #define _logTag LogTag()
@@ -13,7 +11,11 @@ namespace Jde::Threading{
 	IWorker::IWorker( sv name )ι:
 		NameInstance{ name },
 		ThreadCount{ Settings::FindNumber<uint8>(Ƒ("/workers/{}/threads", name)).value_or(0) }
-	{}
+	{
+#ifndef _MSC_VER
+		ASSERT( ThreadCount );
+#endif
+	}
 
 	IWorker::~IWorker(){}//abstract
 
