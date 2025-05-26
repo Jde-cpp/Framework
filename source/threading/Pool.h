@@ -9,7 +9,6 @@
 #include "InterruptibleThread.h"
 
 namespace Jde::Threading{
-#define _logTag Threading::LogTag()
 	struct Γ Pool	{
 		Pool( uint threadCount=0, sv name="Pool" );
 		~Pool();

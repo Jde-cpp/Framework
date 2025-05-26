@@ -4,7 +4,7 @@
 #include <jde/framework/coroutine/Task.h>
 #include "../threading/Worker.h"
 #ifdef _MSC_VER
-	#include "../../../Windows/source/WindowsHandle.h"
+	#include <jde/framework/process/os/windows/WindowsHandle.h>
 	using HFile=Jde::HandlePtr;
 #else
 	using HFile=int;

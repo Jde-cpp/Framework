@@ -16,7 +16,7 @@ namespace Jde::Coroutine{
 		_maxThreadCount{ Settings::FindNumber<uint16>("/coroutinePool/maxThreadCount").value_or(100) },
 		_wakeDuration{ Settings::FindDuration("/coroutinePool/wakeDuration").value_or(5s) },
 		_threadDuration{ Settings::FindDuration("/coroutinePool/threadDuration").value_or(1s) },
-		_poolIdleThreshold{ Settings::FindDuration("/coroutinePool/poolIdleThreshold").value_or(1s) }{
+		_poolIdleThreshold{ Settings::FindDuration("/coroutinePool/poolIdleThreshold").value_or(10ms) }{
 		Information( _tag, "MaxThreadCount={}, WakeDuration={} ThreadDuration={}, PoolIdleThreshold={}", _maxThreadCount, Chrono::ToString<Duration>(_wakeDuration), Chrono::ToString<Duration>(_threadDuration), Chrono::ToString<Duration>(_poolIdleThreshold) );
 		Process::AddShutdownFunction( []( bool terminating ){
 			_instance->Shutdown( terminating );

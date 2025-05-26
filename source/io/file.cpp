@@ -12,7 +12,6 @@
 
 namespace Jde{
 	constexpr ELogTags _tags{ ELogTags::IO };
-//	α IO::LogTag()ι->sp<Jde::LogTag>{ return _logTag; }
 
 	α IO::FileSize( const fs::path& path )ε->uint{
 		try{

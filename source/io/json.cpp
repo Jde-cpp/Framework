@@ -1,5 +1,7 @@
 #include <jde/framework/io/json.h>
-#include <jde/framework/io/file.h>
+#pragma warning( disable : 4996 )
+#define _SILENCE_ALL_CXX23_DEPRECATION_WARNINGS
+#include "C:\Users\duffyj\source\repos\libs\jsonnet\third_party\rapidyaml\ryml_all.hpp"
 #include <libjsonnet++.h>
 #include <jde/framework/str.h>
 #include "../DateTime.h"
@@ -15,7 +17,7 @@ namespace Jde{
 		else if( objOrArray.is_object() )
 			objOrArray = move(item);
 		else
-			throw Exception{ SRCE_CUR, "'{}' is not an array or object.", Kind(objOrArray.kind()) };
+			throw Exception{ sl, "'{}' is not an array or object.", Kind(objOrArray.kind()) };
 	}
 	α Json::Visit( const jvalue& v, function<void(sv s)> op )ε->void{
 		if( v.is_array() ){
@@ -59,13 +61,31 @@ namespace Jde{
 		}
 	}
 
-	α Json::ReadJsonNet( fs::path path, SL sl )ε->jobject{
+	vector<fs::path> _importPaths;
+	α Json::AddImportPath( fs::path path )ι->void{
+		ASSERT_DESC( fs::exists(path) && fs::is_directory(path), Ƒ("'{}' does not exist or is not a directory.", path.string()) );
+		_importPaths.push_back( path );
+	}
+	α Json::TryReadJsonNet( fs::path path, SL sl )ι->std::expected<jobject, string>{
 		jsonnet::Jsonnet vm;
 		vm.init();
+		for( let& importPath : _importPaths )
+			vm.addImportPath( importPath.string() );
 		string j;
-		bool success = vm.evaluateFile( path.string(), &j );
-		THROW_IFSL( !success, "Failed to evaluate '{}'.  {}", path.string(), vm.lastError() );
-		return Parse( j, sl );
+		let success = vm.evaluateFile( path.string(), &j );
+		if( !success )
+			return std::unexpected{ Ƒ("Failed to evaluate '{}'.  {}", path.string(), vm.lastError()) };
+		try{
+			return Parse( j, sl );
+		}
+		catch( exception& e ){
+			return std::unexpected{ Ƒ("Failed to parse '{}'.  {}", path.string(), e.what()) };
+		}
+	}
+	α Json::ReadJsonNet( fs::path path, SL sl )ε->jobject{
+		let json = TryReadJsonNet( path, sl );
+		THROW_IFSL( !json, "Failed to evaluate '{}'.  {}", path.string(), json.error() );
+		return *json;
 	}
 
 	α Json::Parse( sv json, SL sl )ε->jobject{
@@ -106,9 +126,9 @@ namespace Jde{
 		if( !v.is_object() ){
 			let y = v.try_as_object();
 			std::error_code ec = y.error();
-			auto code = ec.value();
-			auto message = ec.message();
-			throw CodeException{ y.error(), ELogTags::Parsing, Ƒ("'{}', is not an object but is a '{}'.", serialize(v), Kind(v.kind())), ELogLevel::Debug, sl };
+			let code = ec.value();
+			let message = ec.message();
+			throw CodeException{ y.error(), ELogTags::Parsing, Ƒ("({})'{}', is not an object but is a '{}'. - {}", code, serialize(v), Kind(v.kind()), message), ELogLevel::Debug, sl };
 		}
 		return v.get_object();
 	}
@@ -124,11 +144,10 @@ namespace Jde{
 	}
 	α Json::AsObjectPath( const jobject& o, sv path, SL sl )ε->const jobject&{
 		let& v = FindValue( o, path );
-		THROW_IF( !v || !v->is_object(), "object '{}' not found in '{}'.", path, serialize(o) );
+		THROW_IFSL( !v || !v->is_object(), "object '{}' not found in '{}'.", path, serialize(o) );
 		return v->get_object();
 	}
 	α Json::AsTimePointOpt( const jobject& o, sv key )ι->optional<TimePoint>{
-		THROW_IF( !o.contains(key), "['{}'] timepoint not found in '{}'.", key, serialize(o) );
 		return FindTimePoint( o, key );
 	}
 
@@ -179,7 +198,6 @@ namespace Jde{
 			else
 				jobj = FindObject( *jobj, keys[i] );
 		}
-		//throw Exception{ sl, ELogLevel::Debug, "Path '{}' not found in '{}'", path, serialize(o) };
 		return nullptr;
 	}
 

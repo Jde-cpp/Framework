@@ -81,7 +81,6 @@ namespace Jde
 		Ŧ InstanceSet( str name, sp<T> pValue )ι->sp<T>;
 		Φ Instance()ι->Cache&;
 		std::map<string,sp<void>,std::less<>> _cache; mutable shared_mutex _cacheLock;
-		Φ LogTag()ι->sp<LogTag>;
 	};
 
 	Ŧ Cache::InstanceGet( str name )ι->sp<T>{

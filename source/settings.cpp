@@ -55,6 +55,13 @@ namespace Jde{
 		return y;
 	}
 
+	consteval α buildTypeSubDir()->sv{
+		if constexpr( _debug )
+			return "Debug";
+		else
+			return "relWithDebInfo";
+	}
+
 	α Settings::FileStem()ι->string{
 		let executable = OSApp::Executable().filename();
 	#ifdef _MSC_VER
@@ -70,8 +77,17 @@ namespace Jde{
 		let fileName = fs::path{ Ƒ("{}.jsonnet", Settings::FileStem()) };
 
 		vector<fs::path> paths{ fileName, fs::path{"../config"}/fileName, fs::path{"config"}/fileName };
-		if( let cli = Process::FindArg("-settings"); cli )
+		if( let cli = Process::FindArg("-settings"); cli ){
+			if( Process::FindArg( "-tests" ) ){
+				#ifdef _MSC_VER
+					string osPath = "win";
+				#else
+					string osPath = "linux";
+				#endif
+				Json::AddImportPath( fs::path{*cli}.parent_path()/osPath/buildTypeSubDir() );
+			}
 			paths = { fs::path{*cli} };
+		}
 
 		auto p = find_if( paths, []( let& path ){return fs::exists(path);} );
 		_path = p!=paths.end() ? *p : OSApp::ApplicationDataFolder()/fileName;
@@ -92,12 +108,8 @@ namespace Jde{
 					let match = begin->str();
 					let group = match.substr( 2, match.size()-3 );
 					auto env = OSApp::EnvironmentVariable( group ).value_or( "" );
-					if( env.empty() && group=="JDE_BUILD_TYPE" ){
-						if( _debug )
-							env = "Debug";
-						else
-							env = "relWithDebInfo";
-					}
+					if( env.empty() && group=="JDE_BUILD_TYPE" )
+						env = buildTypeSubDir();
 					if( env.empty() )
 						Warning{ _tags, "Environment variable '{}' not found", group };
 
@@ -115,13 +127,17 @@ namespace Jde{
 		try{
 			if( !fs::exists(settingsPath) )
 				throw std::runtime_error{ Ƒ("file does not exist: '{}'", settingsPath.string()) };
-			_settings = mu<jvalue>( Json::ReadJsonNet(settingsPath) );
+			let settings = Json::TryReadJsonNet( settingsPath );
+			if( !settings )
+				throw std::runtime_error{ settings.error() };
+			_settings = mu<jvalue>( *settings );
 			if( _settings->is_object() )
 				SetEnv( _settings->get_object() );
 			LOG_MEMORY( {}, ELogLevel::Information, "Settings path={}", settingsPath.string() );
 		}
 		catch( const std::exception& e ){
 			_settings = mu<jvalue>( jobject{{"error", e.what()}} );
+			std::cerr << e.what() << std::endl;
 			LOG_MEMORY( {}, ELogLevel::Critical, "({})Could not load settings - {}", settingsPath.string(), e.what() );
 			BREAK;
 		}
@@ -135,7 +151,7 @@ namespace Jde{
 			auto& object = _settings->get_object();
 			for( uint i=0; i<(parts.size() ? parts.size()-1 : 0); ++i ){
 				if( auto p = object.find(parts[i]); p!=object.end() ){
-					THROW_IF( !p->value().is_object(), "Could not set '{}' to '{}'", path, serialize(v) );
+					THROW_IFSL( !p->value().is_object(), "Could not set '{}' to '{}'", path, serialize(v) );
 					object = p->value().get_object();
 				}
 				else

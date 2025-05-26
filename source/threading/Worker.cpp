@@ -4,14 +4,12 @@
 #include "../io/FileCo.h"
 
 #define let const auto
-#define _logTag LogTag()
 namespace Jde::Threading{
 	sp<IWorker> IWorker::_pInstance;
 	std::atomic_flag IWorker::_mutex;
 	IWorker::IWorker( sv name )ι:
 		NameInstance{ name },
-		ThreadCount{ Settings::FindNumber<uint8>(Ƒ("/workers/{}/threads", name)).value_or(0) }
-	{
+		ThreadCount{ Settings::FindNumber<uint8>(Ƒ("/workers/{}/threads", name)).value_or(0) }{
 #ifndef _MSC_VER
 		ASSERT( ThreadCount );
 #endif
@@ -19,18 +17,15 @@ namespace Jde::Threading{
 
 	IWorker::~IWorker(){}//abstract
 
-	α IWorker::Initialize()ι->void
-	{
+	α IWorker::Initialize()ι->void{
 	}
 
 
-	α IWorker::StartThread()ι->void
-	{
+	α IWorker::StartThread()ι->void{
 		_pThread = mu<std::jthread>( [&]( stop_token st ){ Run( st );} );
 	}
 
-	α IWorker::Run( stop_token /*st*/ )ι->void
-	{
+	α IWorker::Run( stop_token /*st*/ )ι->void{
 	}
 
 	α IWorker::Shutdown( bool /*terminate*/ )ι->void{
@@ -59,8 +54,7 @@ namespace Jde::Threading{
 			IApplication::RemoveActiveWorker( this );
 	}
 
-	α IPollWorker::Run( stop_token st )ι->void
-	{
+	α IPollWorker::Run( stop_token st )ι->void{
 		Threading::SetThreadDscrptn( NameInstance );
 		sp<IWorker> pKeepAlive;
 		let keepAlive = Settings::FindDuration( "/WorkerkeepAlive" ).value_or( 5s );

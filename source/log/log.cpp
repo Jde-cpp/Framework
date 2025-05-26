@@ -104,7 +104,7 @@ namespace Jde{
 					pSink = ms<spdlog::sinks::basic_file_sink_mt>( path.string(), truncate );
 				}
 				catch( const spdlog::spdlog_ex& e ){
-					LogMemoryDetail( Logging::Message{"settings", ELogLevel::Error, "Could not create log:  ({}) path='{}' - {}"}, name, path.string(), e.what() );
+					LogMemoryDetail( Logging::Message{ELogTags::Settings, ELogLevel::Error, "Could not create log:  ({}) path='{}' - {}"}, name, path.string(), e.what() );
 					std::cerr << Ƒ( "Could not create log:  ({}) path='{}' - {}", name, path.string(), path.string(), e.what() ) << std::endl;
 					continue;
 				}
@@ -117,7 +117,7 @@ namespace Jde{
 			let level = Json::FindEnum<ELogLevel>( sink, "/level", ToLogLevel ).value_or( ELogLevel::Trace );
 			pSink->set_level( (level_enum)level );
 			//std::cout << Ƒ( "({})level='{}' pattern='{}'{}", name, ToString(level), pattern, additional ) << std::endl;
-			LogMemoryDetail( Logging::Message{"settings", ELogLevel::Information, "({})level='{}' pattern='{}'{}"}, name, ToString(level), *pattern, additional );
+			LogMemoryDetail( Logging::Message{ELogTags::Settings, ELogLevel::Information, "({})level='{}' pattern='{}'{}"}, name, ToString(level), *pattern, additional );
 			sinks.push_back( pSink );
 		}
 		Logging::_logMemory = Settings::FindBool("/logging/memory").value_or( false );
@@ -233,9 +233,9 @@ namespace Jde{
 		auto& messages = _pOnceMessages->emplace( messageBase.FileId, flat_set<string>{} ).first->second;
 		return messages.emplace(messageBase.MessageView).second;
 	}
-	α Logging::LogOnce( Logging::MessageBase&& m, const sp<LogTag>& tag )ι->void{
+	α Logging::LogOnce( Logging::MessageBase&& m, ELogTags tags )ι->void{
 		if( ShouldLogOnce(m) )
-			Log( move(m), tag, true );
+			Log( move(m), tags, true );
 	}
 
 	spdlog::logger* Logging::Default()ι{ return &SpdLog(); }

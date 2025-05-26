@@ -5,7 +5,7 @@
 #include <fmt/args.h>
 
 #ifdef _MSC_VER
-	#include "../../Windows/source/WindowsUtilities.h"
+	#include <jde/framework/process/os/windows/WindowsUtilities.h>
 #endif
 
 #define let const auto

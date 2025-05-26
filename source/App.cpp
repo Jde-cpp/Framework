@@ -36,6 +36,11 @@ namespace Jde{
 	α Process::RemoveKeepAlive( sp<void> pShared )ι->void{
 		_keepAlives.erase( pShared );
 	}
+
+	α Process::FindArg( string key )ι->optional<string>{
+		auto p = Args().find( key );
+		return p!=Args().end() ? p->second : optional<string>{};
+	}
 }
 namespace Jde{
 	vector<Threading::IPollWorker*> IApplication::_activeWorkers; std::atomic_flag IApplication::_activeWorkersMutex;

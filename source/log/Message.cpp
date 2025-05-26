@@ -63,9 +63,9 @@ namespace Jde::Logging{
 		MessageId = Calc32RunTime( MessageView );
 	}
 
-	Message::Message( sv tag, ELogLevel level, string message, SL sl )ι:
+	Message::Message( ELogTags tags, ELogLevel level, string message, SL sl )ι:
 		MessageBase( level, sl ),
-		Tag{ tag },
+		Tags{ tags },
 		_pMessage{ mu<string>(move(message)) },
 		_fileName{ FileName(sl.file_name()) }{
 		File = _fileName.c_str();
@@ -73,9 +73,9 @@ namespace Jde::Logging{
 		MessageId = Calc32RunTime( MessageView );
 	}
 
-	Message::Message( sv tag, ELogLevel level, string message, char const* file, char const * function, boost::uint_least32_t line )ι:
+	Message::Message( ELogTags tags, ELogLevel level, string message, char const* file, char const * function, boost::uint_least32_t line )ι:
 		MessageBase{ level, message, file, function, line },
-		Tag{ tag },
+		Tags{ tags },
 		_pMessage{ mu<string>(move(message)) },
 		_fileName{ FileName(file) }{
 		File = _fileName.c_str();
@@ -86,7 +86,7 @@ namespace Jde::Logging{
 
 	Message::Message( const Message& x )ι:
 		MessageBase{ x },
-		Tag{ x.Tag },
+		Tags{ x.Tags },
 		_pMessage{ x._pMessage ? mu<string>(*x._pMessage) : nullptr },
 		_fileName{ x._fileName }{
 		File = _fileName.c_str();

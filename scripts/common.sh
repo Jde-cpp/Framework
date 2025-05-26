@@ -5,8 +5,7 @@ windows() { [[ -n "$WINDIR" ]]; }
 
 export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 
-startIndex()
-{
+startIndex() {
   x="${1%%$2*}"
   [[ "$x" = "$1" ]] && echo -1 || echo "${#x}"
 }

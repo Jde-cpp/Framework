@@ -11,10 +11,10 @@ namespace Jde{
 	up<IException> _empty;
 	α IException::EmptyPtr()ι->const up<IException>&{ return _empty; }
 
-	IException::IException( string value, ELogLevel level, uint32 code, sp<LogTag>&& tag, SL sl )ι:
+	IException::IException( string value, ELogLevel level, uint32 code, ELogTags tags, SL sl )ι:
 		_stack{ sl },
 		_what{ move(value) },
-		_pTag{ move(tag) },
+		_tags{ tags | ELogTags::Exception },
 		Code( code ? code : Calc32RunTime(value) ),
 		_level{ level }{
 		BreakLog();
@@ -25,7 +25,7 @@ namespace Jde{
 		_what{ from._what },
 		_pInner{ from._pInner },
 		_format{ from._format },
-		_pTag{ from._pTag },
+		_tags{ from._tags },
 		_args{ from._args },
 		Code{ from.Code },
 		_level{ from.Level() }{
@@ -37,7 +37,7 @@ namespace Jde{
 		_what{ move(from._what) },
 		_pInner{ move(from._pInner) },
 		_format{ move(from._format) },
-		_pTag{ from._pTag },
+		_tags{ from._tags },
 		_args{ move(from._args) },
 		Code{ from.Code },
 		_level{ from.Level() }{
@@ -76,7 +76,7 @@ namespace Jde{
 	}
 	α IException::Log()Ι->void{
 		let level = Level();
-		if( level==ELogLevel::NoLog || (_pTag && level<MinLevel(ToLogTags(_pTag->Id))) )
+		if( level==ELogLevel::NoLog || (!empty(_tags) && level<MinLevel(_tags)) )
 			return;
 		let& sl = _stack.size() ? _stack.front() : SRCE_CUR;
 		const string fileName{ strlen(sl.file_name()) ? FileName(sl.file_name()) : "{Unknown}\0"sv };
@@ -105,16 +105,6 @@ namespace Jde{
 		return _what.c_str();
 	}
 
-	CodeException::CodeException( std::error_code code, sp<LogTag> tag, string value, ELogLevel level, SL sl )ι:
-		IException{ Ƒ("({}){} - {}", code.value(), value, code.message()), level, (uint)code.value(), move(tag), sl },
-		_errorCode{ move(code) }
-	{}
-
-	CodeException::CodeException( std::error_code code, sp<LogTag> tag, ELogLevel level, SL sl )ι:
-		IException{ Ƒ("({}){}", code.value(), code.message()), level, (uint)code.value(), move(tag), sl },
-		_errorCode{ move(code) }
-	{}
-
 	CodeException::CodeException( std::error_code code, ELogTags tags, ELogLevel level, SL sl )ι:
 		IException{ tags, sl, level, "({}){}", code.value(), code.message() },
 		_errorCode{ move(code) }
@@ -125,7 +115,7 @@ namespace Jde{
 	{}
 
 	BoostCodeException::BoostCodeException( const boost::system::error_code& c, sv msg, SL sl )ι:
-		IException{ string{msg}, ELogLevel::Debug, (uint)c.value(), {}, sl },
+		IException{ string{msg}, ELogLevel::Debug, (uint32)c.value(), {}, sl },
 		_errorCode{ c }
 	{}
 	BoostCodeException::BoostCodeException( BoostCodeException&& e )ι:
@@ -153,7 +143,7 @@ namespace Jde{
 
 	OSException::OSException( TErrorCode result, string&& m, SL sl )ι:
 #ifdef _MSC_VER
-		IException{ sl, ELogLevel::Error, (uint)GetLastError(), "result={}/error={} - {}", result, GetLastError(), m }
+		IException{ sl, ELogLevel::Error, (uint32)GetLastError(), "result={}/error={} - {}", result, GetLastError(), m }
 #else
 		IException{ sl, ELogLevel::Error, (uint)errno, "result={}/error={} - {}", result, errno, m }
 #endif

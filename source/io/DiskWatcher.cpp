@@ -153,9 +153,8 @@ namespace Jde::IO{
 		}
 	}
 #else
-	DiskWatcher::DiskWatcher( const fs::path& /*path*/, EDiskWatcherEvents /*events=DefaultEvents*/ )ε
-	{
-		THROW( "new NotImplemented" );
+	DiskWatcher::DiskWatcher( const fs::path& /*path*/, EDiskWatcherEvents /*events=DefaultEvents*/ )ε{
+		ASSERT_DESC( false, "new NotImplemented" );
 	}
 	DiskWatcher::~DiskWatcher()
 	{}

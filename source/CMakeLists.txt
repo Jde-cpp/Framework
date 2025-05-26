@@ -3,18 +3,16 @@ include( $ENV{JDE_DIR}/Public/build/functions.cmake )
 project( Framework VERSION ${JDE_VERSION} LANGUAGES CXX )
 include( dependencies.cmake )
 
-link_directories( ${JSONNET_DIR}/lib )
-
 set( targetName Jde )
 add_library( ${targetName} SHARED )
-
+compileOptions( ${targetName} )
 set_property( TARGET ${targetName} PROPERTY POSITION_INDEPENDENT_CODE ON )
 
 file(GLOB sources *.cpp **/*.cpp **/**/*.cpp )
-file(GLOB headers   "**/*.h")
+file(GLOB headers "**/*.h")
 set( newDir $ENV{JDE_DIR}/Public/libs/framework )
 set( osDir ${newDir}/process/os )
-if(MSVC)
+if( WIN32 )
 	list(APPEND sources ${osDir}/windows/WindowsApp.cpp ${osDir}/windows/WindowsDrive.cpp ${osDir}/windows/WindowsSvc.cpp  ${osDir}/windows/WindowsThread.cpp ${osDir}/windows/WindowsUtilities.cpp  ${osDir}/windows/WindowsWorker.cpp)
 else()
   list(APPEND sources ${osDir}/linux/LinuxApp.cpp ${osDir}/linux/LinuxDrive.cpp ${osDir}/linux/LinuxTimezone.cpp  ${osDir}/linux/LinuxThread.cpp)
@@ -24,8 +22,13 @@ list(REMOVE_ITEM sources "${thread_cpp}")
 target_sources( ${targetName} PRIVATE ${sources} ${headers} )
 
 target_link_libraries( ${targetName} PUBLIC fmt::fmt )
-target_link_libraries( ${targetName} PRIVATE jsonnet++ jsonnet )
-
+if( WIN32 )
+	target_link_libraries( ${targetName} PRIVATE version )
+	target_link_libraries( ${targetName} PUBLIC Boost::json )
+	target_link_libraries( ${targetName} PRIVATE jsonnet )
+else()
+	target_link_libraries( ${targetName} PRIVATE jsonnet++ jsonnet )
+endif()
 target_precompile_headers( ${targetName}
   PUBLIC
   <jde/framework.h>
