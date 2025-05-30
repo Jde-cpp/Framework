@@ -59,7 +59,7 @@ namespace Jde{
 		if constexpr( _debug )
 			return "Debug";
 		else
-			return "relWithDebInfo";
+			return "Release";
 	}
 
 	α Settings::FileStem()ι->string{
