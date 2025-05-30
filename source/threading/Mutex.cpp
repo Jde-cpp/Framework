@@ -1,19 +1,18 @@
 ﻿#include "Mutex.h"
 #include <boost/container/flat_map.hpp>
-#define var const auto
-namespace Jde
-{
-	static const sp<LogTag> _logTag = Logging::Tag( "locks" );
+#define let const auto
+namespace Jde{
+	constexpr ELogTags _tags = ELogTags::Locks;
 
 	CoGuard::CoGuard( CoLock& lock )ι:
 		_lock{lock}
 	{
-		TRACE( "CoGuard" );
+		Trace( _tags, "CoGuard" );
 	}
 
 	CoGuard::~CoGuard()
 	{
-		TRACE( "~CoGuard" );
+		Trace( _tags, "~CoGuard" );
 		_lock.Clear();
 	}
 	LockAwait::LockAwait( CoLock& lock )ι:_lock{lock}{}
@@ -24,8 +23,8 @@ namespace Jde
 		return !!_pGuard;
 	}
 
-	α LockAwait::await_resume()ι->AwaitResult{ 
-		return _pGuard ? AwaitResult{move(_pGuard)} : base::await_resume(); 
+	α LockAwait::await_resume()ι->AwaitResult{
+		return _pGuard ? AwaitResult{move(_pGuard)} : base::await_resume();
 	}
 
 	α LockAwait::Suspend()ι->void{
@@ -76,7 +75,7 @@ namespace Jde::Threading
 		for( auto pExisting = _mutexes.begin(); pExisting != _mutexes.end();  )
 			pExisting = pExisting->first!=key && pExisting->second.use_count()==1 && pExisting->second->try_lock() ? _mutexes.erase( pExisting ) : std::next( pExisting );
 		l.unlock();
-		TRACE( "UniqueLock( '{}' )", key );
+		Trace( _tags, "UniqueLock( '{}' )", key );
 		return unique_lock{ *pKeyMutex };
 	}
 }

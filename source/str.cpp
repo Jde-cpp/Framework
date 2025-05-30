@@ -1,12 +1,14 @@
-﻿#include <jde/Str.h>
+﻿#include <jde/framework/str.h>
 #include <algorithm>
 #include <functional>
 #include <boost/algorithm/hex.hpp>
+#include <fmt/args.h>
+
 #ifdef _MSC_VER
-	#include "../../Windows/source/WindowsUtilities.h"
+	#include <jde/framework/process/os/windows/WindowsUtilities.h>
 #endif
 
-#define var const auto
+#define let const auto
 
 namespace Jde{
 	α Str::DecodeUri( sv x )ι->string{
@@ -31,7 +33,7 @@ namespace Jde{
 	α Str::Empty()ι->str{ return _empty; };
 
 	α Str::NextWord( sv x )ι->sv{
-		var p = NextWordLocation( x );
+		let p = NextWordLocation( x );
 		return p ? get<0>( *p ) : sv{};
 	}
 
@@ -60,18 +62,9 @@ namespace Jde{
 	α Str::ToUpper( sv source )ι->string{ return Transform( source, ::toupper ); }
 
 	α Str::ToString( sv format, vector<string> args )ι->string{
-		using ctx = fmt::format_context;
-		vector<fmt::basic_format_arg<ctx>> ctxArgs;
-		for( var& a : args )
-			ctxArgs.push_back( fmt::detail::make_arg<ctx>(a) );
-		string y;
-		try{
-			y = fmt::vformat( format, fmt::basic_format_args<ctx>{ctxArgs.data(), (int)ctxArgs.size()} );
-		}
-		catch( const fmt::format_error& e ){
-			BREAK;
-			y = Jde::format( "format error format='{}' - {}", format, e.what() );
-		}
-		return y;
+    fmt::dynamic_format_arg_store<fmt::format_context> store;
+		for( auto&& arg : args )
+			store.push_back( move(arg) );
+    return fmt::vformat(format, store);
 	}
 }

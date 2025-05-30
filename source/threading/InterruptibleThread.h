@@ -3,15 +3,13 @@
 #define INTERRUPTIBLE_THREAD
 //adapted from https://livebook.manning.com/#!/book/c-plus-plus-concurrency-in-action-second-edition/chapter-9/v-7/1
 #include <future>
-#include <jde/Exception.h>
 #include "Thread.h"
-#include <jde/App.h>
+#include <jde/framework/process.h>
 
 namespace Jde::Threading{  //TODO Reflection remove Threading from public items. move to jthread
 #define ω Γ static auto
 	void InterruptionPoint()ε;
-	struct Γ InterruptFlag
-	{
+	struct Γ InterruptFlag{
 		InterruptFlag()ι;
 		void Set()ι;
 		template<typename Lockable>
@@ -44,47 +42,41 @@ namespace Jde::Threading{  //TODO Reflection remove Threading from public items.
 		InterruptFlag* _pFlag{nullptr};
 		bool ShouldJoin{true};
 	};
-#define _logTag LogTag()
+
 	template<typename FunctionType>
 	InterruptibleThread::InterruptibleThread( string name_, FunctionType f )ι:
-		Name{ name_}
-	{
+		Name{ name_}{
 		std::promise<InterruptFlag*> promise;
 		_internalThread = std::thread( [f,&promise, name=move(name_)]
 		{
-			TRACE( "~InterruptibleThread::f({})", name );
+			Trace( ELogTags::Threads, "~InterruptibleThread::f({})", name );
 			promise.set_value( &GetThreadInterruptFlag() );
 			SetThreadDscrptn( name );
 			f();
-			TRACE( "~InterruptibleThread::f({})", name );
+			Trace( ELogTags::Threads, "~InterruptibleThread::f({})", name );
 			GetThreadInterruptFlag().SetIsDone();
 		});
 		_pFlag = promise.get_future().get();
 	}
 
 	template<typename Lockable>
-	void InterruptFlag::Wait( std::condition_variable_any& cv, Lockable& lk )ι
-	{
+	void InterruptFlag::Wait( std::condition_variable_any& cv, Lockable& lk )ι{
 		struct CustomLock
 		{
 			CustomLock( InterruptFlag* pThis, std::condition_variable_any& cond, Lockable& lk ):
 				_pThis( pThis ),
-				_lk( lk )
-			{
+				_lk( lk ){
 				_pThis->_setClearMutex.lock();
 				_pThis->_pThreadConditionAny=&cond;
 			}
-			void unlock()
-			{
+			void unlock(){
 				_lk.unlock();
 				_pThis->_setClearMutex.unlock();
 			}
-			void lock()
-			{
+			void lock(){
 				std::lock( _pThis->_setClearMutex, _lk );
 			}
-			~CustomLock()
-			{
+			~CustomLock(){
 				_pThis->_pThreadConditionAny = 0;
 				_pThis->_setClearMutex.unlock();
 			}

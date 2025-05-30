@@ -1,6 +1,6 @@
 ﻿#pragma once
-#include <jde/App.h>
-#include <jde/coroutine/TaskOld.h>
+#include <jde/framework/process.h>
+#include <jde/framework/coroutine/TaskOld.h>
 #include "../threading/Thread.h"
 #include "../threading/InterruptibleThread.h"
 

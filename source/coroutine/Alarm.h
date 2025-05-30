@@ -1,6 +1,5 @@
 ﻿#pragma once
-#include <jde/Exports.h>
-#include <jde/coroutine/Task.h>
+#include <jde/framework/coroutine/Task.h>
 #include "../threading/Worker.h"
 #include "Coroutine.h"
 #include "Awaitable.h"
@@ -27,7 +26,7 @@ namespace Jde::Threading{
 		Ω Wait( TimePoint t, Handle& handle, SRCE )ι{ return AlarmAwait{t, handle, sl}; }
 		Ω Wait( Duration d, SRCE )ι{ return AlarmAwait{Clock::now()+d, sl}; }
 		static void Cancel( Handle handle )ι;
-		static constexpr sv Name{ "Alarm" };
+		static constexpr sv Name{ "alarm" };
 	private:
 		void Shutdown( bool terminate )ι override;
 		optional<bool> Poll()ι override;

@@ -1,10 +1,9 @@
 ﻿#include "Lock.h"
 #include "../threading/Mutex.h"
 
-#define var const auto
-namespace Jde
-{
-	static var& _logTag{ Logging::Tag("locks") };
+#define let const auto
+namespace Jde{
+	constexpr ELogTags _tags = ELogTags::Locks;
 	flat_map<string,std::deque<std::variant<LockKeyAwait*,coroutine_handle<>>>> _coLocks; std::atomic_flag _coLocksLock;
 	α LockWrapperAwait::TryLock( string key, bool /*shared*/ )ι->up<CoLockGuard>{
 		AtomicGuard l( _coLocksLock );
@@ -21,8 +20,8 @@ namespace Jde
 		AtomicGuard l( _coLocksLock );
 		auto& locks = _coLocks.try_emplace( Key ).first->second;
 		locks.push_back( this );
-		var ready = locks.size()==1;
-		TRACE( "({})LockKeyAwait::await_ready={} size={}", Key, ready, locks.size() );
+		let ready = locks.size()==1;
+		Trace( _tags, "({})LockKeyAwait::await_ready={} size={}", Key, ready, locks.size() );
 		return locks.size()==1;
 	}
 	α LockKeyAwait::Suspend()ι->void{
@@ -38,7 +37,7 @@ namespace Jde
 					locks[i] = Handle = _h;
 			}
 			ASSERT( Handle );
-			TRACE( "({})LockKeyAwait::await_suspend size={}", Key, locks.size() );
+			Trace( _tags, "({})LockKeyAwait::await_suspend size={}", Key, locks.size() );
 		}
 	}
 	α LockKeyAwait::await_resume()ι->AwaitResult{
@@ -48,7 +47,7 @@ namespace Jde
 	CoLockGuard::CoLockGuard( string key, std::variant<LockKeyAwait*,coroutine_handle<>> h )ι:
 		Handle{h},
 		Key{ move(key) }{
-		TRACE( "({})CoLockGuard() index={}", Key, h.index() );
+			Trace( _tags, "({})CoLockGuard() index={}", Key, h.index() );
 	}
 	CoLockGuard::~CoLockGuard(){
 		AtomicGuard l( _coLocksLock ); ASSERT( _coLocks.find(Key)!=_coLocks.end() && _coLocks.find(Key)->second.size() );
@@ -58,9 +57,9 @@ namespace Jde
 			if( locks.front().index()==1 )
 				CoroutinePool::Resume( move(get<1>(locks.front())) );
 			else
-				TRACE( "({})CoLockGuard - size={}, next is awaitable, should continue.", Key, locks.size() );
+			Trace( _tags, "({})CoLockGuard - size={}, next is awaitable, should continue.", Key, locks.size() );
 		}
-		TRACE( "~CoLockGuard( {} )", Key );
+		Trace( _tags, "~CoLockGuard( {} )", Key );
 	}
 
 	α LockWrapperAwait::await_ready()ι->bool{

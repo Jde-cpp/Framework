@@ -1,5 +1,4 @@
 #pragma once
-#include <jde/Exception.h>
 #include "../threading/Interrupt.h"
 #include "../collections/Map.h"
 #include "DiskWatcher.h"

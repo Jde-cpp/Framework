@@ -21,20 +21,18 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-#include <jde/io/tinyxml2.h>
+#include <jde/framework/io/tinyxml2.h>
 
 #include <new>		// yes, this one new style header, is in the Android SDK.
 #include <cstddef>
 #include <cstdarg>
 #include <fstream>
-#include <jde/TypeDefs.h>
-#include <jde/Exception.h>
-#include <jde/io/Parser.h>
-#include <jde/io/File.h>
-#include "../Settings.h"
+#include <jde/framework/io/Parser.h>
+#include <jde/framework/io/file.h>
+#include <jde/framework/settings.h>
 
 using namespace std::literals::string_view_literals;
-#define var const auto
+#define let const auto
 namespace Jde::Xml
 {
 	using namespace Str;
@@ -42,7 +40,7 @@ namespace Jde::Xml
 }
 
 namespace Jde{
-	static var _logTag{ Logging::Tag("xml") };
+	constexpr ELogTags _tags{ ELogTags::Parsing };
 	using namespace Jde::Xml::XMLUtil;
 	//const char* writeBoolTrue;
 	//const char* writeBoolFalse;
@@ -174,7 +172,7 @@ void StrPair::SetStr( sv str, int flags )
 	TIXMLASSERT( p );
 	TIXMLASSERT( endTag && *endTag );
 
-	var length = strlen( endTag );
+	let length = strlen( endTag );
 	char* pResult = nullptr;
 	for( char* start = p; *p && !pResult; ++p )
 	{
@@ -297,9 +295,9 @@ void StrPair::CollapseWhitespace()
 					else
 					{
 						bool entityFound = false;
-						for( var& entity : _entities )
+						for( let& entity : _entities )
 						{
-							var size = entity.Pattern.size();
+							let size = entity.Pattern.size();
 							if( entity.Pattern!=sv{(char*)p+1, size} || *(p+size+1)!=';' )
 								continue;
 							*q++ = entity.value;
@@ -352,8 +350,8 @@ namespace Jde
 			if( token=="begin"sv )
 			{
 				uint iStart{ parser.Index() }; uint line{ parser.Line() };
-				var next = parser.Next(); iStart += next.find_first_of("\n")+1;
-				if( var nextWord = Str::NextWord(next); nextWord=="644" )
+				let next = parser.Next(); iStart += next.find_first_of("\n")+1;
+				if( let nextWord = Str::NextWord(next); nextWord=="644" )
 				{
 					for( sv n=parser.Next(false); n.size() && !n.ends_with("end"); n = parser.Next(false) );
 					if( parser.Index()<parser.Text.size() )
@@ -367,7 +365,7 @@ namespace Jde
 			}
 			if( token.substr(token.size()-1,1)!="<" )
 				continue;
-			var next = parser.Next();
+			let next = parser.Next();
 			auto tag = ToIV( Str::NextWord(next) ); CHECK( tag.size() );
 			if( token=="<" && tag.starts_with("![CDATA[") && next.ends_with("]]>") )
 				continue;
@@ -376,18 +374,18 @@ namespace Jde
 				for( auto end=next; !end.ends_with("-->") && parser; end = parser.Next() );
 				continue;
 			}
-			var haveClose = next.substr(next.size()-1, 1)==">";//<br > doesn't work with tag.
+			let haveClose = next.substr(next.size()-1, 1)==">";//<br > doesn't work with tag.
 			if( tag.substr(tag.size()-1, 1)==">" )
 				tag = tag.substr( 0, tag.size()-1 );
 			if( tag.size() && tag[0]=='/' )// </html
 			{
-				var endTag = tag.substr( 1, tag.size()-1 ) ; CHECK( openTags.size() );
-				var startTag = openTags.back();
-				var equal = startTag.Tag==endTag;
+				let endTag = tag.substr( 1, tag.size()-1 ) ; CHECK( openTags.size() );
+				let startTag = openTags.back();
+				let equal = startTag.Tag==endTag;
 				bool haveOpenTag = equal;
 				for( size_t i=openTags.size(); !haveOpenTag && i>0; --i )
 				{
-					var& startTagCurrent = openTags[i-1].Tag;
+					let& startTagCurrent = openTags[i-1].Tag;
 					if( endTag=="div" && (startTagCurrent=="td" || startTagCurrent=="hr") )//<td></div></td>
 						break;
 					haveOpenTag = startTagCurrent==endTag;
@@ -395,12 +393,12 @@ namespace Jde
 				if( !haveOpenTag )//<html></div></html>
 				{
 					for( size_t i=0; !equal && i<openTags.size(); ++i )
-						TRACE( "[{}][{}]{}", openTags[i].Line, openTags[i].Index, openTags[i].Tag );
-					var endIndex = parser.Index()-tag.size()-2;
-					var newXml = string{ parser.Text.substr(0, endIndex) }+Jde::format( "<{}>", ToSV(endTag) )+string{ parser.Text.substr(endIndex) };
+						Trace( _tags, "[{}][{}]{}", openTags[i].Line, openTags[i].Index, openTags[i].Tag );
+					let endIndex = parser.Index()-tag.size()-2;
+					let newXml = string{ parser.Text.substr(0, endIndex) }+Jde::format( "<{}>", ToSV(endTag) )+string{ parser.Text.substr(endIndex) };
 
-					TRACE( "[{}]({})noopentag = '{}|||{}", parser.Line(), ToSV(endTag), parser.Text.substr(parser.Index()-120, 120), parser.Text.substr(parser.Index(), 30) );
-					TRACE( "new = '{}", newXml.substr(parser.Index()-120, 150) );
+					Trace( _tags, "[{}]({})noopentag = '{}|||{}", parser.Line(), ToSV(endTag), parser.Text.substr(parser.Index()-120, 120), parser.Text.substr(parser.Index(), 30) );
+					Trace( _tags, "new = '{}", newXml.substr(parser.Index()-120, 150) );
 					result = Close( Parser{newXml, &parser, parser.Index()}, openTags );
 					break;
 				}
@@ -411,13 +409,12 @@ namespace Jde
 					if( !equal )
 					{
 						for( size_t i=0; !equal && i<openTags.size(); ++i )
-							TRACE( "[{}][{}]{}", openTags[i].Line, openTags[i].Index, openTags[i].Tag );
-						var newXml = string{ parser.Text.substr(0, startTag.Index) }+string{"/"}+string{ parser.Text.substr(startTag.Index) };
-						if( Settings::Get<bool>("xml/closeLog").value_or(false) )
-						{
-							TRACE( "({})start = [{}]'{}', end= [{}]'{}'", parser.Line(), startTag.Index, ToStr(startTag.Tag), parser.Index(), ToSV(endTag) );
-							TRACE( "old = '{}'", parser.Text.substr(startTag.Index-70, 100) );
-							TRACE( "new = '{}'", newXml.substr(startTag.Index-70, 100) );
+							Trace( _tags, "[{}][{}]{}", openTags[i].Line, openTags[i].Index, openTags[i].Tag );
+						let newXml = string{ parser.Text.substr(0, startTag.Index) }+string{"/"}+string{ parser.Text.substr(startTag.Index) };
+						if( Settings::FindBool("/xml/closeLog").value_or(false) ){
+							Trace( _tags, "({})start = [{}]'{}', end= [{}]'{}'", parser.Line(), startTag.Index, ToStr(startTag.Tag), parser.Index(), ToSV(endTag) );
+							Trace( _tags, "old = '{}'", parser.Text.substr(startTag.Index-70, 100) );
+							Trace( _tags, "new = '{}'", newXml.substr(startTag.Index-70, 100) );
 						}
 						parser.SetText( newXml, startTag.Index+2, startTag.Line );
 					}
@@ -426,18 +423,18 @@ namespace Jde
 			else //<html
 			{
 				//DEBUG_IF( parser.Line()==139 );
-				var closing = haveClose
+				let closing = haveClose
 					? next.size()<3 ? ">" : next[next.size()-2]=='/' ? "/>" : ">" //tag does not work with <br />
 					: parser.NextToken( {"/>",">","<"} );
 				if( !closing.ends_with("/>") )
 				{
 					if( closing.ends_with("<") ) //<font </p>  //<HR <P
 					{
-						var endIndex = parser.Index()-1;
-						var newXml = string{ parser.Text.substr(0, parser.Index()-1) }+"/>"+string{ parser.Text.substr(endIndex) };
+						let endIndex = parser.Index()-1;
+						let newXml = string{ parser.Text.substr(0, parser.Index()-1) }+"/>"+string{ parser.Text.substr(endIndex) };
 
-						TRACE( "[{}]({})noclosetag = '{}|||{}", parser.Line(), ToSV(tag), parser.Text.substr(parser.Index()-120, 120), parser.Text.substr(parser.Index(), 30) );
-						TRACE( "new = '{}", newXml.substr(parser.Index()-120, 150) );
+						Trace( _tags, "[{}]({})noclosetag = '{}|||{}", parser.Line(), ToSV(tag), parser.Text.substr(parser.Index()-120, 120), parser.Text.substr(parser.Index(), 30) );
+						Trace( _tags, "new = '{}", newXml.substr(parser.Index()-120, 150) );
 						result = Close( Parser{newXml, &parser, endIndex}, openTags );
 						break;
 					}
@@ -445,22 +442,22 @@ namespace Jde
 					{
 						ASSERT( closing.ends_with(">") );
 						ASSERT( parser.Text[parser.Index()-1]=='>' );
-						var i = parser.Text[parser.Index()]=='>' ? parser.Index() : parser.Index()-1;
+						let i = parser.Text[parser.Index()]=='>' ? parser.Index() : parser.Index()-1;
 						ASSERT( parser.Text[i]=='>' );
 						if( tag=="hr" || tag=="br" ) //https://www.w3.org/TR/html401/index/elements.html
 						{
-							var newXml = string{ parser.Text.substr(0, i) }+string{"/"}+string{ parser.Text.substr(i) };
-							TRACE( "old = '{}'", parser.Text.substr(i-70, 100) );
-							TRACE( "new = '{}'", newXml.substr(i-70, 100) );
+							let newXml = string{ parser.Text.substr(0, i) }+string{"/"}+string{ parser.Text.substr(i) };
+							Trace( _tags, "old = '{}'", parser.Text.substr(i-70, 100) );
+							Trace( _tags, "new = '{}'", newXml.substr(i-70, 100) );
 							ASSERT( newXml[i+1]=='>' );
 							parser.SetText( newXml, i+1, parser.Line() );
 						}
 						else if( next.size() && next.ends_with("<") ) //<font <br, TODO, combine with 'if' above.
 						{
-							var start = i-next.size()-closing.size()+tag.size()+1;
-							var newXml = string{ parser.Text.substr(0, start) }+string{"/>"}+string{ parser.Text.substr(start) };
-							TRACE( "old = '{}'", parser.Text.substr(i-70, 100) );
-							TRACE( "new = '{}'", newXml.substr(i-70, 100) );
+							let start = i-next.size()-closing.size()+tag.size()+1;
+							let newXml = string{ parser.Text.substr(0, start) }+string{"/>"}+string{ parser.Text.substr(start) };
+							Trace( _tags, "old = '{}'", parser.Text.substr(i-70, 100) );
+							Trace( _tags, "new = '{}'", newXml.substr(i-70, 100) );
 							parser.SetText( newXml, i+1, parser.Line() );
 						}
 						else
@@ -815,7 +812,7 @@ bool XMLUtil::ToUnsigned64(const char* str, uint64_t* value) {
 {
 	 ASSERT( p );
 	 char* const start = p;
-	 var startLine = _parseCurLineNum;
+	 let startLine = _parseCurLineNum;
 	 if( WhitespaceMode()!=PRESERVE_WHITESPACE || parent.Value<iv>()!="P" )
 		p = SkipWhiteSpace( p, &_parseCurLineNum );
 	 if( !*p )
@@ -1095,7 +1092,7 @@ XMLNode* XMLNode::InsertAfterChild( XMLNode* afterThis, XMLNode* addThis )
 
 α XMLNode::FirstChildElement( sv n )Ι->const XMLElement*
 {
-	var* y = FirstChild();
+	let* y = FirstChild();
 	for( ; y && (!y->ToElement() || (!n.empty() && !StringEqual(y->Name(),n,IsCaseInsensitive()))); y = y->NextSiblingElement(n) );
 
 	return y && y->ToElement() ? y->ToElement() : nullptr;
@@ -1186,7 +1183,7 @@ char* XMLNode::ParseDeep( char* p, StrPair* parentEndTag, uint* curLineNumPtr )
 		std::tie(p,node) = _document->Identify( p, *this );
 		if( !node )
 			break;
-		var initialLineNum = line = node->_parseLineNum;
+		let initialLineNum = line = node->_parseLineNum;
 
 		StrPair endTag;
 		//DEBUG_IF( initialLineNum==138 );
@@ -1311,7 +1308,7 @@ const XMLElement* XMLNode::ToElementWithName( const char* name ) const
 
 α XMLNode::ToElementWithName( sv n )const->const XMLElement*
 {
-	 var p = this->ToElement();
+	 let p = this->ToElement();
 	 return n.empty() || (p && StringEqual(p->Name(), n, IsCaseInsensitive())) ? p : nullptr;
 }
 
@@ -1773,10 +1770,10 @@ float XMLElement::FloatAttribute(const char* name, float defaultValue) const
 */
 sv XMLElement::Text()Ι
 {
-	var* node = FirstChild();
+	let* node = FirstChild();
 	for( ; node && node->ToComment(); node = node->NextSibling() );
 
-	var txt = node ? node->ToText() : nullptr;
+	let txt = node ? node->ToText() : nullptr;
 	return txt ? txt->Value() : sv{};
 }
 
@@ -1806,7 +1803,7 @@ sv XMLElement::Text()Ι
 		text = s->FirstText();
 	if( auto s = NextSibling(); s && text.empty() )
 	{
-		if( var p=s->ToText(); p )
+		if( let p=s->ToText(); p )
 		{
 			text = UnEscape( p->value() );
 			Trim( text );
@@ -1886,7 +1883,7 @@ void XMLElement::SetText( bool v )
 XMLError XMLElement::QueryIntText( int* ival ) const
 {
 	 if ( FirstChild() && FirstChild()->ToText() ) {
-		  var t = FirstChild()->Value();
+		  let t = FirstChild()->Value();
 		  if ( ToInt( t, ival ) ) {
 				return XML_SUCCESS;
 		  }
@@ -1924,7 +1921,7 @@ XMLError XMLElement::QueryInt64Text(int64_t* ival) const
 XMLError XMLElement::QueryUnsigned64Text(uint64_t* ival) const
 {
 	 if(FirstChild() && FirstChild()->ToText()) {
-		  var t = FirstChild()->Value();
+		  let t = FirstChild()->Value();
 		  if(ToUnsigned64(t, ival)) {
 				return XML_SUCCESS;
 		  }
@@ -1937,7 +1934,7 @@ XMLError XMLElement::QueryUnsigned64Text(uint64_t* ival) const
 XMLError XMLElement::QueryBoolText( bool* bval ) const
 {
 	 if ( FirstChild() && FirstChild()->ToText() ) {
-		  var t = FirstChild()->Value();
+		  let t = FirstChild()->Value();
 		  if ( ToBool( t, bval ) ) {
 				return XML_SUCCESS;
 		  }
@@ -1950,7 +1947,7 @@ XMLError XMLElement::QueryBoolText( bool* bval ) const
 XMLError XMLElement::QueryDoubleText( double* dval ) const
 {
 	 if ( FirstChild() && FirstChild()->ToText() ) {
-		  var t = FirstChild()->Value();
+		  let t = FirstChild()->Value();
 		  if ( ToDouble( t, dval ) ) {
 				return XML_SUCCESS;
 		  }
@@ -1963,7 +1960,7 @@ XMLError XMLElement::QueryDoubleText( double* dval ) const
 XMLError XMLElement::QueryFloatText( float* fval ) const
 {
 	 if ( FirstChild() && FirstChild()->ToText() ) {
-		  var t = FirstChild()->Value();
+		  let t = FirstChild()->Value();
 		  if ( ToFloat( t, fval ) ) {
 				return XML_SUCCESS;
 		  }
@@ -2087,12 +2084,12 @@ void XMLElement::DeleteAttribute( sv name )
 			TIXMLASSERT( attrib );
 			attrib->_parseLineNum = _document->_parseCurLineNum;
 
-			var attrLineNum = attrib->_parseLineNum;
+			let attrLineNum = attrib->_parseLineNum;
 			//DEBUG_IF( line==89 );
 
 			p = attrib->ParseDeep( p, *_document );
 
-			var n = attrib->Name();
+			let n = attrib->Name();
 			if( !p ) //Attribute(n)
 			{
 				BREAK;
@@ -2317,13 +2314,11 @@ const char* XMLDocument::_errorNames[XML_ERROR_COUNT] = {
 XMLDocument::XMLDocument( std::string_view value, bool insensitive, bool fix, Jde::SL sl )ε:
 	XMLDocument{ true, PRESERVE_WHITESPACE, insensitive, fix }
 {
-	if( Parse(value.data(), value.size()) )
-	{
-		if( var p = Settings::Get<fs::path>( "xml/errorFile" ); p )
-		{
+	if( Parse(value.data(), value.size()) ){
+		if( let p = Settings::FindString( "/xml/errorFile" ); p ){
 			std::ofstream os{ *p, std::ios::binary };
 			os << value;
-			Logging::Log( Logging::MessageBase{ELogLevel::Error, ErrorStr(), p->string().c_str(), "XMLDocument::XMLDocument", (uint_least32_t)_errorLineNum}, _logTag );
+			//Logging::Log( Logging::MessageBase{ELogLevel::Error, ErrorStr(), p->c_str(), "XMLDocument::XMLDocument", (uint_least32_t)_errorLineNum}, _logTag );
 			BREAK;
 		}
 		throw Jde::Exception{ sl, Jde::ELogLevel::Debug, "Could not parse '{}' - '{}'", value.substr(0, 100), ErrorStr() };
@@ -2732,7 +2727,7 @@ void XMLDocument::PopDepth()
 α XMLNode::Find( const std::span<sv>& entries )Ι->const XMLElement*
 {
 	ASSERT( entries.size() );
-	var p = FirstChildElement( entries[0] );
+	let p = FirstChildElement( entries[0] );
 	return p && entries.size()>1 ? p->Find( {&entries[1], entries.size()-1} ) : p;
 }
 
@@ -2753,13 +2748,13 @@ void XMLDocument::PopDepth()
 	for( ; n->ToText() && (next.empty() || next==text); next = get<0>(n->HtmlText<String>()) )//text should have been included in parent.
 		n = n->NextHtml();
 
-	var equal = next.empty() || next==text;
+	let equal = next.empty() || next==text;
 	return !equal ? n : n ? n->NextHtmlText( text ) : nullptr;
 }
 
 α XMLNode::NextHtml( bool children, bool continuation )Ι->const XMLNode*
 {
-	var* y{ children && !IsHtmlStyle() ? FirstChild() : nullptr };
+	let* y{ children && !IsHtmlStyle() ? FirstChild() : nullptr };
 
 	if( !y && NextSibling() )
 		y = NextSibling()->NextHtml();
@@ -2769,14 +2764,14 @@ void XMLDocument::PopDepth()
 		y = y->NextSibling()->NextHtml( false );
 	else if( y && y->IsHtmlStyle() && continuation )
 	{
-		if( var s=y->NextSibling(); s )
+		if( let s=y->NextSibling(); s )
 			y = s->IsHtmlStyle() ? s->NextHtml() : s;
 		else if( y->ToText() )
 			y = y->NextHtml();
 		else if( continuation )
 			y = nullptr;
 	}
-	//else if( var* s{y && y->IsHtmlStyle() ? NextSibling() : nullptr}; s )
+	//else if( let* s{y && y->IsHtmlStyle() ? NextSibling() : nullptr}; s )
 	//	y = s->IsHtmlStyle() ? s->NextHtml() : s;
 	if( !y && Parent() )
 		y = Parent()->NextHtml( false );
@@ -2794,9 +2789,9 @@ void XMLDocument::PopDepth()
 /*
 α FindTextCompare( sv x, const std::span<sv>& entries, bool stem )ι->bool
 {
-	var txt = UnEscape( x );
+	let txt = UnEscape( x );
 	auto f = []( auto x ){ return vector<CIString>{x.begin(), x.end()}; };
-	var v = stem
+	let v = stem
 		? f( StemmedWords(txt) )
 		: f( Words(txt) );
 	bool equal = entries.empty() && v.size();//empty entries==any text.
@@ -2822,12 +2817,12 @@ void XMLDocument::PopDepth()
 			tags.insert( tags.begin(), string{p->Value()} );
 	}
 start:
-	var pElement = pThis->ToElement();
+	let pElement = pThis->ToElement();
 	static vector<tuple<uint,String>> tags2;
 	if( pElement )
 	{
 		//DEBUG_IF( pThis->Value()=="body" );
-		DBG( "[{}]{}", pThis->GetLineNum(), pThis->Value() );
+		Debug( _tags, "[{}]{}", pThis->GetLineNum(), pThis->Value() );
 		tags2.push_back( make_tuple(pThis->GetLineNum(), String(pThis->Value<iv>())) );
 		tags.push_back( string{pThis->Value()} );
 	}
@@ -2835,7 +2830,7 @@ start:
 	//DEBUG_IF( pThis->_parseLineNum==138/*&& entries.front()!="NAME"*/ );
 
 	string where;
-	if( var c{searchChildren ? pThis->FirstChild() : nullptr}; c )
+	if( let c{searchChildren ? pThis->FirstChild() : nullptr}; c )
 	{
 		//auto foo = c->Value<iv>();
 		//DEBUG_IF( foo=="Sayuri Childs, Chief Compliance Officer" );
@@ -2843,9 +2838,9 @@ start:
 	}
 	if( auto p{y || pThis->ToElement() ? nullptr : pThis}; p )//element child above would have picked up.
 	{
-		var textNode = p->HtmlText<String>();
+		let textNode = p->HtmlText<String>();
 		pThis = get<1>( textNode );
-		if( var text = get<0>(textNode); text.size() )
+		if( let text = get<0>(textNode); text.size() )
 		{
 			if( entryLocation )
 			{
@@ -2886,7 +2881,7 @@ start:
 	{
 		tags.pop_back();
 		tags2.pop_back();
-		DBG( "~[{}]{}", pThis->GetLineNum(), pThis->Value() );
+		Debug( _tags, "~[{}]{}", pThis->GetLineNum(), pThis->Value() );
 	}
 	if( const XMLNode* n{pThis->NextSibling()}; !y && n )//<divs>
 	{
@@ -2924,7 +2919,7 @@ XMLPrinter::XMLPrinter( FILE* file, bool compact, int depth ) :
 		  _entityFlag[i] = false;
 		  _restrictedEntityFlag[i] = false;
 	 }
-	 for( var& entity : _entities )
+	 for( let& entity : _entities )
 	 {
 		  const char entityValue = entity.value;
 		  const unsigned char flagIndex = static_cast<unsigned char>(entityValue);
@@ -3016,7 +3011,7 @@ void XMLPrinter::PrintString( const char* p, bool restricted )
 								p += toPrint;
 						  }
 						  bool entityPatternPrinted = false;
-						  for( var& entity : _entities )
+						  for( let& entity : _entities )
 						  {
 								if( entity.value != *q )
 									continue;

@@ -1,14 +1,14 @@
 ﻿#pragma once
-#include <jde/App.h>
-#include <jde/log/Log.h>
-#include <jde/Str.h>
-#include <jde/Exports.h>
-#include "Settings.h"
+#ifndef CACHE_H
+#define CACHE_H
+#include <jde/framework/process.h>
+#include <jde/framework/str.h>
+#include <jde/framework/settings.h>
 #include "collections/Collections.h"
 
 namespace Jde
 {
-#define var const auto
+#define let const auto
 #define Φ Γ Ω
 	struct Cache2{
 		Φ Has( str id )ι->bool;
@@ -23,7 +23,6 @@ namespace Jde
 		template<class K,class V> static α GetValue( str n, K id )ι->sp<V>;
 	private:
 		static std::map<string,sp<void>> _cache; static  shared_mutex _cacheLock;
-		Φ LogTag()ι->sp<LogTag>;
 	};
 
 	Ŧ Cache2::Emplace( str id )ι->sp<T>{
@@ -48,16 +47,15 @@ namespace Jde
 		return p==_cache.end() ? sp<T>{} : std::static_pointer_cast<T>( p->second );
 	}
 
-#define _logTag LogTag()
 	Ŧ Cache2::Set( str id, sp<T> p )ι->sp<T>{
 		ul l{_cacheLock};
 		if( !p ){
-			var erased = _cache.erase( id );
-			TRACE( "Cache::{} erased={}"sv, id, erased );
+			let erased = _cache.erase( id );
+			Trace( ELogTags::Cache, "Cache::{} erased={}"sv, id, erased );
 		}
 		else{
 			_cache[id] = p;
-			TRACE( "Cache::{} set"sv, id );
+			Trace( ELogTags::Cache, "Cache::{} set"sv, id );
 		}
 		return p;
 	}
@@ -65,7 +63,7 @@ namespace Jde
 
 	struct Cache final{
 		Ω Has( str name )ι{ return Instance().InstanceHas( name ); }
-		Ω Duration( str /*name*/ )ι{ return Settings::Get<Jde::Duration>( "cache/default/duration" ).value_or( Duration::max() ); }
+		Ω Duration( str /*name*/ )ι{ return Settings::FindDuration( "/cache/default/duration" ).value_or( Duration::max() ); }
 		Ṫ Emplace( str name )ι->sp<T>{ return Instance().InstanceEmplace<T>( name ); }
 		Ṫ Get( str name )ι{ return Instance().InstanceGet<T>(name); }
 		Φ Double( string name )ι->double;
@@ -83,7 +81,6 @@ namespace Jde
 		Ŧ InstanceSet( str name, sp<T> pValue )ι->sp<T>;
 		Φ Instance()ι->Cache&;
 		std::map<string,sp<void>,std::less<>> _cache; mutable shared_mutex _cacheLock;
-		Φ LogTag()ι->sp<LogTag>;
 	};
 
 	Ŧ Cache::InstanceGet( str name )ι->sp<T>{
@@ -104,7 +101,7 @@ namespace Jde
 		sp<V> pValue;
 		sl l{_cacheLock};
 		if( auto p = _cache.find( cacheName ); p!=_cache.end() ){
-			if( var pMap = std::static_pointer_cast<flat_map<K,sp<V>>>(p->second); pMap ){
+			if( let pMap = std::static_pointer_cast<flat_map<K,sp<V>>>(p->second); pMap ){
 				if( auto pItem = pMap->find( id ); pItem != pMap->end() )
 					pValue = pItem->second;
 			}
@@ -116,7 +113,7 @@ namespace Jde
 		sp<V> pValue;
 		sl l{_cacheLock};
 		if( auto p = _cache.find( cacheName ); p!=_cache.end() ){
-			if( var pMap = std::static_pointer_cast<flat_map<K,sp<V>>>(p->second); pMap ){
+			if( let pMap = std::static_pointer_cast<flat_map<K,sp<V>>>(p->second); pMap ){
 				if( auto pItem = pMap->find( id ); pItem != pMap->end() )
 					pValue = pItem->second;
 			}
@@ -128,15 +125,15 @@ namespace Jde
 		ul l{_cacheLock};
 		if( !pValue ){
 			const bool erased = _cache.erase( name );
-			TRACE( "Cache::{} erased={}"sv, name, erased );
+			Trace( ELogTags::Cache, "Cache::{} erased={}"sv, name, erased );
 		}
 		else{
 			_cache[name] = pValue;
-			TRACE( "Cache::{} set"sv, name );
+			Trace( ELogTags::Cache, "Cache::{} set"sv, name );
 		}
 		return pValue;
 	}
-#undef var
+#undef let
 #undef Φ
-#undef _logTag
 }
+#endif

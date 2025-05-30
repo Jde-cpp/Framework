@@ -1,8 +1,8 @@
 ﻿#include "DateTime.h"
-#include <jde/Str.h>
+#include <jde/framework/str.h>
 #include "math/MathUtilities.h"
 
-#define var const auto
+#define let const auto
 
 namespace Jde
 {
@@ -27,7 +27,7 @@ namespace Jde
 			}
 			double value;
 			is >> value;
-			var type = is.get();
+			let type = is.get();
 			if( type=='Y' )
 				duration += hours( Round(value*365.25*24) );
 			else if( !parsingTime && type=='M' )
@@ -79,9 +79,9 @@ namespace Jde
 		tm.tm_min = minute;
 		tm.tm_sec = second;
 #ifdef _MSC_VER
-		var time = _mkgmtime( &tm );
+		let time = _mkgmtime( &tm );
 #else
-		var time = timegm( &tm );
+		let time = timegm( &tm );
 #endif
 		_time_point = Clock::from_time_t( time )+nanoFraction;
 	}
@@ -97,9 +97,9 @@ namespace Jde
 		tm.tm_min = stoi( string(iso.substr(14,2)) );
 		tm.tm_sec = stoi( string(iso.substr(17,2)) );
 #ifdef _MSC_VER
-		var time = _mkgmtime( &tm );
+		let time = _mkgmtime( &tm );
 #else
-		var time = timegm( &tm );
+		let time = timegm( &tm );
 #endif
 		_time_point = Clock::from_time_t( time );
 	}
@@ -110,10 +110,10 @@ namespace Jde
 	}
 	α DateTime::BeginingOfWeek()->DateTime
 	{
-		var now = time(nullptr);
+		let now = time(nullptr);
 		constexpr uint16 secondsPerDay = 60*60*24;
-		var date = DateTime( now/secondsPerDay*secondsPerDay );
-		var beginingOfWeek = date.TimeT() - date.Tm()->tm_wday*secondsPerDay;
+		let date = DateTime( now/secondsPerDay*secondsPerDay );
+		let beginingOfWeek = date.TimeT() - date.Tm()->tm_wday*secondsPerDay;
 		return DateTime( beginingOfWeek );
 	}
 
@@ -208,9 +208,9 @@ namespace Jde
 	}
 	α DateTime::ToDate( TimePoint time )ι->TimePoint
 	{
-		var secondsSinceEpoch = duration_cast<seconds>( time.time_since_epoch() ).count();
+		let secondsSinceEpoch = duration_cast<seconds>( time.time_since_epoch() ).count();
 		constexpr uint secondsPerDay = duration_cast<seconds>( 24h ).count();
-		var day = time - seconds( secondsSinceEpoch%secondsPerDay );
+		let day = time - seconds( secondsSinceEpoch%secondsPerDay );
 		return day;
 	}
 	α DateTime::ToIsoString()Ι->string
@@ -225,13 +225,13 @@ namespace Jde
 	constexpr std::array<sv,12> months{ "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec" };
 	uint8 DateTime::ParseMonth( sv month )ε
 	{
-		var index = find( months.begin(), months.end(), Str::ToLower(string(month)) )-months.begin();
+		let index = find( months.begin(), months.end(), Str::ToLower(string(month)) )-months.begin();
 		THROW_IF( index>=(int)months.size(), "Could not parse month '{}'", month );
 		return (uint8)index+1;
 	}
 	α DateTime::MonthAbbrev()Ι->string
 	{
-		var month = months[Month()-1];
+		let month = months[Month()-1];
 		return string{ (char)std::toupper(month[0]),month[1],month[2] };
 	}
 }

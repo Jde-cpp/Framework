@@ -1,16 +1,16 @@
 ﻿#include "Interrupt.h"
 #include "Thread.h"
 #include "InterruptibleThread.h"
-#define var const auto
+#define let const auto
 
 namespace Jde::Threading{
-	sp<Jde::LogTag> _logTag{ Logging::Tag("threads") };
+	constexpr ELogTags _tags = ELogTags::Threads;
 	Interrupt::Interrupt( sv threadName, Duration duration, bool paused ):
 		_threadName{ threadName },
 		_paused{ paused },
 		_refreshRate{ duration }
 	{
-		TRACE( "{0}::{0}(paused:  {1})", _threadName, paused );
+		Trace( _tags, "{0}::{0}(paused:  {1})", _threadName, paused );
 		Start();
 	}
 	Interrupt::~Interrupt()
@@ -23,22 +23,22 @@ namespace Jde::Threading{
 	}
 	void Interrupt::Start()ι
 	{
-		TRACE( "{}::Start(paused:  {})", _threadName, (bool)_paused );
+		Trace( _tags, "{}::Start(paused:  {})", _threadName, (bool)_paused );
 		std::call_once( _singleThread, &Interrupt::Start2, this );
 	}
 	void Interrupt::Wake()ι
 	{
-		TRACE( "{}::Wake()", _threadName );
+		Trace( _tags, "{}::Wake()", _threadName );
 		_cvWait.notify_one();
 	}
 	void Interrupt::Pause()ι
 	{
-		TRACE( "{}::Pause()", _threadName );
+		Trace( _tags, "{}::Pause()", _threadName );
 		_paused = true;
 	}
 	void Interrupt::UnPause()ι
 	{
-		TRACE( "{}::UnPause()", _threadName );
+		Trace( _tags, "{}::UnPause()", _threadName );
 		if( _paused )
 		{
 			_paused = false;
@@ -48,7 +48,7 @@ namespace Jde::Threading{
 
 	void Interrupt::Stop()ι
 	{
-		TRACE( "{}::Stop()", _threadName );
+		Trace( _tags, "{}::Stop()", _threadName );
 		_pThread->Interrupt();
 		Wake();
 		_pThread->Join();
@@ -56,7 +56,7 @@ namespace Jde::Threading{
 	using namespace std::chrono_literals;
 	void Interrupt::Worker()
 	{
-		TRACE( "{}::Worker(paused:  {})", _threadName, (bool)_paused );
+		Trace( _tags, "{}::Worker(paused:  {})", _threadName, (bool)_paused );
 		SetThreadDscrptn( _threadName );
 		std::cv_status status = std::cv_status::timeout;
     	std::unique_lock<std::mutex> lk( _cvMutex );
@@ -70,7 +70,6 @@ namespace Jde::Threading{
 				else
 					OnAwake();
 			}
-			DBG( "Interrupt::Worker - Test Logging" );
 			if( _refreshRate>0ns )
 				status = _cvWait.wait_until( lk, std::chrono::steady_clock::now()+_refreshRate );
 			else
@@ -79,6 +78,6 @@ namespace Jde::Threading{
 				status = std::cv_status::no_timeout;
 			}
 		}
-		TRACE( "{}::Worker() - exiting", _threadName );
+		Trace( _tags, "{}::Worker() - exiting", _threadName );
 	}
 }

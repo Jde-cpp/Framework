@@ -1,20 +1,25 @@
 ﻿#pragma once
+#ifndef COLLECTIONS_H
+#define COLLECTIONS_H
 #include <algorithm>
 #include <forward_list>
 #include <sstream>
-#include <jde/io/Crc.h>
-#include <jde/log/Log.h>
+#include <jde/framework/io/crc.h>
 
-#define var const auto
+#define let const auto
 namespace Jde{
-	Ŧ Find( const T& collection, typename T::key_type key )ι->typename T::mapped_type{
+	Ŧ FindDefault( const T& collection, typename T::key_type key )ι->typename T::mapped_type{
 		auto pItem = collection.find( key );
 		return pItem==collection.end() ? typename T::mapped_type{} : pItem->second;
+	}
+	Ŧ Find( const T& map, typename T::key_type key )ι->typename std::optional<typename T::mapped_type>{
+		auto p = map.find( key );
+		return p==map.end() ? std::optional<typename T::mapped_type>{} : p->second;
 	}
 
 	Ŧ FindKey( const T& collection, const typename T::mapped_type& value )ι->optional<typename T::key_type>{
 		auto pEnd = collection.end();
-		auto p = boost::container::find_if( collection.begin(), pEnd, [&value](var& x)ι->bool{ return x.second==value; } );
+		auto p = boost::container::find_if( collection.begin(), pEnd, [&value](let& x)ι->bool{ return x.second==value; } );
 		return p==pEnd ? nullopt : optional<typename T::key_type>{ p->first };
 	}
 
@@ -60,13 +65,13 @@ namespace Jde::Collections{
 	template<typename Y, typename T>
 	Y Map( const T& map, function<void( const typename T::key_type&, const typename T::mapped_type&, Y&)> f ){
 		Y y;
-		std::for_each( map.begin(), map.end(), [f,&y](var& kv){ f(kv.first,kv.second,y);} );
+		std::for_each( map.begin(), map.end(), [f,&y](let& kv){ f(kv.first,kv.second,y);} );
 		return y;
 	}
 
 	ẗ Invert( const flat_map<K,V>& map )ι->flat_map<V,K>{
 		flat_map<V,K> results;
-		for_each( map.begin(), map.end(), [&results](var& x){results.emplace(x.second,x.first); } );
+		for_each( map.begin(), map.end(), [&results](let& x){results.emplace(x.second,x.first); } );
 		return results;
 	}
 
@@ -80,7 +85,7 @@ namespace Jde::Collections{
 
 	ẗ Keys( const flat_map<K,V>& map, function<bool(const V&)> f )ι->flat_set<K>{
 		flat_set<K> y;
-		for( var& kv : map ){
+		for( let& kv : map ){
 			if( f(kv.second) )
 				y.emplace( kv.first );
 		}
@@ -213,4 +218,5 @@ namespace Jde::Collections{
 		return p->second;
 	}
 }
-#undef var
+#undef let
+#endif

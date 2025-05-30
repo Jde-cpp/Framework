@@ -1,7 +1,7 @@
 ﻿#pragma once
 #ifndef DISK_WATCHER_H
 #define DISK_WATCHER_H
-#include <jde/Exports.h>
+
 #include "../threading/InterruptibleThread.h"
 #include "../coroutine/Awaitable.h"
 #include <shared_mutex>
@@ -65,8 +65,6 @@ namespace Jde::IO
 		β OnUnmount( const fs::path& path, const NotifyEvent& event )ι->void;
 		β OnQOverflow( const fs::path& path, const NotifyEvent& event )ι->void;
 		β OnIgnored( const fs::path& path, const NotifyEvent& event )ι->void;
-	private:
-		sp<LogTag> _logTag{ Logging::Tag("driveWatcher") };
 	};
 //#endif
 	struct WatcherSettings{
@@ -125,14 +123,11 @@ namespace Jde::IO
 		virtual ~DiskWatcher();
 		constexpr static EDiskWatcherEvents DefaultEvents = {EDiskWatcherEvents::Modify | EDiskWatcherEvents::MovedFrom | EDiskWatcherEvents::MovedTo | EDiskWatcherEvents::Create | EDiskWatcherEvents::Delete};
 	protected:
-		Ω LogTag()ι->sp<LogTag>;
-#define _logTag LogTag()
-		β OnModify( const fs::path& path, const NotifyEvent& /*event*/ )ι->void{ WARN( "No listener for OnModify {}.", path.string() );};
-		β OnMovedFrom( const fs::path& path, const NotifyEvent& /*event*/ )ι->void{ WARN( "No listener for OnMovedFrom {}.", path.string() );};
-		β OnMovedTo( const fs::path& path, const NotifyEvent& /*event*/ )ι->void{ WARN( "No listener for OnMovedTo {}.", path.string() );};
+		β OnModify( const fs::path& path, const NotifyEvent& /*event*/ )ι->void{ Warning( ELogTags::IO, "No listener for OnModify {}.", path.string() );};
+		β OnMovedFrom( const fs::path& path, const NotifyEvent& /*event*/ )ι->void{ Warning( ELogTags::IO, "No listener for OnMovedFrom {}.", path.string() );};
+		β OnMovedTo( const fs::path& path, const NotifyEvent& /*event*/ )ι->void{ Warning( ELogTags::IO, "No listener for OnMovedTo {}.", path.string() );};
 		β OnCreate( const fs::path& path, const NotifyEvent& /*event*/ )ι->void=0;
-		β OnDelete( const fs::path& path, const NotifyEvent& /*event*/ )ι->void{ WARN( "No listener for OnDelete {}.", path.string() );};
-#undef _logTag
+		β OnDelete( const fs::path& path, const NotifyEvent& /*event*/ )ι->void{ Warning( ELogTags::IO, "No listener for OnDelete {}.", path.string() );};
 	private:
 		α Run()ι->void;
 		α ReadEvent( const pollfd& fd, bool isRetry=false )ε->void;

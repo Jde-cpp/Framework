@@ -3,8 +3,8 @@
 #define COROUTINE_H
 #include <list>
 #include "../threading/Thread.h"
-#include "../Settings.h"
-#include <jde/App.h>
+#include <jde/framework/settings.h>
+#include <jde/framework/process.h>
 #include "../collections/Queue.h"
 #include "../threading/InterruptibleThread.h"
 
@@ -31,7 +31,7 @@ namespace Jde::Coroutine{
 	};
 
 	struct Γ CoroutinePool final: IShutdown{
-		~CoroutinePool(){ _pInstance=nullptr; }
+		CoroutinePool()ι;
 		Ω Resume( coroutine_handle<> h )ι->void;
 		α Shutdown( bool terminate )ι->void;
 #define SETTINGS(T,n,dflt) optional<T> v; if( _pSettings ) v=_pSettings->TryGet<T>(n); return v.value_or(dflt)
@@ -44,15 +44,14 @@ namespace Jde::Coroutine{
 		std::list<ResumeThread> _threads;
 		up<Threading::InterruptibleThread> _pThread;
 		up<QueueMove<CoroutineParam>> _pQueue;
-		static sp<CoroutinePool> _pInstance;
 
-		static Settings::Item<uint16> MaxThreadCount;
-		static Settings::Item<Duration> WakeDuration;
-		static Settings::Item<Duration> ThreadDuration;
-		static Settings::Item<Duration> PoolIdleThreshold;
+		uint16 _maxThreadCount;
+		Duration _wakeDuration;
+		Duration _threadDuration;
+		Duration _poolIdleThreshold;
 
 		static constexpr sv Name{ "CoroutinePool" };
-		static sp<Settings::Container> _pSettings;
+		//static jobject _settings;
 		friend CoroutineTests;
 	};
 }

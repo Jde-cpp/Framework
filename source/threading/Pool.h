@@ -5,11 +5,10 @@
 #include <shared_mutex>
 #include "Thread.h"
 #include "../collections/Queue.h"
-#include <jde/App.h>
+#include <jde/framework/process.h>
 #include "InterruptibleThread.h"
 
 namespace Jde::Threading{
-#define _logTag Threading::LogTag()
 	struct Γ Pool	{
 		Pool( uint threadCount=0, sv name="Pool" );
 		~Pool();
@@ -51,7 +50,7 @@ namespace Jde::Threading{
     	std::vector<sp<InterruptibleThread>> _threads; mutable std::mutex _mtx;
 		Queue<T> _queue;
 	};
-#define var const auto
+#define let const auto
 	template<typename T>
 	TypePool<T>::TypePool( uint8 threadCount, sv name )ι:
 		MaxThreads{ threadCount },
@@ -66,7 +65,7 @@ namespace Jde::Threading{
 		unique_lock l{_mtx};
 		if( RunningCount<MaxThreads )
 		{
-			var name = Jde::format( "{}-{}", Name, _threads.size() );
+			let name = Jde::format( "{}-{}", Name, _threads.size() );
 			auto pThread = make_shared<InterruptibleThread>( name, [&, name](){Run(name);} );
 			_threads.push_back( pThread );
 		}
@@ -120,5 +119,5 @@ namespace Jde::Threading{
 	}
 #endif
 }
-#undef var
+#undef let
 #undef _logTag

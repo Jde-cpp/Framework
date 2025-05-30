@@ -1,14 +1,13 @@
 ﻿#pragma once
 #ifndef WORKER_H
 #define WORKER_H
-#include <jde/TypeDefs.h>
-#include <jde/App.h>
+#include <jde/framework/process.h>
 #include "./Mutex.h"
 #include "../collections/Queue.h"
 #include "InterruptibleThread.h"
 
 namespace Jde::Threading{
-	#define var const auto
+	#define let const auto
 	using std::stop_token;
 	/*handle signals, configuration*/
 	struct Γ IWorker : IShutdown, std::enable_shared_from_this<IWorker>{
@@ -66,9 +65,9 @@ namespace Jde::Threading{
 		if( !_pInstance || !_pInstance->HasThread() )
 		{
 			//pInstance = _pInstance = make_shared<T>();
-			//const bool addThreads = Settings::TryGet<uint8>( Jde::format("workers/{}/threads", T::Name) ).value_or( 0 );
+			//const bool addThreads = Settings::TryGet<uint8>( Jde::format("/workers/{}/threads", T::Name) ).value_or( 0 );
 			_pInstance = Process::AddPollster<T>();
-			////var pSettings = Settings::TryGetSubcontainer<Settings::Container>(  );
+			////let pSettings = Settings::TryGetSubcontainer<Settings::Container>(  );
 			//if( addThreads )
 			//	_pInstance->StartThread();
 			//else
@@ -103,6 +102,6 @@ namespace Jde::Threading{
 	}
 }
 #undef TARG
-#undef var
+#undef let
 #undef $
 #endif

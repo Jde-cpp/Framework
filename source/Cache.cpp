@@ -1,16 +1,16 @@
 ﻿#include "Cache.h"
-#define var const auto
+#define let const auto
 namespace Jde
 {
 	std::map<string,tuple<double,TP>> _cacheDouble; shared_mutex _cacheDoubleLock;
-	
+
 	std::map<string,sp<void>> Cache2::_cache; shared_mutex Cache2::_cacheLock;
 
 	α Cache2::Has( str id )ι->bool{ sl _{_cacheLock}; return _cache.find( id )!=_cache.end(); }
 	α Cache2::Duration( str id )ι->Jde::Duration
 	{
-		return Settings::Get<Jde::Duration>( Jde::format("cache/{}/duration",id) ).value_or(
-			Settings::Get<Jde::Duration>( "cache/default/duration" ).value_or( Jde::Duration::max() ));
+		return Settings::FindDuration( Jde::format("/cache/{}/duration",id) ).value_or(
+			Settings::FindDuration( "/cache/default/duration" ).value_or( Jde::Duration::max() ));
 	}
 
 	α Cache2::Double( str id )ι->double
@@ -25,7 +25,7 @@ namespace Jde
 	{
 		if( t==TP::max() )
 		{
-			if( var d{ Duration(id) }; d!=Duration::max() )
+			if( let d{ Duration(id) }; d!=Duration::max() )
 				t =  Clock::now()+d;
 		}
 		auto r = _cacheDouble.emplace( move(id), make_tuple(v,t) );
@@ -34,8 +34,7 @@ namespace Jde
 		return r.second;
 	}
 
-	static sp<LogTag> _logTag{ Logging::Tag("cache") };
-	α Cache::LogTag()ι->sp<Jde::LogTag>{ return _logTag; }
+	constexpr ELogTags _tags = ELogTags::Cache;
 	Cache _instance;
 	α Cache::Instance()ι->Cache&{ return _instance; }
 
@@ -43,11 +42,11 @@ namespace Jde
 	{
 		unique_lock l{_cacheLock};
 		auto p = _cache.find( name );
-		var erased = p!=_cache.end();
+		let erased = p!=_cache.end();
 		if( erased )
 		{
 			_cache.erase( p );
-			TRACE( "Cache::{} erased={}"sv, name, erased );
+			Trace( _tags, "Cache::{} erased={}"sv, name, erased );
 		}
 		return erased;
 	}
@@ -62,7 +61,7 @@ namespace Jde
 	{
 		if( expiration==TP::max() )
 		{
-			if( var d{ Duration(id) }; d!=Duration::max() )
+			if( let d{ Duration(id) }; d!=Duration::max() )
 				expiration =  Clock::now()+d;
 		}
 		auto r = _cacheDouble.emplace( move(id), make_tuple(v,expiration) );

@@ -5,14 +5,12 @@ windows() { [[ -n "$WINDIR" ]]; }
 
 export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 
-startIndex()
-{
+startIndex() {
   x="${1%%$2*}"
   [[ "$x" = "$1" ]] && echo -1 || echo "${#x}"
 }
 
-# function anyDir
-# {
+# function anyDir {
 # 	echo a;
 # 	path=$1;
 # 	echo $path
@@ -23,8 +21,7 @@ startIndex()
 # 	echo $index;
 # }
 
-function findExecutable
-{
+function findExecutable {
 	exe=$1;
 	defaultPath=$2;
 	exitFailure=${3:-1};
@@ -42,8 +39,7 @@ function findExecutable
 	fi;
 }
 
-function toBashDir
-{
+function toBashDir {
 	windowsDir=$1;
   	local -n _bashDir=$2
   	_bashDir=${windowsDir/:/}; _bashDir=${_bashDir//\\//}; _bashDir=${_bashDir/C/c};
@@ -58,13 +54,11 @@ else
 	JDE_BASH=$JDE_DIR
 fi;
 
-function moveToDir
-{
+function moveToDir {
 	if [ ! -d $1 ]; then mkdir $1; fi;
 	cd $1;
 };
-function toWinDir
-{
+function toWinDir {
 	bashDir=$1;
 	local -n _winDir=$2
 	_winDir=${bashDir////\\};
@@ -72,8 +66,7 @@ function toWinDir
 	elif [[ $_winDir == \"\\c\\* ]]; then _winDir=\"c:${_winDir:3}; fi;
 }
 
-function fetchFile
-{
+function fetchFile {
     file2=${1};
     fetchLocation2=${2};
     gitTarget2=${3};
@@ -88,15 +81,13 @@ function fetchFile
     fi;
 }
 
-function fetch
-{
+function fetch {
 	fetchDir $1 $2 $shouldFetch; #if [ $? -ne 0 ]; then exit $?; fi;
 	cd $2;
 	if [ -d source ];then cd source; fi;
 }
 
-function fetchDir
-{
+function fetchDir {
 	local branch=${1}; local dir=${2}; local fetch=${3};
 	url=$([ ! -z "$jde_token" ] && echo $jde_token@ || echo "");
 	if [ ! -d $dir ]; then
@@ -111,8 +102,7 @@ function fetchDir
 	fi;
 }
 
-function addHard
-{
+function addHard {
 	local file=$1;#TwsSocketClient64.vcxproj
 	local fetchLocation=$2;
 	if [ -f $file ]; then rm $file; fi;
@@ -130,8 +120,7 @@ function addHard
 	fi;
 };
 
-function addHardDir
-{
+function addHardDir {
 	local dir=$1;
 	local sourceDir=$2/$1;
 	moveToDir $dir;
@@ -143,8 +132,7 @@ function addHardDir
 }
 
 
-function mklink
-{
+function mklink {
 	local file=$1;
 	local fetchLocation=$2;
 	if [ -f $file ]; then rm $file; fi;
@@ -163,8 +151,7 @@ function mklink
 		ln -s $fetchLocation/$file .;
 	fi;
 }
-function linkFileAbs
-{
+function linkFileAbs {
 	local original=$1;#TwsSocketClient64.vcxproj._user
 	local link=$2; #TwsSocketClient64.vcxproj.user
 	if [ -f $link ]; then exit 0; fi;
@@ -178,8 +165,7 @@ function linkFileAbs
 	fi;
 }
 
-function linkFile
-{
+function linkFile {
 	local original=$1;#TwsSocketClient64.vcxproj._user
 	local link=$2; #TwsSocketClient64.vcxproj.user
 	if [ -f $link ]; then exit 0; fi;
@@ -194,8 +180,7 @@ function linkFile
 	fi;
 }
 
-function removeJson
-{
+function removeJson {
 	echo start;
 	local file=$1;
 	local test=$2;
@@ -210,8 +195,7 @@ function removeJson
 	fi;
 }
 
-function addJson
-{
+function addJson {
 	echo start;
 	local file=$1;
 	local test=$2;

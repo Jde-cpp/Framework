@@ -4,9 +4,8 @@
 #include <shared_mutex>
 #include <boost/core/noncopyable.hpp>
 #include "Thread.h"
-#include <jde/Assert.h>
-#include <jde/log/Log.h>
-#include <jde/coroutine/TaskOld.h>
+
+#include <jde/framework/coroutine/TaskOld.h>
 #include "../coroutine/Awaitable.h"
 
 #define Φ Γ auto
@@ -65,15 +64,14 @@ namespace Jde::Threading
 
 
 #ifndef NDEBUG //TODORefactor move somewhere else
-	struct MyLock
-	{
+	struct MyLock{
 		MyLock( std::mutex& mutex, sv instance, sv name, size_t lineNumber ):
 			_pUniqueLock{ nullptr },
 			_pUniqueSharedLock{nullptr},
 			_pSharedLock{nullptr},
 			_description( Jde::format("{}.{} - line={}, thread={}", instance, name, lineNumber, Threading::GetThreadDescription()) )
 		{
-			TRACE( "unique lock - {}", _description );
+			Trace( ELogTags::Locks, "unique lock - {}", _description );
 			_pUniqueLock = make_unique<std::unique_lock<std::mutex>>( mutex );
 		}
 		MyLock( std::shared_mutex& mutex, sv instance, sv name, size_t lineNumber, bool shared = false ):
@@ -84,12 +82,12 @@ namespace Jde::Threading
 		{
 			if( shared )
 			{
-				TRACE( "shared lock - {}", _description );
+				Trace( ELogTags::Locks, "shared lock - {}", _description );
 				_pSharedLock = make_unique<std::shared_lock<std::shared_mutex>>( mutex );
 			}
 			else
 			{
-				TRACE( "unique lock - {}", _description );
+				Trace( ELogTags::Locks, "unique lock - {}", _description );
 				_pUniqueSharedLock = make_unique<std::unique_lock<std::shared_mutex>>( mutex );
 			}
 		}
@@ -101,12 +99,12 @@ namespace Jde::Threading
 				_pUniqueSharedLock->unlock();
 			else if( _pSharedLock )
 				_pSharedLock->unlock();
-			_unlocked=true; TRACE( "release - {}", _description );
+			_unlocked=true; Trace( ELogTags::Locks, "release - {}", _description );
 		}
 		~MyLock()
 		{
 			if( !_unlocked )
-				TRACE( "release - {}", _description );
+				Trace( ELogTags::Locks, "release - {}", _description );
 		}
 		Γ static void SetDefaultLogLevel( ELogLevel logLevel )ι;//{ _defaultLogLevel=logLevel; }
 		Γ static ELogLevel GetDefaultLogLevel()ι;
@@ -117,7 +115,6 @@ namespace Jde::Threading
 		up<std::shared_lock<std::shared_mutex>> _pSharedLock;
 		std::string _description;
 		static ELogLevel _defaultLogLevel;
-		sp<Jde::LogTag> _logTag{ Logging::Tag("mutex") };
 	};
 #endif
 #undef Φ

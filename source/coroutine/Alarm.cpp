@@ -1,10 +1,16 @@
 ﻿#include "Alarm.h"
+#include "../DateTime.h"
 
-#define var const auto
+#define let const auto
 
 namespace Jde::Threading{
 	constexpr ELogTags _tags{ ELogTags::Scheduler };
-	Alarm _instance;
+	up<Alarm> _instance;
+	α Instance()ι->Alarm&{
+		if( !_instance )
+			_instance = mu<Alarm>();
+		return *_instance;
+	}
 	flat_multimap<TimePoint,tuple<Handle,HCoroutine,std::source_location>> _coroutines; mutex _coroutineMutex;
 	std::condition_variable _cv; mutex _mtx;
 
@@ -17,7 +23,7 @@ namespace Jde::Threading{
 			lg _{_coroutineMutex};
 			_coroutines.emplace( t, make_tuple(myHandle, h, sl) );
 		}
-		_instance.WakeUp();
+		Instance().WakeUp();
 		Trace( sl, _tags, "({})Alarm::Add({})", myHandle, Chrono::ToString(Clock::now()-t) );
 		if( t-Clock::now()<WakeDuration ){
 			lg lk( _mtx );
@@ -27,7 +33,7 @@ namespace Jde::Threading{
 
 	α Alarm::Cancel( Coroutine::Handle h )ι->void{
 		lg _{ _coroutineMutex };
-		if( auto p = find_if(_coroutines, [h](var x){ return get<0>(x.second)==h;}); p!=_coroutines.end() ){
+		if( auto p = find_if(_coroutines, [h](let x){ return get<0>(x.second)==h;}); p!=_coroutines.end() ){
 			SL sl{ get<2>(p->second) };
 			Trace( sl, _tags, "({})Alarm::Cancel()", get<0>(p->second) );
 			get<1>( p->second ).destroy();
@@ -45,13 +51,13 @@ namespace Jde::Threading{
 		static uint i=0;
 		{
 			std::unique_lock<std::mutex> lk( _mtx );
-			var now = Clock::now();
-			var dflt = now+WakeDuration;
-			var next = Next().value_or(dflt);
-			var until = std::min( dflt, next );
+			let now = Clock::now();
+			let dflt = now+WakeDuration;
+			let next = Next().value_or(dflt);
+			let until = std::min( dflt, next );
 			if( ++i%10==0 )
 				Trace( _tags, "Alarm wait until:  {}, calls={}"sv, LocalTimeDisplay(until, true, true), Calls() );
-			/*var status =*/ _cv.wait_for( lk, until-now );
+			/*let status =*/ _cv.wait_for( lk, until-now );
 		}
 		lg _{ _coroutineMutex };
 		bool processed = false;

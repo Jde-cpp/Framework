@@ -1,7 +1,7 @@
-#include "jde/log/IExternalLogger.h"
+#include "jde/framework/log/IExternalLogger.h"
 
 namespace Jde::Logging{
-	auto _logTag{ Tag(ELogTags::Settings) };
+	constexpr ELogTags _tags{ ELogTags::ExternalLogger };
 	vector<up<Logging::IExternalLogger>> _externalLoggers;
 	α External::Loggers()ι->const vector<up<Logging::IExternalLogger>>&{ return _externalLoggers; }
 	α External::Size()ι->uint{ return _externalLoggers.size(); }
@@ -38,7 +38,8 @@ namespace Jde::Logging{
 	}
 	α External::MinLevel( sv externalName )ι->ELogLevel{
 		auto p = find_if( _externalLoggers, [externalName](auto& x){return x->Name()==externalName;} );
-		LOG_IF( p==_externalLoggers.end(), ELogLevel::Trace, "Could not find external logger '{}'", externalName );
+		if( p==_externalLoggers.end() )
+			Trace( _tags, "Could not find external logger '{}'", externalName );
 		return p==_externalLoggers.end() ? ELogLevel::NoLog : (*p)->MinLevel();
 	}
 	α External::DestroyLoggers()ι->void{

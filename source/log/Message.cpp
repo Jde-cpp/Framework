@@ -1,7 +1,18 @@
-#include "jde/log/Message.h"
+#include <jde/framework/log/Message.h>
+#include <jde/framework/settings.h>
 
+namespace Jde{
+	optional<ELogLevel> _breakLevel;
+	α Logging::BreakLevel()ι->ELogLevel{
+		if( !_breakLevel )
+			_breakLevel = Settings::FindEnum<ELogLevel>( "/logging/breakLevel", ToLogLevel ).value_or( ELogLevel::Warning );
+		return *_breakLevel;
+	}
+}
+
+α Jde::CanBreak()ι->bool{ return Process::IsDebuggerPresent(); }
 namespace Jde::Logging{
-	MessageBase::MessageBase( ELogLevel level, const source_location& sl )ι:
+	MessageBase::MessageBase( ELogLevel level, SL sl )ι:
 		Fields{ EFields::File | EFields::FileId | EFields::Function | EFields::FunctionId | EFields::LineNumber },
 		Level{ level },
 		MessageId{ 0 },//{},
@@ -20,7 +31,7 @@ namespace Jde::Logging{
 		MessageView{ message },
 		FileId{ Calc32RunTime(FileName(file)) },
 		File{ file },
-		FunctionId{ Calc32RunTime(function) },
+		FunctionId{ function ? Calc32RunTime(function) : 0 },
 		Function{ function },
 		LineNumber{ line }
 	{}
@@ -43,7 +54,7 @@ namespace Jde::Logging{
 		File = _fileName.c_str();
 	}
 
-	Message::Message( ELogLevel level, string message, const source_location& sl )ι:
+	Message::Message( ELogLevel level, string message, SL sl )ι:
 		MessageBase( level, sl ),
 		_pMessage{ mu<string>(move(message)) },
 		_fileName{ FileName(sl.file_name()) }{
@@ -52,9 +63,9 @@ namespace Jde::Logging{
 		MessageId = Calc32RunTime( MessageView );
 	}
 
-	Message::Message( sv tag, ELogLevel level, string message, const source_location& sl )ι:
+	Message::Message( ELogTags tags, ELogLevel level, string message, SL sl )ι:
 		MessageBase( level, sl ),
-		Tag{ tag },
+		Tags{ tags },
 		_pMessage{ mu<string>(move(message)) },
 		_fileName{ FileName(sl.file_name()) }{
 		File = _fileName.c_str();
@@ -62,9 +73,9 @@ namespace Jde::Logging{
 		MessageId = Calc32RunTime( MessageView );
 	}
 
-	Message::Message( sv tag, ELogLevel level, string message, char const* file, char const * function, boost::uint_least32_t line )ι:
+	Message::Message( ELogTags tags, ELogLevel level, string message, char const* file, char const * function, boost::uint_least32_t line )ι:
 		MessageBase{ level, message, file, function, line },
-		Tag{ tag },
+		Tags{ tags },
 		_pMessage{ mu<string>(move(message)) },
 		_fileName{ FileName(file) }{
 		File = _fileName.c_str();
@@ -75,7 +86,7 @@ namespace Jde::Logging{
 
 	Message::Message( const Message& x )ι:
 		MessageBase{ x },
-		Tag{ x.Tag },
+		Tags{ x.Tags },
 		_pMessage{ x._pMessage ? mu<string>(*x._pMessage) : nullptr },
 		_fileName{ x._fileName }{
 		File = _fileName.c_str();
