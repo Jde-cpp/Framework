@@ -6,9 +6,9 @@
 
 namespace Jde{
 	constexpr std::array<sv,29> ELogTagStrings = {"none",
-		"access", "app", "cache", "client", "crypto", "dbDriver", "exception", "externalLogger", 
-		"http", "io", "locks", "parsing", "pedantic", "ql", "read", "scheduler", 
-		"server", "sessions", "settings", "shutdown", "socket", "sql", "startup", "subscription", 
+		"access", "app", "cache", "client", "crypto", "dbDriver", "exception", "externalLogger",
+		"http", "io", "locks", "parsing", "pedantic", "ql", "read", "scheduler",
+		"server", "sessions", "settings", "shutdown", "socket", "sql", "startup", "subscription",
 		"test", "threads", "write"
 	};
 
@@ -26,13 +26,14 @@ namespace Jde{
 
 α toString( const concurrent_flat_map<ELogTags, ELogLevel>& settings )->string{
 	flat_map<ELogLevel, vector<string>> levels;
-	settings.cvisit_all( [&]( let& kv ){ 
+	settings.cvisit_all( [&]( let& kv ){
 		levels.try_emplace( kv.second, vector<string>{} ).first->second.push_back( ToString(kv.first) );
 	});
 	string y;
 	for( auto& [level, tags] : levels )
-		y += Ƒ( "[{}]: {}\n", FromEnum(LogLevelStrings(), level), Str::Join( tags, "," ) );
-	y.pop_back();
+		y += Ƒ( "[{}]: {}\n", FromEnum(LogLevelStrings(), level), Str::Join(tags, ",") );
+	if( y.size() )
+		y.pop_back();
   return y;
 }
 /*	α Logging::Tag( const std::span<const sv> tags )ι->vector<sp<LogTag>>{
@@ -48,7 +49,7 @@ namespace Jde{
 	α Logging::Tag( ELogTags tag )ι->sp<LogTag>{
 		return Tag( ToString(tag) );//TODO handle multiple. socket.client.read
 	}
-	
+
 	Ω setTag( sv tagName, vector<ELogTags>& existing, ELogLevel configLevel )ι->string{
 		using namespace Logging;
 		let tag = ToLogTags( tagName );
