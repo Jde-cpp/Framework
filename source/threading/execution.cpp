@@ -21,10 +21,10 @@ namespace Jde{
 
 namespace Jde{
 	static up<Vector<IShutdown*>> _shutdowns;
-	α Execution::AddShutdown( IShutdown* pShutdown )ι->void{
+	α Execution::AddShutdown( IShutdown* shutdown )ι->void{
 		if( !_shutdowns )
 			_shutdowns = mu<Vector<IShutdown*>>();
-	 	_shutdowns->push_back( pShutdown );
+	 	_shutdowns->push_back( shutdown );
 	}
 
 	struct CancellationSignals final{
@@ -35,7 +35,6 @@ namespace Jde{
 		α Clear()ι->void{ lg _(_mtx); _sigs.clear(); }
 		α Size()ι->uint{ lg _(_mtx); return _sigs.size(); }
 	private:
-		//std::list<sp<net::cancellation_signal>> _sigs;
 		vector<sp<net::cancellation_signal>> _sigs;
 		mutex _mtx;
 	};
@@ -62,7 +61,12 @@ namespace Jde{
 	};
 	up<ExecutorContext> _pExecutorContext;
 	atomic_flag ExecutorContext::_started{};
-	α Execution::Run()->void{ if( !ExecutorContext::Started() ) _pExecutorContext = mu<ExecutorContext>(); }
+	α Execution::Run()->void{
+		if( !ExecutorContext::Started() ){
+			auto keepAlive = Executor();
+			_pExecutorContext = mu<ExecutorContext>(); 
+		}
+	}
 
 	α CancellationSignals::Emit( net::cancellation_type ct )ι->void{
 		lg _(_mtx);
@@ -81,7 +85,8 @@ namespace Jde{
 	}
 	α ExecutorContext::Shutdown( bool terminate )ι->void{
 		Debug( ELogTags::App, "Executor Shutdown: instances: {}.", _ioc.use_count() );
-		_shutdowns->erase( [=](auto p){ p->Shutdown( terminate ); } );
+		if( _shutdowns )
+			_shutdowns->erase( [=](auto p){p->Shutdown(terminate);} );
 		if( _ioc && terminate )
 			_ioc->stop(); // Stop the `io_context`. This will cause `run()` to return immediately, eventually destroying the `io_context` and all of the sockets in it.
 		else
@@ -98,10 +103,11 @@ namespace Jde{
 		_started.test_and_set();
 		_started.notify_all();
 		_ioc->run();
-		_shutdowns->erase( [=](auto p){ p->Shutdown( false ); } );
+		if( _shutdowns )
+			_shutdowns->erase( [=](auto p){ p->Shutdown( false ); } );
 		Information( ELogTags::App, "Executor Stopped: instances: {}.", _ioc.use_count() );
 		_started.clear();
-		for( auto& t : v )// (If we get here, it means we got a SIGINT or SIGTERM)
+		for( auto& t : v )
 			t.join();
 		Debug( ELogTags::App, "Removing Executor remaining instances: {}.", _ioc.use_count()-1 );
 		_ioc.reset(); //need to clear out client connections.

@@ -1,7 +1,5 @@
 #include <jde/framework/io/json.h>
 #pragma warning( disable : 4996 )
-#define _SILENCE_ALL_CXX23_DEPRECATION_WARNINGS
-#include "C:\Users\duffyj\source\repos\libs\jsonnet\third_party\rapidyaml\ryml_all.hpp"
 #include <libjsonnet++.h>
 #include <jde/framework/str.h>
 #include "../DateTime.h"
