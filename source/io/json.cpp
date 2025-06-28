@@ -120,7 +120,7 @@ namespace Jde{
 		return AsArray( v, sl );
 	}
 
-	α Json::AsObject( const jvalue& v, SL sl )ε->const jobject&{
+	α Json::AsObject( jvalue& v, SL sl )ε->jobject&{
 		if( !v.is_object() ){
 			let y = v.try_as_object();
 			std::error_code ec = y.error();
@@ -134,8 +134,8 @@ namespace Jde{
 		auto p = FindValuePtr( v, path ); THROW_IFSL( !p, "Path '{}' not found in '{}'", path, serialize(v) );
 		return AsObject( *p, sl );
 	}
-	α Json::AsObject( const jobject& o, sv key, SL sl )ε->const jobject&{
-		let& y = o.try_at( key );
+	α Json::AsObject( jobject& o, sv key, SL sl )ε->jobject&{
+		auto y = o.try_at( key );
 		if( !y )
 			throw CodeException{ y.error(), ELogTags::Parsing, Ƒ("Key '{}' not found in {}.", key, serialize(o)), ELogLevel::Debug, sl };
 		return AsObject( *y, sl );
@@ -163,7 +163,7 @@ namespace Jde{
 	}
 	α Json::AsSV( const jobject& o, sv key, SL sl )ε->sv{
 		auto p = FindSV( o, key );
-		THROW_IFSL( !p, "Key '{}' not found in '{}'.", key, serialize(o) );
+		THROW_IFSL( !p, "String key '{}' not found in '{}'.", key, serialize(o) );
 		return *p;
 	}
 	α Json::AsSVPath( const jobject& o, sv path, SL sl )ε->sv{
@@ -185,9 +185,9 @@ namespace Jde{
 		return p && p->is_string() ? p->get_string() : optional<sv>{};
 	}
 
-	α Json::FindValue( const jobject& o, sv path )ι->const jvalue*{
+	α Json::FindValue( jobject& o, sv path )ι->jvalue*{
 		auto keys = Str::Split( path, '/' );
-		const jobject* jobj = &o;
+		jobject* jobj = &o;
 		for( uint i=0; jobj && i<keys.size(); ++i ){
 			if( i==keys.size()-1 ){
 				auto p = jobj->if_contains( keys[i] );
