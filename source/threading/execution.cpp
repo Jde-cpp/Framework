@@ -64,7 +64,7 @@ namespace Jde{
 	α Execution::Run()->void{
 		if( !ExecutorContext::Started() ){
 			auto keepAlive = Executor();
-			_pExecutorContext = mu<ExecutorContext>(); 
+			_pExecutorContext = mu<ExecutorContext>();
 		}
 	}
 
@@ -97,20 +97,22 @@ namespace Jde{
 	α ExecutorContext::Execute()ι->void{
 		Threading::SetThreadDscrptn( "Ex[0]" );
 		std::vector<std::jthread> v; v.reserve( ThreadCount() - 1 );
+		auto ioc = _ioc; //keep alive
 		for( auto i = ThreadCount() - 1; i > 0; --i )
-			v.emplace_back( [=]{ Threading::SetThreadDscrptn( Ƒ("Ex[{}]", i) ); _ioc->run(); } );
-		Trace( ELogTags::App, "Executor Started: instances: {}.", _ioc.use_count() );
+			v.emplace_back( [=]{ Threading::SetThreadDscrptn( Ƒ("Ex[{}]", i) ); ioc->run(); } );
+		Trace( ELogTags::App, "Executor Started: instances: {}.", ioc.use_count() );
 		_started.test_and_set();
 		_started.notify_all();
-		_ioc->run();
+		ioc->run();
+		_ioc.reset();
 		if( _shutdowns )
 			_shutdowns->erase( [=](auto p){ p->Shutdown( false ); } );
-		Information( ELogTags::App, "Executor Stopped: instances: {}.", _ioc.use_count() );
+		Information( ELogTags::App, "Executor Stopped: instances: {}.", ioc.use_count() );
 		_started.clear();
 		for( auto& t : v )
 			t.join();
-		Debug( ELogTags::App, "Removing Executor remaining instances: {}.", _ioc.use_count()-1 );
-		_ioc.reset(); //need to clear out client connections.
+		Debug( ELogTags::App, "Removing Executor remaining instances: {}.", ioc.use_count()-1 );
+		ioc.reset(); //need to clear out client connections.
 		_cancelSignals.Clear();
 		_started.clear();
 	}
