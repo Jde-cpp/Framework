@@ -65,7 +65,7 @@ namespace Jde
 		Ω Has( str name )ι{ return Instance().InstanceHas( name ); }
 		Ω Duration( str /*name*/ )ι{ return Settings::FindDuration( "/cache/default/duration" ).value_or( Duration::max() ); }
 		Ṫ Emplace( str name )ι->sp<T>{ return Instance().InstanceEmplace<T>( name ); }
-		Ṫ Get( str name )ι{ return Instance().InstanceGet<T>(name); }
+		Ṫ Get( str name )ι->sp<T>{ return Instance().InstanceGet<T>(name); }
 		Φ Double( string name )ι->double;
 		Φ SetDouble( string name, double v, TP t=TP::max() )ι->bool;
 		Ṫ Set( str name, sp<T> p )ι->sp<T>{ return Instance().InstanceSet<T>(name, p); }

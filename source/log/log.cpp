@@ -78,7 +78,7 @@ namespace Jde{
 #ifdef _MSC_VER
 							pattern = "\u001b]8;;file://%g\u001b\\%3!#-%3!l%$-%H:%M:%S.%e %v\u001b]8;;\u001b";
 #else
-						pattern = "%^%3!l%$-%H:%M:%S.%e \e]8;;file://%g#%#\a%v\e]8;;\a";
+						pattern = "%^%3!l%$-%H:%M:%S.%e \033]8;;file://%g#%#\a%v\033]8;;\a";
 						//pattern = "%^%3!l%$-%H:%M:%S.%e %v %g#%#";//%-64@  %v
 #endif
 					}

@@ -43,7 +43,7 @@ namespace Jde{
 	}
 }
 namespace Jde{
-	vector<Threading::IPollWorker*> IApplication::_activeWorkers; std::atomic_flag IApplication::_activeWorkersMutex;
+	vector<Threading::IPollWorker*> _activeWorkers; std::atomic_flag _activeWorkersMutex;
 
 	const TimePoint _start=Clock::now();
 	α IApplication::StartTime()ι->TimePoint{ return _start; }
@@ -146,39 +146,37 @@ namespace Jde{
 		_activeWorkers.erase( remove(_activeWorkers.begin(), _activeWorkers.end(), p), _activeWorkers.end() );
 	}
 
-	α IApplication::Pause()ι->int{
+	α Process::Pause()ι->int{
 		Information{ ELogTags::App, "Pausing main thread." };
 		while( !_exitReason ){
 			AtomicGuard l{ _activeWorkersMutex };
 			uint size = _activeWorkers.size();
-			if( size )
-			{
+			if( size ){
 				l.unlock();
 				bool processed = false;
-				for( uint i=0; i<size; ++i )
-				{
+				for( uint i=0; i<size; ++i ){
 					AtomicGuard l2{ _activeWorkersMutex };
 					auto p = i<_activeWorkers.size() ? _activeWorkers[i] : nullptr; if( !p ) break;
 					l2.unlock();
 					if( let pWorkerProcessed = p->Poll();  pWorkerProcessed )
 						processed = *pWorkerProcessed || processed;
 					else
-						RemoveActiveWorker( p );
+						IApplication::RemoveActiveWorker( p );
 				}
 				if( !processed )
 					std::this_thread::yield();
 			}
-			else
-			{
+			else{
 				l.unlock();
 				OSApp::Pause();
 			}
 		}
 		Information{ _tags, "Pause returned = {}.", _exitReason ? std::to_string(_exitReason.value()) : "null" };
 		_backgroundThreads.visit( [](auto&& p){ p->Interrupt(); } );
-		Process::Shutdown( _exitReason.value_or(-1) );
+		Shutdown( _exitReason.value_or(-1) );
 		return _exitReason.value_or( -1 );
 	}
+
 	α Cleanup()ι->void;
 	α Process::Shutdown( int exitReason )ι->void{
 		bool terminate{ false }; //use case might be if non-terminate took too long
@@ -236,6 +234,6 @@ namespace Jde{
 		Logging::DestroyLogger();
 	}
 	α IApplication::ApplicationDataFolder()ι->fs::path{
-		return ProgramDataFolder()/OSApp::CompanyRootDir()/OSApp::ProductName();
+		return ProgramDataFolder()/OSApp::CompanyRootDir()/Process::ProductName();
 	}
 }

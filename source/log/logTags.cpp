@@ -6,17 +6,17 @@
 
 namespace Jde{
 	constexpr std::array<sv,29> ELogTagStrings = {"none",
-		"access", "app", "cache", "client", "crypto", "dbDriver", "exception", "externalLogger", 
-		"http", "io", "locks", "parsing", "pedantic", "ql", "read", "scheduler", 
-		"server", "sessions", "settings", "shutdown", "socket", "sql", "startup", "subscription", 
+		"access", "app", "cache", "client", "crypto", "dbDriver", "exception", "externalLogger",
+		"http", "io", "locks", "parsing", "pedantic", "ql", "read", "scheduler",
+		"server", "sessions", "settings", "shutdown", "socket", "sql", "startup", "subscription",
 		"test", "threads", "write"
 	};
 
 	concurrent_flat_map<ELogTags, ELogLevel> _configuredLevels;
 	concurrent_flat_map<ELogTags,ELogLevel> _fileLogLevels;
 	optional<ELogLevel> _defaultFileLogLevel;
-	function<optional<ELogTags>(sv)> _tagFromString;
-	function<optional<string>(ELogTags)> _tagToString;
+	vector<up<Logging::ITagParser>> _tagParsers;
+	α Logging::AddTagParser( up<ITagParser>&& tagParser )ι->void{ _tagParsers.emplace_back( std::move(tagParser) ); }
 
 	α DefaultLogLevel()ι->ELogLevel{
 		if( !_defaultFileLogLevel ) //may not be set when tags are initialized.
@@ -26,59 +26,18 @@ namespace Jde{
 
 α toString( const concurrent_flat_map<ELogTags, ELogLevel>& settings )->string{
 	flat_map<ELogLevel, vector<string>> levels;
-	settings.cvisit_all( [&]( let& kv ){ 
+	settings.cvisit_all( [&]( let& kv ){
 		levels.try_emplace( kv.second, vector<string>{} ).first->second.push_back( ToString(kv.first) );
 	});
 	string y;
 	for( auto& [level, tags] : levels )
-		y += Ƒ( "[{}]: {}\n", FromEnum(LogLevelStrings(), level), Str::Join( tags, "," ) );
-	y.pop_back();
+		y += Ƒ( "[{}]: {}\n", FromEnum(LogLevelStrings(), level), Str::Join(tags, ",") );
+	if( y.size() )
+		y.pop_back();
   return y;
 }
-/*	α Logging::Tag( const std::span<const sv> tags )ι->vector<sp<LogTag>>{
-		vector<sp<LogTag>> y;
-		for( let tag : tags )
-			y.emplace_back( Tag(tag) );
-		return y;
-	}
-	α Logging::Tag( sv tag )ι->sp<LogTag>{
-		auto iter = find_if( _configuredTags, [&](let& x){return x->Id==tag;} );
-		return iter==_configuredTags.end() ? _configuredTags.emplace_back( ms<LogTag>(LogTag{string{tag}, DefaultLogLevel()}) ) : *iter;
-	}
-	α Logging::Tag( ELogTags tag )ι->sp<LogTag>{
-		return Tag( ToString(tag) );//TODO handle multiple. socket.client.read
-	}
-	
-	Ω setTag( sv tagName, vector<ELogTags>& existing, ELogLevel configLevel )ι->string{
-		using namespace Logging;
-		let tag = ToLogTags( tagName );
-		if( !tag )
-			return {};
-		ELogLevel globalLevel{};
-		_configuredLevels.visit( tag, [&](auto& m){globalLevel = m->second;} );
-		bool change = false;
-		if( auto p = find_if(existing.begin(), existing.end(), [&](let& x){return x.Id==tagName;}); p!=existing.end() ){
-			if( change = p->Level != level; change )
-				p->Level = level;
-		}
-		else if( (change = level!=ELogLevel::NoLog) )
-			existing.push_back( LogTag{globalTag->Id, level} );
-		//global tag holds the minimum log level.
-		if( change ){
-			auto minLevel = level==ELogLevel::NoLog ? ELogLevel::Critical : level;
-			auto updateMinLevel = [&]( const vector<LogTag>& otherSinkTags ){
-				if( auto p = find_if( otherSinkTags, [&](let& x){return x.Id==tagName;} ); p!=otherSinkTags.end() )
-					minLevel = std::min( minLevel, p->Level==ELogLevel::NoLog ? ELogLevel::Critical : p->Level );
-			};
-			if( &existing!=&_fileLogLevels )
-				updateMinLevel( _fileLogLevels );
-			//for_each( External::Loggers(), [&](let& x){ if(&existing!=&x->Tags) updateMinLevel(x->Tags);} );
-			globalTag->Level = minLevel;
-		}
-		return string{tagName};
-	}
-	*/
-	α Logging::AddTags( concurrent_flat_map<ELogTags,ELogLevel>& sinkTags, sv path )ι->void{
+
+α Logging::AddTags( concurrent_flat_map<ELogTags,ELogLevel>& sinkTags, sv path )ι->void{
 		uint i=0;
 		for( let& level : LogLevelStrings() ){
 			let levelTags = Settings::FindDefaultArray( Ƒ("/{}/{}", path, Str::ToLower(level)) );
@@ -128,28 +87,31 @@ namespace Jde{
 		if( (uint)tags & (uint)(1ul<<(i-1ul)) )
 			tagStrings.push_back( string{ELogTagStrings[i]} );
 	}
-	if( auto parser = tagStrings.empty() ? _tagToString : nullptr; parser )
-		tagStrings = { parser(tags).value_or("NotFound") };
-
+	for( let& parser : _tagParsers ){
+		auto additional = parser->ToString(tags);
+		if( additional.size() )
+			tagStrings.push_back( additional );
+	}
 	return tagStrings.empty() ? string{ELogTagStrings[0]} : Str::AddSeparators( tagStrings, "." );
 }
 
 α Jde::ToLogTags( sv name )ι->ELogTags{
 	auto flags = Str::Split( name, '.' );
 	ELogTags y{};
-	for( let& tag : flags ){
-		if( auto i = (ELogTags)std::distance( ELogTagStrings.begin(), find(ELogTagStrings, tag) ); i<(ELogTags)ELogTagStrings.size() )
-			y |= (ELogTags)( 1ul<<(underlying(i)-1) );
-		else if( auto parsed = _tagFromString ? _tagFromString(tag) : nullopt; parsed )
-			y |= *parsed;
-		else
-			Warning( ELogTags::Settings, "Unknown tag '{}'", tag );
+	for( let& subName : flags ){
+		ELogTags tag{};
+		if( auto i = (ELogTags)std::distance(ELogTagStrings.begin(), find(ELogTagStrings, subName)); i<(ELogTags)ELogTagStrings.size() )
+			tag |= (ELogTags)( 1ul<<(underlying(i)-1) );
+		else{
+			for( uint i=0; i<_tagParsers.size() && empty(tag); ++i )
+				tag |= _tagParsers[i]->ToTag( string{subName} );
+		}
+		if( empty(tag) )
+			Warning( ELogTags::Settings, "Unknown tag '{}'", subName );
+		y |= tag;
 	}
 	return y;
 }
-
-α Jde::TagFromString( function<optional<ELogTags>(sv)> tagFromString )ι->void{ _tagFromString = tagFromString; }
-α Jde::TagToString( function<string(ELogTags)> tagToString )ι->void{ _tagToString = tagToString; }
 
 α Jde::FileMinLevel( ELogTags tags )ι->ELogLevel{
 	return Min( tags, _fileLogLevels ).value_or( DefaultLogLevel() );
@@ -185,12 +147,7 @@ using enum Jde::ELogLevel;
 	}
 	return min;
 }
-/*
-α Jde::ShouldTrace( sp<LogTag> pTag )ι->bool{
-	//TODO go through all tags.
-	return pTag->Level==ELogLevel::Trace;
-}
-*/
+
 α Jde::ShouldTrace( ELogTags tags )ι->bool {
 	return MinLevel( tags ) == ELogLevel::Trace;
 }
