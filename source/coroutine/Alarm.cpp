@@ -1,5 +1,5 @@
 ﻿#include "Alarm.h"
-#include "../DateTime.h"
+#include <jde/framework/chrono.h>
 
 #define let const auto
 
@@ -56,7 +56,7 @@ namespace Jde::Threading{
 			let next = Next().value_or(dflt);
 			let until = std::min( dflt, next );
 			if( ++i%10==0 )
-				Trace( _tags, "Alarm wait until:  {}, calls={}"sv, LocalTimeDisplay(until, true, true), Calls() );
+				Trace( _tags, "Alarm wait until:  {}, calls={}"sv, Chrono::LocalTimeMilli(until), Calls() );
 			/*let status =*/ _cv.wait_for( lk, until-now );
 		}
 		lg _{ _coroutineMutex };
