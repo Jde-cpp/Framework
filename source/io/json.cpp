@@ -102,7 +102,7 @@ namespace Jde{
 		return value;
 	}
 
-	α Json::AsArray( const jvalue& v, SL sl )ε->const jarray&{
+	α Json::AsArray( jvalue& v, SL sl )ε->jarray&{
 		auto y = v.try_as_array();
 		if( !y )
 			throw CodeException{ y.error(), ELogTags::Parsing, Ƒ("'{}', is not an array but is a '{}'.", serialize(v), Kind(v.kind())), ELogLevel::Debug, sl };
