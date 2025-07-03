@@ -3,8 +3,8 @@
 #define WORKER_H
 #include <jde/framework/process.h>
 #include "./Mutex.h"
-#include "../collections/Queue.h"
 #include "InterruptibleThread.h"
+#include "../collections/Queue.h"
 
 namespace Jde::Threading{
 	#define let const auto

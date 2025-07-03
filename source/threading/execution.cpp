@@ -105,10 +105,10 @@ namespace Jde{
 		_started.notify_all();
 		ioc->run();
 		_ioc.reset();
+		_started.clear();
 		if( _shutdowns )
 			_shutdowns->erase( [=](auto p){ p->Shutdown( false ); } );
 		Information( ELogTags::App, "Executor Stopped: instances: {}.", ioc.use_count() );
-		_started.clear();
 		for( auto& t : v )
 			t.join();
 		Debug( ELogTags::App, "Removing Executor remaining instances: {}.", ioc.use_count()-1 );

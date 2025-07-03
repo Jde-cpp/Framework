@@ -1,6 +1,6 @@
 ﻿#include "Coroutine.h"
 #include "../threading/InterruptibleThread.h"
-#include "../DateTime.h"
+#include <jde/framework/chrono.h>
 
 #define let const auto
 
@@ -17,7 +17,7 @@ namespace Jde::Coroutine{
 		_wakeDuration{ Settings::FindDuration("/coroutinePool/wakeDuration").value_or(5s) },
 		_threadDuration{ Settings::FindDuration("/coroutinePool/threadDuration").value_or(1s) },
 		_poolIdleThreshold{ Settings::FindDuration("/coroutinePool/poolIdleThreshold").value_or(10ms) }{
-		Information( _tag, "MaxThreadCount={}, WakeDuration={} ThreadDuration={}, PoolIdleThreshold={}", _maxThreadCount, Chrono::ToString<Duration>(_wakeDuration), Chrono::ToString<Duration>(_threadDuration), Chrono::ToString<Duration>(_poolIdleThreshold) );
+		Information( _tag, "MaxThreadCount={}, WakeDuration={} ThreadDuration={}, PoolIdleThreshold={}", _maxThreadCount, Chrono::ToString<>(_wakeDuration), Chrono::ToString<>(_threadDuration), Chrono::ToString<>(_poolIdleThreshold) );
 		Process::AddShutdownFunction( []( bool terminating ){
 			_instance->Shutdown( terminating );
 			_instance = nullptr;
