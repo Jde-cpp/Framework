@@ -3,6 +3,7 @@
 #define FILECO_H
 #include <jde/framework/coroutine/Task.h>
 #include "../threading/Worker.h"
+#include "../coroutine/Awaitable.h"
 #ifdef _MSC_VER
 	#include <jde/framework/process/os/windows/WindowsHandle.h>
 	using HFile=Jde::HandlePtr;
