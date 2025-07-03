@@ -7,6 +7,8 @@
 #include <jde/framework/io/file.h>
 #include <jde/framework/settings.h>
 #include "threading/InterruptibleThread.h"
+#include "threading/Mutex.h"
+#include "threading/Worker.h"
 #include <jde/framework/collections/Vector.h>
 
 #define let const auto
