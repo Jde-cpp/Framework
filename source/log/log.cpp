@@ -166,7 +166,7 @@ namespace Jde{
 			for( let& m : *_pMemoryLog ){
 				if( !ShouldLog(m) )
 					continue;
-				let message = Str::ToString( m.MessageView, m.Args );
+				let message = Str::Format( m.MessageView, m.Args );
 				if( Sinks().size() )
 				SpdLog().log( spdlog::source_loc{m.File,(int)m.LineNumber,m.Function}, (level_enum)m.Level, message );
 				else
