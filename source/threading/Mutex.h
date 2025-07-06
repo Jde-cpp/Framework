@@ -28,12 +28,16 @@ namespace Jde{
 	struct CoLock;
 	struct Γ CoGuard{
 		CoGuard()ι{ ASSERT(false); }
+		CoGuard( CoGuard&& lock )ι;
 		~CoGuard();
+		α operator=( CoGuard&& )ι->CoGuard&;
 		α unlock()ι->void;
 	private:
 		CoGuard( CoLock& lock )ι;
+		CoGuard( const CoGuard& )ι = delete;
+		α operator=( const CoGuard& )ι->CoGuard& = delete;
 		CoLock* _lock{};
-		friend CoLock;
+		friend CoLock; friend class LockAwait;
 	};
 
 	class Γ LockAwait : public TAwait<CoGuard>{

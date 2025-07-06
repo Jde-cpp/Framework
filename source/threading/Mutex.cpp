@@ -4,15 +4,23 @@
 namespace Jde{
 	constexpr ELogTags _tags = ELogTags::Locks;
 
-	CoGuard::CoGuard( CoLock& lock )ι:
-		_lock{&lock}
-	{
+	CoGuard::CoGuard( CoLock& lock )ι:_lock{&lock}{
 		Trace( _tags, "CoGuard" );
+	}
+
+	CoGuard::CoGuard( CoGuard&& lock )ι:_lock{ lock._lock }{
+		lock._lock = nullptr;
+	}
+	α CoGuard::operator=( CoGuard&& rhs )ι->CoGuard&{
+		_lock = move( rhs._lock );
+		rhs._lock = nullptr;
+		return *this;
 	}
 
 	CoGuard::~CoGuard(){
 		Trace( _tags, "~CoGuard" );
-		_lock->Clear();
+		if( _lock )
+			_lock->Clear();
 	}
 	α CoGuard::unlock()ι->void{ _lock->Clear(); }
 
@@ -34,11 +42,11 @@ namespace Jde{
 	}
 	α CoLock::TestAndSet()ι->optional<CoGuard>{
 		lg l{ _mutex };
-		return _flag.test_and_set(std::memory_order_acquire) ? optional<CoGuard>{} : CoGuard(*this);
+		return _flag.test_and_set( std::memory_order_acquire ) ? optional<CoGuard>{} : CoGuard{ *this };
 	}
 	α CoLock::Push( LockAwait::Handle h )ι->optional<CoGuard>{
 		lg l{ _mutex };
-		auto p = _flag.test_and_set(std::memory_order_acquire) ? optional<CoGuard>{} : CoGuard(*this);
+		auto p = _flag.test_and_set(std::memory_order_acquire) ? optional<CoGuard>{} : CoGuard{ *this };
 		if( !p )
 			_queue.push( move(h) );
 		return p;
