@@ -166,11 +166,19 @@ namespace Jde{
 			for( let& m : *_pMemoryLog ){
 				if( !ShouldLog(m) )
 					continue;
-				let message = Str::Format( m.MessageView, m.Args );
-				if( Sinks().size() )
-				SpdLog().log( spdlog::source_loc{m.File,(int)m.LineNumber,m.Function}, (level_enum)m.Level, message );
-				else
-					std::cerr << message << std::endl;
+				try{
+					let message = Str::Format( m.MessageView, m.Args );
+					if( Sinks().size() )
+						SpdLog().log( spdlog::source_loc{m.File,(int)m.LineNumber,m.Function}, (level_enum)m.Level, message );
+					else
+						std::cerr << message << std::endl;
+				}
+				catch( const exception& e ){
+					string message{ m.MessageView };
+					message += " - " + Str::Join( m.Args, ", " );
+					SpdLog().log( spdlog::source_loc{m.File,(int)m.LineNumber,m.Function}, (level_enum)m.Level, message );
+					std::cerr << "Logging error: " << e.what() << std::endl;
+				}
 				//no use case for loggers being initialized before this.
 				// for_each( _externalLoggers, [&](auto& x){
 				// 	if( x->MinLevel()<=m.Level )
