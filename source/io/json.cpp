@@ -145,8 +145,10 @@ namespace Jde{
 		THROW_IFSL( !v || !v->is_object(), "object '{}' not found in '{}'.", path, serialize(o) );
 		return v->get_object();
 	}
-	α Json::AsTimePointOpt( const jobject& o, sv key )ι->optional<TimePoint>{
-		return FindTimePoint( o, key );
+	α Json::AsTimePoint( const jobject& o, sv key, SL sl )ε->TimePoint{
+		auto p = FindValue( o, key );
+		THROW_IFSL( !p || !p->is_string(), "Key '{}' not found in '{}'.", key, serialize(o) );
+		return Chrono::ToTimePoint( string{p->get_string()} );
 	}
 
 	α Json::FindDefaultObject( const jobject& o, sv key )ι->const jobject&{
