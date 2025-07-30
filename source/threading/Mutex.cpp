@@ -4,17 +4,26 @@
 namespace Jde{
 	constexpr ELogTags _tags = ELogTags::Locks;
 
-	CoGuard::CoGuard( CoLock& lock )ι:
-		_lock{lock}
-	{
+	CoGuard::CoGuard( CoLock& lock )ι:_lock{&lock}{
 		Trace( _tags, "CoGuard" );
 	}
 
-	CoGuard::~CoGuard()
-	{
-		Trace( _tags, "~CoGuard" );
-		_lock.Clear();
+	CoGuard::CoGuard( CoGuard&& lock )ι:_lock{ lock._lock }{
+		lock._lock = nullptr;
 	}
+	α CoGuard::operator=( CoGuard&& rhs )ι->CoGuard&{
+		_lock = move( rhs._lock );
+		rhs._lock = nullptr;
+		return *this;
+	}
+
+	CoGuard::~CoGuard(){
+		Trace( _tags, "~CoGuard" );
+		if( _lock )
+			_lock->Clear();
+	}
+	α CoGuard::unlock()ι->void{ _lock->Clear(); }
+
 	LockAwait::LockAwait( CoLock& lock )ι:_lock{lock}{}
 	LockAwait::~LockAwait(){} //clang error without this.
 	α LockAwait::await_ready()ι->bool
@@ -23,21 +32,21 @@ namespace Jde{
 		return !!_pGuard;
 	}
 
-	α LockAwait::await_resume()ι->AwaitResult{
-		return _pGuard ? AwaitResult{move(_pGuard)} : base::await_resume();
+	α LockAwait::await_resume()ι->CoGuard{
+		return _pGuard ? CoGuard{move(*_pGuard)} : base::await_resume();
 	}
 
 	α LockAwait::Suspend()ι->void{
 		if( (_pGuard = _lock.Push(_h)) )
 			_h.resume();
 	}
-	α CoLock::TestAndSet()ι->up<CoGuard>{
+	α CoLock::TestAndSet()ι->optional<CoGuard>{
 		lg l{ _mutex };
-		return _flag.test_and_set(std::memory_order_acquire) ? up<CoGuard>{} : up<CoGuard>( new CoGuard(*this) );
+		return _flag.test_and_set( std::memory_order_acquire ) ? optional<CoGuard>{} : CoGuard{ *this };
 	}
-	α CoLock::Push( HCoroutine h )ι->up<CoGuard>{
+	α CoLock::Push( LockAwait::Handle h )ι->optional<CoGuard>{
 		lg l{ _mutex };
-		auto p = _flag.test_and_set(std::memory_order_acquire) ? up<CoGuard>{} : up<CoGuard>{ new CoGuard(*this) };
+		auto p = _flag.test_and_set(std::memory_order_acquire) ? optional<CoGuard>{} : CoGuard{ *this };
 		if( !p )
 			_queue.push( move(h) );
 		return p;
@@ -47,11 +56,8 @@ namespace Jde{
 		if( !_queue.empty() ){
 			auto h = _queue.front();
 			_queue.pop();
-			h.promise().SetResult( up<CoGuard>{ new CoGuard(*this) } );
-			if( _resumeOnPool )
-				CoroutinePool::Resume( move(h) );
-			else
-				h.resume();
+			h.promise().SetValue( CoGuard{*this} );
+			h.resume();
 		}
 		else
 			_flag.clear();

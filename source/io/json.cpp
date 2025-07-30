@@ -2,7 +2,7 @@
 #pragma warning( disable : 4996 )
 #include <libjsonnet++.h>
 #include <jde/framework/str.h>
-#include "../DateTime.h"
+#include <jde/framework/chrono.h>
 
 #define let const auto
 namespace Jde{
@@ -102,7 +102,7 @@ namespace Jde{
 		return value;
 	}
 
-	α Json::AsArray( const jvalue& v, SL sl )ε->const jarray&{
+	α Json::AsArray( jvalue& v, SL sl )ε->jarray&{
 		auto y = v.try_as_array();
 		if( !y )
 			throw CodeException{ y.error(), ELogTags::Parsing, Ƒ("'{}', is not an array but is a '{}'.", serialize(v), Kind(v.kind())), ELogLevel::Debug, sl };
@@ -145,8 +145,10 @@ namespace Jde{
 		THROW_IFSL( !v || !v->is_object(), "object '{}' not found in '{}'.", path, serialize(o) );
 		return v->get_object();
 	}
-	α Json::AsTimePointOpt( const jobject& o, sv key )ι->optional<TimePoint>{
-		return FindTimePoint( o, key );
+	α Json::AsTimePoint( const jobject& o, sv key, SL sl )ε->TimePoint{
+		auto p = FindValue( o, key );
+		THROW_IFSL( !p || !p->is_string(), "Key '{}' not found in '{}'.", key, serialize(o) );
+		return Chrono::ToTimePoint( string{p->get_string()} );
 	}
 
 	α Json::FindDefaultObject( const jobject& o, sv key )ι->const jobject&{
@@ -176,8 +178,8 @@ namespace Jde{
 		return y ? string{ *y } : optional<string>{};
 	}
 	α Json::FindTimePoint( const jobject& o, sv key )ι->optional<TimePoint>{
-		let tp = FindSV( o, key );
-		return tp.has_value() ? Chrono::to_timepoint( *tp ) : optional<TimePoint>{};
+		let v = o.if_contains( key );
+		return v && v->is_string() ? Chrono::ToTimePoint( string{v->get_string()} ) : optional<TimePoint>{};
 	}
 
 	α Json::FindSVPath( const jobject& o, sv path )ι->optional<sv>{

@@ -98,7 +98,7 @@ namespace Jde{
 	α IException::what()Ι->const char*{
 		if( _what.empty() ){
 			if( _format.size() )
-				_what = Str::ToString( _format, _args );
+				_what = Str::Format( _format, _args );
 			else if( _pInner )
 				_what = _pInner->what();
 		}

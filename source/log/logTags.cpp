@@ -92,11 +92,11 @@ namespace Jde{
 		if( additional.size() )
 			tagStrings.push_back( additional );
 	}
-	return tagStrings.empty() ? string{ELogTagStrings[0]} : Str::AddSeparators( tagStrings, "." );
+	return tagStrings.empty() ? string{ELogTagStrings[0]} : Str::Join( tagStrings, "." );
 }
 
 α Jde::ToLogTags( sv name )ι->ELogTags{
-	auto flags = Str::Split( name, '.' );
+	auto flags = Str::Split( name, "." );
 	ELogTags y{};
 	for( let& subName : flags ){
 		ELogTags tag{};

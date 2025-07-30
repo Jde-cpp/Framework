@@ -7,6 +7,8 @@
 #include <jde/framework/io/file.h>
 #include <jde/framework/settings.h>
 #include "threading/InterruptibleThread.h"
+#include "threading/Mutex.h"
+#include "threading/Worker.h"
 #include <jde/framework/collections/Vector.h>
 
 #define let const auto
@@ -99,6 +101,20 @@ namespace Jde{
 	α Process::ShuttingDown()ι->bool{ return (bool)_exitReason; }
 	bool _finalizing{};
 	α Process::Finalizing()ι->bool{ return _finalizing; }
+
+	α Process::ExitException( exception&& e )ι->int{
+		int y{ EXIT_FAILURE };
+		auto cerrOutput = [&](){
+			sv prefix = y==0 ? "Exiting on exception:  " : "Exiting on error:  ";
+			std::cerr << prefix << e.what() << std::endl;
+		};
+		if( auto p = dynamic_cast<IException*>(&e); p ){
+			y = p->Level()==ELogLevel::Trace ? EXIT_SUCCESS :
+				p->Code ? (int)p->Code : EXIT_FAILURE;
+		}
+		cerrOutput();
+		return y;
+	}
 
 	up<vector<function<void(bool)>>> _pShutdownFunctions;
 	α Process::AddShutdownFunction( function<void(bool)>&& shutdown )ι->void{
