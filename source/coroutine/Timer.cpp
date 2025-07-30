@@ -3,7 +3,7 @@
 
 namespace Jde{
 	DurationTimer::DurationTimer( steady_clock::duration duration, SL sl )ι:
-		VoidAwait<>{sl},
+		VoidAwait{sl},
 		_duration{duration},
 		_ctx{ Executor() },
 		_timer{ *_ctx }

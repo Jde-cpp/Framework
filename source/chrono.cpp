@@ -43,19 +43,15 @@ namespace Jde{
 	}
 	α Chrono::ToTimePoint( string iso, SL sl )ε->TimePoint{
 		TimePoint tp;
-#ifdef _NDEBUG
 		std::istringstream is{ move(iso) };
-#else
-		std::istringstream is{ iso };
-#endif
 		is >> std::chrono::parse( "%FT%T", tp );
 		THROW_IFSL( is.fail(), "Could not parse ISO time" );
 		return tp;
 	}
-	α Chrono::ToTimePoint( uint16_t y, uint8_t mnth, uint8_t dayOfMonth, uint8 h, uint8 mnt, uint8 scnd, SL sl )ε->TimePoint{
+	α Chrono::ToTimePoint( uint16_t y, uint8_t mnth, uint8_t dayOfMonth, uint8 h, uint8 mnt, uint8 scnd, Duration subseconds, SL sl )ε->TimePoint{
     auto ymd = year{y}/month{mnth}/day{dayOfMonth};
 		THROW_IFSL( !ymd.ok(), "Invalid date: {}-{}-{}", y, mnth, dayOfMonth );
-    auto tp = sys_days{ymd} + hours{h} + minutes{mnt} + seconds{scnd};
+    auto tp = sys_days{ymd} + hours{h} + minutes{mnt} + seconds{scnd}+subseconds;
 		return tp;
 	}
 }
