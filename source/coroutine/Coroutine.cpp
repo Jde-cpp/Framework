@@ -45,7 +45,7 @@ namespace Jde::Coroutine{
 						continue;
 					}
 				}
-				Trace( _tag, "({}:{}:{})CoroutineThread call resume - on thread:{:x}", ThreadParam.AppHandle, index, _param->CoHandle.address(), Threading::GetThreadId() );
+				Trace( _tag, "({}:{}:{})CoroutineThread call resume - on thread:{:x}", ThreadParam.AppHandle, index, _param->CoHandle.address(), ThreadId() );
 				_param->CoHandle.resume();
 				Trace( _tag, "({})CoroutineThread finish resume", index );
 				SetThreadInfo( ThreadParam );
@@ -60,7 +60,7 @@ namespace Jde::Coroutine{
 	{}
 	ResumeThread::~ResumeThread(){
 		//if( !Process::ShuttingDown() )
-		Trace( _tag, "({:x}:{})ResumeThread::~ResumeThread", Threading::GetThreadId(), ThreadParam.AppHandle );
+		Trace( _tag, "({:x}:{})ResumeThread::~ResumeThread", ThreadId(), ThreadParam.AppHandle );
 		if( _thread.joinable() ){
 			_thread.request_stop();
 			_thread.join();

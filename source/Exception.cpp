@@ -157,7 +157,6 @@ namespace Jde{
 		return  _pUnderLying? _pUnderLying->path1() : _path;
 	}
 	α IOException::SetWhat()Ι->void{
-		auto e = errno;
 #ifdef _MSC_VER
 		let msg = std::strerror( Code );
 #else

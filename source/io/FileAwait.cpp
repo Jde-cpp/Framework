@@ -26,8 +26,8 @@ namespace IO{
 			Buffer = vector<char>{};
 	}
 	FileIOArg::FileIOArg( fs::path path, variant<string,vector<char>> data, SL sl )ι:
-		IsRead{ false },
 		Buffer{ move(data) },
+		IsRead{ false },
 		Path{ move(path) },
 		_sl{ sl }
 	{}
@@ -63,7 +63,7 @@ namespace IO{
 		lg l{ ChunkMutex };
 		ResumeExp( move(e), l );
 	}
-	α FileIOArg::ResumeExp( exception&& e, lg& chunkLock )ι->void{
+	α FileIOArg::ResumeExp( exception&& e, lg& /*chunkLock*/ )ι->void{
 		while( Chunks.size() )
 			Chunks.pop();
 		if( IsRead ){

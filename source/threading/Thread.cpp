@@ -6,9 +6,8 @@
 #define let const auto
 
 namespace Jde{
-	namespace Threading{
-		thread_local uint ThreadId{0};
-	}
+	thread_local uint _threadId{0};
+
 	constexpr uint NameLength = 256;
 	thread_local char ThreadName[NameLength]={0};//string shows up as memory leak
 	thread_local Threading::HThread AppThreadHandle{0};
