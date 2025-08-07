@@ -1,6 +1,7 @@
 ﻿#include "Coroutine.h"
 #include "../threading/InterruptibleThread.h"
 #include <jde/framework/chrono.h>
+#include <jde/framework/settings.h>
 
 #define let const auto
 
@@ -28,7 +29,7 @@ namespace Jde::Coroutine{
 		ThreadParam{ name, Threading::BumpThreadHandle() },
 		_param{ move(param) },
 		_thread{ [this]( std::stop_token stoken ){
-			Threading::SetThreadDscrptn( Jde::format("({:x})Co", ThreadParam.AppHandle) );
+			SetThreadDscrptn( Ƒ("({:x})Co", ThreadParam.AppHandle) );
 			let index = INDEX++;
 			auto timeout = Clock::now()+IdleLimit;
 			while( !stoken.stop_requested() ){
@@ -44,7 +45,7 @@ namespace Jde::Coroutine{
 						continue;
 					}
 				}
-				Trace( _tag, "({}:{}:{})CoroutineThread call resume - on thread:{:x}", ThreadParam.AppHandle, index, _param->CoHandle.address(), Threading::GetThreadId() );
+				Trace( _tag, "({}:{}:{})CoroutineThread call resume - on thread:{:x}", ThreadParam.AppHandle, index, _param->CoHandle.address(), ThreadId() );
 				_param->CoHandle.resume();
 				Trace( _tag, "({})CoroutineThread finish resume", index );
 				SetThreadInfo( ThreadParam );
@@ -59,7 +60,7 @@ namespace Jde::Coroutine{
 	{}
 	ResumeThread::~ResumeThread(){
 		//if( !Process::ShuttingDown() )
-		Trace( _tag, "({:x}:{})ResumeThread::~ResumeThread", Threading::GetThreadId(), ThreadParam.AppHandle );
+		Trace( _tag, "({:x}:{})ResumeThread::~ResumeThread", ThreadId(), ThreadParam.AppHandle );
 		if( _thread.joinable() ){
 			_thread.request_stop();
 			_thread.join();
@@ -118,7 +119,7 @@ namespace Jde::Coroutine{
 		}
 		if( pResult ){
 			if( _threads.size()<_maxThreadCount ){
-				_threads.emplace_back( Jde::format("CoroutinePool[{}]", _threads.size()), _poolIdleThreshold, move(*pResult) );
+				_threads.emplace_back( Ƒ("CoroutinePool[{}]", _threads.size()), _poolIdleThreshold, move(*pResult) );
 				pResult = {};
 			}
 			else if( !_pQueue ){

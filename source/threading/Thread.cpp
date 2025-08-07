@@ -1,4 +1,4 @@
-﻿#include "Thread.h"
+﻿#include <jde/framework/thread/thread.h>
 #include <algorithm>
 #include <atomic>
 #include <sstream>
@@ -6,9 +6,8 @@
 #define let const auto
 
 namespace Jde{
-	namespace Threading{
-		thread_local uint ThreadId{0};
-	}
+	thread_local uint _threadId{0};
+
 	constexpr uint NameLength = 256;
 	thread_local char ThreadName[NameLength]={0};//string shows up as memory leak
 	thread_local Threading::HThread AppThreadHandle{0};
@@ -19,21 +18,5 @@ namespace Jde{
 
 	void Threading::SetThreadInfo( const ThreadParam& param )ι{
 		AppThreadHandle = param.AppHandle;
-	}
-
-	void Threading::Run( const size_t iMaxThreadCount, size_t runCount, std::function<void(size_t)> func )ι{
-		size_t maxThreadCount = std::min( runCount, std::max( iMaxThreadCount,size_t(1)) );
-		std::vector<std::thread> threads;
-		threads.reserve( maxThreadCount );
-		std::atomic<std::size_t> currentIndex{0};
-		auto threadStart =  [&currentIndex, &runCount, &func]()mutable
-		{
-			for( size_t index = currentIndex++; index<runCount; index = currentIndex++ )
-				func( index );
-		};
-		for( size_t i=0; i<maxThreadCount; ++i )
-			threads.push_back( std::thread(threadStart) );
-		for( auto& thread : threads )
-			thread.join();
 	}
 }

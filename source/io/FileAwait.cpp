@@ -1,0 +1,140 @@
+﻿#include <jde/framework/io/FileAwait.h>
+#include "../Cache.h"
+#include <signal.h>
+
+#define let const auto
+namespace Jde{
+	uint32 _chunkSize=0;
+	α IO::ChunkByteSize()ι->uint32{ return _chunkSize==0 ? (_chunkSize=Settings::FindNumber<uint32>("/workers/io/chunkByteSize").value_or(1 << 19)) : _chunkSize; }
+	uint8 _threadSize=0;
+	α IO::ThreadSize()ι->uint8{ return _threadSize==0 ? (_threadSize=Settings::FindNumber<uint8>("/workers/io/threads").value_or(5)) : _threadSize; }
+
+namespace IO{
+	constexpr ELogTags _tags = ELogTags::IO;
+	α IFileChunkArg::Handle()ι->HFile&{ return _fileIOArg.Handle; }
+
+
+	//void DriveWorker::Initialize()ι{
+	//	IWorker::Initialize();
+	//}
+
+	FileIOArg::FileIOArg( fs::path path, bool vec, SL sl )ι:
+		IsRead{ true },
+		Path{ move(path) },
+		_sl{ sl }{
+		if( vec )
+			Buffer = vector<char>{};
+	}
+	FileIOArg::FileIOArg( fs::path path, variant<string,vector<char>> data, SL sl )ι:
+		Buffer{ move(data) },
+		IsRead{ false },
+		Path{ move(path) },
+		_sl{ sl }
+	{}
+/*
+	bool FileIOArg::HandleChunkComplete( IFileChunkArg* pChunkArg )ι{
+		ul l{ Chunks.Mutex };
+		IFileChunkArg* pNextChunk{ nullptr };
+		up<IFileChunkArg> pChunk;
+		bool additional{ false };
+		for( auto pp=Chunks.begin(l); !(pChunk && pNextChunk) && pp!=Chunks.end(l); ++pp )
+		{
+			if( *pp==nullptr )
+				continue;
+			if( (*pp).get()==pChunkArg )
+				pChunk = move( *pp );
+			else if( !pNextChunk && !(*pp)->Sent.exchange(true) )
+				pNextChunk = (*pp).get();
+			else
+				additional = true;
+		}
+		ASSERT( pChunk );
+		if( pNextChunk )
+			pNextChunk->Process();
+		else
+		{
+			//DBG( "[{}] close"sv, pChunkArg->Handle() );
+			//::close( pChunkArg->Handle() );//TODO fix this on windows.
+		}
+		return !pNextChunk && !additional;
+	}
+*/
+	α FileIOArg::ResumeExp( exception&& e )ι->void{
+		lg l{ ChunkMutex };
+		ResumeExp( move(e), l );
+	}
+	α FileIOArg::ResumeExp( exception&& e, lg& /*chunkLock*/ )ι->void{
+		while( Chunks.size() )
+			Chunks.pop();
+		if( IsRead ){
+			auto h = get<TAwait<string>::Handle>( CoHandle );
+			if( h ){
+				CoHandle = (TAwait<string>::Handle)nullptr;
+				h.promise().ResumeExp( move(e), h );
+			}
+		}
+		else{
+			auto h = get<VoidAwait::Handle>( CoHandle );
+			if( h ){
+				CoHandle = (VoidAwait::Handle)nullptr;
+				h.promise().ResumeExp( move(e), h );
+			}
+		}
+	}
+	// α FileIOArg::Send( coroutine_handle<Task2::promise_type>&& h )ι->void
+	// {
+	// 	CoHandle = move( h );
+	// 	for( uint i=0; i*DriveWorker::ChunkSize()<Size(); ++i )
+	// 		Chunks.emplace_back( CreateChunk(i) );
+	// 	OSSend();
+	// }
+
+	α ReadAwait::await_ready()ι->bool{
+		if( auto p = _cache ? Cache::Get<string>(_arg.Path.string()) : sp<string>{}; p ){
+			_arg.Buffer = *p;
+			return true;
+		}
+		else{
+			try{
+				_arg.Open( false );
+			}
+			catch( IOException& e ){
+				ExceptionPtr = e.Move();
+			}
+		}
+		return ExceptionPtr!=nullptr;
+	}
+
+	α WriteAwait::await_ready()ι->bool{
+		try{
+			_arg.Open( _create );
+		}
+		catch( IOException& e ){
+			ExceptionPtr = e.Move();
+		}
+		return ExceptionPtr!=nullptr;
+	}
+
+	α ReadAwait::Suspend()ι->void{
+		_arg.Send( _h );
+	}
+	α WriteAwait::Suspend()ι->void{
+		_arg.Send( _h );
+	}
+	α ReadAwait::await_resume()ε->string{
+		if( ExceptionPtr )
+			ExceptionPtr->Throw();
+		auto& r = get<string>(_arg.Buffer);
+		if( r.size() )
+			return move(r);
+		auto y = TAwait<string>::await_resume();
+		if( _cache )
+			Cache::Set<string>( _arg.Path.string(), ms<string>(y) );
+		return y;
+	}
+	α WriteAwait::await_resume()ε->void{
+		if( ExceptionPtr )
+			ExceptionPtr->Throw();
+		VoidAwait::await_resume();
+	}
+}}

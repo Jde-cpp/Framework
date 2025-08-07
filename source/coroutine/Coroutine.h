@@ -2,9 +2,8 @@
 #ifndef COROUTINE_H
 #define COROUTINE_H
 #include <list>
-#include "../threading/Thread.h"
-#include <jde/framework/settings.h>
 #include <jde/framework/process.h>
+#include <jde/framework/thread/thread.h>
 #include "../collections/Queue.h"
 #include "../threading/InterruptibleThread.h"
 

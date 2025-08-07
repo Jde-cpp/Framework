@@ -1,5 +1,5 @@
 ﻿#include "Interrupt.h"
-#include "Thread.h"
+#include <jde/framework/thread/thread.h>
 #include "InterruptibleThread.h"
 #define let const auto
 
