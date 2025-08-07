@@ -1,6 +1,7 @@
 ﻿#include "Coroutine.h"
 #include "../threading/InterruptibleThread.h"
 #include <jde/framework/chrono.h>
+#include <jde/framework/settings.h>
 
 #define let const auto
 
@@ -28,7 +29,7 @@ namespace Jde::Coroutine{
 		ThreadParam{ name, Threading::BumpThreadHandle() },
 		_param{ move(param) },
 		_thread{ [this]( std::stop_token stoken ){
-			Threading::SetThreadDscrptn( Jde::format("({:x})Co", ThreadParam.AppHandle) );
+			SetThreadDscrptn( Ƒ("({:x})Co", ThreadParam.AppHandle) );
 			let index = INDEX++;
 			auto timeout = Clock::now()+IdleLimit;
 			while( !stoken.stop_requested() ){
@@ -118,7 +119,7 @@ namespace Jde::Coroutine{
 		}
 		if( pResult ){
 			if( _threads.size()<_maxThreadCount ){
-				_threads.emplace_back( Jde::format("CoroutinePool[{}]", _threads.size()), _poolIdleThreshold, move(*pResult) );
+				_threads.emplace_back( Ƒ("CoroutinePool[{}]", _threads.size()), _poolIdleThreshold, move(*pResult) );
 				pResult = {};
 			}
 			else if( !_pQueue ){

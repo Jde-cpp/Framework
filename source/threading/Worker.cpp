@@ -1,7 +1,8 @@
 ﻿#include "Worker.h"
-#include "Thread.h"
+#include <jde/framework/thread/thread.h>
 #include "InterruptibleThread.h"
-#include "../io/FileCo.h"
+#include <jde/framework/io/FileAwait.h>
+#include <jde/framework/settings.h>
 
 #define let const auto
 namespace Jde::Threading{
@@ -55,7 +56,7 @@ namespace Jde::Threading{
 	}
 
 	α IPollWorker::Run( stop_token st )ι->void{
-		Threading::SetThreadDscrptn( NameInstance );
+		SetThreadDscrptn( NameInstance );
 		sp<IWorker> pKeepAlive;
 		let keepAlive = Settings::FindDuration( "/WorkerkeepAlive" ).value_or( 5s );
 		Trace( ELogTags::Threads, "({})Starting Thread", NameInstance );

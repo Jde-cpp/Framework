@@ -1,7 +1,7 @@
 ﻿#pragma once
 #include <jde/framework/process.h>
 #include <jde/framework/coroutine/TaskOld.h>
-#include "../threading/Thread.h"
+#include <jde/framework/thread/thread.h>
 #include "../threading/InterruptibleThread.h"
 
 namespace Jde::Coroutine{

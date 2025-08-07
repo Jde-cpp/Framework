@@ -1,6 +1,7 @@
 ﻿#pragma once
 #ifndef AWAITABLE_H
 #define AWAITABLE_H
+#include <future>
 #include <jde/framework/coroutine/TaskOld.h>
 #include "Coroutine.h"
 namespace Jde{
@@ -205,7 +206,7 @@ namespace Jde::Coroutine{
 		//AwaitResume();
 		AwaitResult y;
 		try{
-			Threading::SetThreadDscrptn( _name );
+			SetThreadDscrptn( _name );
 			up<T> p = _fnctn();
 			y.Set( p.release() );
 		}

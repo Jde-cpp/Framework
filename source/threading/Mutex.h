@@ -4,13 +4,11 @@
 #include <shared_mutex>
 #include <queue>
 #include <boost/core/noncopyable.hpp>
-#include "Thread.h"
-
 #include <jde/framework/coroutine/Await.h>
+#include <jde/framework/thread/thread.h>
 
 #define Φ Γ auto
 namespace Jde{
-	enum class ELogLevel : int8;
 	struct AtomicGuard final : boost::noncopyable{
 		AtomicGuard( std::atomic_flag& f )ι: _pValue{ &f }{
 			while( f.test_and_set(std::memory_order_acquire) ){
@@ -76,7 +74,7 @@ namespace Jde::Threading
 			_pUniqueLock{ nullptr },
 			_pUniqueSharedLock{nullptr},
 			_pSharedLock{nullptr},
-			_description( Jde::format("{}.{} - line={}, thread={}", instance, name, lineNumber, Threading::GetThreadDescription()) )
+			_description( Ƒ("{}.{} - line={}, thread={}", instance, name, lineNumber, ThreadDscrptn()) )
 		{
 			Trace( ELogTags::Locks, "unique lock - {}", _description );
 			_pUniqueLock = make_unique<std::unique_lock<std::mutex>>( mutex );
@@ -85,7 +83,7 @@ namespace Jde::Threading
 			_pUniqueLock{ nullptr },
 			_pUniqueSharedLock{ nullptr },
 			_pSharedLock{  nullptr },
-			_description( Jde::format("{} {}.{} - line={}, thread={}", (shared ? "Shared" : "Unique"), instance, name, lineNumber, Threading::GetThreadDescription()) )
+			_description( Ƒ("{} {}.{} - line={}, thread={}", (shared ? "Shared" : "Unique"), instance, name, lineNumber, ThreadDscrptn()) )
 		{
 			if( shared )
 			{

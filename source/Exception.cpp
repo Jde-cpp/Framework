@@ -157,8 +157,14 @@ namespace Jde{
 		return  _pUnderLying? _pUnderLying->path1() : _path;
 	}
 	α IOException::SetWhat()Ι->void{
+		auto e = errno;
+#ifdef _MSC_VER
+		let msg = std::strerror( Code );
+#else
+		let msg = std::strerror( errno );
+#endif
 		_what = _pUnderLying ? _pUnderLying->what() : Code
-			? Ƒ( "({}) {} - {} path='{}'", Code, std::strerror(errno), IException::what(), Path().string() )
+			? Ƒ( "({}) {} - {} path='{}'", Code, msg, IException::what(), Path().string() )
 			: Ƒ( "({}){}", Path().string(), IException::what() );
 	}
 	α IOException::what()Ι->const char*{

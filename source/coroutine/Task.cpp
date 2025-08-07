@@ -1,5 +1,5 @@
 ﻿#include <jde/framework/coroutine/TaskOld.h>
-#include "../threading/Thread.h"
+#include <jde/framework/thread/thread.h>
 
 namespace Jde::Coroutine{
 	constexpr ELogTags _tags{ ELogTags::Threads };

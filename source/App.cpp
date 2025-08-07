@@ -88,7 +88,7 @@ namespace Jde{
 		else
 			AsService();
 		Logging::Initialize();
-		Threading::SetThreadDscrptn( appName );
+		SetThreadDscrptn( appName );
 		_pInstance->AddSignals();
 		return values;
 	}
