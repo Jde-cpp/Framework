@@ -48,7 +48,7 @@ namespace Jde{
 		α await_resume()ι->CoGuard override;
 	private:
 		CoLock& _lock;
-		optional<CoGuard> _pGuard;
+		optional<CoGuard> _guard;
 	};
 
 	struct Γ CoLock{
@@ -59,69 +59,12 @@ namespace Jde{
 		α Clear()ι->void;
 
 		std::queue<LockAwait::Handle> _queue; mutex _mutex;
-		atomic_flag _flag;
+		atomic_flag _locked;
 		friend class LockAwait; friend struct CoGuard;
 	};
 }
-namespace Jde::Threading
-{
+namespace Jde::Threading{
 	Φ UniqueLock( str key )ι->std::unique_lock<std::shared_mutex>;
-
-
-#ifndef NDEBUG //TODORefactor move somewhere else
-	struct MyLock{
-		MyLock( std::mutex& mutex, sv instance, sv name, size_t lineNumber ):
-			_pUniqueLock{ nullptr },
-			_pUniqueSharedLock{nullptr},
-			_pSharedLock{nullptr},
-			_description( Ƒ("{}.{} - line={}, thread={}", instance, name, lineNumber, ThreadDscrptn()) )
-		{
-			Trace( ELogTags::Locks, "unique lock - {}", _description );
-			_pUniqueLock = make_unique<std::unique_lock<std::mutex>>( mutex );
-		}
-		MyLock( std::shared_mutex& mutex, sv instance, sv name, size_t lineNumber, bool shared = false ):
-			_pUniqueLock{ nullptr },
-			_pUniqueSharedLock{ nullptr },
-			_pSharedLock{  nullptr },
-			_description( Ƒ("{} {}.{} - line={}, thread={}", (shared ? "Shared" : "Unique"), instance, name, lineNumber, ThreadDscrptn()) )
-		{
-			if( shared )
-			{
-				Trace( ELogTags::Locks, "shared lock - {}", _description );
-				_pSharedLock = make_unique<std::shared_lock<std::shared_mutex>>( mutex );
-			}
-			else
-			{
-				Trace( ELogTags::Locks, "unique lock - {}", _description );
-				_pUniqueSharedLock = make_unique<std::unique_lock<std::shared_mutex>>( mutex );
-			}
-		}
-		void unlock()
-		{
-			if( _pUniqueLock )
-				_pUniqueLock->unlock();
-			else if( _pUniqueSharedLock )
-				_pUniqueSharedLock->unlock();
-			else if( _pSharedLock )
-				_pSharedLock->unlock();
-			_unlocked=true; Trace( ELogTags::Locks, "release - {}", _description );
-		}
-		~MyLock()
-		{
-			if( !_unlocked )
-				Trace( ELogTags::Locks, "release - {}", _description );
-		}
-		Γ static void SetDefaultLogLevel( ELogLevel logLevel )ι;//{ _defaultLogLevel=logLevel; }
-		Γ static ELogLevel GetDefaultLogLevel()ι;
-	private:
-		bool _unlocked{false};
-		up<std::unique_lock<std::mutex>> _pUniqueLock;
-		up<std::unique_lock<std::shared_mutex>> _pUniqueSharedLock;
-		up<std::shared_lock<std::shared_mutex>> _pSharedLock;
-		std::string _description;
-		static ELogLevel _defaultLogLevel;
-	};
-#endif
-#undef Φ
 }
+#undef Φ
 #endif

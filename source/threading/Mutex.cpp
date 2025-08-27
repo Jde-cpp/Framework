@@ -4,72 +4,76 @@
 namespace Jde{
 	constexpr ELogTags _tags = ELogTags::Locks;
 
-	CoGuard::CoGuard( CoLock& lock )ι:_lock{&lock}{
-		Trace( _tags, "CoGuard" );
+	LockAwait::LockAwait( CoLock& lock )ι:_lock{lock}{}
+	LockAwait::~LockAwait(){} //clang error without this.
+	α LockAwait::await_ready()ι->bool{
+		_guard = _lock.TestAndSet();
+		TRACE( "[{:x}]LockAwait ready={}", (uint)&_lock, _guard.has_value() );
+		return _guard.has_value();
 	}
 
-	CoGuard::CoGuard( CoGuard&& lock )ι:_lock{ lock._lock }{
-		lock._lock = nullptr;
+	α LockAwait::await_resume()ι->CoGuard{
+		return _guard ? CoGuard{move(*_guard)} : base::await_resume();
+	}
+
+	α LockAwait::Suspend()ι->void{
+		if( (_guard = _lock.Push(_h)) ){
+			TRACE( "[{:x}]LockAwait::Suspend resume", (uint)&_lock );
+			_h.resume();
+		}
+	}
+
+
+	CoGuard::CoGuard( CoLock& rhs )ι:_lock{&rhs}{
+	}
+
+	CoGuard::CoGuard( CoGuard&& rhs )ι:_lock{ rhs._lock }{
+		rhs._lock = nullptr;
 	}
 	α CoGuard::operator=( CoGuard&& rhs )ι->CoGuard&{
 		_lock = move( rhs._lock );
 		rhs._lock = nullptr;
 		return *this;
 	}
-
 	CoGuard::~CoGuard(){
-		Trace( _tags, "~CoGuard" );
-		if( _lock )
+		if( _lock ){
+			TRACE( "[{:x}]~CoGuard", (uint)_lock );
 			_lock->Clear();
+		}
 	}
-	α CoGuard::unlock()ι->void{ _lock->Clear(); }
+	α CoGuard::unlock()ι->void{ _lock->Clear(); _lock=nullptr; }
 
-	LockAwait::LockAwait( CoLock& lock )ι:_lock{lock}{}
-	LockAwait::~LockAwait(){} //clang error without this.
-	α LockAwait::await_ready()ι->bool
-	{
-		_pGuard = _lock.TestAndSet();
-		return !!_pGuard;
-	}
-
-	α LockAwait::await_resume()ι->CoGuard{
-		return _pGuard ? CoGuard{move(*_pGuard)} : base::await_resume();
-	}
-
-	α LockAwait::Suspend()ι->void{
-		if( (_pGuard = _lock.Push(_h)) )
-			_h.resume();
-	}
 	α CoLock::TestAndSet()ι->optional<CoGuard>{
 		lg l{ _mutex };
-		return _flag.test_and_set( std::memory_order_acquire ) ? optional<CoGuard>{} : CoGuard{ *this };
+		return _locked.test_and_set( std::memory_order_acquire ) ? optional<CoGuard>{} : CoGuard{ *this };
 	}
 	α CoLock::Push( LockAwait::Handle h )ι->optional<CoGuard>{
 		lg l{ _mutex };
-		auto p = _flag.test_and_set(std::memory_order_acquire) ? optional<CoGuard>{} : CoGuard{ *this };
-		if( !p )
+		auto guard = _locked.test_and_set(std::memory_order_acquire) ? optional<CoGuard>{} : CoGuard{ *this };
+		if( !guard ){
 			_queue.push( move(h) );
-		return p;
+			TRACE( "[{:x}]CoLock::Push Locked queue size={}", (uint)this, _queue.size() );
+		}
+		else
+			TRACE( "[{:x}]CoLock::Push unlocked", (uint)this, _queue.size() );
+		return guard;
 	}
 	α CoLock::Clear()ι->void{
 		lg _{ _mutex };
-		if( !_queue.empty() ){
+		if( _queue.size() ){
+			TRACE( "[{:x}]CoLock::Clear resuming queueSize={}", (uint)this, _queue.size() );
 			auto h = _queue.front();
 			_queue.pop();
 			h.promise().SetValue( CoGuard{*this} );
 			h.resume();
 		}
-		else
-			_flag.clear();
+		else{
+			_locked.clear();
+			TRACE( "[{:x}]CoLock::Clear locked={}", (uint)this, _locked.test() );
+		}
 	}
 }
-namespace Jde::Threading
-{
-#ifndef NDEBUG
-	ELogLevel Threading::MyLock::_defaultLogLevel{ ELogLevel::Trace };
-	void Threading::MyLock::SetDefaultLogLevel( ELogLevel logLevel )ι{ _defaultLogLevel=logLevel; }
-	ELogLevel Threading::MyLock::GetDefaultLogLevel()ι{ return _defaultLogLevel; }
-#endif
+namespace Jde::Threading{
 	static boost::container::flat_map<string,sp<shared_mutex>> _mutexes;
 	mutex _mutex;
 	unique_lock<shared_mutex> UniqueLock( str key )ι
@@ -81,7 +85,7 @@ namespace Jde::Threading
 		for( auto pExisting = _mutexes.begin(); pExisting != _mutexes.end();  )
 			pExisting = pExisting->first!=key && pExisting->second.use_count()==1 && pExisting->second->try_lock() ? _mutexes.erase( pExisting ) : std::next( pExisting );
 		l.unlock();
-		Trace( _tags, "UniqueLock( '{}' )", key );
+		TRACE( "UniqueLock( '{}' )", key );
 		return unique_lock{ *pKeyMutex };
 	}
 }
