@@ -1,11 +1,8 @@
 ﻿#include <jde/framework/thread/execution.h>
-#include <jde/framework/settings.h>
-#include <list>
 #include <boost/asio.hpp>
-#include "../threading/Thread.h"
+#include <jde/framework/settings.h>
+#include <jde/framework/thread/thread.h>
 #include <jde/framework/collections/Vector.h>
-
-//#include <boost/asio/cancellation_signal.hpp>
 
 #define let const auto
 namespace Jde{
@@ -95,11 +92,11 @@ namespace Jde{
 		//Process::RemoveShutdown( this ); deadlock
 	}
 	α ExecutorContext::Execute()ι->void{
-		Threading::SetThreadDscrptn( "Ex[0]" );
-		std::vector<std::jthread> v; v.reserve( ThreadCount() - 1 );
+		SetThreadDscrptn( "Ex[0]" );
+		vector<std::jthread> v; v.reserve( ThreadCount() - 1 );
 		auto ioc = _ioc; //keep alive
 		for( auto i = ThreadCount() - 1; i > 0; --i )
-			v.emplace_back( [=]{ Threading::SetThreadDscrptn( Ƒ("Ex[{}]", i) ); ioc->run(); } );
+			v.emplace_back( [=]{ SetThreadDscrptn( Ƒ("Ex[{}]", i) ); ioc->run(); } );
 		Trace( ELogTags::App, "Executor Started: instances: {}.", ioc.use_count() );
 		_started.test_and_set();
 		_started.notify_all();

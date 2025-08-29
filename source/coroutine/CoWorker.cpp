@@ -24,7 +24,7 @@ namespace Jde::Coroutine{
 	}
 
 	α CoWorker::Run()ι->void{
-		Threading::SetThreadDscrptn( _name );
+		SetThreadDscrptn( _name );
 		Trace( _tags, "{} - Starting", _name );
 		while( !Threading::GetThreadInterruptFlag().IsSet() ){
 			Process();
