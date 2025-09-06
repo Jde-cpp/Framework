@@ -5,6 +5,8 @@
 #include <boost/system/error_code.hpp>
 
 #include <jde/framework/str.h>
+#include <jde/framework/log/Entry.h>
+#include <jde/framework/log/SpdLog.h>
 #define let const auto
 
 namespace Jde{
@@ -75,24 +77,12 @@ namespace Jde{
 #endif
 	}
 	α IException::Log()Ι->void{
-		let level = Level();
-		if( level==ELogLevel::NoLog || (!empty(_tags) && level<MinLevel(_tags)) )
+		if( Level()==ELogLevel::NoLog )
 			return;
-		let& sl = _stack.size() ? _stack.front() : SRCE_CUR;
-		const string fileName{ strlen(sl.file_name()) ? FileName(sl.file_name()) : "{Unknown}\0"sv };
-		let functionName = strlen(sl.file_name()) ? sl.function_name() : "{Unknown}\0";
-		if( Logging::Initialized() ){
-			if( auto p = Logging::Default(); p )
-				p->log( spdlog::source_loc{fileName.c_str(), (int)sl.line(), functionName}, (spdlog::level::level_enum)level, what() );
-			if( Logging::External::Size() )
-				Logging::External::Log( Logging::ExternalMessage{Logging::Message{level, what(), sl}, vector<string>{_args}} );
-		}
-		if( Logging::LogMemory() ){
-			if( _format.size() )
-				Logging::LogMemory( Logging::Message{level, string{_format}, sl}, vector<string>{_args} );
-			else
-				Logging::LogMemory( Logging::Message{level, _what, sl} );
-		}
+		if( _format.size() )
+			Logging::Log( Logging::Entry{Logging::ToSpdSL(_stack.size() ? _stack.front() : SRCE_CUR), Level(), _tags, string{_format}, _args} );
+		else
+			Logging::Log( Logging::Entry{Logging::ToSpdSL(_stack.size() ? _stack.front() : SRCE_CUR), Level(), _tags, string{what()}} );
 	}
 
 	α IException::what()Ι->const char*{

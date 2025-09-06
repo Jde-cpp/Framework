@@ -24,7 +24,7 @@ namespace Jde::IO::Tests{
 
 	Ω write( uuid guid1, uuid guid2, Vector<uuid>& written, SRCE )->LockKeyAwait::Task{
 		auto l = co_await LockKeyAwait{ File().string() };
-		[&written,sl]( uuid guid1, uuid guid2, CoLockGuard l )->VoidAwait::Task {
+		[sl]( uuid guid1, uuid guid2, Vector<uuid>& written, [[maybe_unused]]CoLockGuard l )->VoidAwait::Task {
 			try{
 				co_await IO::WriteAwait{ File(), Ƒ("{}\n{}\n", to_string(guid1), to_string(guid2)), guid1==uuid{}, sl };
 			}
@@ -34,7 +34,7 @@ namespace Jde::IO::Tests{
 			}
 			written.push_back( guid1 );
 			written.push_back( guid2 );
-		}( guid1, guid2, move(l) );
+		}( guid1, guid2, written, move(l) );
 	}
 	Ω read( Vector<uuid>& readValues, SRCE )->TAwait<string>::Task{
 		let content = co_await IO::ReadAwait{ File(), false, sl };

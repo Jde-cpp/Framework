@@ -1,4 +1,5 @@
 ﻿#include <jde/framework/io/FileAwait.h>
+#include <jde/framework/thread/execution.h>
 #include "../Cache.h"
 #include <signal.h>
 
@@ -11,7 +12,8 @@ namespace Jde{
 
 namespace IO{
 	constexpr ELogTags _tags = ELogTags::IO;
-	α IFileChunkArg::Handle()ι->HFile&{ return _fileIOArg.Handle; }
+	α IFileChunkArg::Handle()Ι->HFile&{ return _fileIOArg->Handle; }
+	α IFileChunkArg::IsRead()Ι->bool{ return _fileIOArg->IsRead; }
 
 
 	//void DriveWorker::Initialize()ι{
@@ -59,11 +61,47 @@ namespace IO{
 		return !pNextChunk && !additional;
 	}
 */
-	α FileIOArg::ResumeExp( exception&& e )ι->void{
+
+	α FileIOArg::PostExp( up<IFileChunkArg>&& chunk, uint32 code, string&& m )ι->void{
+		{
+			lg l{ ChunkMutex };
+			while( Chunks.size() )
+				Chunks.pop();
+		}
+		if( IsRead ){
+			auto h = ReadCoHandle();
+			Post( [path=move(Path),sl=_sl, m=move(m), code, h](){h.promise().ResumeExp(IOException{path, code, move(m), sl}, h);} );
+			_coHandle = (TAwait<string>::Handle)nullptr;
+		}
+		else{
+			auto h = WriteCoHandle();
+			Post( [path=move(Path),sl=_sl, m=move(m), code, h](){h.promise().ResumeExp(IOException{path, code, move(m), sl}, h);} );
+			_coHandle = (VoidAwait::Handle)nullptr;
+		}
+		chunk=nullptr;
+	}
+
+	α FileIOArg::ResumeExp( uint32 code, string&& m )ι->void{
+		lg l{ ChunkMutex };
+		ResumeExp( code, move(m), l );
+	}
+	α FileIOArg::ResumeExp( uint32 code, string&& m, lg& /*chunkLock*/ )ι->void{
+		IOException e{ Path, code, move(m), _sl };
+		if( IsRead ){
+			auto h = ReadCoHandle();
+			h.promise().ResumeExp( move(e), h );
+		}
+		else{
+			auto h = WriteCoHandle();
+			h.promise().ResumeExp( move(e), h );
+		}
+	}
+
+/*	α FileIOArg::ResumeExp( exception&& e )ι->void{
 		lg l{ ChunkMutex };
 		ResumeExp( move(e), l );
 	}
-	α FileIOArg::ResumeExp( exception&& e, lg& /*chunkLock*/ )ι->void{
+	α FileIOArg::ResumeExp( exception&& e, lg& / *chunkLock* / )ι->void{
 		while( Chunks.size() )
 			Chunks.pop();
 		if( IsRead ){
@@ -81,6 +119,7 @@ namespace IO{
 			}
 		}
 	}
+*/
 	// α FileIOArg::Send( coroutine_handle<Task2::promise_type>&& h )ι->void
 	// {
 	// 	CoHandle = move( h );
@@ -90,13 +129,13 @@ namespace IO{
 	// }
 
 	α ReadAwait::await_ready()ι->bool{
-		if( auto p = _cache ? Cache::Get<string>(_arg.Path.string()) : sp<string>{}; p ){
-			_arg.Buffer = *p;
+		if( auto p = _cache ? Cache::Get<string>(_arg->Path.string()) : sp<string>{}; p ){
+			_arg->Buffer = *p;
 			return true;
 		}
 		else{
 			try{
-				_arg.Open( false );
+				_arg->Open( false );
 			}
 			catch( IOException& e ){
 				ExceptionPtr = e.Move();
@@ -107,7 +146,7 @@ namespace IO{
 
 	α WriteAwait::await_ready()ι->bool{
 		try{
-			_arg.Open( _create );
+			_arg->Open( _create );
 		}
 		catch( IOException& e ){
 			ExceptionPtr = e.Move();
@@ -116,20 +155,20 @@ namespace IO{
 	}
 
 	α ReadAwait::Suspend()ι->void{
-		_arg.Send( _h );
+		_arg->Send( _h );
 	}
 	α WriteAwait::Suspend()ι->void{
-		_arg.Send( _h );
+		_arg->Send( _h );
 	}
 	α ReadAwait::await_resume()ε->string{
 		if( ExceptionPtr )
 			ExceptionPtr->Throw();
-		auto& r = get<string>(_arg.Buffer);
+		auto& r = get<string>(_arg->Buffer);
 		if( r.size() )
 			return move(r);
 		auto y = TAwait<string>::await_resume();
 		if( _cache )
-			Cache::Set<string>( _arg.Path.string(), ms<string>(y) );
+			Cache::Set<string>( _arg->Path.string(), ms<string>(y) );
 		return y;
 	}
 	α WriteAwait::await_resume()ε->void{

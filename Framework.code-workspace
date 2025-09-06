@@ -1,14 +1,84 @@
 {
+	"settings": {
+		"window.title": "Framework",
+		"name": "framework",
+		"sourceDir": "${env:JDE_DIR}/Framework",
+		"buildTarget": "Debug",
+		"buildRoot": "${env:JDE_BUILD_DIR}/jde/${config:buildTarget}",
+		"buildDir": "${config:buildRoot}/libs/${config:name}",
+		"exe": "tests/Jde.Framework.Tests"
+	},
 	"folders": [
 		{
-			"path": "source"
+			"path": "source",
+			"name": "src"
 		},
 		{
 			"path": "tests"
+		},
+		{
+			"path": "../Public/libs/framework/process/os",
+			"name": "libs"
+		},
+		{
+			"path": "../Public/include/jde/framework",
+			"name": "include"
 		}
 	],
-	"settings": {
-		"window.title": "Framework"
+	"tasks": {
+		"version": "2.0.0",
+		"tasks": [
+			{
+				"label": "build",
+				"command": "cd ${config:buildDir}; tput reset; make -j",
+				"type": "shell",
+				"problemMatcher": { "base": "$gcc", "fileLocation": ["absolute"] },
+				"group": { "kind": "build", "isDefault": true }
+			},
+			{
+				"label": "compile",
+				"command": "tput reset; source $JDE_DIR/Public/build/buildFunctions.sh;compile ${workspaceFolder} ${fileWorkspaceFolder} ${relativeFile} ${config:buildRoot};",
+				"type": "shell",
+				"problemMatcher": { "base": "$gcc", "fileLocation": ["absolute"] },
+				"group": "build"
+			},
+			{
+				"label": "buildProject",
+				"type": "shell",
+				"command": "tput reset; source $JDE_DIR/Public/build/buildFunctions.sh;buildProject ${fileWorkspaceFolder} ${config:buildRoot};",
+				"problemMatcher": { "base": "$gcc", "fileLocation": ["absolute"] },
+				"group": { "kind": "build", "isDefault": false }
+			},
+			{
+				"label": "cmake",
+				"type": "shell",
+				"command": "mkdir -p ${config:buildDir}; cd ${config:buildDir}; tput reset; rm -f CMakeCache.txt; cmake ${config:sourceDir} --preset linux-jde-debug",
+				"problemMatcher": { "base": "$gcc", "fileLocation": ["absolute"] },
+				"group": { "kind": "build", "isDefault": false }
+			}
+		]
+	},
+	"launch": {
+		"version": "0.2.0",
+		"configurations": [
+			{
+				"name": "Debug",
+				"type": "cppdbg",
+				"request": "launch",
+				"program": "${config:buildDir}/tests/Jde.Framework.Tests",
+				"args": [
+					"-settings=${config:sourceDir}/tests/config/Framework.Tests.jsonnet"
+				],
+				"stopAtEntry": false,
+				"cwd": "${config:buildDir}/tests",
+				"externalConsole": false,
+				"MIMode": "gdb",
+				"visualizerFile": "${env:JDE_DIR}/Public/build/gcc.natvis",
+				"showDisplayString": true,
+				"setupCommands": [{"description": "Enable pretty-printing for gdb","text": "-enable-pretty-printing",	"ignoreFailures": true }],
+				"preLaunchTask": "build"
+			},
+		],
+		"compounds": []
 	}
-	
 }
