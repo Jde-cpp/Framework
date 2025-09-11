@@ -1,6 +1,10 @@
 #include <jde/framework/log/Logger.h>
 
 namespace Jde{
+	concurrent_flat_set<StringMd5> _loggedEntries;
+	α Logging::MarkLogged( StringMd5 id )ι->bool{
+		return _loggedEntries.insert(id);
+	}
 	α Logging::CanBreak()ι->bool{ return Process::IsDebuggerPresent(); }
 
 	α Logging::Log( const Entry& entry )ι->void{
@@ -15,5 +19,6 @@ namespace Jde{
 				Jde::Critical{ ELogTags::App, "could not log entry '{}' error: '{}'", entry.Text, string{e.what()} };
 			}
 		}
+		BREAK_IF( entry.Tags<=ELogTags::Write && entry.Level>=BreakLevel() );//don't want to break for opc server.
 	}
 }

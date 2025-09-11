@@ -70,7 +70,7 @@ namespace Jde{
 
 	α IException::BreakLog()Ι->void{
 #ifndef NDEBUG
-		if( /*Level()!=ELogLevel::None &&*/ Level()>=Logging::BreakLevel() ){
+		if( Level()>=Logging::BreakLevel() ){
 			Log();
 			SetLevel( ELogLevel::NoLog );
 		}

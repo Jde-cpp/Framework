@@ -139,7 +139,7 @@ namespace Jde{
 		return *level;
 	}
 	α LogTags::ShouldLog( ELogLevel level, ELogTags tags )Ι->bool{
-		return level!=ELogLevel::NoLog && _cumulative.MinLevel()<=level && _cumulative.MinLevel( tags ) <= level;
+		return level!=ELogLevel::NoLog && MinLevel( tags ) <= level;
 	}
 
 	α LogTags::ToString()->string{
