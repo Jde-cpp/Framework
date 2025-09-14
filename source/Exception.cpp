@@ -15,7 +15,7 @@ namespace Jde{
 
 	IException::IException( string value, ELogLevel level, uint32 code, ELogTags tags, SL sl )ι:
 		_stack{ sl },
-		_what{ move(value) },
+		_format{ move(value) },
 		_tags{ tags | ELogTags::Exception },
 		Code( code ? code : Calc32RunTime(value) ),
 		_level{ level }{
@@ -79,16 +79,16 @@ namespace Jde{
 	α IException::Log()Ι->void{
 		if( Level()==ELogLevel::NoLog )
 			return;
-		if( _format.size() )
-			Logging::Log( Logging::Entry{Logging::ToSpdSL(_stack.size() ? _stack.front() : SRCE_CUR), Level(), _tags, string{_format}, _args} );
+		if( auto sv = Format(); sv.size() )
+			Logging::Log( Logging::Entry{Logging::ToSpdSL(_stack.size() ? _stack.front() : SRCE_CUR), Level(), _tags, string{sv}, _args} );
 		else
 			Logging::Log( Logging::Entry{Logging::ToSpdSL(_stack.size() ? _stack.front() : SRCE_CUR), Level(), _tags, string{what()}} );
 	}
 
 	α IException::what()Ι->const char*{
 		if( _what.empty() ){
-			if( _format.size() )
-				_what = Str::Format( _format, _args );
+			if( auto sv = Format(); sv.size() )
+				_what = Str::Format( sv, _args );
 			else if( _pInner )
 				_what = _pInner->what();
 		}
