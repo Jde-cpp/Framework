@@ -11,7 +11,7 @@ set_property( TARGET ${targetName} PROPERTY POSITION_INDEPENDENT_CODE ON )
 
 file(GLOB sources *.cpp **/*.cpp **/**/*.cpp )
 file(GLOB headers "**/*.h")
-set( newDir $ENV{JDE_DIR}/Public/libs/framework )
+set( newDir $ENV{JDE_DIR}/Public/libs/framework/src )
 set( osDir ${newDir}/process/os )
 if( WIN32 )
 	set( CMAKE_SHARED_LINKER_FLAGS_DEBUG "/debug /INCREMENTAL:NO" )

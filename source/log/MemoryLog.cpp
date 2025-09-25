@@ -21,19 +21,19 @@ namespace Jde::Logging{
 		_entries.visit( [&](const auto& entry){ logger.Write( Entry{entry} ); } );
 	}
 	α MemoryLog::Find( StringMd5 id )ι->vector<Logging::Entry>{
-		vector<Logging::Entry> result;
+		vector<Logging::Entry> y;
 		_entries.visit( [&](const auto& entry){
 			if( entry.Id() == id )
-				result.push_back(entry);
+				y.push_back(entry);
 		});
-		return result;
+		return y;
 	}
 	α MemoryLog::Find( function<bool(const Logging::Entry&)> f )ι->vector<Logging::Entry>{
-		vector<Logging::Entry> result;
+		vector<Logging::Entry> y;
 		_entries.visit( [&](const auto& entry){
 			if( f(entry) )
-				result.push_back(entry);
+				y.push_back(entry);
 		});
-		return result;
+		return y;
 	}
 }

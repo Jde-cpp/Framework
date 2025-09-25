@@ -61,8 +61,8 @@ namespace Jde{
 
 	vector<fs::path> _importPaths;
 	α Json::AddImportPath( fs::path path )ι->void{
-		ASSERT_DESC( fs::exists(path) && fs::is_directory(path), Ƒ("'{}' does not exist or is not a directory.", path.string()) );
-		_importPaths.push_back( path );
+		if( fs::exists(path) && fs::is_directory(path) )
+			_importPaths.push_back( path );
 	}
 	α Json::TryReadJsonNet( fs::path path, SL sl )ι->std::expected<jobject, string>{
 		jsonnet::Jsonnet vm;

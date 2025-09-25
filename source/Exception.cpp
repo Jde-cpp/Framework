@@ -5,6 +5,7 @@
 #include <boost/system/error_code.hpp>
 
 #include <jde/framework/str.h>
+#include <jde/framework/exceptions/CodeException.h>
 #include <jde/framework/log/Entry.h>
 #include <jde/framework/log/SpdLog.h>
 #define let const auto
@@ -96,13 +97,29 @@ namespace Jde{
 	}
 
 	CodeException::CodeException( std::error_code code, ELogTags tags, ELogLevel level, SL sl )ι:
-		IException{ tags, sl, level, "({}){}", code.value(), code.message() },
+		ExternalException{ ToString(code), {}, (uint)code.value(), sl, tags, level },
 		_errorCode{ move(code) }
 	{}
 	CodeException::CodeException( std::error_code code, ELogTags tags, string msg, ELogLevel level, SL sl )ι:
-		IException{ tags, sl, level, "({}){} - {}", code.value(), code.message(), msg },
+		ExternalException{ ToString(code), msg, (uint)code.value(), sl, tags, level },
 		_errorCode{ move(code) }
 	{}
+
+	α CodeException::ToString( const std::error_code& errorCode )ι->string{
+		let& category = errorCode.category();
+		let message = errorCode.message();
+		return Ƒ( "{} - {}", category.name(), message );
+	}
+
+	α CodeException::ToString( const std::error_category& errorCategory )ι->string{	return errorCategory.name(); }
+
+	α CodeException::ToString( const std::error_condition& errorCondition )ι->string{
+		const int value = errorCondition.value();
+		const std::error_category& category = errorCondition.category();
+		const string message = errorCondition.message();
+		return Ƒ( "({}){} - {})", value, category.name(), message );
+	}
+
 
 	BoostCodeException::BoostCodeException( const boost::system::error_code& c, sv msg, SL sl )ι:
 		IException{ string{msg}, ELogLevel::Debug, (uint32)c.value(), {}, sl },
@@ -114,22 +131,6 @@ namespace Jde{
 	{}
 	BoostCodeException::~BoostCodeException()
 	{}
-
-	α CodeException::ToString( const std::error_code& errorCode )ι->string{
-		let value = errorCode.value();
-		let& category = errorCode.category();
-		let message = errorCode.message();
-		return Ƒ( "({}){} - {})", value, category.name(), message );
-	}
-
-	α CodeException::ToString( const std::error_category& errorCategory )ι->string{	return errorCategory.name(); }
-
-	α CodeException::ToString( const std::error_condition& errorCondition )ι->string{
-		const int value = errorCondition.value();
-		const std::error_category& category = errorCondition.category();
-		const string message = errorCondition.message();
-		return Ƒ( "({}){} - {})", value, category.name(), message );
-	}
 
 	OSException::OSException( TErrorCode result, string&& m, SL sl )ι:
 #ifdef _MSC_VER

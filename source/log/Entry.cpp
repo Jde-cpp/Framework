@@ -54,7 +54,12 @@ namespace Jde::Logging{
 		for( auto&& arg : Arguments ){
 			store.push_back( arg );
 		}
-		_message = Arguments.size()==0 ? Text : fmt::vformat(Text, store);
+		try{
+			_message = Arguments.size()==0 ? Text : fmt::vformat(Text, store);
+		}
+		catch( const exception& e ){
+			Critical{ Tags, "Bad Format: {}", Text };
+		}
     return _message;
 	}
 }

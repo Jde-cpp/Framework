@@ -142,7 +142,7 @@ namespace Jde{
 		return level!=ELogLevel::NoLog && MinLevel( tags ) <= level;
 	}
 
-	α LogTags::ToString()->string{
+	α LogTags::ToString()ι->string{
 		flat_map<ELogLevel, vector<string>> levels;
 		Tags.cvisit_all( [&]( let& kv ){
 			levels.try_emplace( kv.second, vector<string>{} ).first->second.push_back( Jde::ToString(kv.first) );
