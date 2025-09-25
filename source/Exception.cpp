@@ -5,6 +5,9 @@
 #include <boost/system/error_code.hpp>
 
 #include <jde/framework/str.h>
+#include <jde/framework/exceptions/CodeException.h>
+#include <jde/framework/log/Entry.h>
+#include <jde/framework/log/SpdLog.h>
 #define let const auto
 
 namespace Jde{
@@ -13,7 +16,7 @@ namespace Jde{
 
 	IException::IException( string value, ELogLevel level, uint32 code, ELogTags tags, SL sl )ι:
 		_stack{ sl },
-		_what{ move(value) },
+		_format{ move(value) },
 		_tags{ tags | ELogTags::Exception },
 		Code( code ? code : Calc32RunTime(value) ),
 		_level{ level }{
@@ -68,37 +71,25 @@ namespace Jde{
 
 	α IException::BreakLog()Ι->void{
 #ifndef NDEBUG
-		if( /*Level()!=ELogLevel::None &&*/ Level()>=Logging::BreakLevel() ){
+		if( Level()>=Logging::BreakLevel() ){
 			Log();
 			SetLevel( ELogLevel::NoLog );
 		}
 #endif
 	}
 	α IException::Log()Ι->void{
-		let level = Level();
-		if( level==ELogLevel::NoLog || (!empty(_tags) && level<MinLevel(_tags)) )
+		if( Level()==ELogLevel::NoLog )
 			return;
-		let& sl = _stack.size() ? _stack.front() : SRCE_CUR;
-		const string fileName{ strlen(sl.file_name()) ? FileName(sl.file_name()) : "{Unknown}\0"sv };
-		let functionName = strlen(sl.file_name()) ? sl.function_name() : "{Unknown}\0";
-		if( Logging::Initialized() ){
-			if( auto p = Logging::Default(); p )
-				p->log( spdlog::source_loc{fileName.c_str(), (int)sl.line(), functionName}, (spdlog::level::level_enum)level, what() );
-			if( Logging::External::Size() )
-				Logging::External::Log( Logging::ExternalMessage{Logging::Message{level, what(), sl}, vector<string>{_args}} );
-		}
-		if( Logging::LogMemory() ){
-			if( _format.size() )
-				Logging::LogMemory( Logging::Message{level, string{_format}, sl}, vector<string>{_args} );
-			else
-				Logging::LogMemory( Logging::Message{level, _what, sl} );
-		}
+		if( auto sv = Format(); sv.size() )
+			Logging::Log( Logging::Entry{Logging::ToSpdSL(_stack.size() ? _stack.front() : SRCE_CUR), Level(), _tags, string{sv}, _args} );
+		else
+			Logging::Log( Logging::Entry{Logging::ToSpdSL(_stack.size() ? _stack.front() : SRCE_CUR), Level(), _tags, string{what()}} );
 	}
 
 	α IException::what()Ι->const char*{
 		if( _what.empty() ){
-			if( _format.size() )
-				_what = Str::Format( _format, _args );
+			if( auto sv = Format(); sv.size() )
+				_what = Str::Format( sv, _args );
 			else if( _pInner )
 				_what = _pInner->what();
 		}
@@ -106,13 +97,29 @@ namespace Jde{
 	}
 
 	CodeException::CodeException( std::error_code code, ELogTags tags, ELogLevel level, SL sl )ι:
-		IException{ tags, sl, level, "({}){}", code.value(), code.message() },
+		ExternalException{ ToString(code), {}, (uint)code.value(), sl, tags, level },
 		_errorCode{ move(code) }
 	{}
 	CodeException::CodeException( std::error_code code, ELogTags tags, string msg, ELogLevel level, SL sl )ι:
-		IException{ tags, sl, level, "({}){} - {}", code.value(), code.message(), msg },
+		ExternalException{ ToString(code), msg, (uint)code.value(), sl, tags, level },
 		_errorCode{ move(code) }
 	{}
+
+	α CodeException::ToString( const std::error_code& errorCode )ι->string{
+		let& category = errorCode.category();
+		let message = errorCode.message();
+		return Ƒ( "{} - {}", category.name(), message );
+	}
+
+	α CodeException::ToString( const std::error_category& errorCategory )ι->string{	return errorCategory.name(); }
+
+	α CodeException::ToString( const std::error_condition& errorCondition )ι->string{
+		const int value = errorCondition.value();
+		const std::error_category& category = errorCondition.category();
+		const string message = errorCondition.message();
+		return Ƒ( "({}){} - {})", value, category.name(), message );
+	}
+
 
 	BoostCodeException::BoostCodeException( const boost::system::error_code& c, sv msg, SL sl )ι:
 		IException{ string{msg}, ELogLevel::Debug, (uint32)c.value(), {}, sl },
@@ -124,22 +131,6 @@ namespace Jde{
 	{}
 	BoostCodeException::~BoostCodeException()
 	{}
-
-	α CodeException::ToString( const std::error_code& errorCode )ι->string{
-		let value = errorCode.value();
-		let& category = errorCode.category();
-		let message = errorCode.message();
-		return Ƒ( "({}){} - {})", value, category.name(), message );
-	}
-
-	α CodeException::ToString( const std::error_category& errorCategory )ι->string{	return errorCategory.name(); }
-
-	α CodeException::ToString( const std::error_condition& errorCondition )ι->string{
-		const int value = errorCondition.value();
-		const std::error_category& category = errorCondition.category();
-		const string message = errorCondition.message();
-		return Ƒ( "({}){} - {})", value, category.name(), message );
-	}
 
 	OSException::OSException( TErrorCode result, string&& m, SL sl )ι:
 #ifdef _MSC_VER

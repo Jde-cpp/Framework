@@ -4,10 +4,9 @@
 #include <jde/framework/process.h>
 #include <jde/framework/str.h>
 #include <jde/framework/settings.h>
-#include "collections/Collections.h"
+#include <jde/framework/collections/collections.h>
 
-namespace Jde
-{
+namespace Jde{
 #define let const auto
 #define Φ Γ Ω
 	struct Cache2{

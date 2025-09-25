@@ -4,6 +4,8 @@
 #include <jde/framework/process.h>
 #include <jde/framework/str.h>
 #include <jde/framework/io/file.h>
+#include <jde/framework/log/MemoryLog.h>
+#include <jde/framework/log/Logger.h>
 
 #define let const auto
 
@@ -91,7 +93,6 @@ namespace Jde{
 
 		auto p = find_if( paths, []( let& path ){return fs::exists(path);} );
 		_path = p!=paths.end() ? *p : OSApp::ApplicationDataFolder()/fileName;
-		Information{ _tags, "settings path={}", _path.string() };
 		std::cout << "settings path=" << _path.string() << std::endl;
 		return _path;
 	}
@@ -111,7 +112,7 @@ namespace Jde{
 					if( env.empty() && group=="JDE_BUILD_TYPE" )
 						env = buildTypeSubDir();
 					if( env.empty() )
-						Warning{ _tags, "Environment variable '{}' not found", group };
+						Debug{ _tags, "Environment variable '{}' not found", group };
 
 					setting = Str::Replace( setting, match, env );
 				}
@@ -133,12 +134,12 @@ namespace Jde{
 			_settings = mu<jvalue>( *settings );
 			if( _settings->is_object() )
 				SetEnv( _settings->get_object() );
-			LOG_MEMORY( {}, ELogLevel::Information, "Settings path={}", settingsPath.string() );
+			Information{ ELogTags::App, "Settings path={}", settingsPath.string() };
 		}
 		catch( const std::exception& e ){
 			_settings = mu<jvalue>( jobject{{"error", e.what()}} );
 			std::cerr << e.what() << std::endl;
-			LOG_MEMORY( {}, ELogLevel::Critical, "({})Could not load settings - {}", settingsPath.string(), e.what() );
+			Critical{ _tags, "({})Could not load settings - {}", settingsPath.string(), e.what() };
 			BREAK;
 		}
 	}

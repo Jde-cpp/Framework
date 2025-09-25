@@ -5,6 +5,9 @@
 #define let const auto
 
 namespace Jde{
+#ifndef _MSC_VER
+	α Process::ProductName()ι->sv{ return "Tests.Crypto"; }
+#endif
  	Ω startup( int argc, char **argv )ι->void{
 		OSApp::Startup( argc, argv, "Tests.Framework", "Unit Tests description", true );
 	}

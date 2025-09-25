@@ -29,6 +29,9 @@ namespace Jde{
 	α Process::IsConsole()ι->bool{ return _isConsole; }
 
 
+	TimePoint _startTime{ Clock::now() };
+	α Process::StartTime()ι->TimePoint{ return _startTime; };
+
 	Vector<sp<Threading::InterruptibleThread>> _backgroundThreads;
 	function<void()> OnExit;
 }
@@ -59,7 +62,8 @@ namespace Jde{
 			for( auto i=0; i<argc; ++i )
 				os << argv[i] << " ";
 			os << ";cwd=" << fs::current_path().string();
-			Logging::Default()->log( spdlog::source_loc{FileName(SRCE_CUR.file_name()).c_str(),SRCE_CUR.line(),SRCE_CUR.function_name()}, (spdlog::level::level_enum)ELogLevel::Information, os.str() );
+			//Logging::Default()->log( spdlog::source_loc{SRCE_CUR.file_name(),SRCE_CUR.line(),SRCE_CUR.function_name()}, (spdlog::level::level_enum)ELogLevel::Information, os.str() );
+			Information{ ELogTags::App, "Starting {}{}", appName, os.str() };
 		}
 		_applicationName = appName;
 		const string arg0{ argv[0] };
@@ -247,7 +251,7 @@ namespace Jde{
 		_pInstance = nullptr;
 		_pShutdownFunctions = nullptr;
 		Information( ELogTags::App, "Clearing Logger" );
-		Logging::DestroyLogger();
+		Logging::DestroyLoggers();
 	}
 	α IApplication::ApplicationDataFolder()ι->fs::path{
 		return ProgramDataFolder()/OSApp::CompanyRootDir()/Process::ProductName();

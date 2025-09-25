@@ -18,7 +18,7 @@
 			"name": "headers"
 		},
 		{
-			"path": "../Public/libs/framework/process/os/windows",
+			"path": "../Public/libs/framework/src/process/os/windows",
 			"name": "win"
 		}
 	],
