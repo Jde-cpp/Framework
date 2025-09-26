@@ -2,6 +2,7 @@
 #include "../source/coroutine/Lock.h"
 #include <boost/uuid.hpp>
 #include <boost/endian/conversion.hpp>
+#include <jde/framework/thread/execution.h>
 
 #define let const auto
 
@@ -55,9 +56,11 @@ namespace Jde::IO::Tests{
 		}
 
 		Vector<uuid> written;
-		for( uint i=0; i<guids.size(); i+=2 ){
-			write( guids[i], guids[i+1], written );
-		}
+		Post( [&written, &guids](){
+			for( uint i=0; i<guids.size(); i+=2 ){
+				write( guids[i], guids[i+1], written );
+			}
+		});
 //		std::this_thread::sleep_for( 1s );
 		while( written.size()<guids.size() )
 			std::this_thread::sleep_for( 10ms );

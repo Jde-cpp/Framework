@@ -4,15 +4,22 @@
 #include <jde/framework/thread/thread.h>
 #include <jde/framework/collections/Vector.h>
 
+namespace Jde::IO{
+	constexpr int CompletionSignal{ SIGUSR2 };
+}
+
 #define let const auto
 namespace Jde{
 	namespace asio = boost::asio;
-	α ThreadCount()ι->int{ return std::max(Settings::FindNumber<int>( "/workers/executor" ).value_or(std::thread::hardware_concurrency()), 1); }
+	α ThreadCount()ι->int{ return std::max(Settings::FindNumber<int>( "/workers/executor/threads" ).value_or(std::thread::hardware_concurrency()), 1); }
 	sp<asio::io_context> _ioc;
+	up<asio::executor_work_guard<asio::io_context::executor_type>> _keepAlive;
 }
 α Jde::Executor()ι->sp<asio::io_context>{
-	if( !_ioc )
+	if( !_ioc ){
 		_ioc = ms<asio::io_context>( ThreadCount() );
+		_keepAlive = mu<asio::executor_work_guard<asio::io_context::executor_type>>( _ioc->get_executor() );
+	}
 	return _ioc;
 }
 
@@ -42,7 +49,14 @@ namespace Jde{
 
 	struct ExecutorContext final : IShutdown{
 		ExecutorContext()ι:
-			_thread{ [&](){Execute();} }{
+			_thread{ [&](){
+				Trace( ELogTags::Test, "Ex[0]" );
+				sigset_t set;
+				sigemptyset( &set );
+				sigaddset( &set, IO::CompletionSignal );
+				pthread_sigmask( SIG_BLOCK, &set, nullptr );
+				Execute();
+			}}{
 			_started.wait( false );
 			Information( ELogTags::App, "Created executor threadCount: {}.", ThreadCount() );
 			Process::AddShutdown( this );
@@ -82,6 +96,7 @@ namespace Jde{
 	}
 	α ExecutorContext::Shutdown( bool terminate )ι->void{
 		Debug( ELogTags::App, "Executor Shutdown: instances: {}.", _ioc.use_count() );
+		_keepAlive = nullptr;
 		if( _shutdowns )
 			_shutdowns->erase( [=](auto p){p->Shutdown(terminate);} );
 		if( _ioc && terminate )
@@ -95,8 +110,17 @@ namespace Jde{
 		SetThreadDscrptn( "Ex[0]" );
 		vector<std::jthread> v; v.reserve( ThreadCount() - 1 );
 		auto ioc = _ioc; //keep alive
-		for( auto i = ThreadCount() - 1; i > 0; --i )
-			v.emplace_back( [=]{ SetThreadDscrptn( Ƒ("Ex[{}]", i) ); ioc->run(); } );
+		for( auto i = ThreadCount() - 1; i > 0; --i ){
+			v.emplace_back( [=]{
+				sigset_t set;
+				sigemptyset( &set );
+				sigaddset( &set, IO::CompletionSignal );
+				pthread_sigmask( SIG_BLOCK, &set, nullptr );
+				Trace( ELogTags::Test, "Ex[{}]", i );
+				SetThreadDscrptn( Ƒ("Ex[{}]", i) );
+				ioc->run();
+			});
+		}
 		Trace( ELogTags::App, "Executor Started: instances: {}.", ioc.use_count() );
 		_started.test_and_set();
 		_started.notify_all();
