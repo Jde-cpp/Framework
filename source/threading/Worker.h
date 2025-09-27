@@ -1,6 +1,7 @@
 ﻿#pragma once
 #ifndef WORKER_H
 #define WORKER_H
+/*
 #include <jde/framework/process.h>
 #include "./Mutex.h"
 #include "InterruptibleThread.h"
@@ -9,7 +10,7 @@
 namespace Jde::Threading{
 	#define let const auto
 	using std::stop_token;
-	/*handle signals, configuration*/
+	//handle signals, configuration
 	struct Γ IWorker : IShutdown, std::enable_shared_from_this<IWorker>{
 		IWorker( sv name )ι;
 		virtual ~IWorker()=0;
@@ -39,14 +40,14 @@ namespace Jde::Threading{
 	};
 
 	template<class TDerived>
-	struct TWorker /*abstract*/: IPollWorker{
+	struct TWorker / *abstract* /: IPollWorker{
 		TWorker()ι:IPollWorker{ TDerived::Name }{}
 	protected:
 		Ω Start()ι->sp<IWorker>;
 	};
 
 	template<class TArg, class TDerived>
-	struct IQueueWorker /*abstract*/: TWorker<TDerived>{
+	struct IQueueWorker / *abstract* /: TWorker<TDerived>{
 		using base=TWorker<TDerived>; using Class=IQueueWorker<TArg,TDerived>;
 		Ω Push( TArg&& x )ι->void;
 		β HandleRequest( TArg&& x )ι->void=0;
@@ -104,4 +105,5 @@ namespace Jde::Threading{
 #undef TARG
 #undef let
 #undef $
+*/
 #endif

@@ -19,7 +19,7 @@ namespace Jde::Logging{
 		for( let& [name,sink] : sinkSettings ){
 			spdlog::sink_ptr pSink;
 			string additional;
-			auto pattern =  Json::FindSV( sink, "pattern" );
+			auto pattern =  Json::FindSV( sink, "/pattern" );
 			if( name=="console" && Process::IsConsole() ){
 				if( !pattern ){
 					if constexpr( _debug ){
@@ -45,7 +45,7 @@ namespace Jde::Logging{
 					pPath = fs::path{ "~/."+pPath->string().substr(1) };
 				let markdown = Json::FindBool(sink, "/md" ).value_or( false );
 				let fileNameWithExt = Settings::FileStem()+( markdown ? ".md" : ".log" );
-				let path = pPath && !pPath->empty() ? *pPath/fileNameWithExt : OSApp::ApplicationDataFolder()/"logs"/fileNameWithExt;
+				let path = pPath && !pPath->empty() ? *pPath/fileNameWithExt : Process::ApplicationDataFolder()/"logs"/fileNameWithExt;
 				let truncate = Json::FindBool( sink, "/truncate" ).value_or( true );
 				additional = Ƒ( " truncate='{}' path='{}'", truncate, path.string() );
 				try{

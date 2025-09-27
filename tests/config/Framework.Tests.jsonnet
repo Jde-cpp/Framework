@@ -1,27 +1,30 @@
 {
 	testing:{
-		tests:: "OpenSslTests.Main",
+		tests: "LogGeneralTests.ArgsNotCalled",
 		file: "$(JDE_BUILD_DIR)/tests/test.txt"
 	},
 	cryptoTests:{
 		clear: false
 	},
 	logging:{
-		tags: {
-			trace:["test", "io", "exception"],
-			debug:["settings"],
-			information:[],
-			warning:[],
-			"error":[],
-			critical:[]
+		spd:{
+			tags: {
+				trace:["test", "io", "exception", "app"],
+				debug:["settings"],
+				information:[],
+				warning:[],
+				"error":[],
+				critical:[]
+			},
+			sinks:{
+				console:{},
+				file:{ path: "$(JDE_BUILD_DIR)", md: false, pattern: "%^%3!l%$-%H:%M:%S.%e %v" }
+			}
 		},
-		sinks:{
-			console:{},
-			file:{ path: "$(JDE_BUILD_DIR)", md: false }
-		},
+		memory:{ default: "trace" }
 	},
 	workers:{
-		executor: {threads: 4},
+		executor: {threads: 2},
 		io: {chunkByteSize: 10, threads: 2}
 	}
 }

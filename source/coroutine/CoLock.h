@@ -9,7 +9,7 @@
 
 #define Φ Γ auto
 namespace Jde{
-	struct AtomicGuard final : boost::noncopyable{
+/*	struct AtomicGuard final : boost::noncopyable{
 		AtomicGuard( std::atomic_flag& f )ι: _pValue{ &f }{
 			while( f.test_and_set(std::memory_order_acquire) ){
         while( f.test(std::memory_order_relaxed) )
@@ -21,7 +21,7 @@ namespace Jde{
 		α unlock()ι->void{ ASSERT(_pValue) _pValue->clear( std::memory_order_release ); _pValue = nullptr; }
 	private:
 		atomic_flag* _pValue;
-	};
+	};*/
 
 	struct CoLock;
 	struct Γ CoGuard{
@@ -64,7 +64,7 @@ namespace Jde{
 	};
 }
 namespace Jde::Threading{
-	Φ UniqueLock( str key )ι->std::unique_lock<std::shared_mutex>;
+//	Φ UniqueLock( str key )ι->std::unique_lock<std::shared_mutex>;
 }
 #undef Φ
 #endif

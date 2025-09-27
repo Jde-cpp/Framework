@@ -4,6 +4,7 @@
 #include <jde/framework/io/FileAwait.h>
 #include <jde/framework/settings.h>
 
+#ifdef unused
 #define let const auto
 namespace Jde::Threading{
 	sp<IWorker> IWorker::_pInstance;
@@ -79,3 +80,4 @@ namespace Jde::Threading{
 		Trace( ELogTags::Threads, "({})Ending Thread", NameInstance );
 	}
 }
+#endif

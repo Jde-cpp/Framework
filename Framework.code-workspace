@@ -17,7 +17,7 @@
 			"path": "tests"
 		},
 		{
-			"path": "../Public/libs/framework/process/os",
+			"path": "../Public/libs/framework/src/process/os",
 			"name": "libs"
 		},
 		{
@@ -75,7 +75,12 @@
 				"MIMode": "gdb",
 				"visualizerFile": "${env:JDE_DIR}/Public/build/gcc.natvis",
 				"showDisplayString": true,
-				"setupCommands": [{"description": "Enable pretty-printing for gdb","text": "-enable-pretty-printing",	"ignoreFailures": true }],
+				"setupCommands": [
+					{"description": "Set Disassembly Flavor to Intel","text": "-gdb-set disassembly-flavor intel","ignoreFailures": true },
+					{"description": "Set print elements","text": "-enable-pretty-printing","ignoreFailures": true },
+					{"description": "ignore SIGUSR2","text": "handle SIGUSR2 nostop", "ignoreFailures": true }
+
+				],
 				"preLaunchTask": "build"
 			},
 		],

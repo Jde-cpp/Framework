@@ -21,6 +21,12 @@ namespace Jde{
 	vector<up<Logging::ILogger>> _loggers = initLoggers();
 	α Logging::Loggers()->const vector<up<ILogger>>&{ return _loggers; }
 	α Logging::AddLogger( up<ILogger>&& logger )->void{ _loggers.push_back( move(logger) ); }
+	α Logging::MemoryLogger()ε->MemoryLog&{
+		for( let& logger : _loggers )
+			if( auto log = dynamic_cast<MemoryLog*>( logger.get() ) )
+				return *log;
+		THROW( "No MemoryLog found." );
+	}
 	inline constexpr std::array<sv,7> ELogLevelStrings = { "Trace", "Debug", "Information", "Warning", "Error", "Critical", "None" };
 }
 
@@ -47,8 +53,13 @@ namespace Jde{
 
 	α Logging::Initialize()ι->void{
 		_loggers.push_back( mu<SpdLog>() );
-		dynamic_cast<MemoryLog*>( _loggers.front().get() )->Write( *_loggers.back().get() );
-		if( auto memory = Settings::FindObject("/logging/memory"); !memory || Json::FindEnum<ELogLevel>(*memory, "default", ToLogLevel).value_or(ELogLevel::NoLog)==ELogLevel::NoLog )
+		for( let& logger : _loggers ){
+			if( dynamic_cast<MemoryLog*>(logger.get()) )
+				continue;
+			MemoryLogger().Write( *logger.get() );
+		}
+		auto memory = Settings::FindObject("/logging/memory");
+		if( !memory || Json::FindEnum<ELogLevel>(*memory, "default", ToLogLevel).value_or(ELogLevel::NoLog)==ELogLevel::NoLog )
 			_loggers.erase( _loggers.begin() );
 		UpdateCumulative( _loggers );
 	}

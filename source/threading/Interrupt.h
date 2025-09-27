@@ -6,6 +6,7 @@
 #include <functional>
 #include <mutex>
 #include <thread>
+#ifdef Unused
 
 namespace Jde::Threading{
 	struct InterruptibleThread;
@@ -40,4 +41,5 @@ namespace Jde::Threading{
 		std::chrono::nanoseconds _refreshRate;
 	};
 }
+#endif
 #endif

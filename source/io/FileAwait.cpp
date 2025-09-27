@@ -5,20 +5,22 @@
 
 #define let const auto
 namespace Jde{
-	uint32 _chunkSize=0;
-	α IO::ChunkByteSize()ι->uint32{ return _chunkSize==0 ? (_chunkSize=Settings::FindNumber<uint32>("/workers/io/chunkByteSize").value_or(1 << 19)) : _chunkSize; }
-	uint8 _threadSize=0;
-	α IO::ThreadSize()ι->uint8{ return _threadSize==0 ? (_threadSize=Settings::FindNumber<uint8>("/workers/io/threads").value_or(5)) : _threadSize; }
+	uint32 _chunkSize;
+	α IO::ChunkByteSize()ι->uint32{ return _chunkSize; }
+	uint8 _threadSize;
+	α IO::ThreadSize()ι->uint8{ return _threadSize; }
+	α IO::Init()ι->void{
+		_chunkSize = Settings::FindNumber<uint32>("/workers/io/chunkByteSize").value_or(1 << 19);
+		_threadSize = Settings::FindNumber<uint8>("/workers/io/threads").value_or(5);
+#ifndef _MSC_VER
+		LinuxInit();
+#endif
+	}
 
 namespace IO{
 	constexpr ELogTags _tags = ELogTags::IO;
 	α IFileChunkArg::Handle()Ι->HFile&{ return _fileIOArg->Handle; }
 	α IFileChunkArg::IsRead()Ι->bool{ return _fileIOArg->IsRead; }
-
-
-	//void DriveWorker::Initialize()ι{
-	//	IWorker::Initialize();
-	//}
 
 	FileIOArg::FileIOArg( fs::path path, bool vec, SL sl )ι:
 		IsRead{ true },
@@ -69,14 +71,16 @@ namespace IO{
 				Chunks.pop();
 		}
 		if( IsRead ){
-			auto h = ReadCoHandle();
-			Post( [path=move(Path),sl=_sl, m=move(m), code, h](){h.promise().ResumeExp(IOException{path, code, move(m), sl}, h);} );
-			_coHandle = (TAwait<string>::Handle)nullptr;
+			if( auto h = ReadCoHandle(); h ){
+				_coHandle = (TAwait<string>::Handle)nullptr;
+				Post( [path=move(Path),sl=_sl, m=move(m), code, h](){h.promise().ResumeExp(IOException{path, code, move(m), sl}, h);} );
+			}
 		}
 		else{
-			auto h = WriteCoHandle();
-			Post( [path=move(Path),sl=_sl, m=move(m), code, h](){h.promise().ResumeExp(IOException{path, code, move(m), sl}, h);} );
-			_coHandle = (VoidAwait::Handle)nullptr;
+			if( auto h = WriteCoHandle(); h ){
+				_coHandle = (VoidAwait::Handle)nullptr;
+				Post( [path=move(Path),sl=_sl, m=move(m), code, h](){h.promise().ResumeExp(IOException{path, code, move(m), sl}, h);} );
+			}
 		}
 		chunk=nullptr;
 	}

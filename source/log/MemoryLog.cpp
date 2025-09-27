@@ -18,11 +18,14 @@ namespace Jde::Logging{
 		_entries.emplace_back( move(m) );
 	}
 	α MemoryLog::Write( ILogger& logger )ι->void{
-		_entries.visit( [&](const auto& entry){ logger.Write( Entry{entry} ); } );
+		_entries.visit( [&](let& entry){
+			if( logger.ShouldLog(entry.Level, entry.Tags) )
+				logger.Write( Entry{entry} );
+		});
 	}
 	α MemoryLog::Find( StringMd5 id )ι->vector<Logging::Entry>{
 		vector<Logging::Entry> y;
-		_entries.visit( [&](const auto& entry){
+		_entries.visit( [&](let& entry){
 			if( entry.Id() == id )
 				y.push_back(entry);
 		});
@@ -30,10 +33,16 @@ namespace Jde::Logging{
 	}
 	α MemoryLog::Find( function<bool(const Logging::Entry&)> f )ι->vector<Logging::Entry>{
 		vector<Logging::Entry> y;
-		_entries.visit( [&](const auto& entry){
+		_entries.visit( [&](let& entry){
 			if( f(entry) )
 				y.push_back(entry);
 		});
 		return y;
+	}
+
+	α MemoryLog::Find( string text )ι->vector<Logging::Entry>{
+		return Find( [&](let& entry){
+			return entry.Message()==text;
+		} );
 	}
 }

@@ -6,13 +6,13 @@
 #include <jde/framework/thread/thread.h>
 #include "../collections/Queue.h"
 #include "../threading/InterruptibleThread.h"
-
+/*
 namespace Jde::Threading{ struct InterruptibleThread; }
 
 namespace Jde::Coroutine{
 	struct CoroutineTests;
 
-	struct CoroutineParam{ /*: Threading::ThreadParam*/
+	struct CoroutineParam{ / *: Threading::ThreadParam* /
 		coroutine_handle<> CoHandle;
 	};
 
@@ -53,5 +53,5 @@ namespace Jde::Coroutine{
 		//static jobject _settings;
 		friend CoroutineTests;
 	};
-}
+}*/
 #endif
