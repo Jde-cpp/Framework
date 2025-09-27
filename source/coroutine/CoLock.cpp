@@ -1,4 +1,4 @@
-﻿#include "Mutex.h"
+﻿#include "CoLock.h"
 #include <boost/container/flat_map.hpp>
 #define let const auto
 namespace Jde{
@@ -74,7 +74,7 @@ namespace Jde{
 	}
 }
 namespace Jde::Threading{
-	static boost::container::flat_map<string,sp<shared_mutex>> _mutexes;
+/*	static boost::container::flat_map<string,sp<shared_mutex>> _mutexes;
 	mutex _mutex;
 	unique_lock<shared_mutex> UniqueLock( str key )ι
 	{
@@ -88,4 +88,5 @@ namespace Jde::Threading{
 		TRACE( "UniqueLock( '{}' )", key );
 		return unique_lock{ *pKeyMutex };
 	}
+*/
 }

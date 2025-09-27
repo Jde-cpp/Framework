@@ -30,8 +30,8 @@ namespace Jde{
 				continue;
 			}
 			cumulative->_minLevel = min( cumulative->MinLevel(), logger->MinLevel() );
-			logger->Tags.cvisit_all( [&cumulative](let& kv){
-				cumulative->Tags.insert_or_visit( kv, [&kv]( auto& cumulativeValues ){
+			logger->ConfiguredTags.cvisit_all( [&cumulative](let& kv){
+				cumulative->ConfiguredTags.insert_or_visit( kv, [&kv]( auto& cumulativeValues ){
 					cumulativeValues.second = min( cumulativeValues.second, kv.second );
 				} );
 			} );
@@ -100,7 +100,8 @@ namespace Jde{
 	}
 
 	LogTags::LogTags( jobject o )ι:
-		Tags{ parseTags(o) },
+		ConfiguredTags{ parseTags(o) },
+		ExtrapolatedTags{ ConfiguredTags },
 		_defaultLevel{ Json::FindEnum<ELogLevel>( o, "default", ToLogLevel ).value_or(ELogLevel::Information) }
 	{}
 
@@ -115,14 +116,14 @@ namespace Jde{
 	}
 	α LogTags::MinLevel( ELogTags tags )Ι->ELogLevel{
 		optional<ELogLevel> level;
-		if( Tags.cvisit(tags, [&](let& kv){level = kv.second;}) )
+		if( ExtrapolatedTags.cvisit(tags, [&](let& kv){level = kv.second;}) )
 			return *level;
 		let pedantic = !empty( tags & ELogTags::Pedantic );
 		if( !pedantic ){
 			vector<ELogTags> individual = split( tags );
 			if( individual.size()>1 ){
 				uint matches{};
-				Tags.cvisit_while( [&level,&matches,tags,count=individual.size()](let& kv ){
+				ExtrapolatedTags.cvisit_while( [&level,&matches,tags,count=individual.size()](let& kv ){
 					if( empty(kv.first & tags) )
 						return true;
 					if( auto iterCount = split( tags ).size(); iterCount>matches ){
@@ -132,19 +133,28 @@ namespace Jde{
 					return matches+1<count;
 				} );
 			}
+			Trace{ ELogTags::App | ELogTags::Pedantic, "[{}]tag: {}, minLevel: {}", Name(), Jde::ToString(tags), level ? Jde::ToString(*level) : "{default}" };
 		}
 		if( !level )
 			level = pedantic ? ELogLevel::NoLog : _defaultLevel;
-		Tags.emplace( tags, *level );
+		ExtrapolatedTags.emplace( tags, *level );
 		return *level;
 	}
+
+	α LogTags::SetLevel( ELogTags tags, ELogLevel level )ι->void{
+		ConfiguredTags.insert_or_assign( tags, level );
+		ExtrapolatedTags = ConfiguredTags;
+		UpdateCumulative( Logging::Loggers() );
+	}
+
 	α LogTags::ShouldLog( ELogLevel level, ELogTags tags )Ι->bool{
-		return level!=ELogLevel::NoLog && MinLevel( tags ) <= level;
+		let configuredMin = level==ELogLevel::NoLog ? ELogLevel::NoLog : MinLevel( tags );
+		return configuredMin!=ELogLevel::NoLog && configuredMin <= level;
 	}
 
 	α LogTags::ToString()ι->string{
 		flat_map<ELogLevel, vector<string>> levels;
-		Tags.cvisit_all( [&]( let& kv ){
+		ConfiguredTags.cvisit_all( [&]( let& kv ){
 			levels.try_emplace( kv.second, vector<string>{} ).first->second.push_back( Jde::ToString(kv.first) );
 		});
 		string y; y.reserve(1024);

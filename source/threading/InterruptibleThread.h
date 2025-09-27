@@ -5,7 +5,7 @@
 #include <future>
 #include <jde/framework/process.h>
 #include <jde/framework/thread/thread.h>
-
+#ifdef Unused
 namespace Jde::Threading{  //TODO Reflection remove Threading from public items. move to jthread
 #define ω Γ static auto
 	void InterruptionPoint()ε;
@@ -96,4 +96,5 @@ namespace Jde::Threading{  //TODO Reflection remove Threading from public items.
 }
 #undef _logTag
 #undef ω
+#endif
 #endif

@@ -13,11 +13,13 @@ namespace Jde{
 	namespace asio = boost::asio;
 	α ThreadCount()ι->int{ return std::max(Settings::FindNumber<int>( "/workers/executor/threads" ).value_or(std::thread::hardware_concurrency()), 1); }
 	sp<asio::io_context> _ioc;
+  up<asio::io_context::strand> _ioStrand;
 	up<asio::executor_work_guard<asio::io_context::executor_type>> _keepAlive;
 }
 α Jde::Executor()ι->sp<asio::io_context>{
 	if( !_ioc ){
 		_ioc = ms<asio::io_context>( ThreadCount() );
+		_ioStrand = mu<asio::io_context::strand>( *_ioc );
 		_keepAlive = mu<asio::executor_work_guard<asio::io_context::executor_type>>( _ioc->get_executor() );
 	}
 	return _ioc;
@@ -69,9 +71,11 @@ namespace Jde{
 		Ω Execute()ι->void;
 		std::jthread _thread;
 		static atomic_flag _started;
+		static atomic_flag _stopped;
 	};
 	up<ExecutorContext> _pExecutorContext;
 	atomic_flag ExecutorContext::_started{};
+	atomic_flag ExecutorContext::_stopped{};
 	α Execution::Run()->void{
 		if( !ExecutorContext::Started() ){
 			auto keepAlive = Executor();
@@ -96,14 +100,16 @@ namespace Jde{
 	}
 	α ExecutorContext::Shutdown( bool terminate )ι->void{
 		Debug( ELogTags::App, "Executor Shutdown: instances: {}.", _ioc.use_count() );
+		_keepAlive->reset();
 		_keepAlive = nullptr;
 		if( _shutdowns )
 			_shutdowns->erase( [=](auto p){p->Shutdown(terminate);} );
 		if( _ioc && terminate )
 			_ioc->stop(); // Stop the `io_context`. This will cause `run()` to return immediately, eventually destroying the `io_context` and all of the sockets in it.
-		else
+		else{
 			_cancelSignals.Emit( asio::cancellation_type::all );
-
+			_stopped.wait( false );
+		}
 		//Process::RemoveShutdown( this ); deadlock
 	}
 	α ExecutorContext::Execute()ι->void{
@@ -122,6 +128,7 @@ namespace Jde{
 			});
 		}
 		Trace( ELogTags::App, "Executor Started: instances: {}.", ioc.use_count() );
+		_stopped.clear();
 		_started.test_and_set();
 		_started.notify_all();
 		ioc->run();
@@ -136,11 +143,18 @@ namespace Jde{
 		ioc.reset(); //need to clear out client connections.
 		_cancelSignals.Clear();
 		_started.clear();
+		_stopped.test_and_set();
+		_stopped.notify_all();
 	}
 }
 α Jde::Post( function<void()> f )ι->void{
 	auto ctx = Executor();
 	asio::post( *ctx, f );
+	Execution::Run();
+}
+α Jde::PostIO( function<void()> f )ι->void{
+	Executor();
+	asio::post( *_ioStrand, f );
 	Execution::Run();
 }
 α Jde::Post( VoidAwait::Handle&& h )ι->void{

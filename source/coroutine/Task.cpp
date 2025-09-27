@@ -1,6 +1,7 @@
 ﻿#include <jde/framework/coroutine/TaskOld.h>
 #include <jde/framework/thread/thread.h>
 
+#ifdef Unused
 namespace Jde::Coroutine{
 	constexpr ELogTags _tags{ ELogTags::Threads };
 
@@ -36,3 +37,4 @@ namespace Jde::Coroutine{
 		}
 	}
 }
+#endif

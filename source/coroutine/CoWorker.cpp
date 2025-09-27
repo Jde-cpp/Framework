@@ -1,6 +1,6 @@
 ﻿#include "CoWorker.h"
 #include "../threading/InterruptibleThread.h"
-
+#ifdef Unused
 namespace Jde::Coroutine{
 	constexpr ELogTags _tags = ELogTags::Threads;
 	sp<CoWorker> CoWorker::_pInstance;
@@ -32,3 +32,4 @@ namespace Jde::Coroutine{
 		Trace( _tags, "{} - Ending", _name );
 	}
 }
+#endif

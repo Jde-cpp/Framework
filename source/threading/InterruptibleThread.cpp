@@ -1,5 +1,6 @@
 ﻿#include "InterruptibleThread.h"
 
+#ifdef Unused
 #define let const auto
 namespace Jde::Threading{
 	constexpr ELogTags _tags = ELogTags::Threads;
@@ -53,3 +54,4 @@ namespace Jde::Threading{
 		Interrupt();
 	};
 }
+#endif

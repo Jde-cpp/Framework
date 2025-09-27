@@ -2,7 +2,7 @@
 #include <jde/framework/thread/thread.h>
 #include "InterruptibleThread.h"
 #define let const auto
-
+#ifdef Unused
 namespace Jde::Threading{
 	constexpr ELogTags _tags = ELogTags::Threads;
 	Interrupt::Interrupt( sv threadName, Duration duration, bool paused ):
@@ -81,3 +81,4 @@ namespace Jde::Threading{
 		Trace( _tags, "{}::Worker() - exiting", _threadName );
 	}
 }
+#endif

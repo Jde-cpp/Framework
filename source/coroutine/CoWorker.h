@@ -3,9 +3,8 @@
 #include <jde/framework/coroutine/TaskOld.h>
 #include <jde/framework/thread/thread.h>
 #include "../threading/InterruptibleThread.h"
-
+#ifdef Unused
 namespace Jde::Coroutine{
-
 	typedef uint ClientHandle;
 	struct Γ CoWorker /*abstract*/: public IShutdown, std::enable_shared_from_this<CoWorker>{
 		CoWorker( sv name )ι:_name{name}{};
@@ -34,3 +33,4 @@ namespace Jde::Coroutine{
 		static constexpr Duration WakeDuration{5s};
 	};
 }
+#endif

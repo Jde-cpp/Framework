@@ -3,6 +3,7 @@
 #include <deque>
 #include <shared_mutex>
 
+#ifdef Unused
 namespace Jde::Threading{
 	//single thread pool. TODO get rid of.
 	template<class TArgs>
@@ -97,3 +98,4 @@ namespace Jde::Threading{
 			_pThread->join();
 	}
 }
+#endif

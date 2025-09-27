@@ -1,4 +1,5 @@
-﻿#pragma once
+﻿/*
+#pragma once
 #ifndef QUEUE_H
 #define QUEUE_H
 //adapted from https://livebook.manning.com/#!/book/c-plus-plus-concurrency-in-action-second-edition/chapter-4/v-7/40
@@ -280,3 +281,4 @@ namespace Jde
 }
 #undef let
 #endif
+*/

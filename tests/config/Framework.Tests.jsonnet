@@ -1,6 +1,6 @@
 {
 	testing:{
-		tests:: "OpenSslTests.Main",
+		tests: "LogGeneralTests.ArgsNotCalled",
 		file: "$(JDE_BUILD_DIR)/tests/test.txt"
 	},
 	cryptoTests:{
@@ -18,9 +18,10 @@
 			},
 			sinks:{
 				console:{},
-				file:{ path: "$(JDE_BUILD_DIR)", md: false }
+				file:{ path: "$(JDE_BUILD_DIR)", md: false, pattern: "%^%3!l%$-%H:%M:%S.%e %v" }
 			}
-		}
+		},
+		memory:{ default: "trace" }
 	},
 	workers:{
 		executor: {threads: 2},

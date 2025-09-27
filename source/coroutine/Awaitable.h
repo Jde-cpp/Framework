@@ -4,10 +4,10 @@
 #include <future>
 #include <jde/framework/coroutine/TaskOld.h>
 #include "Coroutine.h"
+#ifdef Unused
 namespace Jde{
 	using namespace Jde::Coroutine;
 }
-
 namespace Jde::Coroutine{
 	using ClientHandle = uint;
 
@@ -157,7 +157,7 @@ namespace Jde::Coroutine{
 #define awaitp(t,a) ( co_await a ).UP<t>()
 
 	//await_suspend is async.
-	class AsyncAwait /*final*/ : public IAwaitOld{
+	class AsyncAwait / *final* / : public IAwaitOld{
 		using base=IAwaitOld;
 	public:
 		AsyncAwait( function<void(HCoroutine)>&& suspend, SRCE, str name={} )ι:base{name, sl}, _suspend{move(suspend)}{};
@@ -193,7 +193,7 @@ namespace Jde::Coroutine{
 	};
 
 	// Allows cancellation of an awaitable.  Used for alarms.
-	struct CancelAwait /*abstract*/ : IAwaitOld{
+	struct CancelAwait / *abstract* / : IAwaitOld{
 		CancelAwait()ι:_hClient{ NextHandle() }{}
 		CancelAwait( ClientHandle& handle )ι:_hClient{ NextHandle() }{ handle = _hClient; }
 		virtual ~CancelAwait()=0;
@@ -223,5 +223,7 @@ namespace Jde::Coroutine{
 		return y;
 	}
 }
+	*/
 #undef Base
+#endif
 #endif

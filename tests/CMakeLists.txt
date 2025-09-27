@@ -12,8 +12,8 @@ if( WIN32)
 	set_target_properties( ${targetName} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/$<CONFIG>" )
 endif()
 
-file( GLOB sources *.cpp )
-file( GLOB_RECURSE headers  *.h )
+file( GLOB sources *.cpp log/*.cpp )
+file( GLOB_RECURSE headers *.h log/*.h )
 target_sources( ${targetName} PRIVATE ${sources} ${headers} )
 
 target_link_libraries( ${targetName} Boost::json )

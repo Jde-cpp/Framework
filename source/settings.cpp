@@ -34,7 +34,7 @@ namespace Jde{
 			std::smatch b = *begin;
 			let match = begin->str();
 			let group = match.substr( 2, match.size()-3 );
-			let env = OSApp::EnvironmentVariable( group ).value_or( "" );
+			let env = Process::EnvironmentVariable( group ).value_or( "" );
 			setting = Str::Replace( setting, match, env );
 		}
 		return setting;
@@ -65,7 +65,7 @@ namespace Jde{
 	}
 
 	α Settings::FileStem()ι->string{
-		let executable = OSApp::Executable().filename();
+		let executable = Process::Executable().filename();
 	#ifdef _MSC_VER
 			auto stem = executable.stem().string();
 			return stem.size()>4 ? stem.substr(4) : stem;
@@ -92,7 +92,7 @@ namespace Jde{
 		}
 
 		auto p = find_if( paths, []( let& path ){return fs::exists(path);} );
-		_path = p!=paths.end() ? *p : OSApp::ApplicationDataFolder()/fileName;
+		_path = p!=paths.end() ? *p : Process::ApplicationDataFolder()/fileName;
 		std::cout << "settings path=" << _path.string() << std::endl;
 		return _path;
 	}
@@ -108,7 +108,7 @@ namespace Jde{
 					std::smatch b = *begin;
 					let match = begin->str();
 					let group = match.substr( 2, match.size()-3 );
-					auto env = OSApp::EnvironmentVariable( group ).value_or( "" );
+					auto env = Process::EnvironmentVariable( group ).value_or( "" );
 					if( env.empty() && group=="JDE_BUILD_TYPE" )
 						env = buildTypeSubDir();
 					if( env.empty() )

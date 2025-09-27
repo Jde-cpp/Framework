@@ -3,6 +3,7 @@
 #include <jde/framework/chrono.h>
 #include <jde/framework/settings.h>
 
+#ifdef Unused
 #define let const auto
 
 using namespace std::chrono;
@@ -151,3 +152,4 @@ namespace Jde::Coroutine{
 		Trace( _tag, "{} - Ending", Name );
 	}
 }
+#endif

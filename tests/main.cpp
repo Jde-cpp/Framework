@@ -9,7 +9,7 @@ namespace Jde{
 	α Process::ProductName()ι->sv{ return "Tests.Crypto"; }
 #endif
  	Ω startup( int argc, char **argv )ι->void{
-		OSApp::Startup( argc, argv, "Tests.Framework", "Unit Tests description", true );
+		Process::Startup( argc, argv, "Tests.Framework", "Unit Tests description", true );
 	}
 }
 
@@ -20,7 +20,7 @@ namespace Jde{
 	startup( argc, argv );
 	auto result = EXIT_FAILURE;
 	{
-		let p=Settings::FindSV( "testing/tests" );
+		let p=Settings::FindSV( "/testing/tests" );
 		let filter = p ? *p : "*";
 		if( !filterSet ){
 			Information{ ELogTags::App, "filter:'{}'", filter };
