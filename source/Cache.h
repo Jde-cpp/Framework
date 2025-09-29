@@ -5,6 +5,7 @@
 #include <jde/framework/str.h>
 #include <jde/framework/settings.h>
 #include <jde/framework/collections/collections.h>
+#include <jde/framework/log/log.h>
 
 namespace Jde{
 #define let const auto
@@ -50,11 +51,11 @@ namespace Jde{
 		ul l{_cacheLock};
 		if( !p ){
 			let erased = _cache.erase( id );
-			Trace( ELogTags::Cache, "Cache::{} erased={}"sv, id, erased );
+			TRACET( ELogTags::Cache, "Cache::{} erased={}", id, erased );
 		}
 		else{
 			_cache[id] = p;
-			Trace( ELogTags::Cache, "Cache::{} set"sv, id );
+			TRACET( ELogTags::Cache, "Cache::{} set", id );
 		}
 		return p;
 	}
@@ -124,11 +125,11 @@ namespace Jde{
 		ul l{_cacheLock};
 		if( !pValue ){
 			const bool erased = _cache.erase( name );
-			Trace( ELogTags::Cache, "Cache::{} erased={}"sv, name, erased );
+			TRACET( ELogTags::Cache, "Cache::{} erased={}"sv, name, erased );
 		}
 		else{
 			_cache[name] = pValue;
-			Trace( ELogTags::Cache, "Cache::{} set"sv, name );
+			TRACET( ELogTags::Cache, "Cache::{} set"sv, name );
 		}
 		return pValue;
 	}

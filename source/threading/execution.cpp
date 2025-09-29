@@ -52,7 +52,7 @@ namespace Jde{
 	struct ExecutorContext final : IShutdown{
 		ExecutorContext()ι:
 			_thread{ [&](){
-				Trace( ELogTags::Test, "Ex[0]" );
+				TRACET( ELogTags::Test, "Ex[0]" );
 				sigset_t set;
 				sigemptyset( &set );
 				sigaddset( &set, IO::CompletionSignal );
@@ -60,7 +60,7 @@ namespace Jde{
 				Execute();
 			}}{
 			_started.wait( false );
-			Information( ELogTags::App, "Created executor threadCount: {}.", ThreadCount() );
+			INFOT( ELogTags::App, "Created executor threadCount: {}.", ThreadCount() );
 			Process::AddShutdown( this );
 		}
 		~ExecutorContext()ι{ if( !Process::Finalizing() ) Process::RemoveShutdown( this ); _cancelSignals.Clear(); }
@@ -86,7 +86,7 @@ namespace Jde{
 	α CancellationSignals::Emit( asio::cancellation_type ct )ι->void{
 		lg _(_mtx);
 		for( uint i=0; i<_sigs.size(); ++i ){
-			Trace{ ELogTags::App, "Emitting cancellation signal {}.", i };
+			TRACET( ELogTags::App, "Emitting cancellation signal {}.", i );
 			_sigs[i]->emit( ct );
 		}
 	}
@@ -99,7 +99,7 @@ namespace Jde{
 		return p == _sigs.end() ? _sigs.emplace_back( ms<asio::cancellation_signal>() ) : *p;
 	}
 	α ExecutorContext::Shutdown( bool terminate )ι->void{
-		Debug( ELogTags::App, "Executor Shutdown: instances: {}.", _ioc.use_count() );
+		DBGT( ELogTags::App, "Executor Shutdown: instances: {}.", _ioc.use_count() );
 		_keepAlive->reset();
 		_keepAlive = nullptr;
 		if( _shutdowns )
@@ -122,12 +122,12 @@ namespace Jde{
 				sigemptyset( &set );
 				sigaddset( &set, IO::CompletionSignal );
 				pthread_sigmask( SIG_BLOCK, &set, nullptr );
-				Trace( ELogTags::Test, "Ex[{}]", i );
+				TRACET( ELogTags::Test, "Ex[{}]", i );
 				SetThreadDscrptn( Ƒ("Ex[{}]", i) );
 				ioc->run();
 			});
 		}
-		Trace( ELogTags::App, "Executor Started: instances: {}.", ioc.use_count() );
+		TRACET( ELogTags::App, "Executor Started: instances: {}.", ioc.use_count() );
 		_stopped.clear();
 		_started.test_and_set();
 		_started.notify_all();
@@ -136,10 +136,10 @@ namespace Jde{
 		_started.clear();
 		if( _shutdowns )
 			_shutdowns->erase( [=](auto p){ p->Shutdown( false ); } );
-		Information( ELogTags::App, "Executor Stopped: instances: {}.", ioc.use_count() );
+		INFOT( ELogTags::App, "Executor Stopped: instances: {}.", ioc.use_count() );
 		for( auto& t : v )
 			t.join();
-		Debug( ELogTags::App, "Removing Executor remaining instances: {}.", ioc.use_count()-1 );
+		DBGT( ELogTags::App, "Removing Executor remaining instances: {}.", ioc.use_count()-1 );
 		ioc.reset(); //need to clear out client connections.
 		_cancelSignals.Clear();
 		_started.clear();

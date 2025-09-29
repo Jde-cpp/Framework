@@ -73,7 +73,7 @@ namespace Jde{
 				tag |= _tagParsers[i]->ToTag( string{subName} );
 		}
 		if( empty(tag) )
-			Warning( ELogTags::Settings, "Unknown tag '{}'", subName );
+			WARNT( ELogTags::Settings, "Unknown tag '{}'", subName );
 		y |= tag;
 	}
 	return y;
@@ -133,7 +133,7 @@ namespace Jde{
 					return matches+1<count;
 				} );
 			}
-			Trace{ ELogTags::App | ELogTags::Pedantic, "[{}]tag: {}, minLevel: {}", Name(), Jde::ToString(tags), level ? Jde::ToString(*level) : "{default}" };
+			TRACET( ELogTags::App | ELogTags::Pedantic, "[{}]tag: {}, minLevel: {}", Name(), Jde::ToString(tags), level ? Jde::ToString(*level) : "{default}" );
 		}
 		if( !level )
 			level = pedantic ? ELogLevel::NoLog : _defaultLevel;

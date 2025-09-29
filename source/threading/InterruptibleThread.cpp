@@ -41,7 +41,7 @@ namespace Jde::Threading{
 	{
 		if( _pFlag && !_pFlag->IsSet() )
 		{
-			Debug( _tags, "{} - Interrupt _pFlag={}", Name, _pFlag!=nullptr );
+			DBG( "{} - Interrupt _pFlag={}", Name, _pFlag!=nullptr );
 			_pFlag->Set();
 		}
 	}
@@ -50,7 +50,7 @@ namespace Jde::Threading{
 			_internalThread.join();
 	}
 	void InterruptibleThread::Shutdown( bool /*terminate*/ )ι{
-		Debug( _tags, "{} - Shutdown", Name );
+		DBG( "{} - Shutdown", Name );
 		Interrupt();
 	};
 }

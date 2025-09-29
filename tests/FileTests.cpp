@@ -7,8 +7,8 @@
 #define let const auto
 
 using boost::uuids::uuid;
-
 namespace Jde::IO::Tests{
+	constexpr ELogTags _tags{ ELogTags::Test };
 	Ω File( uint index )->fs::path{
 		let path = Settings::FindPath("/testing/file");
 		return path
@@ -25,7 +25,7 @@ namespace Jde::IO::Tests{
 			Execution::Run();//io strand threading issue.
 		}
 		α SetUp()->void override{
-			Information{ ELogTags::Test, "{}", File(0).string() };
+			INFO( "{}", File(0).string() );
 			fs::create_directories( File(0).parent_path() );
 		}
 		α TearDown()->void override {}
@@ -54,7 +54,7 @@ namespace Jde::IO::Tests{
 				readValues.push_back( boost::uuids::string_generator{}(string{guid}), l );
 			}
 			catch( const std::exception& e ){
-				Error( ELogTags::Test, "[{}] Failed to parse GUID from string '{}': {}", file.string(), guid, e.what() );
+				ERR( "[{}] Failed to parse GUID from string '{}': {}", file.string(), guid, e.what() );
 			}
 		}
 	}
@@ -72,7 +72,7 @@ namespace Jde::IO::Tests{
 		let file = File(fileIndex);
 		let exists = fs::exists(file);
 		if( exists ){
-			Information{ ELogTags::Test, "Removing existing file: {}", file.string() };
+			INFO( "Removing existing file: {}", file.string() );
 			fs::remove( file );
 		}
 		SetThreadDscrptn( file.filename().string() );

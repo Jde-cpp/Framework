@@ -12,10 +12,14 @@ namespace Jde{
 			throw Exception{ sl, "Failed to convert time point to local time: {} - {}", ToIsoString(time), e.what() };
 		}
 	}
-	α Chrono::ToDuration( string&& iso )ε->Duration{
+	α Chrono::ToDuration( string&& iso, SL sl )ε->Duration{
 		std::istringstream is{ move(iso) };
-		if( is.get()!='P' )
-			THROW( "Expected 'P' as first character." );
+		if( let ch = is.get(); ch!='P' ){
+			string content{ (char)ch }; string line;
+			while( std::getline(is,line) )
+				content += line;
+			throw Exception{ sl, ELogLevel::Debug, "Expected 'P' as first character in '{}{}'.", ch, content };
+		}
 		bool parsingTime = false;
 		Duration duration{ Duration::zero() };
 		while( is.good() ){
@@ -41,6 +45,15 @@ namespace Jde{
 		}
 		return duration;
 	}
+	α Chrono::TryToDuration( string&& iso, ELogLevel level, SL sl )ε->optional<Duration>{
+		try{
+			return ToDuration( move(iso), sl );
+		}
+		catch( IException& e ){
+			e.SetLevel( level );
+		}
+		return {};
+	}
 	α Chrono::ToTimePoint( string iso, SL sl )ε->TimePoint{
 		TimePoint tp;
 		std::istringstream is{ move(iso) };
@@ -53,5 +66,14 @@ namespace Jde{
 		THROW_IFSL( !ymd.ok(), "Invalid date: {}-{}-{}", y, mnth, dayOfMonth );
     auto tp = sys_days{ymd} + hours{h} + minutes{mnt} + seconds{scnd}+subseconds;
 		return tp;
+	}
+	α Chrono::ToTimeZone( sv name, const std::chrono::time_zone& dflt, ELogLevel level, SL sl )ι->const std::chrono::time_zone&{
+		try{
+			return *std::chrono::locate_zone( name );
+		}
+		catch( const std::runtime_error& e ){
+			LOGSL( level, sl, ELogTags::Parsing, "Time zone: '{}' not found: {}. Using default '{}'.", name, e.what(), dflt.name() );
+		}
+		return dflt;
 	}
 }

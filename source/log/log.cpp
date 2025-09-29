@@ -45,10 +45,14 @@ namespace Jde::Logging{
 }
 
 namespace Jde{
-	α Logging::DestroyLoggers()->void{
-		Trace( ELogTags::App, "Destroying Logger" );
+	α Logging::DestroyLoggers( bool terminate )->void{
+		TRACET( ELogTags::App, "Destroying Loggers" );
 		Logging::_pOnceMessages = nullptr;
-		_loggers.clear();
+		for( auto p=_loggers.begin(); p!=_loggers.end(); ){
+			auto logger = move(*p);
+			p = _loggers.erase(p);
+			logger->Shutdown( terminate );
+		}
 	};
 
 	α Logging::Initialize()ι->void{

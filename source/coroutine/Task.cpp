@@ -16,7 +16,7 @@ namespace Jde::Coroutine{
 
 	α AwaitResult::CheckUninitialized()ι->void{
 		if( !Uninitialized() )
-			Critical( _tags, "Uninitialized - index={}", _result.index() );
+			CRITICAL( "Uninitialized - index={}", _result.index() );
 	}
 
 	α Task::promise_type::unhandled_exception()ι->void{
@@ -27,13 +27,13 @@ namespace Jde::Coroutine{
 			e.Resume( *this );
 		}
 		catch( IException& e ){
-			Critical( _tags, "Jde::Task::promise_type::unhandled_exception - {}", e.what() );
+			CRITICAL( "Jde::Task::promise_type::unhandled_exception - {}", e.what() );
 		}
 		catch( const std::exception& e ){
-			Critical( _tags, "Jde::Task::promise_type::unhandled_exception ->{}", e.what() );
+			CRITICAL( "Jde::Task::promise_type::unhandled_exception ->{}", e.what() );
 		}
 		catch( ... ){
-			Critical( _tags, "Jde::Task::promise_type::unhandled_exception" );
+			CRITICAL( "Jde::Task::promise_type::unhandled_exception" );
 		}
 	}
 }
