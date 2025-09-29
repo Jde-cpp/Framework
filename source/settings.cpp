@@ -18,10 +18,10 @@ namespace Jde{
 		return *_settings;
 	}
 
-	α Settings::FindDuration( sv path )ι->optional<Duration>{
+	α Settings::FindDuration( sv path, SL sl )ι->optional<Duration>{
 		optional<Duration> y;
 		if( let setting = FindSV(path); setting.has_value() )
-			Try( [setting, &y](){ y = Chrono::ToDuration(*setting);} );
+			y = Chrono::TryToDuration( string{*setting}, ELogLevel::Error, sl );
 		return y;
 	}
 
@@ -112,7 +112,7 @@ namespace Jde{
 					if( env.empty() && group=="JDE_BUILD_TYPE" )
 						env = buildTypeSubDir();
 					if( env.empty() )
-						Debug{ _tags, "Environment variable '{}' not found", group };
+						DBG( "Environment variable '{}' not found", group );
 
 					setting = Str::Replace( setting, match, env );
 				}
@@ -134,12 +134,12 @@ namespace Jde{
 			_settings = mu<jvalue>( *settings );
 			if( _settings->is_object() )
 				SetEnv( _settings->get_object() );
-			Information{ ELogTags::App, "Settings path={}", settingsPath.string() };
+			INFOT( ELogTags::App, "Settings path={}", settingsPath.string() );
 		}
 		catch( const std::exception& e ){
 			_settings = mu<jvalue>( jobject{{"error", e.what()}} );
 			std::cerr << e.what() << std::endl;
-			Critical{ _tags, "({})Could not load settings - {}", settingsPath.string(), e.what() };
+			CRITICAL( "({})Could not load settings - {}", settingsPath.string(), e.what() );
 			BREAK;
 		}
 	}

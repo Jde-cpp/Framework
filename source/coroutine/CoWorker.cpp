@@ -12,7 +12,7 @@ namespace Jde::Coroutine{
 	}
 
 	α CoWorker::Shutdown( bool /*terminate*/ )ι->void{
-		Trace( _tags, "({})Shutdown", _name );
+		TRACET( _tags, "({})Shutdown", _name );
 		_pThread->Interrupt();
 		{
 			std::unique_lock<std::mutex> lk( _mtx );
@@ -20,16 +20,16 @@ namespace Jde::Coroutine{
 		}
 		_pThread->Join();
 		_pInstance = nullptr;
-		Trace( _tags, "({})~Shutdown", _name );
+		TRACET( _tags, "({})~Shutdown", _name );
 	}
 
 	α CoWorker::Run()ι->void{
 		SetThreadDscrptn( _name );
-		Trace( _tags, "{} - Starting", _name );
+		TRACET( _tags, "{} - Starting", _name );
 		while( !Threading::GetThreadInterruptFlag().IsSet() ){
 			Process();
 		}
-		Trace( _tags, "{} - Ending", _name );
+		TRACET( _tags, "{} - Ending", _name );
 	}
 }
 #endif

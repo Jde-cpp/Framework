@@ -16,7 +16,7 @@ namespace Jde{
 					logger->Write( entry );
 			}
 			catch( const fmt::format_error& e ){
-				Jde::Critical{ ELogTags::App, "could not log entry '{}' error: '{}'", entry.Text, string{e.what()} };
+				CRITICALT( ELogTags::App, "could not log entry '{}' error: '{}'", entry.Text, e.what() );
 			}
 		}
 		BREAK_IF( entry.Tags<=ELogTags::Write && entry.Level>=BreakLevel() );//don't want to break for opc server.

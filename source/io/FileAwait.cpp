@@ -27,13 +27,14 @@ namespace IO{
 		Path{ move(path) },
 		_sl{ sl }{
 		if( vec )
-			Buffer = vector<char>{};
+			Buffer = vector<byte>{};
 	}
-	FileIOArg::FileIOArg( fs::path path, variant<string,vector<char>> data, SL sl )ι:
+	FileIOArg::FileIOArg( fs::path path, variant<string,vector<byte>> data, ELogTags tags, SL sl )ι:
 		Buffer{ move(data) },
 		IsRead{ false },
 		Path{ move(path) },
-		_sl{ sl }
+		_sl{ sl },
+		_tags{ tags }
 	{}
 /*
 	bool FileIOArg::HandleChunkComplete( IFileChunkArg* pChunkArg )ι{

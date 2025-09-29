@@ -46,7 +46,7 @@ namespace Jde
 		if( erased )
 		{
 			_cache.erase( p );
-			Trace( _tags, "Cache::{} erased={}"sv, name, erased );
+			TRACE( "Cache::{} erased={}"sv, name, erased );
 		}
 		return erased;
 	}

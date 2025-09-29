@@ -177,9 +177,22 @@ namespace Jde{
 		let y = FindSV( o, key );
 		return y ? string{ *y } : optional<string>{};
 	}
+
+	α Json::FindDuration( const jobject& o, sv key, ELogLevel level, SL sl )ι->optional<Duration>{
+		let v = o.if_contains( key );
+		return v && v->is_string() ? Chrono::TryToDuration( string{v->get_string()}, level, sl ) : optional<Duration>{};
+	}
+
 	α Json::FindTimePoint( const jobject& o, sv key )ι->optional<TimePoint>{
 		let v = o.if_contains( key );
 		return v && v->is_string() ? Chrono::ToTimePoint( string{v->get_string()} ) : optional<TimePoint>{};
+	}
+
+	α Json::FindTimeZone( const jobject& o, sv key, const std::chrono::time_zone& dflt, ELogLevel level, SL sl )ι->const std::chrono::time_zone&{
+		auto p = FindValue( o, key );
+		if( p && p->is_string() )
+			return Chrono::ToTimeZone( string{p->get_string()}, dflt, level, sl );
+		return dflt;
 	}
 
 	α Json::FindSVPath( const jobject& o, sv path )ι->optional<sv>{

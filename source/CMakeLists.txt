@@ -11,6 +11,7 @@ set_property( TARGET ${targetName} PROPERTY POSITION_INDEPENDENT_CODE ON )
 
 file(GLOB sources *.cpp **/*.cpp **/**/*.cpp )
 file(GLOB headers "**/*.h")
+
 set( newDir $ENV{JDE_DIR}/Public/libs/framework/src )
 set( osDir ${newDir}/process/os )
 if( WIN32 )
@@ -24,6 +25,7 @@ else()
 endif()
 get_filename_component(thread_cpp ${CMAKE_CURRENT_SOURCE_DIR}/threading/Thread.cpp ABSOLUTE)
 list(REMOVE_ITEM sources "${thread_cpp}")
+
 target_sources( ${targetName} PRIVATE ${sources} ${headers} )
 
 target_link_libraries( ${targetName} PUBLIC fmt::fmt )
@@ -35,6 +37,7 @@ else()
 	target_link_libraries( ${targetName} PRIVATE jsonnet++ jsonnet )
 	target_link_libraries( ${targetName} PRIVATE PkgConfig::uring )
 endif()
+
 target_precompile_headers( ${targetName}
   PUBLIC
   <jde/framework.h>

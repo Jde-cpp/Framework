@@ -1,5 +1,6 @@
 #include <jde/framework/log/SpdLog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
+#include <spdlog/sinks/basic_file_sink.h>
 #ifdef _MSC_VER
 	#include <crtdbg.h>
 	#include <spdlog/spdlog.h>
@@ -52,7 +53,7 @@ namespace Jde::Logging{
 					pSink = ms<spdlog::sinks::basic_file_sink_mt>( path.string(), truncate );
 				}
 				catch( const spdlog::spdlog_ex& e ){
-					Error{ ELogTags::Settings, "Could not create log:  ({}) path='{}' - {}", string{name}, path.string(), string{e.what()} };
+					ERRT( ELogTags::Settings, "Could not create log:  ({}) path='{}' - {}", string{name}, path.string(), string{e.what()} );
 					std::cerr << Ƒ( "Could not create log:  ({}) path='{}' - {}", name, path.string(), path.string(), e.what() ) << std::endl;
 					continue;
 				}
@@ -65,7 +66,7 @@ namespace Jde::Logging{
 			let level = Json::FindEnum<ELogLevel>( sink, "/level", ToLogLevel ).value_or( ELogLevel::Trace );
 			pSink->set_level( (level_enum)level );
 			//std::cout << Ƒ( "({})level='{}' pattern='{}'{}", name, ToString(level), pattern, additional ) << std::endl;
-			Information{ ELogTags::Settings, "({})level='{}' pattern='{}'{}", name, ToString(level), *pattern, additional };
+			INFOT( ELogTags::Settings, "({})level='{}' pattern='{}'{}", name, ToString(level), *pattern, additional );
 			sinks.push_back( pSink );
 		}
 		return sinks;
@@ -86,6 +87,6 @@ namespace Jde::Logging{
 	SpdLog::SpdLog()ι:
 		ILogger{ Settings::FindDefaultObject("/logging/spd") },
 		_logger{ move(logger()) }{
-		Information{ ELogTags::Settings, "{} minLevel='{}' flushOn='{}' {}", Name(), Jde::ToString((ELogLevel)_logger.level()), Jde::ToString((ELogLevel)_logger.flush_level()), ToString() };
+		INFOT( ELogTags::Settings, "{} minLevel='{}' flushOn='{}' {}", Name(), Jde::ToString((ELogLevel)_logger.level()), Jde::ToString((ELogLevel)_logger.flush_level()), ToString() );
 	}
 }

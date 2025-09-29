@@ -14,7 +14,7 @@ namespace Jde{
 		auto& locks = _coLocks.try_emplace( Key ).first->second;
 		locks.push_back( this );
 		let ready = locks.size()==1;
-		Trace( _tags, "({})LockKeyAwait::await_ready={} size={}", Key, ready, locks.size() );
+		TRACE( "({})LockKeyAwait::await_ready={} size={}", Key, ready, locks.size() );
 		return locks.size()==1;
 	}
 	α LockKeyAwait::Suspend()ι->void{
@@ -31,7 +31,7 @@ namespace Jde{
 			}
 			_coLocksLock.unlock();
 			ASSERT( Handle );
-			Trace( _tags, "({})LockKeyAwait::await_suspend size={}", Key, locks.size() );
+			TRACE( "({})LockKeyAwait::await_suspend size={}", Key, locks.size() );
 		}
 	}
 	α LockKeyAwait::await_resume()ι->CoLockGuard{
@@ -41,7 +41,7 @@ namespace Jde{
 	CoLockGuard::CoLockGuard( string key, std::variant<LockKeyAwait*,coroutine_handle<>> h )ι:
 		Handle{h},
 		Key{ move(key) }{
-			Trace( _tags, "({})CoLockGuard() index={}", Key, h.index() );
+			TRACE( "({})CoLockGuard() index={}", Key, h.index() );
 	}
 	CoLockGuard::CoLockGuard( CoLockGuard&& rhs )ι:Handle{move(rhs.Handle)}, Key{move(rhs.Key)}{
 		rhs.Handle = nullptr;
@@ -68,8 +68,8 @@ namespace Jde{
 				Post( move(get<1>(locks.front())) );
 				//CoroutinePool::Resume( move(get<1>(locks.front())) );
 			else
-				Trace( _tags, "({})CoLockGuard - size={}, next is awaitable, should continue.", Key, locks.size() );
+				TRACE( "({})CoLockGuard - size={}, next is awaitable, should continue.", Key, locks.size() );
 		}
-		Trace( _tags, "~CoLockGuard( {} )", Key );
+		TRACE( "~CoLockGuard( {} )", Key );
 	}
 }

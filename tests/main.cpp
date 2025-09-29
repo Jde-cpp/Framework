@@ -23,7 +23,7 @@ namespace Jde{
 		let p=Settings::FindSV( "/testing/tests" );
 		let filter = p ? *p : "*";
 		if( !filterSet ){
-			Information{ ELogTags::App, "filter:'{}'", filter };
+			INFOT( ELogTags::App, "filter:'{}'", filter );
 			::testing::GTEST_FLAG( filter ) = filter;
 		}
 		result = RUN_ALL_TESTS();
